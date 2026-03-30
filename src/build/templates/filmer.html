@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="index"><div class="index_inner">
+{% include "nav.html" %}
+<div class="all-movies">
+{% for film in films %}
+{% include "film_card.html" %}
+{% endfor %}
+</div>
+</div></div>
+{% endblock %}

@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+*.lock
+build/
+!src/build
+www/

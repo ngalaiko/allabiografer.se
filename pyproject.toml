@@ -1,0 +1,67 @@
+[project]
+name = "allabiografer"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "jinja2>=3.1",
+    "pillow>=11.0",
+]
+
+[project.scripts]
+parse = "parse:main"
+build = "build:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/parse", "src/build", "src/store"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific
+    "C4",   # flake8-comprehensions
+    "DTZ",  # flake8-datetimez
+    "PIE",  # flake8-pie
+    "PT",   # flake8-pytest-style
+    "RSE",  # flake8-raise
+    "RET",  # flake8-return
+    "TCH",  # flake8-type-checking
+    "PERF", # perflint
+    "FURB", # refurb
+    "LOG",  # flake8-logging
+]
+ignore = [
+    "RET504",  # unnecessary assignment before return
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["parse", "build", "store"]
+
+[dependency-groups]
+build = [
+    "jinja2>=3.1",
+    "pillow>=11.0",
+]
+parse = [
+    "beautifulsoup4>=4.12",
+    "curl-cffi>=0.7",
+    "playwright>=1.49",
+    "requests>=2.31",
+]
+dev = [
+    "ruff>=0.15.8",
+]

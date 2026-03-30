@@ -1,0 +1,39 @@
+name: Parse
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # every day at midnight
+    - cron: "0 0 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}
+          lfs: true
+      - run: git lfs install
+      - uses: jdx/mise-action@v2
+      - run: uv run --group parse playwright install --with-deps chromium
+      - run: mise run parse
+      - name: Create PR with changes
+        env:
+          GH_TOKEN: ${{ secrets.PAT }}
+        run: |
+          BRANCH="parse-${{ github.run_number }}"
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git checkout -b "$BRANCH"
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Update screenings"
+          git push origin "$BRANCH"
+          PR_URL=$(gh pr create --title "Update screenings" --body "Automated update of screenings data" --base master)
+          gh pr merge "$PR_URL" --rebase

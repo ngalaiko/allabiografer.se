@@ -1,0 +1,6 @@
+{# Renders a poster image. Grey background shows if no poster. Expects: poster_url #}
+{% if poster_url %}
+<img class="poster" loading="lazy" src="{{ poster_url }}">
+{% else %}
+<div class="poster"></div>
+{% endif %}

@@ -1,0 +1,19 @@
+{
+  "tmdb_id": 642,
+  "title_sv": "Butch Cassidy och Sundance Kid",
+  "title_original": "Butch Cassidy and the Sundance Kid",
+  "overview_sv": "En film om de legendariska bankrånarna Butch Cassidy och Sundance Kid, och deras flykt undan rättvisan som tar dem ända till Bolivia.",
+  "genres": [
+    "Äventyr",
+    "Västern",
+    "Kriminal",
+    "Drama",
+    "Historisk"
+  ],
+  "release_date": "1969-09-23",
+  "runtime": 110,
+  "poster_path": "/m14Al58qt0WrspTjyLnodhmh7TL.jpg",
+  "vote_average": 7.611,
+  "age_rating": "15",
+  "release_date_se": "1969-10-30"
+}

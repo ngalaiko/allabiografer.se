@@ -1,0 +1,6 @@
+server {
+    listen 8080;
+    server_name www.allabiografer.se;
+
+    return 301 https://allabiografer.se$request_uri;
+}

@@ -1,0 +1,7 @@
+{# Renders a single film poster+title card. Expects: film.url, film.poster_url, film.title #}
+<div class="film">
+<a href="{{ film.url }}">
+{% with poster_url=film.poster_url %}{% include "poster.html" %}{% endwith %}
+<div class="title">{{ film.title }}</div>
+</a>
+</div>
