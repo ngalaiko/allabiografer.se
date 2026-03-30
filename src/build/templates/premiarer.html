@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="index"><div class="index_inner">
+{% include "nav.html" %}
+<div class="all-movies">
+{% for group in date_groups %}
+<h2 class="date">{{ group.label }}</h2>
+{% for film in group.films %}
+{% include "film_card.html" %}
+{% endfor %}
+{% endfor %}
+</div>
+</div></div>
+{% endblock %}

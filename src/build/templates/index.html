@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="index"><div class="index_inner">
+{% include "nav.html" %}
+{% for letter, cities in groups %}
+{% if cities %}
+<h2>{{ letter }}</h2>
+<ul class="cities">
+{% for city in cities %}
+<li><a class="{{ 'city large' if city.large else 'city' }}" href="/stad/{{ city.slug }}/">{{ city.name }}</a></li>
+{% endfor %}
+</ul>
+{% endif %}
+{% endfor %}
+</div></div>
+{% endblock %}

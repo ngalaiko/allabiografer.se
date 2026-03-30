@@ -1,0 +1,56 @@
+[tools]
+uv = "latest"
+
+[tasks.lint]
+description = "Lint with ruff"
+run = "uv run ruff check src/"
+
+[tasks.format]
+description = "Format with ruff"
+run = "uv run ruff format src/"
+
+
+[tasks.parse]
+description = "Parse all cinema websites"
+depends = ["parse:*"]
+
+[tasks."parse:filmstaden_se"]
+run = "uv run --group parse parse --output data/screenings.csv filmstaden_se"
+
+[tasks."parse:bio_se"]
+run = "uv run --group parse parse --output data/screenings.csv bio_se"
+
+[tasks."parse:nfbio_se"]
+run = "uv run --group parse parse --output data/screenings.csv nfbio_se"
+
+[tasks."parse:bioroy_se"]
+run = "uv run --group parse parse --output data/screenings.csv bioroy_se"
+
+[tasks."parse:wp_theatre"]
+run = "uv run --group parse parse --output data/screenings.csv wp_theatre"
+
+[tasks."parse:kiviksbio_se"]
+run = "uv run --group parse parse --output data/screenings.csv kiviksbio_se"
+
+[tasks."parse:biorio_se"]
+run = "uv run --group parse parse --output data/screenings.csv biorio_se"
+
+[tasks."parse:soderkopingsbio_se"]
+run = "uv run --group parse parse --output data/screenings.csv soderkopingsbio_se"
+
+[tasks."parse:hallundafolketshus_se"]
+run = "uv run --group parse parse --output data/screenings.csv hallundafolketshus_se"
+
+[tasks."parse:fhbracke_se"]
+run = "uv run --group parse parse --output data/screenings.csv fhbracke_se"
+
+[tasks."parse:osbyborgen_se"]
+run = "uv run --group parse parse --output data/screenings.csv osbyborgen_se"
+
+[tasks.build]
+description = "Build the static site"
+run = "uv run --group build build www/allabiografer.se"
+
+[tasks.serve]
+description = "Serve the built site locally"
+run = "python -m http.server 8000 -d www/allabiografer.se"

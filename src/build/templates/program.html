@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="program">
+<style>.row { grid-column: 2 / {{ 2 + num_days + 1 }}; }</style>
+<div class="top-placeholder"></div>
+<div class="left-placeholder"></div>
+<div class="movies" style="grid-template-columns:135px 310px repeat({{ num_days }}, 200px);">
+<div class="poster-placeholder"></div>
+<div class="cinema-placeholder"></div>
+<div class="breadcrumbs"><a class="home" href="/">{% include "home_icon.html" %}</a>{{ breadcrumbs|safe }}</div>
+{% for day in days %}
+<div class="day">{{ day.label }}</div>
+{% endfor %}
+{% for block in blocks %}
+{# Poster #}
+<div class="mp">
+{% with poster_url=block.poster_url %}{% include "poster.html" %}{% endwith %}
+</div>
+{# Row #}
+<div class="row" style="grid-template-rows:repeat({{ 1 + block.cinemas|length }}, auto) 1fr;">
+{# Movie title #}
+<div class="mt" style="grid-column-end:span 2;">
+<h2><a href="{{ block.film_url }}">{{ block.film_title }}</a></h2>
+{% if block.mi %}<div class="mi">{{ block.mi|safe }}</div>{% endif %}
+{% if block.desc %}<div class="md" title="{{ block.full_desc }}">{{ block.desc }}</div>{% endif %}
+</div>
+<p class="e" style="grid-column-end:span {{ num_days - 1 }};"></p>
+{# Cinema rows #}
+{% for cinema in block.cinemas %}
+<div class="c" style="min-height:{{ cinema.min_height }}px;">
+{% if cinema.url %}
+<a href="{{ cinema.url }}">{{ cinema.name }}</a>
+{% else %}
+{{ cinema.name }}
+{% endif %}
+{% if cinema.address or cinema.city_name %}
+<div>{{ cinema.address }}{% if cinema.address and cinema.city_name %} • {% endif %}{% if cinema.city_name %}<a href="{{ cinema.city_url }}">{{ cinema.city_name }}</a>{% endif %}</div>
+{% else %}<div></div>{% endif %}
+</div>
+{% for cell in cinema.cells %}
+{% if cell.times %}
+<p>
+{% for t in cell.times %}
+{% if t.past %}
+<span class="past" style="left:{{ t.left }}px;top:{{ t.top }}px;">{{ t.label }}</span>
+{% else %}
+<a href="{{ t.url }}" style="left:{{ t.left }}px;top:{{ t.top }}px;" target="_blank">{{ t.label }}</a>
+{% endif %}
+{% endfor %}
+</p>
+{% else %}
+<p></p>
+{% endif %}
+{% endfor %}
+{% endfor %}
+</div>
+{% endfor %}
+</div>
+</div>
+{% endblock %}

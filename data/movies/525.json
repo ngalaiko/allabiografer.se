@@ -1,0 +1,18 @@
+{
+  "tmdb_id": 525,
+  "title_sv": "Blues Brothers",
+  "title_original": "The Blues Brothers",
+  "overview_sv": "Jake släpps ut ur fängelse och beslutar, tillsammans med brodern Elwood, att samla ihop sitt gamla band som de hade innan Jake hamnade bakom galler. Det blir en svår uppgift men till slut är inte bara orkestern komplett, en spelning ordnas också som ska samla in pengar för att rädda ett hem för föräldralösa barn. Men tiden är knapp och en kamp för att hinna få in pengarna innan det är för sent tar sin början.",
+  "genres": [
+    "Music",
+    "Komedi",
+    "Action",
+    "Kriminal"
+  ],
+  "release_date": "1980-06-16",
+  "runtime": 134,
+  "poster_path": "/zDpMuIAwaGuGOqHkB2ukbTHnDgO.jpg",
+  "vote_average": 7.717,
+  "age_rating": "15",
+  "release_date_se": "1980-12-22"
+}
