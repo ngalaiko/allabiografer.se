@@ -36,7 +36,7 @@ RUN \
           exit 1; \
     esac; \
     rm -rf "/tmp/*"; \
-    apk add --update --no-cache goaccess nginx
+    apk add --update --no-cache goaccess nginx nginx-mod-http-brotli
 COPY --from=build /app/www /var/www/allabiografer.se
 COPY etc /etc
 COPY init-wrapper /
