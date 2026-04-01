@@ -44,6 +44,9 @@ run = "uv run --group parse parse --output data/screenings.csv hallundafolketshu
 [tasks."parse:fhbracke_se"]
 run = "uv run --group parse parse --output data/screenings.csv fhbracke_se"
 
+[tasks."parse:palladiumbio_se"]
+run = "uv run --group parse parse --output data/screenings.csv palladiumbio_se"
+
 [tasks."parse:osbyborgen_se"]
 run = "uv run --group parse parse --output data/screenings.csv osbyborgen_se"
 
