@@ -4,7 +4,7 @@
 :target { scroll-margin-block: 5ex; }
 img, picture, video, canvas, svg { display: block; max-width: 100%; height: auto; }
 p, h1, h2, h3 { overflow-wrap: break-word; }
-body { min-height: 100vh; }
+body { min-height: 100vh; display: flex; flex-direction: column; }
 
 /** Shared **/
 :root {
@@ -84,7 +84,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 p.e { background: #F5F5F5; }
 
 /** Footer **/
-.site-footer { padding: 2em 20px; margin-top: 3em; color: #999; font-size: var(--cap-height-10); text-align: center; line-height: 2; position: sticky; left: 0; width: 100vw; }
+.site-footer { padding: 2em 20px 1em; margin-top: auto; color: #999; font-size: var(--cap-height-10); text-align: center; line-height: 2; }
 .site-footer a { color: #777; text-decoration: none; }
 .site-footer a:hover { color: #FF4F20; }
 .site-footer .sep { margin: 0 0.6em; color: #ccc; }
