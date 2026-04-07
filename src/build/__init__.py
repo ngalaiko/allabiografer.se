@@ -20,7 +20,7 @@ import shutil
 import unicodedata
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -206,11 +206,13 @@ def _load_data(out_dir: Path) -> SiteData:
     sd.today = datetime.now(tz=SWEDEN_TZ).date()
 
     print("Reading screenings…")
-    sd.screenings = read_screenings(path=SCREENINGS_FILE)
-    print(f"  {len(sd.screenings)} screenings")
+    all_screenings = read_screenings(path=SCREENINGS_FILE)
+    sd.screenings = [s for s in all_screenings if s.date >= sd.today]
+    print(f"  {len(sd.screenings)} screenings ({len(all_screenings) - len(sd.screenings)} past, skipped)")
 
-    # Today through end of next week (same weekday)
-    sd.days = [sd.today + timedelta(days=i) for i in range(8)]
+    # Days are computed per-page from screening dates; keep a global
+    # reference only for today.
+    sd.days = []
 
     tmdb_ids: set[int] = set()
     for s in sd.screenings:
@@ -347,11 +349,8 @@ def _build_premiarer(env: Environment, sd: SiteData) -> None:
 
     # Premiere date: prefer Swedish release date from TMDB, fall back to
     # earliest screening date.
-    day_set = set(sd.days)
     first_screening: dict[int, date] = {}
     for s in sd.screenings:
-        if s.date not in day_set:
-            continue
         if s.tmdb_id not in first_screening or s.date < first_screening[s.tmdb_id]:
             first_screening[s.tmdb_id] = s.date
 
@@ -402,8 +401,7 @@ def _build_premiarer(env: Environment, sd: SiteData) -> None:
 def _build_filmer(env: Environment, sd: SiteData) -> None:
     print("Building /filmer/")
 
-    day_set = set(sd.days)
-    screening_ids = {s.tmdb_id for s in sd.screenings if s.date in day_set}
+    screening_ids = {s.tmdb_id for s in sd.screenings}
     movies = [m for m in sd.movies.values() if m.tmdb_id in screening_ids]
     movies.sort(key=lambda m: m.title_sv.lower())
 
@@ -432,16 +430,23 @@ def _build_filmer(env: Environment, sd: SiteData) -> None:
 # ---------------------------------------------------------------------------
 
 
+def _compute_days(screenings: list[Screening]) -> list[date]:
+    """Return sorted list of dates that have at least one screening."""
+    dates = {s.date for s in screenings}
+    return sorted(dates)
+
+
 def _prepare_programme_blocks(
     sd: SiteData,
     screenings: list[Screening],
+    days: list[date],
     *,
     city: str | None = None,
 ) -> list[dict]:
     """Prepare template-ready block dicts for a programme page."""
 
     now = datetime.now(tz=SWEDEN_TZ)
-    day_set = set(sd.days)
+    day_set = set(days)
     filtered = [s for s in screenings if s.date in day_set]
 
     # movie → (city, cinema) → day → [(time, url)]
@@ -449,17 +454,23 @@ def _prepare_programme_blocks(
         lambda: defaultdict(lambda: defaultdict(list))
     )
     movie_counts: dict[int, int] = defaultdict(int)
+    movie_earliest: dict[int, tuple[date, time]] = {}
 
     for s in filtered:
         try:
-            day_idx = sd.days.index(s.date)
+            day_idx = days.index(s.date)
         except ValueError:
             continue
         movie_cinemas[s.tmdb_id][(s.city, s.cinema_name)][day_idx].append((s.time, s.ticket_url))
         movie_counts[s.tmdb_id] += 1
+        key = (s.date, s.time)
+        if s.tmdb_id not in movie_earliest or key < movie_earliest[s.tmdb_id]:
+            movie_earliest[s.tmdb_id] = key
 
     blocks = []
-    for tmdb_id in sorted(movie_cinemas, key=lambda tid: -movie_counts[tid]):
+    for tmdb_id in sorted(
+        movie_cinemas, key=lambda tid: (-movie_counts.get(tid, 0), movie_earliest.get(tid, (date.max, time.max)))
+    ):
         movie = sd.movies.get(tmdb_id)
         film_title = movie.title_sv if movie else f"Film {tmdb_id}"
         film_slug = sd.film_slugs.get(film_title, _slugify_sv(film_title))
@@ -502,12 +513,12 @@ def _prepare_programme_blocks(
 
             cells = []
             max_h = 55.0
-            for day_idx in range(len(sd.days)):
+            for day_idx in range(len(days)):
                 raw = day_times.get(day_idx, [])
                 positions = _compute_time_positions(raw)
                 # Mark past times
                 for p in positions:
-                    dt = datetime.combine(sd.days[day_idx], time(*map(int, p["label"].split(":"))), tzinfo=SWEDEN_TZ)
+                    dt = datetime.combine(days[day_idx], time(*map(int, p["label"].split(":"))), tzinfo=SWEDEN_TZ)
                     p["past"] = dt < now
                 h = _cell_min_height(positions)
                 if h > max_h:
@@ -567,15 +578,16 @@ def _write_programme(
     out_path: Path,
     city: str | None = None,
 ) -> None:
-    blocks = _prepare_programme_blocks(sd, screenings, city=city)
-    days = [{"label": _format_day(d)} for d in sd.days]
+    page_days = _compute_days(screenings)
+    blocks = _prepare_programme_blocks(sd, screenings, page_days, city=city)
+    days = [{"label": _format_day(d)} for d in page_days]
 
     tmpl = env.get_template("program.html")
     html = tmpl.render(
         title=title,
         breadcrumbs=breadcrumbs,
         days=days,
-        num_days=len(sd.days),
+        num_days=len(page_days),
         blocks=blocks,
     )
     out_path.parent.mkdir(parents=True, exist_ok=True)
