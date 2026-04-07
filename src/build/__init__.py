@@ -347,8 +347,11 @@ def _build_premiarer(env: Environment, sd: SiteData) -> None:
 
     # Premiere date: prefer Swedish release date from TMDB, fall back to
     # earliest screening date.
+    day_set = set(sd.days)
     first_screening: dict[int, date] = {}
     for s in sd.screenings:
+        if s.date not in day_set:
+            continue
         if s.tmdb_id not in first_screening or s.date < first_screening[s.tmdb_id]:
             first_screening[s.tmdb_id] = s.date
 
@@ -399,7 +402,8 @@ def _build_premiarer(env: Environment, sd: SiteData) -> None:
 def _build_filmer(env: Environment, sd: SiteData) -> None:
     print("Building /filmer/")
 
-    screening_ids = {s.tmdb_id for s in sd.screenings}
+    day_set = set(sd.days)
+    screening_ids = {s.tmdb_id for s in sd.screenings if s.date in day_set}
     movies = [m for m in sd.movies.values() if m.tmdb_id in screening_ids]
     movies.sort(key=lambda m: m.title_sv.lower())
 
