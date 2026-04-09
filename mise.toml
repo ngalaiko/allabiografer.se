@@ -50,6 +50,9 @@ run = "uv run --group parse parse --output data/screenings.csv palladiumbio_se"
 [tasks."parse:osbyborgen_se"]
 run = "uv run --group parse parse --output data/screenings.csv osbyborgen_se"
 
+[tasks."parse:doclounge_se"]
+run = "uv run --group parse parse --output data/screenings.csv doclounge_se"
+
 [tasks.build]
 description = "Build the static site"
 run = "uv run --group build build www/allabiografer.se"
