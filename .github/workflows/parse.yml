@@ -21,7 +21,12 @@ jobs:
       - run: git lfs install
       - uses: jdx/mise-action@v2
       - run: uv run --group parse playwright install --with-deps chromium
-      - run: mise run parse
+      - run: |
+          for attempt in 1 2 3; do
+            mise run parse && break
+            echo "Attempt $attempt failed, retrying in 30s..."
+            sleep 30
+          done
       - name: Create PR with changes
         env:
           GH_TOKEN: ${{ secrets.PAT }}
