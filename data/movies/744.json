@@ -1,0 +1,17 @@
+{
+  "tmdb_id": 744,
+  "title_sv": "Top Gun",
+  "title_original": "Top Gun",
+  "overview_sv": "Top Gun handlar om de faror och den spänning som väntar den som blir pilot på marinens prestigefyllda skola för jaktflyg. Tom Cruise är utmärkt i rollen som den våghalsige, unge piloten Maverick Mitchell som gör allt för att bli bäst.",
+  "genres": [
+    "Action",
+    "Drama",
+    "Romantik"
+  ],
+  "release_date": "1986-05-16",
+  "release_date_se": "1986-07-04",
+  "runtime": 110,
+  "poster_path": "/xUuHj3CgmZQ9P2cMaqQs4J0d4Zc.jpg",
+  "vote_average": 7.1,
+  "age_rating": "11"
+}
