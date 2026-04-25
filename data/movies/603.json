@@ -1,0 +1,16 @@
+{
+  "tmdb_id": 603,
+  "title_sv": "Matrix",
+  "title_original": "The Matrix",
+  "overview_sv": "När Neo en kväll förs iväg av Trinity och finner sig själv öga mot öga med Morpheus blir han erbjuden ett livsavgörande val. Tar han den röda tabletten får han veta sanningen om Matrix och den värld han tror sig leva i. Tar han den blå glömmer han att någonsin mött Morpheus och fortsätter det liv han nu lever i ovisshet.",
+  "genres": [
+    "Action",
+    "Science Fiction"
+  ],
+  "release_date": "1999-03-31",
+  "release_date_se": "1999-07-14",
+  "runtime": 136,
+  "poster_path": "/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg",
+  "vote_average": 8.242,
+  "age_rating": "15"
+}
