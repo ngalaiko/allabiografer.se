@@ -1,0 +1,16 @@
+{
+  "tmdb_id": 185,
+  "title_sv": "A Clockwork Orange",
+  "title_original": "A Clockwork Orange",
+  "overview_sv": "Stampande, knuffande, stjälande, sjungande, dansande, våldsam. Huliganen Alex har sin egen definition på att ha det roligt. Han har det på tragisk bekostnad av andra. Alex resa från en omoralisk slyngel till en hjärntvättad, ordentlig medborgare.",
+  "genres": [
+    "Science Fiction",
+    "Kriminal"
+  ],
+  "release_date": "1971-10-28",
+  "release_date_se": "1972-04-26",
+  "runtime": 137,
+  "poster_path": "/4sHeTAp65WrSSuc05nRBKddhBxO.jpg",
+  "vote_average": 8.179,
+  "age_rating": "15"
+}
