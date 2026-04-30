@@ -1,0 +1,18 @@
+{
+  "tmdb_id": 601,
+  "title_sv": "E.T. the Extra-Terrestrial",
+  "title_original": "E.T. the Extra-Terrestrial",
+  "overview_sv": "En vilsen liten utomjording som är tre miljoner ljusår hemifrån. En ensam tioårig pojke som vill ta med honom hem. Två liv som förändras i ett tidlöst äventyr av vänskap utan världsliga hinder.",
+  "genres": [
+    "Science Fiction",
+    "Äventyr",
+    "Familj",
+    "Fantasy"
+  ],
+  "release_date": "1982-06-11",
+  "release_date_se": "2002-03-27",
+  "runtime": 114,
+  "poster_path": "/an0nD6uq6byfxXCfk6lQBzdL2J1.jpg",
+  "vote_average": 7.513,
+  "age_rating": "11"
+}
