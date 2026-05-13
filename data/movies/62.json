@@ -1,0 +1,17 @@
+{
+  "tmdb_id": 62,
+  "title_sv": "År 2001 - ett rymdäventyr",
+  "title_original": "2001: A Space Odyssey",
+  "overview_sv": "Mänskligheten hittar ett mystiskt, uppenbart tillverkat objekt begravt under Månens yta. Med hjälp av superdatorn H.A.L. 9000 skickas en grupp forskare på en expedition med destination Jupiter, för att få svar på frågan vem, eller vilka, som tillverkat föremålet.",
+  "genres": [
+    "Science Fiction",
+    "Mystik",
+    "Äventyr"
+  ],
+  "release_date": "1968-04-02",
+  "release_date_se": "1968-08-27",
+  "runtime": 149,
+  "poster_path": "/dBoSfUMF0TvAydMvYMyZYTHMU71.jpg",
+  "vote_average": 8.052,
+  "age_rating": "11"
+}

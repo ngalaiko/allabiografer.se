@@ -1,0 +1,16 @@
+{
+  "tmdb_id": 213,
+  "title_sv": "I sista minuten",
+  "title_original": "North by Northwest",
+  "overview_sv": "Reklammannen Roger Thornhill förs av misstag bort av utländska agenter. Han lyckas fly och börjar forska i omständigheterna kring sin kidnappning. Snart finner hans sig på flykt från både agenter och poliser.",
+  "genres": [
+    "Thriller",
+    "Äventyr"
+  ],
+  "release_date": "1959-08-06",
+  "release_date_se": "1959-10-19",
+  "runtime": 135,
+  "poster_path": "/2gA2K3vGMDcru6nT5WM8dPVG9Z3.jpg",
+  "vote_average": 7.966,
+  "age_rating": "15"
+}
