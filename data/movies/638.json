@@ -1,0 +1,17 @@
+{
+  "tmdb_id": 638,
+  "title_sv": "Lost Highway",
+  "title_original": "Lost Highway",
+  "overview_sv": "När Fred kommer hem en kväll hittar han en videofilm utanför sin dörr, som är filmad inifrån hans hus. När så ytterligare ett videoband dyker upp får Fred problem. Bandet visar ett mord, och det är Fred som mördar sin fru.",
+  "genres": [
+    "Drama",
+    "Thriller",
+    "Mystik"
+  ],
+  "release_date": "1997-01-15",
+  "release_date_se": "1997-03-14",
+  "runtime": 134,
+  "poster_path": "/pkkQjmP5CqoZGBq3e9t5vxcf5lC.jpg",
+  "vote_average": 7.5,
+  "age_rating": "15"
+}
