@@ -1,0 +1,16 @@
+{
+  "tmdb_id": 329,
+  "title_sv": "Jurassic Park",
+  "title_original": "Jurassic Park",
+  "overview_sv": "En rik entreprenör skapar i hemlighet en nöjespark med levande dinosaurier från förhistoriskt DNA. Före öppningsdagen bjuder han ner ett team av experter och sina två ivriga barnbarn för att uppleva parken och bidra till att lugna oroliga investerare. Men det visar sig att parken är allt annat än roande.",
+  "genres": [
+    "Äventyr",
+    "Science Fiction"
+  ],
+  "release_date": "1993-06-11",
+  "release_date_se": "2013-06-05",
+  "runtime": 127,
+  "poster_path": "/urkBfqRSMjigiDTkXamXnKUcuc2.jpg",
+  "vote_average": 7.969,
+  "age_rating": "11"
+}
