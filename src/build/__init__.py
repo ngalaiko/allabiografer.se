@@ -454,6 +454,10 @@ def _prepare_programme_blocks(
         lambda: defaultdict(lambda: defaultdict(list))
     )
     movie_counts: dict[int, int] = defaultdict(int)
+    # Ranking score: each screening contributes more the sooner it is, so films
+    # playing a lot in the near columns float to the top rather than films that
+    # are blank for weeks and then burst with screenings far in the future.
+    movie_score: dict[int, float] = defaultdict(float)
     movie_earliest: dict[int, tuple[date, time]] = {}
 
     for s in filtered:
@@ -463,13 +467,14 @@ def _prepare_programme_blocks(
             continue
         movie_cinemas[s.tmdb_id][(s.city, s.cinema_name)][day_idx].append((s.time, s.ticket_url))
         movie_counts[s.tmdb_id] += 1
+        movie_score[s.tmdb_id] += 1.0 / (1 + day_idx)
         key = (s.date, s.time)
         if s.tmdb_id not in movie_earliest or key < movie_earliest[s.tmdb_id]:
             movie_earliest[s.tmdb_id] = key
 
     blocks = []
     for tmdb_id in sorted(
-        movie_cinemas, key=lambda tid: (-movie_counts.get(tid, 0), movie_earliest.get(tid, (date.max, time.max)))
+        movie_cinemas, key=lambda tid: (-movie_score.get(tid, 0.0), movie_earliest.get(tid, (date.max, time.max)))
     ):
         movie = sd.movies.get(tmdb_id)
         film_title = movie.title_sv if movie else f"Film {tmdb_id}"
