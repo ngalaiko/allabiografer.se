@@ -15,6 +15,7 @@ Outputs to the given directory with this URL structure:
 """
 
 import argparse
+import json
 import re
 import shutil
 import unicodedata
@@ -46,6 +47,16 @@ from store import (
 
 SWEDEN_TZ = ZoneInfo("Europe/Stockholm")
 TEMPLATE_DIR = Path(__file__).parent / "templates"
+
+# Canonical origin — see etc/nginx (www → apex redirect).
+BASE_URL = "https://allabiografer.se"
+SITE_NAME = "Alla biografer i Sverige"
+SITE_DESCRIPTION = (
+    "Hitta vad som går på bio i hela Sverige — speltider, kommande premiärer "
+    "och alla biografer, stad för stad. Samlad bioguide för alla svenska biografer."
+)
+# Cap structured-data events per film page to keep page weight sane.
+MAX_JSONLD_EVENTS = 100
 
 
 # Residensstäder — capital of each Swedish län.
@@ -199,6 +210,7 @@ class SiteData:
     city_slugs: dict[str, str] = field(default_factory=dict)
     cinema_slugs: dict[tuple[str, str], str] = field(default_factory=dict)
     film_slugs: dict[str, str] = field(default_factory=dict)
+    sitemap_urls: list[str] = field(default_factory=list)
 
 
 def _load_data(out_dir: Path) -> SiteData:
@@ -293,6 +305,146 @@ def _poster_url(sd: SiteData, tmdb_id: int) -> str | None:
 
 
 # ---------------------------------------------------------------------------
+# SEO: canonical URLs, sitemap, structured data
+# ---------------------------------------------------------------------------
+
+
+def _register(sd: SiteData, out_path: Path) -> str:
+    """Compute the canonical URL for a page and record it for the sitemap."""
+    rel = out_path.relative_to(sd.out_dir)
+    if rel.name == "index.html":
+        parent = rel.parent
+        url = f"{BASE_URL}/" if str(parent) == "." else f"{BASE_URL}/{parent.as_posix()}/"
+    else:
+        url = f"{BASE_URL}/{rel.as_posix()}"
+    sd.sitemap_urls.append(url)
+    return url
+
+
+def _abs(url: str | None) -> str | None:
+    """Make a site-relative URL absolute for og:image / structured data."""
+    if not url:
+        return None
+    return url if url.startswith("http") else f"{BASE_URL}{url}"
+
+
+def _jsonld(data: object) -> str:
+    """Serialise a JSON-LD payload safely for an inline <script> tag."""
+    return json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
+
+
+def _breadcrumb_node(items: list[tuple[str, str | None]]) -> dict:
+    """A schema.org BreadcrumbList from (name, absolute-url|None) pairs."""
+    elements = []
+    for i, (name, url) in enumerate(items, start=1):
+        el: dict = {"@type": "ListItem", "position": i, "name": name}
+        if url:
+            el["item"] = url
+        elements.append(el)
+    return {"@type": "BreadcrumbList", "itemListElement": elements}
+
+
+def _website_jsonld() -> str:
+    return _jsonld(
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": SITE_NAME,
+            "url": f"{BASE_URL}/",
+            "inLanguage": "sv-SE",
+            "description": SITE_DESCRIPTION,
+        }
+    )
+
+
+def _film_jsonld(sd: SiteData, movie: Movie, screenings: list[Screening], canonical: str) -> str:
+    """Movie + ScreeningEvent graph for a film programme page."""
+    title = movie.title_sv or movie.title_original or f"Film {movie.tmdb_id}"
+    movie_node: dict = {
+        "@type": "Movie",
+        "@id": f"{canonical}#movie",
+        "name": title,
+        "url": canonical,
+        "inLanguage": "sv",
+    }
+    if movie.title_original and movie.title_original != title:
+        movie_node["alternateName"] = movie.title_original
+    poster = _abs(_poster_url(sd, movie.tmdb_id))
+    if poster:
+        movie_node["image"] = poster
+    if movie.overview_sv:
+        movie_node["description"] = movie.overview_sv
+    if movie.genres:
+        movie_node["genre"] = movie.genres
+    if movie.release_date:
+        movie_node["datePublished"] = movie.release_date
+    if movie.runtime:
+        movie_node["duration"] = f"PT{movie.runtime}M"
+    if movie.age_rating:
+        movie_node["contentRating"] = movie.age_rating
+
+    graph: list[dict] = [movie_node]
+    ordered = sorted(screenings, key=lambda s: (s.date, s.time))[:MAX_JSONLD_EVENTS]
+    for s in ordered:
+        start = datetime.combine(s.date, s.time, tzinfo=SWEDEN_TZ).isoformat()
+        address: dict = {"@type": "PostalAddress", "addressLocality": s.city, "addressCountry": "SE"}
+        venue = sd.venues.get((s.city, s.cinema_name))
+        if venue and venue.address:
+            address["streetAddress"] = venue.address
+        event: dict = {
+            "@type": "ScreeningEvent",
+            "name": f"{title} – {s.cinema_name}, {s.city}",
+            "startDate": start,
+            "eventStatus": "https://schema.org/EventScheduled",
+            "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+            "location": {"@type": "MovieTheater", "name": s.cinema_name, "address": address},
+            "workPresented": {"@id": f"{canonical}#movie"},
+        }
+        if s.ticket_url:
+            event["offers"] = {
+                "@type": "Offer",
+                "url": s.ticket_url,
+                "availability": "https://schema.org/InStock",
+            }
+        graph.append(event)
+
+    graph.append(_breadcrumb_node([(SITE_NAME, f"{BASE_URL}/"), (title, canonical)]))
+    return _jsonld({"@context": "https://schema.org", "@graph": graph})
+
+
+def _cinema_jsonld(sd: SiteData, city: str, cinema_name: str, canonical: str) -> str:
+    """MovieTheater node + breadcrumb for a cinema programme page."""
+    address: dict = {"@type": "PostalAddress", "addressLocality": city, "addressCountry": "SE"}
+    venue = sd.venues.get((city, cinema_name))
+    if venue and venue.address:
+        address["streetAddress"] = venue.address
+    theater = {
+        "@type": "MovieTheater",
+        "name": cinema_name,
+        "url": canonical,
+        "address": address,
+        "areaServed": city,
+    }
+    city_slug = sd.city_slugs.get(city, _slugify_sv(city))
+    crumb = _breadcrumb_node(
+        [(SITE_NAME, f"{BASE_URL}/"), (city, f"{BASE_URL}/stad/{city_slug}/"), (cinema_name, canonical)]
+    )
+    return _jsonld({"@context": "https://schema.org", "@graph": [theater, crumb]})
+
+
+def _collection_jsonld(name: str, canonical: str, crumbs: list[tuple[str, str | None]]) -> str:
+    """CollectionPage + breadcrumb for city / genre listing pages."""
+    page = {
+        "@type": "CollectionPage",
+        "name": name,
+        "url": canonical,
+        "inLanguage": "sv-SE",
+        "isPartOf": {"@type": "WebSite", "name": SITE_NAME, "url": f"{BASE_URL}/"},
+    }
+    return _jsonld({"@context": "https://schema.org", "@graph": [page, _breadcrumb_node(crumbs)]})
+
+
+# ---------------------------------------------------------------------------
 # Jinja environment
 # ---------------------------------------------------------------------------
 
@@ -334,13 +486,17 @@ def _build_index(env: Environment, sd: SiteData) -> None:
         ]
         groups.append((letter, city_dicts))
 
+    out = sd.out_dir / "index.html"
+    canonical = _register(sd, out)
     tmpl = env.get_template("index.html")
     html = tmpl.render(
-        title="Alla biografer i Sverige",
+        title="Alla biografer i Sverige – vad går på bio just nu?",
+        description=SITE_DESCRIPTION,
+        canonical=canonical,
+        jsonld=_website_jsonld(),
         active="index",
         groups=groups,
     )
-    out = sd.out_dir / "index.html"
     out.write_text(html, encoding="utf-8")
 
 
@@ -387,14 +543,26 @@ def _build_premiarer(env: Environment, sd: SiteData) -> None:
             )
         date_groups.append({"label": _format_day(d), "films": films})
 
+    out = sd.out_dir / "premiarer" / "index.html"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    canonical = _register(sd, out)
+    description = (
+        "Kommande biopremiärer i Sverige. Se vilka filmer som har premiär framöver "
+        "och var de visas — sorterat efter premiärdatum."
+    )
     tmpl = env.get_template("premiarer.html")
     html = tmpl.render(
-        title="Alla biografer i Sverige",
+        title="Kommande biopremiärer i Sverige",
+        description=description,
+        canonical=canonical,
+        jsonld=_collection_jsonld(
+            "Kommande biopremiärer i Sverige",
+            canonical,
+            [(SITE_NAME, f"{BASE_URL}/"), ("Kommande premiärer", canonical)],
+        ),
         active="premiarer",
         date_groups=date_groups,
     )
-    out = sd.out_dir / "premiarer" / "index.html"
-    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html, encoding="utf-8")
 
 
@@ -414,14 +582,26 @@ def _build_filmer(env: Environment, sd: SiteData) -> None:
         for m in movies
     ]
 
+    out = sd.out_dir / "filmer" / "index.html"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    canonical = _register(sd, out)
+    description = (
+        f"Alla {len(films)} filmer som visas på bio i Sverige just nu, i bokstavsordning. "
+        "Klicka på en film för speltider och biografer."
+    )
     tmpl = env.get_template("filmer.html")
     html = tmpl.render(
-        title="Alla filmer i Sverige",
+        title="Alla filmer som visas på bio i Sverige",
+        description=description,
+        canonical=canonical,
+        jsonld=_collection_jsonld(
+            "Alla filmer som visas på bio i Sverige",
+            canonical,
+            [(SITE_NAME, f"{BASE_URL}/"), ("Alla filmer", canonical)],
+        ),
         active="filmer",
         films=films,
     )
-    out = sd.out_dir / "filmer" / "index.html"
-    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html, encoding="utf-8")
 
 
@@ -581,7 +761,12 @@ def _write_programme(
     title: str,
     breadcrumbs: str,
     out_path: Path,
+    canonical: str,
     city: str | None = None,
+    description: str | None = None,
+    jsonld: str | None = None,
+    og_image: str | None = None,
+    og_type: str | None = None,
 ) -> None:
     page_days = _compute_days(screenings)
     blocks = _prepare_programme_blocks(sd, screenings, page_days, city=city)
@@ -590,6 +775,11 @@ def _write_programme(
     tmpl = env.get_template("program.html")
     html = tmpl.render(
         title=title,
+        description=description,
+        canonical=canonical,
+        jsonld=jsonld,
+        og_image=og_image,
+        og_type=og_type,
         breadcrumbs=breadcrumbs,
         days=days,
         num_days=len(page_days),
@@ -620,13 +810,27 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
     for city_name, city_screenings in sorted(by_city.items()):
         slug = sd.city_slugs[city_name]
         print(f"  /stad/{slug}/")
+        out_path = sd.out_dir / "stad" / slug / "index.html"
+        canonical = _register(sd, out_path)
+        n_films = len({s.tmdb_id for s in city_screenings})
+        title = f"På bio i {city_name} – speltider och biografer"
         _write_programme(
             env,
             sd,
             city_screenings,
-            title=f"Föreställningar i {city_name}",
+            title=title,
+            description=(
+                f"Vad går på bio i {city_name}? Se speltider för {n_films} filmer på alla "
+                f"biografer i {city_name} — uppdaterat dagligen."
+            ),
+            canonical=canonical,
+            jsonld=_collection_jsonld(
+                f"På bio i {city_name}",
+                canonical,
+                [(SITE_NAME, f"{BASE_URL}/"), (city_name, canonical)],
+            ),
             breadcrumbs=f" / {city_name}",
-            out_path=sd.out_dir / "stad" / slug / "index.html",
+            out_path=out_path,
             city=city_name,
         )
 
@@ -634,13 +838,20 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
     for (city_name, cinema_name), cinema_screenings in sorted(by_city_cinema.items()):
         city_slug = sd.city_slugs[city_name]
         cinema_slug = sd.cinema_slugs[(city_name, cinema_name)]
+        out_path = sd.out_dir / "stad" / city_slug / cinema_slug / "index.html"
+        canonical = _register(sd, out_path)
         _write_programme(
             env,
             sd,
             cinema_screenings,
-            title=f"Föreställningar på {cinema_name} i {city_name}",
+            title=f"{cinema_name} i {city_name} – program och speltider",
+            description=(
+                f"Program och speltider för {cinema_name} i {city_name}. Se vilka filmer som visas och köp biljetter."
+            ),
+            canonical=canonical,
+            jsonld=_cinema_jsonld(sd, city_name, cinema_name, canonical),
             breadcrumbs=f' / <a href="/stad/{city_slug}/">{city_name}</a> / {cinema_name}',
-            out_path=sd.out_dir / "stad" / city_slug / cinema_slug / "index.html",
+            out_path=out_path,
             city=city_name,
         )
 
@@ -648,32 +859,122 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
     for (city_name, genre), genre_screenings in sorted(by_city_genre.items()):
         city_slug = sd.city_slugs[city_name]
         genre_slug = _slugify_sv(genre)
+        out_path = sd.out_dir / "stad" / city_slug / "genre" / genre_slug / "index.html"
+        canonical = _register(sd, out_path)
         _write_programme(
             env,
             sd,
             genre_screenings,
-            title=f"{genre} i {city_name}",
+            title=f"{genre} på bio i {city_name} – speltider",
+            description=f"{genre}-filmer som visas på bio i {city_name} just nu, med speltider och biografer.",
+            canonical=canonical,
+            jsonld=_collection_jsonld(
+                f"{genre} på bio i {city_name}",
+                canonical,
+                [
+                    (SITE_NAME, f"{BASE_URL}/"),
+                    (city_name, f"{BASE_URL}/stad/{city_slug}/"),
+                    (genre, canonical),
+                ],
+            ),
             breadcrumbs=f' / <a href="/stad/{city_slug}/">{city_name}</a> / {genre}',
-            out_path=sd.out_dir / "stad" / city_slug / "genre" / genre_slug / "index.html",
+            out_path=out_path,
             city=city_name,
         )
 
     # /film/{slug}/
     for film_title, film_screenings in sorted(by_film.items()):
         slug = sd.film_slugs[film_title]
+        out_path = sd.out_dir / "film" / slug / "index.html"
+        canonical = _register(sd, out_path)
+        movie = next((sd.movies.get(s.tmdb_id) for s in film_screenings if sd.movies.get(s.tmdb_id)), None)
+        n_cities = len({s.city for s in film_screenings})
+        if movie and movie.overview_sv:
+            description = movie.overview_sv[:155].rstrip()
+            if len(movie.overview_sv) > 155:
+                description += "…"
+        else:
+            description = (
+                f"Speltider för {film_title} på biografer i hela Sverige — "
+                f"visas i {n_cities} {'stad' if n_cities == 1 else 'städer'}."
+            )
+        jsonld = _film_jsonld(sd, movie, film_screenings, canonical) if movie else None
+        og_image = _abs(_poster_url(sd, movie.tmdb_id)) if movie else None
         _write_programme(
             env,
             sd,
             film_screenings,
-            title=f"Föreställningar av {film_title}",
+            title=f"{film_title} – speltider på bio i Sverige",
+            description=description,
+            canonical=canonical,
+            jsonld=jsonld,
+            og_image=og_image,
+            og_type="video.movie",
             breadcrumbs=f" / {film_title}",
-            out_path=sd.out_dir / "film" / slug / "index.html",
+            out_path=out_path,
         )
 
 
 # ---------------------------------------------------------------------------
 # Copy static assets
 # ---------------------------------------------------------------------------
+
+
+def _write_robots(out_dir: Path) -> None:
+    """robots.txt — allow everyone, explicitly welcome AI crawlers, link sitemap."""
+    print("Writing robots.txt")
+    # Crawlers commonly used by search engines and LLM assistants. Listed
+    # explicitly so there is no ambiguity that indexing is welcome.
+    agents = [
+        "*",
+        "Googlebot",
+        "Bingbot",
+        "GPTBot",
+        "OAI-SearchBot",
+        "ChatGPT-User",
+        "ClaudeBot",
+        "Claude-Web",
+        "anthropic-ai",
+        "PerplexityBot",
+        "Google-Extended",
+        "Applebot",
+        "Applebot-Extended",
+    ]
+    lines = []
+    for agent in agents:
+        lines.append(f"User-agent: {agent}")
+        lines.append("Allow: /")
+        lines.append("")
+    lines.append(f"Sitemap: {BASE_URL}/sitemap.xml")
+    lines.append("")
+    (out_dir / "robots.txt").write_text("\n".join(lines), encoding="utf-8")
+
+
+def _write_sitemap(sd: SiteData) -> None:
+    """sitemap.xml listing every generated page, newest-relevant first."""
+    print(f"Writing sitemap.xml ({len(sd.sitemap_urls)} urls)")
+    lastmod = sd.today.isoformat()
+    parts = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+    # Deduplicate while preserving order.
+    seen: set[str] = set()
+    for url in sd.sitemap_urls:
+        if url in seen:
+            continue
+        seen.add(url)
+        # Home and top-level hubs change most often.
+        priority = "1.0" if url == f"{BASE_URL}/" else "0.7"
+        parts.append("<url>")
+        parts.append(f"<loc>{url}</loc>")
+        parts.append(f"<lastmod>{lastmod}</lastmod>")
+        parts.append("<changefreq>daily</changefreq>")
+        parts.append(f"<priority>{priority}</priority>")
+        parts.append("</url>")
+    parts.append("</urlset>")
+    parts.append("")
+    (sd.out_dir / "sitemap.xml").write_text("\n".join(parts), encoding="utf-8")
 
 
 def _copy_static(out_dir: Path) -> None:
@@ -709,5 +1010,8 @@ def main() -> None:
     _build_premiarer(env, sd)
     _build_filmer(env, sd)
     _build_programme_pages(env, sd)
+
+    _write_robots(out_dir)
+    _write_sitemap(sd)
 
     print(f"\nDone. Output in {out_dir}/")

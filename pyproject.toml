@@ -23,6 +23,8 @@ target-version = "py313"
 line-length = 120
 
 [tool.ruff.lint]
+# Intentional Swedish typography (en dash in page titles); not a typo for a hyphen.
+allowed-confusables = ["–"]
 select = [
     "E",    # pycodestyle errors
     "W",    # pycodestyle warnings
