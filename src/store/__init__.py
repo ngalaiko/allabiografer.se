@@ -37,6 +37,25 @@ _CSV_FIELDS = ["city", "cinema", "date", "time", "screen", "tmdb_id", "ticket_ur
 # ---------------------------------------------------------------------------
 
 
+_CITY_ALIASES: dict[str, str] = {
+    # Stockholm municipality stadsdelar
+    "Bromma": "Stockholm",
+    "Älvsjö": "Stockholm",
+    "Hägersten": "Stockholm",
+    "Johanneshov": "Stockholm",
+    "Skärholmen": "Stockholm",
+    "Årsta": "Stockholm",
+    # Göteborg municipality stadsdelar
+    "Angered": "Göteborg",
+    "Torslanda": "Göteborg",
+    "Västra Frölunda": "Göteborg",
+}
+
+
+def _normalize_city(city: str) -> str:
+    return _CITY_ALIASES.get(city, city)
+
+
 def _slugify(text: str) -> str:
     text = text.strip()
     text = re.sub(r'[/\\:*?"<>|]', "_", text)
@@ -72,7 +91,7 @@ def write_screenings(screenings: list[Screening], *, path: Path = SCREENINGS_FIL
         new_count = 0
         for s in screenings:
             row = {
-                "city": s.city,
+                "city": _normalize_city(s.city),
                 "cinema": s.cinema_name,
                 "date": s.date.isoformat(),
                 "time": s.time.strftime("%H:%M"),
@@ -152,11 +171,14 @@ def movie_poster_path(tmdb_id: int, *, movies_dir: Path = MOVIES_DIR) -> Path | 
 
 def write_venue(venue: Venue, *, data_dir: Path = VENUES_DIR) -> Path:
     """Write venue metadata JSON.  Returns the written path."""
-    out_dir = data_dir / _slugify(venue.city)
+    city = _normalize_city(venue.city)
+    out_dir = data_dir / _slugify(city)
     out_dir.mkdir(parents=True, exist_ok=True)
     out_file = out_dir / f"{_slugify(venue.name)}.json"
+    payload = venue.to_dict()
+    payload["city"] = city
     with open(out_file, "w", encoding="utf-8") as fh:
-        json.dump(venue.to_dict(), fh, ensure_ascii=False, indent=2)
+        json.dump(payload, fh, ensure_ascii=False, indent=2)
     return out_file
 
 
