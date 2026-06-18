@@ -2,7 +2,7 @@
 
 import logging
 from collections.abc import Iterator
-from datetime import datetime
+from datetime import date, time
 
 import requests
 
@@ -52,15 +52,18 @@ def parse() -> Iterator[Screening | Venue]:
                 yield Venue(name=cinema_name, city=city, address=address)
 
             try:
-                dt = datetime.strptime(raw_dt, "%Y-%m-%d %H:%M")
-            except ValueError:
+                date_str, time_str = raw_dt.split(" ", 1)
+                h, m = time_str.split(":")
+                dt_date = date.fromisoformat(date_str)
+                dt_time = time(int(h), int(m))
+            except (ValueError, AttributeError):
                 log.warning("bad startDate %r for %r", raw_dt, film_title)
                 continue
 
             yield Screening(
                 tmdb_id=tmdb_id,
-                date=dt.date(),
-                time=dt.time(),
+                date=dt_date,
+                time=dt_time,
                 cinema_name=cinema_name,
                 city=city,
                 ticket_url=ticket_url,
