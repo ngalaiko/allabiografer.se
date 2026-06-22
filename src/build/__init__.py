@@ -6,12 +6,13 @@ Usage::
 
 Outputs to the given directory with this URL structure:
 
-    /                           - city A-O index
-    /premiarer/                 - upcoming premieres
-    /filmer/                    - all films currently showing
-    /stad/{slug}/               - programme for a city
-    /stad/{slug}/{cinema-slug}/ - programme for a cinema
-    /film/{slug}/               - programme for a film (nationwide)
+    /                                    - city A-O index
+    /premiarer/                          - upcoming premieres
+    /filmer/                             - all films currently showing
+    /stad/{slug}/                        - programme for a city
+    /stad/{slug}/{cinema-slug}/          - programme for a cinema
+    /stad/{slug}/film/{film-slug}/       - film filtered to a city
+    /film/{slug}/                        - programme for a film (nationwide)
 """
 
 import argparse
@@ -738,11 +739,17 @@ def _prepare_programme_blocks(
                 }
             )
 
+        if city:
+            city_slug = sd.city_slugs.get(city, _slugify_sv(city))
+            film_url = f"/stad/{city_slug}/film/{film_slug}/"
+        else:
+            film_url = f"/film/{film_slug}/"
+
         blocks.append(
             {
                 "poster_url": _poster_url(sd, tmdb_id),
                 "film_title": film_title,
-                "film_url": f"/film/{film_slug}/",
+                "film_url": film_url,
                 "mi": " • ".join(mi_parts) if mi_parts else "",
                 "desc": desc,
                 "full_desc": full_desc,
@@ -796,6 +803,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
     by_city_cinema: dict[tuple[str, str], list[Screening]] = defaultdict(list)
     by_film: dict[str, list[Screening]] = defaultdict(list)
     by_city_genre: dict[tuple[str, str], list[Screening]] = defaultdict(list)
+    by_city_film: dict[tuple[str, str], list[Screening]] = defaultdict(list)
 
     for s in sd.screenings:
         by_city[s.city].append(s)
@@ -803,6 +811,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
         movie = sd.movies.get(s.tmdb_id)
         if movie and movie.title_sv:
             by_film[movie.title_sv].append(s)
+            by_city_film[(s.city, movie.title_sv)].append(s)
             for genre in movie.genres:
                 by_city_genre[(s.city, genre)].append(s)
 
@@ -878,6 +887,40 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
                 ],
             ),
             breadcrumbs=f' / <a href="/stad/{city_slug}/">{city_name}</a> / {genre}',
+            out_path=out_path,
+            city=city_name,
+        )
+
+    # /stad/{slug}/film/{film-slug}/
+    for (city_name, film_title), city_film_screenings in sorted(by_city_film.items()):
+        city_slug = sd.city_slugs[city_name]
+        film_slug = sd.film_slugs.get(film_title, _slugify_sv(film_title))
+        out_path = sd.out_dir / "stad" / city_slug / "film" / film_slug / "index.html"
+        canonical = _register(sd, out_path)
+        movie = next((sd.movies.get(s.tmdb_id) for s in city_film_screenings if sd.movies.get(s.tmdb_id)), None)
+        if movie and movie.overview_sv:
+            description = movie.overview_sv[:155].rstrip()
+            if len(movie.overview_sv) > 155:
+                description += "…"
+        else:
+            n_cinemas = len({s.cinema_name for s in city_film_screenings})
+            description = (
+                f"Speltider för {film_title} på biografer i {city_name} — "
+                f"visas på {n_cinemas} {'biograf' if n_cinemas == 1 else 'biografer'}."
+            )
+        jsonld = _film_jsonld(sd, movie, city_film_screenings, canonical) if movie else None
+        og_image = _abs(_poster_url(sd, movie.tmdb_id)) if movie else None
+        _write_programme(
+            env,
+            sd,
+            city_film_screenings,
+            title=f"{film_title} i {city_name} – speltider på bio",
+            description=description,
+            canonical=canonical,
+            jsonld=jsonld,
+            og_image=og_image,
+            og_type="video.movie",
+            breadcrumbs=f' / <a href="/stad/{city_slug}/">{city_name}</a> / {film_title}',
             out_path=out_path,
             city=city_name,
         )
