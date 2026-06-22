@@ -312,7 +312,7 @@ def _poster_url(sd: SiteData, tmdb_id: int) -> str | None:
 
 def _sitemap_priority(url: str) -> str:
     """Assign priority based on URL depth/type."""
-    path = url[len(BASE_URL):]
+    path = url[len(BASE_URL) :]
     if path in ("/", ""):
         return "1.0"
     if path in ("/premiarer/", "/filmer/"):
