@@ -22,7 +22,7 @@ import shutil
 import unicodedata
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -310,6 +310,33 @@ def _poster_url(sd: SiteData, tmdb_id: int) -> str | None:
 # ---------------------------------------------------------------------------
 
 
+def _sitemap_priority(url: str) -> str:
+    """Assign priority based on URL depth/type."""
+    path = url[len(BASE_URL):]
+    if path in ("/", ""):
+        return "1.0"
+    if path in ("/premiarer/", "/filmer/"):
+        return "0.9"
+    # Nationwide film pages and large-city pages
+    if path.startswith("/film/"):
+        return "0.8"
+    # City index pages — large cities get higher priority
+    if path.startswith("/stad/") and path.count("/") == 3:
+        city_slug = path.split("/")[2]
+        large_city_slugs = {_slugify_sv(c) for c in LARGE_CITIES}
+        return "0.8" if city_slug in large_city_slugs else "0.7"
+    # Individual cinema pages
+    if path.startswith("/stad/") and path.count("/") == 4:
+        return "0.6"
+    # City-filtered film pages
+    if "/film/" in path:
+        return "0.5"
+    # Genre pages
+    if "/genre/" in path:
+        return "0.4"
+    return "0.6"
+
+
 def _register(sd: SiteData, out_path: Path) -> str:
     """Compute the canonical URL for a page and record it for the sitemap."""
     rel = out_path.relative_to(sd.out_dir)
@@ -396,6 +423,15 @@ def _film_jsonld(sd: SiteData, movie: Movie, screenings: list[Screening], canoni
             "@type": "ScreeningEvent",
             "name": f"{title} – {s.cinema_name}, {s.city}",
             "startDate": start,
+            **(
+                {
+                    "endDate": (
+                        datetime.combine(s.date, s.time, tzinfo=SWEDEN_TZ) + timedelta(minutes=movie.runtime)
+                    ).isoformat()
+                }
+                if movie.runtime
+                else {}
+            ),
             "eventStatus": "https://schema.org/EventScheduled",
             "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
             "location": {"@type": "MovieTheater", "name": s.cinema_name, "address": address},
@@ -1007,8 +1043,7 @@ def _write_sitemap(sd: SiteData) -> None:
         if url in seen:
             continue
         seen.add(url)
-        # Home and top-level hubs change most often.
-        priority = "1.0" if url == f"{BASE_URL}/" else "0.7"
+        priority = _sitemap_priority(url)
         parts.append("<url>")
         parts.append(f"<loc>{url}</loc>")
         parts.append(f"<lastmod>{lastmod}</lastmod>")
