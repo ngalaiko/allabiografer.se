@@ -1,0 +1,16 @@
+{
+  "tmdb_id": 672,
+  "title_sv": "Harry Potter och hemligheternas kammare",
+  "title_original": "Harry Potter and the Chamber of Secrets",
+  "overview_sv": "Sommarlovet är äntligen över! Harry Potter har längtat tillbaka till sitt andra år på Hogwarts. Ett meddelande på väggen meddelar att den legendariska Hemligheternas kammare har öppnats. Trion inser snart att det kommer att krävas mycket mod för att rädda skolan.",
+  "genres": [
+    "Äventyr",
+    "Fantasy"
+  ],
+  "release_date": "2002-11-13",
+  "release_date_se": "2002-11-22",
+  "runtime": 162,
+  "poster_path": "/6nI30SXd5ul9qHsWSqHI0Vyjjqc.jpg",
+  "vote_average": 7.705,
+  "age_rating": "11"
+}
