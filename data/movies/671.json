@@ -1,0 +1,16 @@
+{
+  "tmdb_id": 671,
+  "title_sv": "Harry Potter och de vises sten",
+  "title_original": "Harry Potter and the Philosopher's Stone",
+  "overview_sv": "Föräldralöse Harry Potter bor hos sina elaka styvföräldrar och deras vidrige son. En helt ny värld öppnar sig för Harry när han får veta att hans föräldrar var berömda magiker och han får börja på Hogwarths skola för häxkonster och trolldom, en värld full av magi och spännande äventyr.",
+  "genres": [
+    "Äventyr",
+    "Fantasy"
+  ],
+  "release_date": "2001-11-16",
+  "release_date_se": "2001-11-23",
+  "runtime": 153,
+  "poster_path": "/sbG27upebMRVIoFeywTpMrU21nU.jpg",
+  "vote_average": 7.899,
+  "age_rating": "11"
+}
