@@ -1,0 +1,18 @@
+{
+  "tmdb_id": 15121,
+  "title_sv": "Sound of Music",
+  "title_original": "The Sound of Music",
+  "overview_sv": "Maria, en spirituella ung kvinna, lämnar klostret för att bli guvernant åt Kapten Trapps sju barn. Han är en enväldig änkeman vars stränga regler inte tillåter något utrymme för musik och skratt.",
+  "genres": [
+    "Drama",
+    "Familj",
+    "Music",
+    "Romantik"
+  ],
+  "release_date": "1965-03-29",
+  "release_date_se": "1966-10-15",
+  "runtime": 171,
+  "poster_path": "/yBWAncEoUTFukG7jdcYRVhtsmh5.jpg",
+  "vote_average": 7.7,
+  "age_rating": "11"
+}
