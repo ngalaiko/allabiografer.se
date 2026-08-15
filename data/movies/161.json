@@ -1,0 +1,16 @@
+{
+  "tmdb_id": 161,
+  "title_sv": "Ocean's Eleven",
+  "title_original": "Ocean's Eleven",
+  "overview_sv": "Danny planerar århundradets stöt - att länsa några av Las Vegas största casinon. Han tänker göra det under en omtalad boxningsmatch och till sin hjälp har han elva vassa killar som sätter allt på spel för att lyckas genomföra den farliga kuppen.",
+  "genres": [
+    "Thriller",
+    "Kriminal"
+  ],
+  "release_date": "2001-12-07",
+  "release_date_se": "2002-01-18",
+  "runtime": 117,
+  "poster_path": "/hQQCdZrsHtZyR6NbKH2YyCqd2fR.jpg",
+  "vote_average": 7.465,
+  "age_rating": "7"
+}
