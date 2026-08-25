@@ -9,6 +9,23 @@ COPY static static
 COPY data data
 RUN uv run build /app/www
 
+FROM alpine:3.22 AS goaccess-build
+ARG GOACCESS_VERSION=1.11
+ARG GOACCESS_SHA256=19f52862eb805bfa2682acc3184e7af09019c00df96a27f400480230b0bcaf73
+ADD "https://github.com/allinurl/goaccess/archive/refs/tags/v${GOACCESS_VERSION}.tar.gz" /tmp/goaccess.tar.gz
+RUN \
+    echo "${GOACCESS_SHA256}  /tmp/goaccess.tar.gz" > /tmp/goaccess.sha256; \
+    sha256sum -c /tmp/goaccess.sha256; \
+    apk add --no-cache \
+        autoconf automake build-base gettext-dev libmaxminddb-dev linux-headers ncurses-dev openssl-dev pkgconf zlib-dev
+WORKDIR /src
+RUN \
+    tar -xzf /tmp/goaccess.tar.gz --strip-components=1; \
+    autoreconf -fiv; \
+    ./configure --prefix=/usr --enable-utf8 --with-openssl --with-zlib --enable-geoip=mmdb; \
+    make -j"$(nproc)"; \
+    make DESTDIR=/dist install
+
 FROM alpine:3.22
 ARG S6_OVERLAY_VERSION=3.2.1.0
 ADD "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz" /tmp
@@ -36,7 +53,9 @@ RUN \
           exit 1; \
     esac; \
     rm -rf "/tmp/*"; \
-    apk add --update --no-cache goaccess nginx nginx-mod-http-brotli
+    apk add --update --no-cache gettext-libs libmaxminddb ncurses-libs nginx nginx-mod-http-brotli openssl tzdata zlib
+COPY --from=goaccess-build /dist/usr/bin/goaccess /usr/bin/goaccess
+COPY --from=goaccess-build /dist/usr/share /usr/share
 COPY --from=build /app/www /var/www/allabiografer.se
 COPY etc /etc
 COPY init-wrapper /
