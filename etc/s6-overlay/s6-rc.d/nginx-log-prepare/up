@@ -1,3 +1,4 @@
 if { mkdir -p /var/log/nginx }
-if { chown nobody:nogroup /var/log/nginx }
+if { touch /var/log/nginx/access.log }
+if { chown -R nobody:nogroup /var/log/nginx }
 chmod 02755 /var/log/nginx
