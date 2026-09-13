@@ -16,6 +16,7 @@ Outputs to the given directory with this URL structure:
 """
 
 import argparse
+import hashlib
 import json
 import re
 import shutil
@@ -487,12 +488,14 @@ def _collection_jsonld(name: str, canonical: str, crumbs: list[tuple[str, str | 
 
 
 def _make_env() -> Environment:
-    return Environment(
+    env = Environment(
         loader=FileSystemLoader(str(TEMPLATE_DIR)),
         autoescape=select_autoescape(["html"]),
         trim_blocks=True,
         lstrip_blocks=True,
     )
+    env.globals["style_version"] = hashlib.sha256(Path("static/i/style.css").read_bytes()).hexdigest()[:12]
+    return env
 
 
 # ---------------------------------------------------------------------------
@@ -813,7 +816,7 @@ def _write_programme(
 ) -> None:
     page_days = _compute_days(screenings)
     blocks = _prepare_programme_blocks(sd, screenings, page_days, city=city)
-    days = [{"label": _format_day(d)} for d in page_days]
+    days = [{"label": _format_day(d), "date": d.isoformat()} for d in page_days]
 
     tmpl = env.get_template("program.html")
     html = tmpl.render(

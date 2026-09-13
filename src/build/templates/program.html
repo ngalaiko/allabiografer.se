@@ -1,60 +1,52 @@
 {% extends "base.html" %}
+{% block page %}<div class="schedule-scroll" tabindex="0" aria-label="Bioprogram">{{ super() }}</div>{% endblock %}
 {% block body %}
-<div class="program">
-<style>.row { grid-column: 2 / {{ 2 + num_days + 1 }}; }</style>
-<div class="top-placeholder"></div>
-<div class="left-placeholder"></div>
-<div class="movies" style="grid-template-columns:135px 310px repeat({{ num_days }}, 200px);">
-<div class="poster-placeholder"></div>
-<div class="cinema-placeholder"></div>
-<div class="breadcrumbs"><a class="home" href="/">{% include "home_icon.html" %}</a>{{ breadcrumbs|safe }}</div>
-{% for day in days %}
-<div class="day">{{ day.label }}</div>
-{% endfor %}
+<section class="program" aria-label="Bioprogram, rulla i sidled för fler datum" tabindex="0" style="--day-count: {{ num_days }};">
+<header class="schedule-header">
+<nav class="schedule-breadcrumbs" aria-label="Brödsmulor"><a class="home" href="/" aria-label="Alla städer">{% include "home_icon.html" %}</a>{{ breadcrumbs|safe }}</nav>
+<div class="schedule-dates">
+{% for day in days %}<time datetime="{{ day.date }}">{{ day.label }}</time>{% endfor %}
+</div>
+</header>
 {% for block in blocks %}
-{# Poster #}
-<div class="mp">
-{% with poster_url=block.poster_url %}{% include "poster.html" %}{% endwith %}
+<article class="schedule-film" style="--film-rows: {{ block.cinemas|length + 2 }};">
+<div class="film-title">
+<h2><a href="{{ block.film_url }}" title="{{ block.film_title }}">{{ block.film_title }}</a></h2>
+{% if block.mi %}<div class="film-meta">{{ block.mi|safe }}</div>{% endif %}
 </div>
-{# Row #}
-<div class="row" style="grid-template-rows:repeat({{ 1 + block.cinemas|length }}, auto) 1fr;">
-{# Movie title #}
-<div class="mt" style="grid-column-end:span 2;">
-<h2><a href="{{ block.film_url }}">{{ block.film_title }}</a></h2>
-{% if block.mi %}<div class="mi">{{ block.mi|safe }}</div>{% endif %}
-{% if block.desc %}<div class="md" title="{{ block.full_desc }}">{{ block.desc }}</div>{% endif %}
+<div class="film-overview">
+<div class="film-poster">{% if block.poster_url %}<img src="{{ block.poster_url }}" alt="" width="125" height="177" loading="lazy">{% endif %}</div>
+<div class="film-description">
+{% if block.desc %}
+{% if block.desc != block.full_desc %}
+<details>
+<summary><span class="description-short">{{ block.desc }}</span><span class="read-more">Läs mer</span><span class="read-less">Visa mindre</span></summary>
+<p>{{ block.full_desc }}</p>
+</details>
+{% else %}<p>{{ block.desc }}</p>{% endif %}
+{% endif %}
 </div>
-<p class="e" style="grid-column-end:span {{ num_days - 1 }};"></p>
-{# Cinema rows #}
+</div>
 {% for cinema in block.cinemas %}
-<div class="c" style="min-height:{{ cinema.min_height }}px;">
-{% if cinema.url %}
-<a href="{{ cinema.url }}">{{ cinema.name }}</a>
-{% else %}
-{{ cinema.name }}
-{% endif %}
-{% if cinema.address or cinema.city_name %}
-<div>{{ cinema.address }}{% if cinema.address and cinema.city_name %} • {% endif %}{% if cinema.city_name %}<a href="{{ cinema.city_url }}">{{ cinema.city_name }}</a>{% endif %}</div>
-{% else %}<div></div>{% endif %}
+<section class="schedule-cinema" aria-label="{{ cinema.name }}" style="--cinema-row: {{ loop.index + 2 }}; --cinema-height: {{ cinema.min_height }}px;">
+<div class="cinema-name">
+{% if cinema.url %}<a href="{{ cinema.url }}">{{ cinema.name }}</a>{% else %}{{ cinema.name }}{% endif %}
+{% if cinema.address or cinema.city_name %}<div class="cinema-location"><span class="cinema-address">{{ cinema.address }}{% if cinema.address and cinema.city_name %} • {% endif %}</span>{% if cinema.city_name %}<a href="{{ cinema.city_url }}">{{ cinema.city_name }}</a>{% endif %}</div>{% endif %}
 </div>
+<div class="schedule-times">
 {% for cell in cinema.cells %}
-{% if cell.times %}
-<p>
+{% set day_label = days[loop.index0].label %}
+<div class="schedule-cell" style="--day-column: {{ loop.index }};" aria-label="{{ day_label }}">
 {% for t in cell.times %}
-{% if t.past %}
-<span class="past" style="left:{{ t.left }}px;top:{{ t.top }}px;">{{ t.label }}</span>
-{% else %}
-<a href="{{ t.url }}" style="left:{{ t.left }}px;top:{{ t.top }}px;" target="_blank">{{ t.label }}</a>
-{% endif %}
-{% endfor %}
-</p>
-{% else %}
-<p></p>
-{% endif %}
-{% endfor %}
+{% if t.past %}<span class="past" style="--time-left: {{ t.left }}px; --time-top: {{ t.top }}px;">{{ t.label }}</span>{% else %}<a href="{{ t.url }}" style="--time-left: {{ t.left }}px; --time-top: {{ t.top }}px;" target="_blank" rel="noopener" aria-label="{{ block.film_title }}, {{ cinema.name }}, {{ day_label }} {{ t.label }}">{{ t.label }}</a>{% endif %}
 {% endfor %}
 </div>
 {% endfor %}
 </div>
-</div>
+</section>
+{% endfor %}
+</article>
+{% endfor %}
+{% if not blocks %}<p class="no-screenings">Inga visningar.</p>{% endif %}
+</section>
 {% endblock %}

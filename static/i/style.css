@@ -16,9 +16,13 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
   --gap-v: 10px;
   --gap-h: 10px;
   --border-color: #DDD;
+  --schedule-surface: #f5f5f5;
+  --schedule-nav-height: 30px;
+  --schedule-day-height: 30px;
+  --schedule-inset: 12px;
 }
 a { text-decoration: none; color: #0060a0; text-decoration-thickness: 1px; }
-a:hover, .c > :nth-child(2) > a:hover { color: #FF4F20; text-decoration: underline; }
+a:hover { color: #FF4F20; text-decoration: underline; }
 html { overscroll-behavior-x: none; }
 body { font: var(--cap-height-11) / 19px 'Fira Sans'; }
 .home:hover { text-decoration: none; border-bottom: 1px solid #FF4F20; }
@@ -42,48 +46,86 @@ body { font: var(--cap-height-11) / 19px 'Fira Sans'; }
 .all-movies .poster { width: 125px; height: 177px; display: block; background: #D5D5D5; border-radius: 4px; object-fit: cover; }
 
 /** Program **/
-.program { padding: 20px; cursor: default; width: max-content; position: relative; }
-.movies { display: grid; }
-.breadcrumbs, .day, .mp, .row > * { padding: calc(var(--gap-v) / 2) calc(var(--gap-h) / 2); }
-
-.top-placeholder { z-index: 50; position: fixed; top: -100px; left: 0; width: 100vw; height: 120px; background: #FFF; }
-.left-placeholder { z-index: 30; position: fixed; top: 0; left: 0; width: 20px; height: 100vh; background: #FFF; }
-
-.breadcrumbs { z-index: 60; width: 300px; height: 30px; position: sticky; left: 20px; top: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; grid-column: 1 / 2; grid-row: 1 / 2; }
-
-.poster-placeholder { z-index: 50; position: sticky; height: 30px; top: 20px; background-color: #F5F5F5; grid-column: 1 / 2; grid-row: 1 / 2; }
-.cinema-placeholder { z-index: 50; position: sticky; height: 30px; top: 20px; left: 20px; background-color: #F5F5F5; grid-column: 2 / 3; grid-row: 1 / 2; }
-
-.day { z-index: 20; height: calc(20px + var(--gap-v)); position: sticky; top: 20px; line-height: 20px; text-align: center; background: #F5F5F5; }
-
-.mp { min-height: 177px; grid-column-start: 1; }
-.mp > .poster { z-index: 40; width: 125px; height: 177px; background: #D5D5D5; position: sticky; top: 55px; object-fit: cover; }
-
-.row { display: grid; grid-template-columns: subgrid; }
-.mt { z-index: 10; position: sticky; left: 20px; grid-column-start: 1; background: #F5F5F5; }
+.schedule-scroll { display: contents; }
 h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
-.mi, .md { font-size: var(--cap-height-9-5); }
+.program { --day-width: 200px; --sheet-width: calc(445px + var(--day-count) * var(--day-width)); padding: 20px; cursor: default; width: max-content; position: relative; }
+.program::before { content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 20px; z-index: 50; background: #fff; }
+.program::after { content: ""; position: fixed; top: 0; left: 0; width: 20px; height: 100vh; z-index: 30; background: #fff; }
+.schedule-header { position: sticky; top: 20px; z-index: 50; width: var(--sheet-width); display: grid; grid-template-columns: 445px 1fr; background: var(--schedule-surface); }
+.schedule-breadcrumbs { position: sticky; left: 20px; z-index: 60; width: 445px; height: var(--schedule-nav-height); padding: 4px 5px; line-height: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--schedule-surface); border: 1px solid var(--border-color); }
+.schedule-dates { display: grid; grid-template-columns: repeat(var(--day-count), var(--day-width)); }
+.schedule-dates > time { height: var(--schedule-day-height); padding: 4px; line-height: 20px; text-align: center; background: var(--schedule-surface); border-block: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
+.schedule-film { display: grid; grid-template-columns: 135px 310px repeat(var(--day-count), var(--day-width)); width: var(--sheet-width); background: var(--schedule-surface); border-bottom: 1px solid var(--border-color); }
+.film-title { grid-column: 2 / 4; grid-row: 1; position: sticky; left: 20px; padding: 10px var(--schedule-inset) 0; background: var(--schedule-surface); border-left: 1px solid var(--border-color); }
+.film-title h2 { font-size: 18px; line-height: 24px; margin: 0; }
+.film-meta, .film-description { font-size: 14px; line-height: 20px; }
+.film-overview, .schedule-cinema, .schedule-times { display: contents; }
+.film-poster { grid-column: 1; grid-row: 1 / span var(--film-rows); padding: 5px; background: #fff; border-left: 1px solid var(--border-color); }
+.film-poster img { position: sticky; top: 55px; width: 125px; height: 177px; object-fit: cover; border-radius: 2px; background: #ddd; }
+.film-description { grid-column: 2 / 4; grid-row: 2; position: sticky; left: 20px; padding: 0 var(--schedule-inset) 10px; background: var(--schedule-surface); border-left: 1px solid var(--border-color); }
+.film-description summary { list-style: none; cursor: pointer; }
+.film-description summary::-webkit-details-marker { display: none; }
+.read-more, .read-less { color: #0060a0; }
+.read-more, .read-less, .film-description [open] .description-short { display: none; }
+.film-description [open] .read-less { display: block; }
+.cinema-name { grid-column: 2; grid-row: var(--cinema-row); min-height: var(--cinema-height); position: sticky; left: 20px; z-index: 20; padding: 10px var(--schedule-inset); background: #fff; font-size: 15px; line-height: 24px; border: 1px solid var(--border-color); border-bottom: 0; }
+.cinema-location, .cinema-location a { color: #666; font-size: 14px; line-height: 20px; }
+.schedule-cell { grid-column: calc(var(--day-column) + 2); grid-row: var(--cinema-row); position: relative; min-height: var(--cinema-height); background: #fff; border-top: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
+.schedule-cell > a, .schedule-cell > span { position: absolute; left: var(--time-left); top: var(--time-top); padding: 5px; line-height: 10px; text-align: center; font-feature-settings: 'case' 1; font-size: var(--cap-height-10); }
+.schedule-cell > a:hover { text-decoration: none; background: #fee1e4; }
+.schedule-cell .past { color: #999; }
+.no-screenings { padding: 16px 12px; }
 
-.c { z-index: 20; background: #FFF; position: sticky; left: 20px; grid-column-start: 1; }
-.c > :nth-child(2) { color: #B0B0B0; font-size: var(--cap-height-9-5); }
-.c > :nth-child(2) > a { color: inherit; text-decoration: underline; }
-.movies p { position: relative; }
-.movies p > span, .movies p > a { position: absolute; padding: 5px; line-height: 10px; text-align: center; font-feature-settings: 'case' 1;
-  font-size: var(--cap-height-10); }
-.movies p > a:hover { text-decoration: none; background: #FEE1E4; }
-.movies p > span.past { color: #BBB; }
+@media (max-width: 700px) {
+  .schedule-scroll { display: block; width: 100%; height: 100dvh; overflow: auto; scroll-padding-top: 186px; }
+  .schedule-scroll > .site-footer { position: sticky; left: 0; width: 100%; }
+  .program { padding: 0; width: max-content; --visible-days: 3; --day-width: calc(100vw / var(--visible-days)); --sheet-width: max(100vw, calc(var(--day-count) * var(--day-width))); --header-height: calc(var(--schedule-nav-height) + var(--schedule-day-height)); --film-height: 56px; scroll-padding-top: calc(var(--header-height) + var(--film-height) + 70px); }
+  .program::before, .program::after { display: none; }
+  .schedule-header { display: block; top: 0; z-index: 40; }
+  .schedule-breadcrumbs { left: 0; width: 100vw; padding: 5px; border: 0; }
+  .schedule-dates > time:first-child { border-left: 1px solid var(--border-color); }
+  .schedule-film { display: block; background: #fff; border: 0; }
+  .film-title { display: flex; align-items: center; left: 0; width: 100vw; height: var(--film-height); top: var(--header-height); z-index: 30; padding: 3px var(--schedule-inset); border: 0; border-bottom: 1px solid var(--border-color); }
+  .film-title h2 { min-width: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+  .film-meta { display: none; }
+  .film-overview { position: sticky; left: 0; width: 100vw; display: flex; align-items: flex-start; gap: var(--schedule-inset); padding: 10px var(--schedule-inset); border-bottom: 1px solid var(--border-color); }
+  .film-poster { flex: 0 0 52px; padding: 0; border: 0; }
+  .film-poster:empty { display: none; }
+  .film-poster img { position: static; width: 52px; height: 74px; }
+  .film-description { flex: 1; min-width: 0; position: static; padding: 0; border: 0; background: #fff; }
+  .read-more, .read-less { display: flex; align-items: center; min-height: 44px; }
+  .read-less, .film-description [open] .read-more { display: none; }
+  .film-description [open] .read-less { display: flex; }
+  .schedule-cinema { display: block; border-bottom: 1px solid var(--border-color); }
+  .cinema-name { top: calc(var(--header-height) + var(--film-height)); left: 0; width: 100vw; min-height: 0; border: 0; border-bottom: 1px solid var(--border-color); }
+  .cinema-location { display: inline; }
+  .cinema-location a::before { content: " · "; }
+  .cinema-address { display: none; }
+  .schedule-times { display: grid; grid-template-columns: repeat(var(--day-count), var(--day-width)); min-height: 44px; }
+  .schedule-cell { display: flex; grid-column: var(--day-column); grid-row: 1; min-height: 44px; align-content: start; justify-content: center; flex-wrap: wrap; padding: 2px 4px 6px; border-top: 0; }
+  .schedule-cell > a, .schedule-cell > span { position: static; display: inline-flex; align-items: center; justify-content: center; min-width: 48px; min-height: 44px; padding: 4px; font-size: 15px; line-height: 19px; font-variant-numeric: tabular-nums; }
+  .index { padding: 12px; min-width: 0; min-height: 0; flex: 1; }
+  .index_inner { width: 100%; min-width: 0; }
+  .index h1 { margin: 0 0 16px; font-size: 16px; line-height: 1.5; }
+  .index h1 > a, .index h1 > span { white-space: nowrap; }
+  .index h2 { margin: 24px 0 6px; }
+  .index h1 + h2 { margin-top: 0; }
+  .cities { columns: 2; column-gap: 16px; }
+  .cities > li { margin: 0; break-inside: avoid; }
+  .cities a { display: inline-block; padding: 6px 0; line-height: 20px; }
+  .all-movies { width: 100%; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); gap: 20px 12px; }
+  .all-movies .film > a { width: 100%; }
+  .all-movies .poster { width: 100%; height: auto; aspect-ratio: 125 / 177; }
+  .all-movies .title { margin-top: 6px; overflow-wrap: anywhere; }
+  .all-movies > .date { margin: 8px 0 -8px; }
+  .all-movies > .date:first-child { margin-top: 0; }
+  body > .site-footer { padding: 24px 12px 12px; }
+}
 
-.poster-placeholder { border-left: 1px solid var(--border-color); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
-.cinema-placeholder { border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
+@media (min-width: 480px) and (max-width: 700px) {
+  .program { --visible-days: 4; }
+}
 
-.mp { border-left: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
-.day { border-top: 1px solid var(--border-color); }
-.mt, .c { border-left: 1px solid var(--border-color); }
-.day, .mt, .c, .movies p { border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
-.mt { border-right: none; }
-p.e { background: #F5F5F5; }
-
-/** Footer **/
 .site-footer { padding: 2em 20px 1em; margin-top: auto; color: #999; font-size: var(--cap-height-10); text-align: center; line-height: 2; }
 .site-footer a { color: #777; text-decoration: none; }
 .site-footer a:hover { color: #FF4F20; }
