@@ -102,7 +102,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
   .cinema-location a::before { content: " · "; }
   .cinema-address { display: none; }
   .schedule-times { display: grid; grid-template-columns: repeat(var(--day-count), var(--day-width)); min-height: 44px; }
-  .schedule-cell { display: flex; grid-column: var(--day-column); grid-row: 1; min-height: 44px; align-content: start; justify-content: center; flex-wrap: wrap; padding: 2px 4px 6px; border-top: 0; }
+  .schedule-cell { position: static; display: flex; grid-column: var(--day-column); grid-row: 1; min-height: 44px; align-content: start; justify-content: center; flex-wrap: wrap; padding: 2px 4px 6px; border-top: 0; }
   .schedule-cell > a, .schedule-cell > span { position: static; display: inline-flex; align-items: center; justify-content: center; min-width: 48px; min-height: 44px; padding: 4px; font-size: 15px; line-height: 19px; font-variant-numeric: tabular-nums; }
   .index { padding: 12px; min-width: 0; min-height: 0; flex: 1; }
   .index_inner { width: 100%; min-width: 0; }
