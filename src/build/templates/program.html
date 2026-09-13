@@ -12,19 +12,12 @@
 <article class="schedule-film" style="--film-rows: {{ block.cinemas|length + 2 }};">
 <div class="film-title">
 <h2><a href="{{ block.film_url }}" title="{{ block.film_title }}">{{ block.film_title }}</a></h2>
-{% if block.mi %}<div class="film-meta">{{ block.mi|safe }}</div>{% endif %}
 </div>
 <div class="film-overview">
 <div class="film-poster">{% if block.poster_url %}<img src="{{ block.poster_url }}" alt="" width="125" height="177" loading="lazy">{% endif %}</div>
 <div class="film-description">
-{% if block.desc %}
-{% if block.desc != block.full_desc %}
-<details>
-<summary><span class="description-short">{{ block.desc }}</span><span class="read-more">Läs mer</span><span class="read-less">Visa mindre</span></summary>
-<p>{{ block.full_desc }}</p>
-</details>
-{% else %}<p>{{ block.desc }}</p>{% endif %}
-{% endif %}
+{% if block.mi %}<div class="film-meta">{{ block.mi|safe }}</div>{% endif %}
+{% if block.full_desc %}<p>{{ block.full_desc }}</p>{% endif %}
 </div>
 </div>
 {% for cinema in block.cinemas %}
