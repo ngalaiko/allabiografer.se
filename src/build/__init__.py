@@ -18,6 +18,7 @@ Outputs to the given directory with this URL structure:
 import argparse
 import hashlib
 import json
+import os
 import re
 import shutil
 import unicodedata
@@ -507,6 +508,8 @@ def _make_env() -> Environment:
         lstrip_blocks=True,
     )
     env.globals["style_version"] = hashlib.sha256(Path("static/i/style.css").read_bytes()).hexdigest()[:12]
+    env.globals["posthog_token"] = os.environ.get("POSTHOG_PROJECT_TOKEN", "").strip()
+    env.globals["posthog_host"] = os.environ.get("POSTHOG_HOST", "/salong").strip()
     return env
 
 

@@ -5,6 +5,25 @@ server {
     root /var/www/allabiografer.se;
     index index.html;
 
+    location ^~ /salong/ {
+        resolver 1.1.1.1 8.8.8.8 valid=300s ipv6=off;
+        resolver_timeout 5s;
+        rewrite ^/salong/(.*)$ /$1 break;
+        proxy_pass https://$posthog_upstream;
+        proxy_set_header Host $posthog_upstream;
+        proxy_set_header X-Forwarded-For $posthog_client_ip;
+        proxy_set_header X-Real-IP $posthog_client_ip;
+        proxy_set_header Cookie "";
+        proxy_set_header Authorization "";
+        proxy_hide_header Set-Cookie;
+        proxy_ssl_server_name on;
+        proxy_ssl_name $posthog_upstream;
+        proxy_ssl_verify on;
+        proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+        client_max_body_size 64m;
+        access_log off;
+    }
+
     location / {
         try_files $uri $uri/ =404;
     }

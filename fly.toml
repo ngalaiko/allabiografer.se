@@ -8,6 +8,10 @@ primary_region = 'arn'
 
 [build]
 
+  [build.args]
+    POSTHOG_PROJECT_TOKEN = 'phc_BMbekuviuGc4cCqzgcoJ7Q2MiETp2yL8WEojww4Kzxjq'
+    POSTHOG_HOST = '/salong'
+
 [[mounts]]
   source = 'logs'
   destination = '/var/log'

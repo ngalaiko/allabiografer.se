@@ -28,6 +28,7 @@
 <link href="/i/style.css?v={{ style_version }}" rel="stylesheet" type="text/css">
 <link href="/i/favicon-32x32.png" rel="icon" sizes="32x32">
 {% if jsonld %}<script type="application/ld+json">{{ jsonld|safe }}</script>{% endif %}
+{% if posthog_token %}{% include "posthog.html" %}{% endif %}
 </head>
 <body>
 {% block page %}

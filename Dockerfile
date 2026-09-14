@@ -7,6 +7,8 @@ RUN uv sync --frozen --no-dev --group build
 COPY src src
 COPY static static
 COPY data data
+ARG POSTHOG_PROJECT_TOKEN
+ARG POSTHOG_HOST=/salong
 RUN uv run build /app/www
 
 FROM alpine:3.22 AS goaccess-build
@@ -53,7 +55,7 @@ RUN \
           exit 1; \
     esac; \
     rm -rf "/tmp/*"; \
-    apk add --update --no-cache gettext-libs libmaxminddb ncurses-libs nginx nginx-mod-http-brotli openssl tzdata zlib
+    apk add --update --no-cache ca-certificates gettext-libs libmaxminddb ncurses-libs nginx nginx-mod-http-brotli openssl tzdata zlib
 COPY --from=goaccess-build /dist/usr/bin/goaccess /usr/bin/goaccess
 COPY --from=goaccess-build /dist/usr/share /usr/share
 COPY --from=build /app/www /var/www/allabiografer.se
