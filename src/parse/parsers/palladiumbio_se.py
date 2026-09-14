@@ -122,11 +122,10 @@ def parse() -> Iterator[Screening | Venue]:
         screen = _parse_screen(venue_el.get_text(strip=True)) if venue_el else ""
 
         tmdb_id = _tmdb(film_title)
-        if tmdb_id is None:
-            continue
 
         yield Screening(
             tmdb_id=tmdb_id,
+            title=film_title,
             date=current_date,
             time=t,
             ticket_url=ticket_url,

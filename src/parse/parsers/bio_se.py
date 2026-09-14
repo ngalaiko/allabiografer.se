@@ -29,7 +29,7 @@ def parse() -> Iterator[Screening]:
 
     resp = session.get(f"{_API}/cinemas", timeout=30)
     resp.raise_for_status()
-    cinemas = resp.json().get("cinemas", [])
+    cinemas = resp.json()["cinemas"]
     log.info("bio.se: %d cinemas", len(cinemas))
 
     for cinema in cinemas:
@@ -44,14 +44,12 @@ def parse() -> Iterator[Screening]:
         resp.raise_for_status()
 
         count = 0
-        for entry in resp.json().get("movies", []):
+        for entry in resp.json()["movies"]:
             movie = entry.get("movie", {})
             film_title = movie.get("title", "")
             if not film_title:
                 continue
             tmdb_id = _tmdb(film_title)
-            if tmdb_id is None:
-                continue
             for sess in entry.get("sessions", []):
                 raw = sess.get("show_date_time", "")
                 if not raw:
@@ -62,6 +60,7 @@ def parse() -> Iterator[Screening]:
                     continue
                 yield Screening(
                     tmdb_id=tmdb_id,
+                    title=film_title,
                     date=dt.date(),
                     time=dt.time(),
                     cinema_name=cinema_name,

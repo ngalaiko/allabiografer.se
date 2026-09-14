@@ -29,22 +29,22 @@ def parse() -> Iterator[Screening | Venue]:
 
     m = re.search(r'<script[^>]*type="application/json"[^>]*>(.*?)</script>', resp.text, re.DOTALL)
     if not m:
-        log.warning("bioroy.se: no JSON data found")
-        return
+        raise ValueError("bioroy.se: no JSON data found")
 
     data = json.loads(m.group(1))
-    pl = data.get("props", {}).get("pageProps", {}).get("programList", {})
+    pl = data["props"]["pageProps"]["programList"]
 
     features = {f["id"]: f["info"]["title"] for f in pl.get("features", []) if f.get("info", {}).get("title")}
 
+    runtimes = {f["id"]: f["info"].get("duration") for f in pl["features"]}
     count = 0
     for entry in pl.get("schedule", []):
         film_title = features.get(entry.get("featureId"), "")
         if not film_title:
             continue
-        tmdb_id = _tmdb(film_title)
-        if tmdb_id is None:
+        if film_title == "Biosalongen abonnerad":
             continue
+        tmdb_id = _tmdb(film_title, runtime=runtimes.get(entry.get("featureId")))
 
         for show in entry.get("dates", []):
             raw = show.get("startDate", "")
@@ -59,6 +59,7 @@ def parse() -> Iterator[Screening | Venue]:
 
             yield Screening(
                 tmdb_id=tmdb_id,
+                title=film_title,
                 date=dt.date(),
                 time=dt.time(),
                 ticket_url=ticket_url,

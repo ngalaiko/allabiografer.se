@@ -52,7 +52,7 @@ def parse() -> Iterator[Screening | Venue]:
 
     m = re.search(r'vueData_sessions\s*=\s*(\{.*?"sessions":\[.*?\]\})', resp.text, re.DOTALL)
     if not m:
-        return
+        raise ValueError("osbyborgen.se: no schedule found")
     data = json.loads(m.group(1))
 
     for sess in data.get("sessions", []):
@@ -63,10 +63,9 @@ def parse() -> Iterator[Screening | Venue]:
         if not film_title or not t or not d or not ticket_url:
             continue
         tmdb_id = _tmdb(film_title)
-        if tmdb_id is None:
-            continue
         yield Screening(
             tmdb_id=tmdb_id,
+            title=film_title,
             date=d,
             time=t,
             ticket_url=ticket_url,

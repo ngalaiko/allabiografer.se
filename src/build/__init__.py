@@ -22,7 +22,7 @@ import re
 import shutil
 import unicodedata
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -221,7 +221,19 @@ def _load_data(out_dir: Path) -> SiteData:
 
     print("Reading screenings…")
     all_screenings = read_screenings(path=SCREENINGS_FILE)
-    sd.screenings = [s for s in all_screenings if s.date >= sd.today]
+    sd.screenings = []
+    for screening in all_screenings:
+        if screening.date < sd.today:
+            continue
+        if screening.tmdb_id is None:
+            # Negative identifiers exist only inside the build, never in TMDB or storage.
+            title = screening.title.strip()
+            if not title:
+                raise ValueError("Screening has neither a title nor TMDB metadata")
+            identifier = -int.from_bytes(hashlib.sha256(title.casefold().encode()).digest()[:8], "big")
+            sd.movies[identifier] = Movie.from_dict({"tmdb_id": identifier, "title_sv": title})
+            screening = replace(screening, tmdb_id=identifier)
+        sd.screenings.append(screening)
     print(f"  {len(sd.screenings)} screenings ({len(all_screenings) - len(sd.screenings)} past, skipped)")
 
     # Days are computed per-page from screening dates; keep a global

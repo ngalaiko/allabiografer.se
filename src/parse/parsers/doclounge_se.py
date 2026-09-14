@@ -36,11 +36,10 @@ def parse() -> Iterator[Screening | Venue]:
     soup = BeautifulSoup(resp.text, "html.parser")
     script = soup.find("script", id="__NEXT_DATA__")
     if not script or not script.string:
-        log.warning("doclounge.se: no __NEXT_DATA__ found")
-        return
+        raise ValueError("doclounge.se: no __NEXT_DATA__ found")
 
     data = json.loads(script.string)
-    events = data.get("props", {}).get("pageProps", {}).get("events", {}).get("nodes", [])
+    events = data["props"]["pageProps"]["events"]["nodes"]
     log.info("doclounge.se: %d events found", len(events))
 
     yielded_venues: set[tuple[str, str]] = set()
@@ -92,8 +91,6 @@ def parse() -> Iterator[Screening | Venue]:
             continue
 
         tmdb_id = _tmdb(title)
-        if tmdb_id is None:
-            continue
 
         # Yield venue if not seen
         venue_key = (city, cinema_name)
@@ -104,6 +101,7 @@ def parse() -> Iterator[Screening | Venue]:
 
         yield Screening(
             tmdb_id=tmdb_id,
+            title=title,
             date=d,
             time=t,
             ticket_url=ticket_url,

@@ -9,7 +9,7 @@ from typing import Self
 class Screening:
     """One showtime of one film at one cinema."""
 
-    tmdb_id: int
+    tmdb_id: int | None
     date: date
     time: time
     ticket_url: str
@@ -17,14 +17,16 @@ class Screening:
     city: str
 
     # optional
+    title: str = ""
+    source: str = ""
     screen: str = ""
     format: str = ""
     language: str = ""
     subtitles: str = ""
 
-    def to_dict(self) -> dict[str, str | int]:
+    def to_dict(self) -> dict[str, str | int | None]:
         """Serialise for JSON storage."""
-        d: dict[str, str | int] = {
+        d: dict[str, str | int | None] = {
             "tmdb_id": self.tmdb_id,
             "date": self.date.isoformat(),
             "time": self.time.strftime("%H:%M"),
@@ -32,7 +34,7 @@ class Screening:
             "city": self.city,
             "ticket_url": self.ticket_url,
         }
-        for key in ("screen", "format", "language", "subtitles"):
+        for key in ("title", "source", "screen", "format", "language", "subtitles"):
             val = getattr(self, key)
             if val:
                 d[key] = val
@@ -43,7 +45,9 @@ class Screening:
         """Deserialise from JSON storage."""
         h, m = d["time"].split(":")
         return cls(
-            tmdb_id=d["tmdb_id"],
+            tmdb_id=d.get("tmdb_id"),
+            title=d.get("title", ""),
+            source=d.get("source", ""),
             date=date.fromisoformat(d["date"]),
             time=time(int(h), int(m)),
             ticket_url=d["ticket_url"],

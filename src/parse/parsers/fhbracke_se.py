@@ -76,14 +76,13 @@ def parse() -> Iterator[Screening | Venue]:
         seen.add(key)
 
         tmdb_id = _tmdb(title)
-        if tmdb_id is None:
-            continue
 
         if not href.startswith("http"):
             href = "https://fhbracke.se" + href
 
         yield Screening(
             tmdb_id=tmdb_id,
+            title=title,
             date=date(infer_year(month), month, day),
             time=time(hour, minute),
             ticket_url=href,

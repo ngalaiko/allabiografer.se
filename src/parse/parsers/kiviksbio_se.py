@@ -45,8 +45,6 @@ def parse() -> Iterator[Screening | Venue]:
             continue
 
         film_title = title_el.get_text(strip=True)
-        # Strip common prefixes like "Påsklovsfilm!" or "Favorit i repris!"
-        film_title = re.sub(r"^[^!]+!\s*", "", film_title).strip()
         ticket_url = title_el.get("href", "")
 
         # Parse "onsdag 1 apr kl 15:00 - 16:45"
@@ -64,11 +62,10 @@ def parse() -> Iterator[Screening | Venue]:
         t = time(int(m.group(3)), int(m.group(4)))
 
         tmdb_id = _tmdb(film_title)
-        if tmdb_id is None:
-            continue
 
         yield Screening(
             tmdb_id=tmdb_id,
+            title=film_title,
             date=d,
             time=t,
             ticket_url=ticket_url,

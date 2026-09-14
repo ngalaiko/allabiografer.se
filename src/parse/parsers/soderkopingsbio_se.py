@@ -52,11 +52,10 @@ def parse() -> Iterator[Screening | Venue]:
             if not title or not dt_str or not href:
                 continue
             tmdb_id = _tmdb(title)
-            if tmdb_id is None:
-                continue
             dt = datetime.fromisoformat(dt_str).astimezone(_TZ)
             yield Screening(
                 tmdb_id=tmdb_id,
+                title=title,
                 date=dt.date(),
                 time=dt.time().replace(tzinfo=None),
                 ticket_url=href,

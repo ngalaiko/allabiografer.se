@@ -44,7 +44,7 @@ def main() -> None:
         else:
             screenings.append(item)
 
-    n = store.write_screenings(screenings, path=args.output)
+    n = store.write_screenings(screenings, path=args.output, source=args.parser, venues=venues)
     nv = store.write_venues(venues)
     cities = len({s.city for s in screenings})
     cinemas = len({(s.city, s.cinema_name) for s in screenings})

@@ -83,9 +83,9 @@ def _parse_site(session: requests.Session, site: dict) -> Iterator[Screening]:
         try:
             resp = session.get(url, timeout=15)
             resp.raise_for_status()
-        except Exception as exc:
-            log.warning("  error fetching %s: %s", url, exc)
-            continue
+        except requests.RequestException:
+            log.exception("error fetching %s", url)
+            raise
 
         psoup = BeautifulSoup(resp.text, "html.parser")
 
@@ -95,8 +95,6 @@ def _parse_site(session: requests.Session, site: dict) -> Iterator[Screening]:
         if not film_title:
             continue
         tmdb_id = _tmdb(film_title)
-        if tmdb_id is None:
-            continue
 
         for ev in psoup.select(".wp_theatre_event"):
             dt_el = ev.select_one(".wp_theatre_event_datetime")
@@ -116,6 +114,7 @@ def _parse_site(session: requests.Session, site: dict) -> Iterator[Screening]:
 
             yield Screening(
                 tmdb_id=tmdb_id,
+                title=film_title,
                 date=d,
                 time=t,
                 ticket_url=ticket_url,

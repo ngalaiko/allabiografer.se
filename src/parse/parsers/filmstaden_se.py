@@ -23,7 +23,7 @@ def _get(session: cffi_requests.Session, url: str, **kw: Any) -> Any:
 
 def parse() -> Iterator[Screening]:
     session = cffi_requests.Session()
-    cinemas = _get(session, f"{_API}/cinema/sv/1/1024").get("items", [])
+    cinemas = _get(session, f"{_API}/cinema/sv/1/1024")["items"]
     log.info("filmstaden: %d cinemas", len(cinemas))
 
     for cinema in cinemas:
@@ -38,7 +38,7 @@ def parse() -> Iterator[Screening]:
         page, shows = 1, []
         while True:
             data = _get(session, f"{_API}/show/sv/{page}/1024", params={"CinemaNcgId": ncg_id})
-            items = data.get("items", [])
+            items = data["items"]
             shows.extend(items)
             if len(shows) >= data.get("totalNbrOfItems", 0) or len(items) < 1024:
                 break
@@ -51,13 +51,12 @@ def parse() -> Iterator[Screening]:
             film_title = movie.get("title", "")
             if not raw or not film_title:
                 continue
-            tmdb_id = _tmdb(film_title)
-            if tmdb_id is None:
-                continue
+            tmdb_id = _tmdb(film_title, runtime=movie.get("length"))
             dt = datetime.fromisoformat(raw)
             attrs = show.get("attributes", [])
             yield Screening(
                 tmdb_id=tmdb_id,
+                title=film_title,
                 date=dt.date(),
                 time=dt.time(),
                 cinema_name=title,

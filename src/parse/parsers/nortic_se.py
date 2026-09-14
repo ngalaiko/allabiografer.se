@@ -20,7 +20,7 @@ def parse() -> Iterator[Screening | Venue]:
 
     resp = session.get(_API, timeout=30)
     resp.raise_for_status()
-    bio_events = [e for e in resp.json().get("events", []) if e.get("category") == "Bio"]
+    bio_events = [e for e in resp.json()["events"] if e.get("category") == "Bio"]
     log.info("nortic.se: %d bio events", len(bio_events))
 
     seen_venues: set[tuple[str, str]] = set()
@@ -30,8 +30,6 @@ def parse() -> Iterator[Screening | Venue]:
         if not film_title:
             continue
         tmdb_id = _tmdb(film_title)
-        if tmdb_id is None:
-            continue
 
         count = 0
         for show in event.get("shows") or []:
@@ -62,6 +60,7 @@ def parse() -> Iterator[Screening | Venue]:
 
             yield Screening(
                 tmdb_id=tmdb_id,
+                title=film_title,
                 date=dt_date,
                 time=dt_time,
                 cinema_name=cinema_name,

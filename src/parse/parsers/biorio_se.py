@@ -91,8 +91,6 @@ def parse() -> Iterator[Screening | Venue]:
                 continue
 
             tmdb_id = _tmdb(title)
-            if tmdb_id is None:
-                continue
 
             m = re.match(r"(\d{1,2}):(\d{2})", time_str)
             if not m:
@@ -100,6 +98,7 @@ def parse() -> Iterator[Screening | Venue]:
 
             yield Screening(
                 tmdb_id=tmdb_id,
+                title=title,
                 date=d,
                 time=time(int(m.group(1)), int(m.group(2))),
                 ticket_url=href,

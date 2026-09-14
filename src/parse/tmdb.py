@@ -18,6 +18,7 @@ import json
 import logging
 import re
 import time
+import unicodedata
 from pathlib import Path
 from urllib.parse import urljoin
 
@@ -50,25 +51,33 @@ def _get(session: requests.Session, url: str, **params: str) -> dict:
     return resp.json()
 
 
+# Source titles that otherwise resolve to unrelated films or older adaptations.
+_TITLE_HINTS = {
+    "Flaggan": ("Flaggan", 2026),
+    "Främlingen": ("Främlingen", 2025),
+    "Sense and Sensibility": ("Sense and Sensibility", 2026),
+    "My Favorite Things": ("My Favorite Things: The Rodgers & Hammerstein 80th Anniversary Concert", 2024),
+}
+
+
 def _clean_title(title: str) -> str:
-    """Strip noise from cinema titles to improve TMDB search."""
-    # Remove parenthesised suffixes like "(Sv. tal)", "(Sv. txt)"
-    title = re.sub(r"\s*\([^)]*\)\s*$", "", title)
-    # "Title - English Title" → try the first part
-    # But keep titles that are just one part
-    if " - " in title:
-        parts = title.split(" - ", 1)
-        # If the left part is very short it's probably a prefix, use right
-        title = parts[0] if len(parts[0]) > 3 else parts[1]
-    # Strip leading "director's " patterns like "Lee Cronin's "
-    title = re.sub(r"^[\w']+'s\s+", "", title)
-    # Remove "förfilm ..." (short film listed alongside)
+    """Remove presentation labels without discarding subtitles or sequel names."""
+    title = re.sub(
+        r"^(?:(?:extravisning(?:\s*\(\d+\))?|premiär|höstlovsfilm|påsklovsfilm|favorit i repris)"
+        r"[!:]?\s+)+",
+        "",
+        title,
+        flags=re.IGNORECASE,
+    )
+    title = re.sub(r"\s*\((?:sv\.?|eng)\s*(?:tal|txt|text)\)\s*$", "", title, flags=re.IGNORECASE)
     title = re.sub(r"\s+förfilm\s+.*$", "", title, flags=re.IGNORECASE)
-    # Remove version tags like ", version: Meänkieli"
     title = re.sub(r",\s*version:.*$", "", title, flags=re.IGNORECASE)
-    # Remove "eng tal" / "sv tal" suffixes
     title = re.sub(r"\s+(eng|sv\.?)\s+(tal|txt)\.?\s*$", "", title, flags=re.IGNORECASE)
     return title.strip()
+
+
+def _title_key(title: str) -> str:
+    return " ".join(re.findall(r"\w+", unicodedata.normalize("NFKC", title).casefold()))
 
 
 def _download_poster(session: requests.Session, poster_path: str, dest: Path) -> bool:
@@ -101,6 +110,7 @@ def lookup(
     movies_dir: Path = MOVIES_DIR,
     session: requests.Session | None = None,
     year: int | None = None,
+    runtime: int | None = None,
 ) -> int | None:
     """Search TMDB for *title*, save metadata + poster. Returns TMDB ID or None.
 
@@ -113,16 +123,18 @@ def lookup(
         session = requests.Session()
 
     clean = _clean_title(title)
+    if year is None and clean in _TITLE_HINTS:
+        clean, year = _TITLE_HINTS[clean]
 
     # ------ index: title → tmdb_id (avoids re-searching) ------
     # Use file locking so concurrent parsers don't corrupt _index.json.
-    index_path = movies_dir / "_index.json"
-    lock_path = movies_dir / "_index.lock"
+    index_path = movies_dir / "_index_v2.json"
+    lock_path = movies_dir / "_index_v2.lock"
 
     with open(lock_path, "w") as lock_fh:
         fcntl.flock(lock_fh, fcntl.LOCK_EX)
         try:
-            result = _lookup_locked(clean, title, session, year, movies_dir, index_path)
+            result = _lookup_locked(clean, title, session, year, runtime, movies_dir, index_path)
         finally:
             fcntl.flock(lock_fh, fcntl.LOCK_UN)
 
@@ -137,6 +149,7 @@ def _lookup_locked(
     title: str,
     session: requests.Session,
     year: int | None,
+    runtime: int | None,
     movies_dir: Path,
     index_path: Path,
 ) -> int | None:
@@ -144,8 +157,10 @@ def _lookup_locked(
     index: dict[str, int | None] = {}
     if index_path.exists():
         index = json.loads(index_path.read_text("utf-8"))
-    if clean in index:
-        return index[clean]
+    cache_key = f"{_title_key(clean)}|{year or ''}|{runtime or ''}"
+    cached = index.get(cache_key)
+    if cached is not None and (movies_dir / f"{cached}.json").exists():
+        return cached
 
     # ------ search TMDB ------
     try:
@@ -160,19 +175,46 @@ def _lookup_locked(
     results = data.get("results", [])
     if not results:
         log.debug("no TMDB results for %r (cleaned from %r)", clean, title)
-        index[clean] = None
-        index_path.write_text(json.dumps(index, ensure_ascii=False, indent=2), "utf-8")
         return None
 
-    movie = results[0]
+    candidates = {
+        result["id"]: result
+        for result in results
+        if _title_key(clean) in {_title_key(result.get("title", "")), _title_key(result.get("original_title", ""))}
+        and (year is None or result.get("release_date", "").startswith(str(year)))
+    }
+    if runtime and candidates:
+        compatible = {}
+        for candidate_id, candidate in candidates.items():
+            cached_path = movies_dir / f"{candidate_id}.json"
+            try:
+                details = (
+                    json.loads(cached_path.read_text("utf-8"))
+                    if cached_path.exists()
+                    else _get(
+                        session,
+                        f"{_API}/movie/{candidate_id}",
+                        language="sv-SE",
+                    )
+                )
+            except requests.RequestException:
+                return None
+            if not details.get("runtime") and cached_path.exists():
+                try:
+                    details = _get(session, f"{_API}/movie/{candidate_id}", language="sv-SE")
+                except requests.RequestException:
+                    return None
+            length = details.get("runtime")
+            if (length and abs(length - runtime) <= 5) or (not length and len(candidates) == 1):
+                compatible[candidate_id] = candidate
+        candidates = compatible
+    if len(candidates) != 1:
+        log.info("ambiguous or inexact TMDB match for %r; keeping source title", title)
+        return None
+    movie = next(iter(candidates.values()))
     tmdb_id: int = movie["id"]
 
-    # ------ already fetched? ------
     meta_path = movies_dir / f"{tmdb_id}.json"
-    if meta_path.exists():
-        index[clean] = tmdb_id
-        index_path.write_text(json.dumps(index, ensure_ascii=False, indent=2), "utf-8")
-        return tmdb_id
 
     # ------ fetch full details ------
     try:
@@ -219,11 +261,11 @@ def _lookup_locked(
     meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), "utf-8")
 
     # ------ poster ------
-    if meta["poster_path"]:
+    if meta["poster_path"] and not any(movies_dir.glob(f"{tmdb_id}.w500.*")):
         _download_poster(session, meta["poster_path"], movies_dir / str(tmdb_id))
 
     # ------ update index ------
-    index[clean] = tmdb_id
+    index[cache_key] = tmdb_id
     index_path.write_text(json.dumps(index, ensure_ascii=False, indent=2), "utf-8")
 
     log.info("TMDB %d: %s", tmdb_id, meta["title_sv"] or meta["title_original"])

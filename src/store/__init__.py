@@ -14,7 +14,9 @@ Layout::
 import csv
 import fcntl
 import json
+import os
 import re
+import tempfile
 from datetime import date, time
 from pathlib import Path
 
@@ -29,7 +31,20 @@ SCREENINGS_FILE = DATA_DIR / "screenings.csv"
 MOVIES_DIR = DATA_DIR / "movies"
 VENUES_DIR = DATA_DIR / "venues"
 
-_CSV_FIELDS = ["city", "cinema", "date", "time", "screen", "tmdb_id", "ticket_url", "format", "language", "subtitles"]
+_CSV_FIELDS = [
+    "city",
+    "cinema",
+    "date",
+    "time",
+    "screen",
+    "tmdb_id",
+    "ticket_url",
+    "format",
+    "language",
+    "subtitles",
+    "title",
+    "source",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -64,56 +79,70 @@ def _slugify(text: str) -> str:
 
 def _screening_key(row: dict[str, str]) -> tuple[str, ...]:
     """Return a deduplication key for a screening CSV row."""
-    return (row["city"], row["cinema"], row["date"], row["time"], row["tmdb_id"], row["ticket_url"])
+    return (
+        row["city"],
+        row["cinema"],
+        row["date"],
+        row["time"],
+        row.get("screen", ""),
+        row["tmdb_id"],
+        row.get("title", ""),
+        row["ticket_url"],
+        row.get("source", ""),
+    )
 
 
-def write_screenings(screenings: list[Screening], *, path: Path = SCREENINGS_FILE) -> int:
-    """Merge screenings into the CSV file, deduplicating.  Returns count of new rows added.
+def write_screenings(
+    screenings: list[Screening],
+    *,
+    path: Path = SCREENINGS_FILE,
+    source: str = "",
+    venues: list[Venue] = (),
+) -> int:
+    """Atomically replace a source snapshot after a complete parse.
 
-    Uses file locking so multiple parsers can safely write in parallel.
+    Unowned legacy rows migrate only for venues covered by this snapshot.
+    Other sources remain intact. Calls without a source merge records.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
-    lock_path = path.with_suffix(".lock")
-
-    with open(lock_path, "w") as lock_fh:
+    covered = {(_normalize_city(v.city), v.name) for v in venues}
+    covered.update((_normalize_city(s.city), s.cinema_name) for s in screenings)
+    with open(path.with_suffix(".lock"), "w") as lock_fh:
         fcntl.flock(lock_fh, fcntl.LOCK_EX)
-
-        seen_keys: set[tuple[str, ...]] = set()
-        existing_rows: list[dict[str, str]] = []
-        if path.exists() and path.stat().st_size > 0:
+        rows = []
+        if path.exists():
             with open(path, newline="", encoding="utf-8") as fh:
                 for row in csv.DictReader(fh):
-                    key = _screening_key(row)
-                    if key not in seen_keys:
-                        existing_rows.append(row)
-                        seen_keys.add(key)
-
-        new_count = 0
-        for s in screenings:
-            row = {
-                "city": _normalize_city(s.city),
-                "cinema": s.cinema_name,
-                "date": s.date.isoformat(),
-                "time": s.time.strftime("%H:%M"),
-                "screen": s.screen,
-                "tmdb_id": str(s.tmdb_id),
-                "ticket_url": s.ticket_url,
-                "format": s.format,
-                "language": s.language,
-                "subtitles": s.subtitles,
-            }
+                    owned = row.get("source") == source
+                    legacy = not row.get("source") and (row["city"], row["cinema"]) in covered
+                    if source and (owned or legacy):
+                        continue
+                    rows.append(row)
+        seen = {_screening_key(row) for row in rows}
+        added = 0
+        for screening in screenings:
+            row = {key: str(value) if value is not None else "" for key, value in screening.to_dict().items()}
+            row["cinema"] = row.pop("cinema_name")
+            row["city"] = _normalize_city(screening.city)
+            row["source"] = source or screening.source
             key = _screening_key(row)
-            if key not in seen_keys:
-                existing_rows.append(row)
-                seen_keys.add(key)
-                new_count += 1
-
-        with open(path, "w", newline="", encoding="utf-8") as fh:
-            writer = csv.DictWriter(fh, fieldnames=_CSV_FIELDS)
-            writer.writeheader()
-            writer.writerows(existing_rows)
-
-    return new_count
+            if key not in seen:
+                rows.append(row)
+                seen.add(key)
+                added += 1
+        # Keep separate source ownership even when public listings overlap.
+        with tempfile.NamedTemporaryFile(mode="w", dir=path.parent, delete=False, newline="", encoding="utf-8") as fh:
+            temporary = Path(fh.name)
+            try:
+                writer = csv.DictWriter(fh, fieldnames=_CSV_FIELDS)
+                writer.writeheader()
+                writer.writerows(rows)
+                fh.flush()
+                os.fsync(fh.fileno())
+                os.replace(temporary, path)
+            finally:
+                temporary.unlink(missing_ok=True)
+    return added
 
 
 # ---------------------------------------------------------------------------
@@ -131,7 +160,9 @@ def read_screenings(*, path: Path = SCREENINGS_FILE) -> list[Screening]:
             h, m = row["time"].split(":")
             results.append(
                 Screening(
-                    tmdb_id=int(row["tmdb_id"]),
+                    tmdb_id=int(row["tmdb_id"]) if row["tmdb_id"] else None,
+                    title=row.get("title", ""),
+                    source=row.get("source", ""),
                     date=date.fromisoformat(row["date"]),
                     time=time(int(h), int(m)),
                     ticket_url=row["ticket_url"],

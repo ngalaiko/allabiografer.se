@@ -105,8 +105,6 @@ def _fetch_film_screenings(
             film_title = film_slug.strip("/").replace("-", " ").title()
 
         tmdb_id = _tmdb(film_title)
-        if tmdb_id is None:
-            return
 
         for slide in soup.select(".slick__slide"):
             d = _parse_date_text(slide.get_text(" ", strip=True))
@@ -130,6 +128,7 @@ def _fetch_film_screenings(
 
                 yield Screening(
                     tmdb_id=tmdb_id,
+                    title=film_title,
                     date=d,
                     time=t,
                     ticket_url=href,
@@ -161,7 +160,8 @@ def parse() -> Iterator[Screening | Venue]:
                 for s in _fetch_film_screenings(session, slug, cinema["city_param"], name, city):
                     yield s
                     count += 1
-            except Exception as exc:
-                log.warning("  error fetching %s: %s", slug, exc)
+            except Exception:
+                log.exception("error fetching %s", slug)
+                raise
 
         log.info("  %s: %d screenings", name, count)
