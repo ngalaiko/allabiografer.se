@@ -1,8 +1,8 @@
 {
   "tmdb_id": 1204680,
-  "title_sv": "Gråben vs ACME",
+  "title_sv": "Gråben vs Acme",
   "title_original": "Coyote vs. Acme",
-  "overview_sv": "Efter att Acme-produkterna svikt honom en gång för mycket i hans jakt på Hjulben, bestämmer sig Gråben för att anlita en advokat för att stämma Acme Corporation.",
+  "overview_sv": "Efter årtionden av att ha blivit sprängd i luften av Acmes explosiva produkter slår Gråben äntligen tillbaka och tar hjälp av en osäker advokat för att få den upprättelse som han alltid har förtjänat. Dessutom finns där Hjulben - och dynamit.",
   "genres": [
     "Komedi",
     "Äventyr",
@@ -10,8 +10,8 @@
   ],
   "release_date": "2026-08-20",
   "release_date_se": "2026-09-18",
-  "runtime": 103,
-  "poster_path": "/sVy0fEs7F1N1jipFug9JPZMnx6N.jpg",
-  "vote_average": 0.0,
-  "age_rating": ""
+  "runtime": 101,
+  "poster_path": "/dDk2J6B4LHObKlyF8Hpu2Xatguw.jpg",
+  "vote_average": 7.6,
+  "age_rating": "7"
 }
