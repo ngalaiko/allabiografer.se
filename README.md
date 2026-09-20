@@ -4,6 +4,8 @@ A static site aggregating cinema screenings across Sweden. Reimplementation of [
 
 ## Usage
 
+Screenings, movies, films and venues live in `data/allabiografer.db`; posters in `data/posters/` — `{tmdb_id}.jpg` for TMDB, `{source}/{title}.jpg` for posters taken from a cinema's own site.
+
 Parse screenings from all supported cinemas:
 
 ```

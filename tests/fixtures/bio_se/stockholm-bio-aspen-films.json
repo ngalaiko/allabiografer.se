@@ -1,0 +1,28 @@
+{
+ "movies": [
+  {
+   "movie": {
+    "id": 14004,
+    "title": "The Lost Boys",
+    "poster_url": "https://wp3-prod-bucket.s3.eu-central-1.amazonaws.com/app/uploads/2026/07/10170920/470-WP-poster-2.png",
+    "synopsis": "Två bröder flyttar till en småstad full av vampyrer.",
+    "genre": "Skräck",
+    "language": "Eng.",
+    "text": "Sv. ",
+    "rating": "Barntillåt",
+    "run_time": "97"
+   },
+   "sessions": [
+    {
+     "id": "d98b5fc4d54a9ef29a9a15d8562780b1",
+     "show_date_time": "2026-10-31T20:15",
+     "payment_link": "https://biljetter.bioaspen.se/#/book/57503",
+     "screen_name": "Aspen",
+     "format": "",
+     "language": "Eng.",
+     "text": "Sv. "
+    }
+   ]
+  }
+ ]
+}

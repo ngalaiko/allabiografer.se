@@ -18,6 +18,9 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/parse", "src/build", "src/store"]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 [tool.ruff]
 target-version = "py313"
 line-length = 120
@@ -65,5 +68,6 @@ parse = [
     "requests>=2.31",
 ]
 dev = [
+    "pytest>=8",
     "ruff>=0.15.8",
 ]

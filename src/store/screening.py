@@ -19,6 +19,7 @@ class Screening:
     # optional
     title: str = ""
     source: str = ""
+    film_key: str = ""
     screen: str = ""
     format: str = ""
     language: str = ""
@@ -34,7 +35,7 @@ class Screening:
             "city": self.city,
             "ticket_url": self.ticket_url,
         }
-        for key in ("title", "source", "screen", "format", "language", "subtitles"):
+        for key in ("title", "source", "film_key", "screen", "format", "language", "subtitles"):
             val = getattr(self, key)
             if val:
                 d[key] = val
@@ -48,6 +49,7 @@ class Screening:
             tmdb_id=d.get("tmdb_id"),
             title=d.get("title", ""),
             source=d.get("source", ""),
+            film_key=d.get("film_key", ""),
             date=date.fromisoformat(d["date"]),
             time=time(int(h), int(m)),
             ticket_url=d["ticket_url"],

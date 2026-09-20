@@ -3,11 +3,15 @@ uv = "latest"
 
 [tasks.lint]
 description = "Lint with ruff"
-run = "uv run ruff check src/"
+run = "uv run ruff check src/ tests/"
 
 [tasks.format]
 description = "Format with ruff"
-run = "uv run ruff format src/"
+run = "uv run ruff format src/ tests/"
+
+[tasks.test]
+description = "Run tests with pytest"
+run = "uv run --group dev --group parse --group build pytest"
 
 
 [tasks.parse]
@@ -15,46 +19,46 @@ description = "Parse all cinema websites"
 depends = ["parse:*"]
 
 [tasks."parse:filmstaden_se"]
-run = "uv run --group parse parse --output data/screenings.csv filmstaden_se"
+run = "uv run --group parse parse filmstaden_se"
 
 [tasks."parse:bio_se"]
-run = "uv run --group parse parse --output data/screenings.csv bio_se"
+run = "uv run --group parse parse bio_se"
 
 [tasks."parse:nfbio_se"]
-run = "uv run --group parse parse --output data/screenings.csv nfbio_se"
+run = "uv run --group parse parse nfbio_se"
 
 [tasks."parse:bioroy_se"]
-run = "uv run --group parse parse --output data/screenings.csv bioroy_se"
+run = "uv run --group parse parse bioroy_se"
 
 [tasks."parse:wp_theatre"]
-run = "uv run --group parse parse --output data/screenings.csv wp_theatre"
+run = "uv run --group parse parse wp_theatre"
 
 [tasks."parse:kiviksbio_se"]
-run = "uv run --group parse parse --output data/screenings.csv kiviksbio_se"
+run = "uv run --group parse parse kiviksbio_se"
 
 [tasks."parse:biorio_se"]
-run = "uv run --group parse parse --output data/screenings.csv biorio_se"
+run = "uv run --group parse parse biorio_se"
 
 [tasks."parse:soderkopingsbio_se"]
-run = "uv run --group parse parse --output data/screenings.csv soderkopingsbio_se"
+run = "uv run --group parse parse soderkopingsbio_se"
 
 [tasks."parse:hallundafolketshus_se"]
-run = "uv run --group parse parse --output data/screenings.csv hallundafolketshus_se"
+run = "uv run --group parse parse hallundafolketshus_se"
 
 [tasks."parse:fhbracke_se"]
-run = "uv run --group parse parse --output data/screenings.csv fhbracke_se"
+run = "uv run --group parse parse fhbracke_se"
 
 [tasks."parse:palladiumbio_se"]
-run = "uv run --group parse parse --output data/screenings.csv palladiumbio_se"
+run = "uv run --group parse parse palladiumbio_se"
 
 [tasks."parse:osbyborgen_se"]
-run = "uv run --group parse parse --output data/screenings.csv osbyborgen_se"
+run = "uv run --group parse parse osbyborgen_se"
 
 [tasks."parse:doclounge_se"]
-run = "uv run --group parse parse --output data/screenings.csv doclounge_se"
+run = "uv run --group parse parse doclounge_se"
 
 [tasks."parse:nortic_se"]
-run = "uv run --group parse parse --output data/screenings.csv nortic_se"
+run = "uv run --group parse parse nortic_se"
 
 [tasks.build]
 description = "Build the static site"

@@ -1,0 +1,151 @@
+{
+ "items": [
+  {
+   "remoteEntityId": "18198ee1-3600-49c5-b213-9dfc1f13529b",
+   "time": "2026-09-26T15:45:00+02:00",
+   "movie": {
+    "ncgId": "NCG371487",
+    "title": "Bortglömda ön",
+    "slug": "bortglomda-on",
+    "releaseDate": "2026-09-25T00:00:00",
+    "rating": {
+     "displayName": "7 år",
+     "alias": "7",
+     "age": 7,
+     "ageAccompanied": 0
+    },
+    "posterUrl": "https://catalog.cinema-api.com/cf/images/ncg-images/59510c056e2445acb50003de1379a263.jpg?w=1440&version=F488890EA42856B4EA0930C804BC11BD",
+    "length": 109,
+    "images": [
+     {
+      "id": "3411c75d091149189d0fb369b2525c22",
+      "imageType": "HeroPortrait",
+      "contentType": "image/jpeg",
+      "url": "https://catalog.cinema-api.com/cf/images/ncg-images/3411c75d091149189d0fb369b2525c22.jpg?w=750&version=BB98472AA32990259E185D39CBDAF728"
+     },
+     {
+      "id": "59510c056e2445acb50003de1379a263",
+      "imageType": "Poster",
+      "contentType": "image/jpeg",
+      "url": "https://catalog.cinema-api.com/cf/images/ncg-images/59510c056e2445acb50003de1379a263.jpg?w=1440&version=F488890EA42856B4EA0930C804BC11BD"
+     }
+    ],
+    "genres": [
+     {
+      "name": "Äventyr"
+     },
+     {
+      "name": "Komedi"
+     },
+     {
+      "name": "Animerat"
+     },
+     {
+      "name": "Familj"
+     }
+    ]
+   },
+   "movieVersion": {
+    "title": "Bortglömda ön (eng tal)",
+    "audioLanguageInfo": {
+     "displayName": "Engelska",
+     "alias": "en",
+     "name": "en",
+     "threeLetterISOLanguageName": "eng",
+     "description": ""
+    },
+    "subtitlesLanguageInfo": {
+     "displayName": "Svenska",
+     "alias": "sv",
+     "name": "sv-SE",
+     "threeLetterISOLanguageName": "sve",
+     "description": "Filmen är textad på svenska"
+    }
+   },
+   "screen": {
+    "title": "Salong 5"
+   },
+   "attributes": [
+    {
+     "alias": "Family",
+     "displayName": "Familj",
+     "description": "Filmer för hela familjen, för de allra yngsta biobesökarna och för lite större barn."
+    }
+   ]
+  },
+  {
+   "remoteEntityId": "e16c3ad9-09db-42ff-a417-298c7279df24",
+   "time": "2026-09-26T16:15:00+02:00",
+   "movie": {
+    "ncgId": "NCG371487",
+    "title": "Bortglömda ön",
+    "slug": "bortglomda-on",
+    "releaseDate": "2026-09-25T00:00:00",
+    "rating": {
+     "displayName": "7 år",
+     "alias": "7",
+     "age": 7,
+     "ageAccompanied": 0
+    },
+    "posterUrl": "https://catalog.cinema-api.com/cf/images/ncg-images/59510c056e2445acb50003de1379a263.jpg?w=1440&version=F488890EA42856B4EA0930C804BC11BD",
+    "length": 109,
+    "images": [
+     {
+      "id": "3411c75d091149189d0fb369b2525c22",
+      "imageType": "HeroPortrait",
+      "contentType": "image/jpeg",
+      "url": "https://catalog.cinema-api.com/cf/images/ncg-images/3411c75d091149189d0fb369b2525c22.jpg?w=750&version=BB98472AA32990259E185D39CBDAF728"
+     },
+     {
+      "id": "59510c056e2445acb50003de1379a263",
+      "imageType": "Poster",
+      "contentType": "image/jpeg",
+      "url": "https://catalog.cinema-api.com/cf/images/ncg-images/59510c056e2445acb50003de1379a263.jpg?w=1440&version=F488890EA42856B4EA0930C804BC11BD"
+     }
+    ],
+    "genres": [
+     {
+      "name": "Äventyr"
+     },
+     {
+      "name": "Komedi"
+     },
+     {
+      "name": "Animerat"
+     },
+     {
+      "name": "Familj"
+     }
+    ]
+   },
+   "movieVersion": {
+    "title": "Bortglömda ön (sv tal)",
+    "audioLanguageInfo": {
+     "displayName": "Svenska",
+     "alias": "sv",
+     "name": "sv-SE",
+     "threeLetterISOLanguageName": "sve",
+     "description": ""
+    },
+    "subtitlesLanguageInfo": {
+     "displayName": "Svenska",
+     "alias": "sv",
+     "name": "sv-SE",
+     "threeLetterISOLanguageName": "sve",
+     "description": "Filmen är textad på svenska"
+    }
+   },
+   "screen": {
+    "title": "Salong 3"
+   },
+   "attributes": [
+    {
+     "alias": "Family",
+     "displayName": "Familj",
+     "description": "Filmer för hela familjen, för de allra yngsta biobesökarna och för lite större barn."
+    }
+   ]
+  }
+ ],
+ "totalNbrOfItems": 2
+}

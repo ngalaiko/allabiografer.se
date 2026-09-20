@@ -50,7 +50,7 @@ body { font: var(--cap-height-11) / 19px 'Fira Sans'; }
 h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .program { --day-width: 200px; --sheet-width: calc(445px + var(--day-count) * var(--day-width)); padding: 20px; cursor: default; width: max-content; position: relative; }
 .program::before { content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 20px; z-index: 50; background: #fff; }
-.program::after { content: ""; position: fixed; top: 0; left: 0; width: 20px; height: 100vh; z-index: 30; background: #fff; }
+.program::after { content: ""; position: fixed; top: 0; left: 0; width: 20px; height: 100vh; z-index: 55; background: #fff; }
 .schedule-header { position: sticky; top: 20px; z-index: 50; width: var(--sheet-width); display: grid; grid-template-columns: 445px 1fr; background: var(--schedule-surface); }
 .schedule-breadcrumbs { position: sticky; left: 20px; z-index: 60; width: 445px; height: var(--schedule-nav-height); padding: 4px 5px; line-height: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--schedule-surface); border: 1px solid var(--border-color); }
 .schedule-dates { display: grid; grid-template-columns: repeat(var(--day-count), var(--day-width)); }
@@ -61,7 +61,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .film-meta, .film-description { font-size: 14px; line-height: 20px; }
 .film-overview, .schedule-cinema, .schedule-times { display: contents; }
 .film-poster { grid-column: 1; grid-row: 1 / span var(--film-rows); padding: 5px; background: #fff; border-left: 1px solid var(--border-color); }
-.film-poster img { position: sticky; top: 55px; width: 125px; height: 177px; object-fit: cover; border-radius: 2px; background: #ddd; }
+.film-poster img, .film-poster .poster-placeholder { position: sticky; top: 55px; width: 125px; height: 177px; object-fit: cover; border-radius: 2px; background: #D5D5D5; }
 .film-description { grid-column: 2 / 4; grid-row: 2; position: sticky; left: 20px; padding: 0 var(--schedule-inset) 10px; background: var(--schedule-surface); border-left: 1px solid var(--border-color); }
 .cinema-name { grid-column: 2; grid-row: var(--cinema-row); min-height: var(--cinema-height); position: sticky; left: 20px; z-index: 20; padding: 10px var(--schedule-inset); background: #fff; font-size: 15px; line-height: 24px; border: 1px solid var(--border-color); border-bottom: 0; }
 .cinema-location, .cinema-location a { color: #666; font-size: 14px; line-height: 20px; }
@@ -86,7 +86,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
   .film-overview { position: sticky; left: 0; width: 100vw; display: flex; align-items: flex-start; gap: var(--schedule-inset); padding: 10px var(--schedule-inset); border-bottom: 1px solid var(--border-color); }
   .film-poster { flex: 0 0 52px; padding: 0; border: 0; }
   .film-poster:empty { display: none; }
-  .film-poster img { position: static; width: 52px; height: 74px; }
+  .film-poster img, .film-poster .poster-placeholder { position: static; width: 52px; height: 74px; }
   .film-description { flex: 1; min-width: 0; position: static; padding: 0; border: 0; background: #fff; }
   .schedule-cinema { display: block; border-bottom: 1px solid var(--border-color); }
   .cinema-name { top: calc(var(--header-height) + var(--film-height)); left: 0; width: 100vw; min-height: 0; border: 0; border-bottom: 1px solid var(--border-color); }

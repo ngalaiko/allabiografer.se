@@ -29,19 +29,22 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 from store import (
-    MOVIES_DIR,
-    SCREENINGS_FILE,
-    VENUES_DIR,
+    DB_FILE,
+    Film,
     Movie,
     Screening,
     Venue,
-    movie_poster_path,
-    read_movie,
+    poster_key_for_film,
+    poster_keys,
+    poster_path,
+    read_all_films,
+    read_movies,
     read_screenings,
     read_venues,
+    title_key,
 )
 
 # ---------------------------------------------------------------------------
@@ -205,7 +208,8 @@ class SiteData:
     out_dir: Path = field(default_factory=lambda: Path("build"))
     screenings: list[Screening] = field(default_factory=list)
     movies: dict[int, Movie] = field(default_factory=dict)
-    poster_files: dict[int, Path] = field(default_factory=dict)
+    poster_keys: dict[int, str] = field(default_factory=dict)  # movie id → poster key
+    broken_posters: set[str] = field(default_factory=set)  # poster keys Pillow could not decode
     cities: dict[str, int] = field(default_factory=dict)
     today: date = field(default_factory=lambda: datetime.now(tz=SWEDEN_TZ).date())
     days: list[date] = field(default_factory=list)
@@ -216,24 +220,102 @@ class SiteData:
     sitemap_urls: list[str] = field(default_factory=list)
 
 
+# Chain APIs carry distributor texts; ticketing platforms carry venue prose.
+_FILM_SOURCE_PRIORITY = (
+    "filmstaden_se",
+    "bio_se",
+    "nfbio_se",
+    "biorio_se",
+    "bioroy_se",
+    "soderkopingsbio_se",
+    "osbyborgen_se",
+    "doclounge_se",
+    "wp_theatre",
+    "kiviksbio_se",
+    "palladiumbio_se",
+    "fhbracke_se",
+    "hallundafolketshus_se",
+    "nortic_se",
+)
+
+
+def _source_rank(source: str) -> int:
+    try:
+        return _FILM_SOURCE_PRIORITY.index(source)
+    except ValueError:
+        return len(_FILM_SOURCE_PRIORITY)
+
+
+def _first(films: list[Film], attr: str):
+    """First non-empty value of an attribute across films."""
+    for film in films:
+        value = getattr(film, attr)
+        if value:
+            return value
+    return None
+
+
+def _merge_films(movie: Movie, films: list[Film]) -> Movie:
+    """Fill empty movie fields from the cinema sites' own metadata."""
+    if not films:
+        return movie
+    return replace(
+        movie,
+        title_original=movie.title_original or _first(films, "title_original") or "",
+        overview_sv=movie.overview_sv or _first(films, "overview") or "",
+        runtime=movie.runtime or _first(films, "runtime"),
+        genres=movie.genres or list(_first(films, "genres") or []),
+        age_rating=movie.age_rating or _first(films, "age_rating") or "",
+        release_date=movie.release_date or _first(films, "release_date") or "",
+    )
+
+
 def _load_data(out_dir: Path) -> SiteData:
     sd = SiteData(out_dir=out_dir)
     sd.today = datetime.now(tz=SWEDEN_TZ).date()
 
     print("Reading screenings…")
-    all_screenings = read_screenings(path=SCREENINGS_FILE)
+    all_screenings = read_screenings(path=DB_FILE)
+    upcoming = [s for s in all_screenings if s.date >= sd.today]
+
+    # The same film is described by several chains; pool them by normalised
+    # title so a gap in one source is filled from another.
+    all_films = read_all_films(path=DB_FILE)
+    films_by_key = {f.key: f for f in all_films}
+    films_by_title: dict[str, list[Film]] = defaultdict(list)
+    for f in sorted(all_films, key=lambda f: f.source):
+        films_by_title[f.key.partition(":")[2]].append(f)
+
+    def _candidates(film: Film | None, title: str) -> list[Film]:
+        """Same-title films ranked by source priority, the screening's own source breaking ties."""
+        key = film.key.partition(":")[2] if film else (title_key(title) if title else "")
+        pool = [film] if film else []
+        pool.extend(f for f in films_by_title.get(key, []) if film is None or f.key != film.key)
+        own = film.source if film else ""
+        return sorted(pool, key=lambda f: (_source_rank(f.source), 0 if f.source == own else 1, f.source))
+
+    # Site metadata backing each movie; the first screening to claim a movie wins.
+    films_of: dict[int, list[Film]] = {}
     sd.screenings = []
-    for screening in all_screenings:
-        if screening.date < sd.today:
-            continue
+    for screening in upcoming:
+        film = films_by_key.get(screening.film_key) if screening.film_key else None
         if screening.tmdb_id is None:
             # Negative identifiers exist only inside the build, never in TMDB or storage.
             title = screening.title.strip()
             if not title:
                 raise ValueError("Screening has neither a title nor TMDB metadata")
             identifier = -int.from_bytes(hashlib.sha256(title.casefold().encode()).digest()[:8], "big")
-            sd.movies[identifier] = Movie.from_dict({"tmdb_id": identifier, "title_sv": title})
+            candidates = _candidates(film, title)
+            if identifier not in sd.movies:
+                base = Movie.from_dict(
+                    {"tmdb_id": identifier, "title_sv": candidates[0].title if candidates else title}
+                )
+                sd.movies[identifier] = _merge_films(base, candidates)
             screening = replace(screening, tmdb_id=identifier)
+        else:
+            candidates = _candidates(film, "")
+        if candidates:
+            films_of.setdefault(screening.tmdb_id, candidates)
         sd.screenings.append(screening)
     print(f"  {len(sd.screenings)} screenings ({len(all_screenings) - len(sd.screenings)} past, skipped)")
 
@@ -247,17 +329,28 @@ def _load_data(out_dir: Path) -> SiteData:
         sd.cities[s.city] = sd.cities.get(s.city, 0) + 1
 
     print("Reading movie metadata…")
-    for tid in tmdb_ids:
-        m = read_movie(tid, movies_dir=MOVIES_DIR)
-        if m:
-            sd.movies[tid] = m
-        p = movie_poster_path(tid, movies_dir=MOVIES_DIR)
-        if p:
-            sd.poster_files[tid] = p
-    print(f"  {len(sd.movies)} movies, {len(sd.poster_files)} posters")
+    # Synthetic ids are negative and absent from storage; they also exceed SQLite's integer range.
+    sd.movies.update(read_movies({i for i in tmdb_ids if i > 0}, path=DB_FILE))
+
+    stored = poster_keys(path=DB_FILE)
+    for movie_id in tmdb_ids:
+        candidates = films_of.get(movie_id, [])
+        if movie_id > 0 and str(movie_id) in stored:
+            sd.poster_keys[movie_id] = str(movie_id)
+        else:
+            for film in candidates:
+                film_poster = poster_key_for_film(film.key)
+                if film_poster in stored:
+                    sd.poster_keys[movie_id] = film_poster
+                    break
+        if movie_id > 0:
+            movie = sd.movies.get(movie_id)
+            if movie:
+                sd.movies[movie_id] = _merge_films(movie, candidates)
+    print(f"  {len(sd.movies)} movies, {len(sd.poster_keys)} posters")
 
     print("Reading venues…")
-    for v in read_venues(data_dir=VENUES_DIR):
+    for v in read_venues(path=DB_FILE):
         sd.venues[(v.city, v.name)] = v
     print(f"  {len(sd.venues)} venues")
 
@@ -288,7 +381,7 @@ POSTER_QUALITY = 80
 
 
 def _process_poster(src: Path, dest: Path) -> None:
-    """Resize and convert a poster to @2x WebP."""
+    """Resize and convert a poster file to @2x WebP."""
     with Image.open(src) as img:
         img = img.convert("RGB")
         # Crop to target aspect ratio (centre crop) then resize
@@ -308,15 +401,26 @@ def _process_poster(src: Path, dest: Path) -> None:
         img.save(dest, "WEBP", quality=POSTER_QUALITY)
 
 
-def _poster_url(sd: SiteData, tmdb_id: int) -> str | None:
-    src = sd.poster_files.get(tmdb_id)
-    if not src:
+def _poster_url(sd: SiteData, movie_id: int) -> str | None:
+    key = sd.poster_keys.get(movie_id)
+    if key is None or key in sd.broken_posters:
         return None
-    dest = sd.out_dir / "posters" / f"{tmdb_id}.webp"
+    # The site serves posters from one flat directory.
+    name = key.replace("/", "-")
+    dest = sd.out_dir / "posters" / f"{name}.webp"
     if not dest.exists():
+        src = poster_path(key, path=DB_FILE)
+        if src is None:
+            return None
         dest.parent.mkdir(parents=True, exist_ok=True)
-        _process_poster(src, dest)
-    return f"/posters/{tmdb_id}.webp"
+        try:
+            _process_poster(src, dest)
+        except (UnidentifiedImageError, OSError) as exc:
+            sd.broken_posters.add(key)
+            dest.unlink(missing_ok=True)
+            print(f"  poster {key}: {exc}")
+            return None
+    return f"/posters/{name}.webp"
 
 
 # ---------------------------------------------------------------------------

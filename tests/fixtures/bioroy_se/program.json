@@ -1,0 +1,163 @@
+{
+  "props": {
+    "pageProps": {
+      "programList": {
+        "features": [
+          {
+            "id": 9886,
+            "info": {
+              "title": "Biosalongen abonnerad",
+              "duration": 0,
+              "audioLanguage": "",
+              "textLanguage": "",
+              "synopsis": "",
+              "genres": [],
+              "ageLimit": "",
+              "image": null
+            },
+            "url": "https://www.bioroy.se/program/biosalongen-abonnerad",
+            "premiereDate": null
+          },
+          {
+            "id": 16746,
+            "info": {
+              "title": "Tony",
+              "duration": 106,
+              "audioLanguage": "ENG",
+              "textLanguage": "SV",
+              "synopsis": "<p><strong>Matt Johnsons hyllade spelfilm om en ung Anthony Bourdain.</strong></p>\n<p>En 19-årig Anthony Bourdain reser till Provincetown.</p>",
+              "genres": [
+                {
+                  "id": 1149,
+                  "name": "Drama",
+                  "alias": "drama"
+                },
+                {
+                  "id": 1144,
+                  "name": "Komedi",
+                  "alias": "komedi"
+                }
+              ],
+              "ageLimit": "Från 11 år",
+              "image": {
+                "imageUrl": "http://localhost:8080/media/4ahljaau/tony-still.jpg",
+                "crops": [
+                  {
+                    "alias": "card",
+                    "url": "http://localhost:8080/media/4ahljaau/tony-still.jpg?format=jpg&quality=100&ranchor=center&width=960&height=540&rmode=crop",
+                    "width": 960,
+                    "height": 540
+                  },
+                  {
+                    "alias": "poster",
+                    "url": "http://localhost:8080/media/4ahljaau/tony-still.jpg?format=jpg&quality=100&ranchor=center&width=300&height=450&rmode=crop",
+                    "width": 300,
+                    "height": 450
+                  }
+                ]
+              }
+            },
+            "url": "https://www.bioroy.se/program/tony",
+            "premiereDate": "2026-09-18T00:00:00.000Z"
+          },
+          {
+            "id": 18990,
+            "info": {
+              "title": "Nosferatu",
+              "duration": 95,
+              "audioLanguage": "STUM",
+              "textLanguage": "SV",
+              "synopsis": "<p>Stumfilmsklassiker med liveackompanjemang.</p>",
+              "genres": [
+                {
+                  "id": 1159,
+                  "name": "Skräck",
+                  "alias": "skrack"
+                }
+              ],
+              "ageLimit": "Från 15 år",
+              "image": null
+            },
+            "url": "https://www.bioroy.se/program/nosferatu",
+            "premiereDate": null
+          }
+        ],
+        "schedule": [
+          {
+            "featureId": 9886,
+            "dates": [
+              {
+                "startDate": "2026-09-29T18:00:00.000",
+                "ticksterLink": "https://www.bioroy.se/program/biosalongen-abonnerad",
+                "saloonLabel": "",
+                "soldOut": false
+              },
+              {
+                "startDate": "2026-11-03T17:30:00.000",
+                "ticksterLink": "https://www.bioroy.se/program/biosalongen-abonnerad",
+                "saloonLabel": "",
+                "soldOut": false
+              },
+              {
+                "startDate": "2026-11-09T18:00:00.000",
+                "ticksterLink": "https://www.bioroy.se/program/biosalongen-abonnerad",
+                "saloonLabel": "",
+                "soldOut": false
+              }
+            ]
+          },
+          {
+            "featureId": 16746,
+            "dates": [
+              {
+                "startDate": "2026-09-20T10:30:00.000",
+                "ticksterLink": "https://secure.tickster.com/bn89nz9nh854fdt",
+                "saloonLabel": "",
+                "soldOut": true
+              }
+            ]
+          },
+          {
+            "featureId": 16746,
+            "dates": [
+              {
+                "startDate": "2026-09-22T18:00:00.000",
+                "ticksterLink": "https://secure.tickster.com/dxhamllat43cm82",
+                "saloonLabel": "",
+                "soldOut": false
+              },
+              {
+                "startDate": "2026-09-24T20:30:00.000",
+                "ticksterLink": "https://secure.tickster.com/57xj0e2m9vfvr0g",
+                "saloonLabel": "",
+                "soldOut": false
+              }
+            ]
+          },
+          {
+            "featureId": 18990,
+            "dates": [
+              {
+                "startDate": "2026-10-31T13:00:00.000",
+                "ticksterLink": "https://secure.tickster.com/xh48rjbgl8uz6rd",
+                "saloonLabel": "",
+                "soldOut": false
+              }
+            ]
+          },
+          {
+            "featureId": 16746,
+            "dates": [
+              {
+                "startDate": "2026-09-28T20:00:00.000",
+                "ticksterLink": "https://secure.tickster.com/gg6aun6mwc0cngm",
+                "saloonLabel": "",
+                "soldOut": false
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

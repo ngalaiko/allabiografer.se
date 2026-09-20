@@ -1,0 +1,61 @@
+{
+ "movies": [
+  {
+   "movie": {
+    "id": 42156,
+    "title": "Spider-Man: Brand New Day",
+    "poster_url": "https://wp3-prod-bucket.s3.eu-central-1.amazonaws.com/app/uploads/2026/04/15092118/spider-man-brandnewday_reflection_144",
+    "synopsis": "Efter rekordsuccén inleder Spider-Man: Brand New Day ett helt nytt kapitel.&lt;br&gt;&lt;br&gt;Distributör: SF Studios, &lt;a href=&quot;http://www.sfstudios.se&quot;&gt;www.sfstudios.se&lt;/a&gt;",
+    "genre": "Adventure,Action",
+    "language": "Engelska",
+    "text": "Svenska",
+    "rating": "11",
+    "run_time": "150"
+   },
+   "sessions": [
+    {
+     "id": "b704a56a92feaad50bed0bfe9656b8e0",
+     "show_date_time": "2026-09-22T18:30:00",
+     "payment_link": "https://www.eurostar.se/Boka/f284624",
+     "screen_name": "Screen 1",
+     "format": "",
+     "language": "Engelska",
+     "text": "Svenska"
+    },
+    {
+     "id": "c66922482555e70a3fb11d505a111330",
+     "show_date_time": "2026-10-09T19:15:00",
+     "payment_link": "https://www.eurostar.se/Boka/f285137",
+     "screen_name": "Screen 3",
+     "format": "",
+     "language": "Engelska",
+     "text": "Svenska"
+    }
+   ]
+  },
+  {
+   "movie": {
+    "id": 42265,
+    "title": "Minioner &amp; Monster SV.tal",
+    "poster_url": "",
+    "synopsis": "",
+    "genre": "",
+    "language": "Svenska",
+    "text": "",
+    "rating": "Ej angivet",
+    "run_time": "0"
+   },
+   "sessions": [
+    {
+     "id": "c4d937a9adcfa2d4334c14132c276624",
+     "show_date_time": "2026-10-04T17:00:00",
+     "payment_link": "https://www.eurostar.se/Boka/f285109",
+     "screen_name": "Screen 2",
+     "format": "",
+     "language": "Svenska",
+     "text": ""
+    }
+   ]
+  }
+ ]
+}

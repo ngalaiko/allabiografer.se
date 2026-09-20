@@ -3,17 +3,20 @@
 import logging
 import re
 from collections.abc import Iterator
+from dataclasses import replace
 from datetime import date, time
 
 import requests
 from bs4 import BeautifulSoup
 
 from parse._util import infer_year
+from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
-from store import Screening, Venue
+from store import Film, Screening, Venue
 
 log = logging.getLogger(__name__)
 
+_SOURCE = "palladiumbio_se"
 _URL = "https://palladiumbio.se/"
 _CINEMA = "Filmhuset Palladium"
 _CITY = "Arvika"
@@ -43,6 +46,7 @@ def _parse_title(raw: str) -> tuple[str, str, str]:
         "Köln 75  (Tal: Tyska) (Text: Svenska)"
         "Super Mario Galaxy Filmen  (Tal: Svenska (dubbat))"
         "BIODLAREN (Tal:Sv) (Tex:Sv)"
+        "Practical Magic: Family Legacy  (Tal: Eng)(Txt:Sv)"
     """
     language = ""
     subtitles = ""
@@ -52,8 +56,8 @@ def _parse_title(raw: str) -> tuple[str, str, str]:
     if m:
         language = m.group(1).strip()
 
-    # Extract subtitles — handles "Text: Sv", "Tex:Sv", "Text: Svenska"
-    m = re.search(r"\(Te(?:x|xt):\s*([^)]+)\)", raw)
+    # Extract subtitles — handles "Text: Sv", "Tex:Sv", "Txt:Sv", "Text: Svenska"
+    m = re.search(r"\(T(?:ext|ex|xt):\s*([^)]+)\)", raw)
     if m:
         subtitles = m.group(1).strip()
 
@@ -69,15 +73,17 @@ def _parse_screen(venue_text: str) -> str:
     return m.group(1) if m else ""
 
 
-def parse() -> Iterator[Screening | Venue]:
-    yield Venue(name=_CINEMA, city=_CITY, address=_ADDRESS)
+def _overview(page: str) -> str:
+    """Synopsis from a film page; the paragraphs precede the showings table."""
+    soup = BeautifulSoup(page, "html.parser")
+    return " ".join(" ".join(p.get_text(" ") for p in soup.select("main .lead > p")).split())
 
-    resp = requests.get(_URL, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
-    resp.raise_for_status()
-    soup = BeautifulSoup(resp.text, "html.parser")
+
+def _showtimes(html: str) -> Iterator[tuple[Film, date, time, str, str, str, str]]:
+    """Yield (film, date, time, ticket_url, screen, language, subtitles) per program row."""
+    soup = BeautifulSoup(html, "html.parser")
 
     current_date: date | None = None
-    count = 0
 
     for tr in soup.select("table.tableBioprogram tr"):
         # Date header row
@@ -121,12 +127,35 @@ def parse() -> Iterator[Screening | Venue]:
 
         screen = _parse_screen(venue_el.get_text(strip=True)) if venue_el else ""
 
-        tmdb_id = _tmdb(film_title)
+        # Every showing is its own event; its page carries the film's synopsis.
+        film = _films.make(_SOURCE, film_title, url=title_el.get("href", ""))
 
+        yield film, current_date, t, ticket_url, screen, language, subtitles
+
+
+def parse() -> Iterator[Screening | Venue | Film]:
+    yield Venue(name=_CINEMA, city=_CITY, address=_ADDRESS)
+
+    session = requests.Session()
+    session.headers.update({"User-Agent": "Mozilla/5.0"})
+    resp = session.get(_URL, timeout=15)
+    resp.raise_for_status()
+
+    count = 0
+    seen: set[str] = set()
+    for film, d, t, ticket_url, screen, language, subtitles in _showtimes(resp.text):
+        if film.key not in seen:
+            seen.add(film.key)
+            if film.url:
+                detail = session.get(film.url, timeout=15)
+                if detail.ok:
+                    film = replace(film, overview=_overview(detail.text))
+            yield film
         yield Screening(
-            tmdb_id=tmdb_id,
-            title=film_title,
-            date=current_date,
+            tmdb_id=_tmdb(film.title),
+            title=film.title,
+            film_key=film.key,
+            date=d,
             time=t,
             ticket_url=ticket_url,
             cinema_name=_CINEMA,

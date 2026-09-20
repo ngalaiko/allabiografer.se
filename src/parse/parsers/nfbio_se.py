@@ -1,167 +1,231 @@
-"""nfbio.se — Nordisk Film Bio (Uppsala + Malmö), Drupal AJAX endpoints."""
+"""nfbio.se — Nordisk Film Bio (Uppsala + Malmö), Drupal cinema listing pages."""
 
-import json
 import logging
 import re
 from collections.abc import Iterator
+from dataclasses import replace
 from datetime import date, time
 
 import requests
 from bs4 import BeautifulSoup
 
-from parse._util import infer_year
+from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
-from store import Screening, Venue
+from store import Film, Screening, Venue
 
 log = logging.getLogger(__name__)
 
+_SOURCE = "nfbio_se"
 _BASE = "https://www.nfbio.se"
 _CINEMAS = [
     {
         "city": "Uppsala",
         "name": "Nordisk Film Bio Uppsala",
         "url": "/biograf/uppsala?city=uppsala",
-        "city_param": "uppsala",
         "address": "Vaksalagatan 3",
     },
     {
         "city": "Malmö",
         "name": "Nordisk Film Bio Mobilia",
-        "url": "/nordisk-film-bio-mobilia?city=malmo",
-        "city_param": "malmo",
+        "url": "/biograf/malmo?city=malmo",
         "address": "Per Albin Hanssons väg 40",
     },
 ]
 
+# "(Eng. tal)", "(ES)" — spoken language.
+_LANGUAGE = re.compile(r"^\((.+?)(?:\s+tal)?\)$")
+# "(Sv.text)" — subtitles.
+_SUBTITLES = re.compile(r"^\((.+?)\.?text\)$")
+# "ES", "IT" — spoken language as a bare code.
+_LANGUAGE_CODE = re.compile(r"^[A-Z]{2}$")
+# "Speltid: 1 timme 46 min"
+_HOURS = re.compile(r"(\d+)\s*timm")
+_MINUTES = re.compile(r"(\d+)\s*min")
+# Censorship labels that carry no rating.
+_UNRATED = {"Åldergräns ej granskad", "Åldersgräns ej granskad"}
 
-def _parse_date_text(text: str) -> date | None:
-    m = re.match(r"\w+,?\s*(\d{1,2})/(\d{1,2})", text.strip())
-    if not m:
+
+def _parse_version(text: str) -> tuple[str, str, str]:
+    """Split "2D, (Eng. tal), (Sv.text), Biodagen" into format, language, subtitles."""
+    language = subtitles = ""
+    labels: list[str] = []
+    for raw in (p.strip() for p in text.split(",")):
+        part = raw
+        if not part:
+            continue
+        # A parenthesised value may itself contain the comma that split it.
+        if part.startswith("(") and not part.endswith(")"):
+            part += ")"
+        elif part.endswith(")") and not part.startswith("("):
+            part = "(" + part
+        if m := _SUBTITLES.match(part):
+            subtitles = m.group(1).rstrip(".") + "."
+        elif m := _LANGUAGE.match(part):
+            language = m.group(1)
+        elif _LANGUAGE_CODE.match(part):
+            language = part
+        elif part == "Otextad":
+            subtitles = part
+        else:
+            labels.append(part)
+    return ", ".join(labels), language, subtitles
+
+
+def _parse_duration(text: str) -> int | None:
+    """Runtime in minutes from "Speltid: 1 timme 46 min"."""
+    hours = _HOURS.search(text)
+    minutes = _MINUTES.search(text)
+    if not hours and not minutes:
         return None
-    month = int(m.group(2))
-    return date(infer_year(month), month, int(m.group(1)))
+    return int(hours.group(1) if hours else 0) * 60 + int(minutes.group(1) if minutes else 0)
 
 
-def _parse_time_text(text: str) -> time | None:
-    m = re.match(r"(\d{1,2})\.(\d{2})", text.strip())
+def _parse_time(text: str) -> time | None:
+    m = re.match(r"(\d{1,2})[.:](\d{2})", text.strip())
     return time(int(m.group(1)), int(m.group(2))) if m else None
 
 
-def _discover_film_slugs(session: requests.Session, page_url: str) -> list[str]:
-    """Get film URL slugs from a cinema listing page."""
-    resp = session.get(page_url, timeout=30)
-    resp.raise_for_status()
-    soup = BeautifulSoup(resp.text, "html.parser")
+def _absolute(href: str) -> str:
+    """Absolute nfbio.se URL from a possibly relative href.
 
-    slugs = []
-    seen = set()
-
-    # Both page types: find film links and strip query params to get slugs
-    for a in soup.select("a[href]"):
-        href = a.get("href", "")
-        slug = re.sub(r"\?.*", "", href)
-        if (
-            slug
-            and slug.startswith("/")
-            and slug != "/"
-            and "screening" not in slug
-            and "ajax" not in slug
-            and "biograf" not in slug
-            and slug not in seen
-        ):
-            # Verify it looks like a film slug (single path segment)
-            parts = slug.strip("/").split("/")
-            if len(parts) == 1 and len(parts[0]) > 2:
-                seen.add(slug)
-                slugs.append(slug)
-
-    return slugs
+    Image style derivatives need their ``itok`` query to be generated on demand.
+    """
+    if not href:
+        return ""
+    return href if href.startswith("http") else _BASE + href
 
 
-def _fetch_film_screenings(
-    session: requests.Session,
-    film_slug: str,
-    city_param: str,
-    cinema_name: str,
-    city: str,
-) -> Iterator[Screening]:
-    """Fetch screenings for one film via the AJAX endpoint."""
-    ajax_url = f"{_BASE}{film_slug}/ajax/full/ml-movie-details?city={city_param}"
-    resp = session.get(ajax_url, timeout=15, headers={"X-Requested-With": "XMLHttpRequest"})
-    resp.raise_for_status()
+def _listing_film(article, title: str) -> Film:
+    """Film metadata an article on a cinema listing page carries."""
+    duration_el = article.select_one(".duration")
+    censorship_el = article.select_one(".censorship")
+    age_rating = censorship_el.get_text(" ", strip=True).removeprefix("Åldersgräns:").strip() if censorship_el else ""
+    link_el = article.select_one(".movie-poster a[href]") or article.select_one(".node-title a[href]")
+    poster_el = article.select_one(".movie-poster img[src]")
+    return _films.make(
+        _SOURCE,
+        title,
+        runtime=_parse_duration(duration_el.get_text(" ", strip=True)) if duration_el else None,
+        age_rating="" if age_rating in _UNRATED else age_rating,
+        poster_url=_absolute(poster_el.get("src", "")) if poster_el else "",
+        # Film pages render their content only for the ?city= the listing links carry.
+        url=_absolute(link_el.get("href", "")) if link_el else "",
+    )
 
-    commands = json.loads(resp.text)
-    for cmd in commands:
-        if cmd.get("command") != "insert" or not cmd.get("data"):
-            continue
 
-        soup = BeautifulSoup(cmd["data"], "html.parser")
+def _enrich(film: Film, html: str) -> Film:
+    """Fill in what only the film's own page carries: synopsis, genres, dates."""
+    node = BeautifulSoup(html, "html.parser").select_one("article.node--type-movie")
+    if node is None:
+        return film
 
-        # Film title from the fragment
-        title_el = soup.select_one(".node-title, .field--name-title span")
+    body = node.select_one(".field--name-body")
+    premiere = node.select_one(".field--name-field-premiere-date time[datetime]")
+    original = node.select_one(".field--name-field-original-title .field__item")
+    poster = node.select_one(".field--name-field-image img[src]")
+    return replace(
+        film,
+        overview=body.get_text(" ", strip=True) if body else "",
+        genres=[i.get_text(strip=True) for i in node.select(".field--name-field-genre .field__item")],
+        release_date=(premiere.get("datetime", "") or "")[:10],
+        title_original=original.get_text(strip=True) if original else "",
+        # The film page renders the poster at 336px; the listing only at 230px.
+        poster_url=_absolute(poster.get("src", "")) if poster else film.poster_url,
+    )
+
+
+def _parse_listing(html: str, cinema_name: str, city: str) -> Iterator[Screening | Film]:
+    """Yield every showtime rendered on a cinema listing page, and its film."""
+    soup = BeautifulSoup(html, "html.parser")
+
+    for article in soup.select("article.node--type-movie"):
+        title_el = article.select_one(".node-title .field--name-title") or article.select_one(".node-title")
         film_title = title_el.get_text(strip=True) if title_el else ""
         if not film_title:
-            # Derive from slug: /super-mario-galaxy-filmen -> Super Mario Galaxy Filmen
-            film_title = film_slug.strip("/").replace("-", " ").title()
+            continue
+        film = _listing_film(article, film_title)
+        yield film
+        tmdb_id = _tmdb(film_title, runtime=film.runtime)
 
-        tmdb_id = _tmdb(film_title)
-
-        for slide in soup.select(".slick__slide"):
-            d = _parse_date_text(slide.get_text(" ", strip=True))
-            if not d:
+        seen: set[str] = set()
+        for slide in article.select(".slick__slide"):
+            day_el = slide.select_one("time[datetime]")
+            if not day_el:
+                continue
+            try:
+                d = date.fromisoformat(day_el.get("datetime", ""))
+            except ValueError:
+                log.warning("bad slide date %r for %r", day_el.get("datetime"), film_title)
                 continue
 
             for btn in slide.select(".movies-screenings-button-link"):
                 href = btn.get("href", "")
-                if not href:
+                if not href or href in seen:
                     continue
-                if not href.startswith("http"):
-                    href = _BASE + href
 
                 time_el = btn.select_one(".time")
-                t = _parse_time_text(time_el.get_text(strip=True)) if time_el else None
+                t = _parse_time(time_el.get_text(strip=True)) if time_el else None
                 if not t:
                     continue
+                seen.add(href)
 
                 room_el = btn.select_one(".room")
                 version_el = btn.select_one(".version")
+                version = " ".join(version_el.get_text(" ", strip=True).split()) if version_el else ""
+                fmt, language, subtitles = _parse_version(version)
 
                 yield Screening(
                     tmdb_id=tmdb_id,
                     title=film_title,
                     date=d,
                     time=t,
-                    ticket_url=href,
+                    ticket_url=href if href.startswith("http") else _BASE + href,
                     cinema_name=cinema_name,
                     city=city,
                     screen=room_el.get_text(strip=True) if room_el else "",
-                    format=" ".join(version_el.get_text(" ", strip=True).split()) if version_el else "",
+                    format=fmt,
+                    language=language,
+                    subtitles=subtitles,
+                    film_key=film.key,
                 )
 
 
-def parse() -> Iterator[Screening | Venue]:
+def parse() -> Iterator[Screening | Venue | Film]:
     session = requests.Session()
     session.headers["User-Agent"] = "Mozilla/5.0 (compatible; bio-parser/1.0)"
 
+    seen_films: set[str] = set()
     for cinema in _CINEMAS:
         city = cinema["city"]
         name = cinema["name"]
-        page_url = _BASE + cinema["url"]
 
         yield Venue(name=name, city=city, address=cinema.get("address", ""))
 
-        log.info("nfbio.se: discovering films for %s", name)
-        slugs = _discover_film_slugs(session, page_url)
-        log.info("  %d films found", len(slugs))
+        resp = session.get(_BASE + cinema["url"], timeout=30)
+        resp.raise_for_status()
 
         count = 0
-        for slug in slugs:
-            try:
-                for s in _fetch_film_screenings(session, slug, cinema["city_param"], name, city):
-                    yield s
-                    count += 1
-            except Exception:
-                log.exception("error fetching %s", slug)
-                raise
+        for item in _parse_listing(resp.text, name, city):
+            if isinstance(item, Film):
+                # Both cinemas list most of the same films; fetch each page once.
+                if item.key in seen_films:
+                    continue
+                seen_films.add(item.key)
+                yield _films.register(_fetch_film(session, item), session=session)
+                continue
+            yield item
+            count += 1
 
         log.info("  %s: %d screenings", name, count)
+
+
+def _fetch_film(session: requests.Session, film: Film) -> Film:
+    if not film.url:
+        return film
+    try:
+        resp = session.get(film.url, timeout=30)
+        resp.raise_for_status()
+    except requests.RequestException as exc:
+        log.warning("failed to fetch film page %s: %s", film.url, exc)
+        return film
+    return _enrich(film, resp.text)

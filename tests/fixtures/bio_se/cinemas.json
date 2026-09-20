@@ -1,0 +1,32 @@
+{
+ "cinemas": [
+  {
+   "id": 31441,
+   "title": "Falköping Cosmorama",
+   "city": "Falköping",
+   "street_address": "Sankt Olofsgatan 20",
+   "slug": "falkoping-cosmorama"
+  },
+  {
+   "id": 12114,
+   "title": "Alvesta Bio Thalia",
+   "city": "Alvesta ",
+   "street_address": "Allbogatan 17",
+   "slug": "alvesta-bio-thalia"
+  },
+  {
+   "id": 4,
+   "title": "Enter Details",
+   "city": "",
+   "street_address": "",
+   "slug": "enter-details"
+  },
+  {
+   "id": 8301,
+   "title": "Gåxsjö Bio",
+   "city": "",
+   "street_address": "",
+   "slug": "gaxsjo-bio"
+  }
+ ]
+}

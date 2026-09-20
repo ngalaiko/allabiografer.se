@@ -14,7 +14,7 @@
 <h2><a href="{{ block.film_url }}" title="{{ block.film_title }}">{{ block.film_title }}</a></h2>
 </div>
 <div class="film-overview">
-<div class="film-poster">{% if block.poster_url %}<img src="{{ block.poster_url }}" alt="" width="125" height="177" loading="lazy">{% endif %}</div>
+<div class="film-poster">{% if block.poster_url %}<img src="{{ block.poster_url }}" alt="" width="125" height="177" loading="lazy">{% else %}<div class="poster-placeholder"></div>{% endif %}</div>
 <div class="film-description">
 {% if block.mi %}<div class="film-meta">{{ block.mi|safe }}</div>{% endif %}
 {% if block.full_desc %}<p>{{ block.full_desc }}</p>{% endif %}

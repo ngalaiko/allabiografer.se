@@ -1,0 +1,104 @@
+{
+  "events": [
+    {
+      "id": 85917,
+      "title": "Nyårskonsert kl.21.00",
+      "link": "https://tickets.nortic.se/ticket/event/85917",
+      "category": "Konsert",
+      "shows": [
+        {
+          "id": 357511,
+          "link": "https://tickets.nortic.se/ticket/show/357511",
+          "startDate": "2026-12-31 21:00",
+          "arenaName": "Grand Hotell Spegelsalen",
+          "arenaCity": "Stockholm",
+          "arenaAddress": "S. Blasieholmshamnen 8"
+        }
+      ]
+    },
+    {
+      "id": 85676,
+      "title": "Frukostbio Top Hat - The Musical",
+      "link": "https://tickets.nortic.se/ticket/event/85676",
+      "category": "Bio",
+      "shows": [
+        {
+          "id": 356878,
+          "link": "https://tickets.nortic.se/ticket/show/356878",
+          "startDate": "2026-10-17 09:30",
+          "arenaName": "Folketshus",
+          "arenaCity": "Ulricehamn",
+          "arenaAddress": null
+        }
+      ],
+      "description": "<p>En sprudlande musikal fylld av romantik, humor och od&ouml;dliga klassiker &ndash; Top Hat &auml;r en glittrande hyllning till Hollywoods gyllene era.</p>",
+      "shortDescription": "",
+      "imageUrl": "https://branding.nortic.io/organizer/395/event/85676?type=default&redirect=t"
+    },
+    {
+      "id": 84179,
+      "title": "Biodlaren",
+      "link": "https://tickets.nortic.se/ticket/event/84179",
+      "category": "Bio",
+      "shows": [
+        {
+          "id": 357605,
+          "link": "https://tickets.nortic.se/ticket/show/357605",
+          "startDate": "2026-09-29 16:30",
+          "arenaName": "Sjöängen, Stora salongen",
+          "arenaCity": "Askersund",
+          "arenaAddress": "",
+          "playTimeInMinutes": 0
+        }
+      ],
+      "description": "",
+      "shortDescription": "Ett utforskande av kärleken, naturen och livets cykler."
+    },
+    {
+      "id": 86718,
+      "title": "Tony",
+      "link": "https://tickets.nortic.se/ticket/event/86718",
+      "category": "Film",
+      "shows": [
+        {
+          "id": 359935,
+          "link": "https://tickets.nortic.se/ticket/show/359935",
+          "startDate": "2026-09-20 17:00",
+          "arenaName": "Biocafé Tellus",
+          "arenaCity": "Midsommarkransen",
+          "arenaAddress": "Vattenledningsvägen 46",
+          "playTimeInMinutes": 0
+        },
+        {
+          "id": 359937,
+          "link": "https://tickets.nortic.se/ticket/show/359937",
+          "startDate": "2026-09-23 19:30",
+          "arenaName": "Biocafé Tellus",
+          "arenaCity": "Midsommarkransen",
+          "arenaAddress": "Vattenledningsvägen 46",
+          "playTimeInMinutes": 0
+        }
+      ],
+      "description": "<p>En 19-&aring;rig Anthony Bourdain reser till Provincetown och snubblar in i den kaotiska k&ouml;ksv&auml;rlden p&aring; en lokal restaurang.</p>",
+      "shortDescription": ""
+    },
+    {
+      "id": 84182,
+      "title": "Biodlaren",
+      "link": "https://tickets.nortic.se/ticket/event/84182",
+      "description": "<p>Ett utforskande av k&auml;rleken ur en fars och dotters perspektiv.</p>",
+      "category": "Bio",
+      "shows": [
+        {
+          "id": 357700,
+          "link": "https://tickets.nortic.se/ticket/show/357700",
+          "startDate": "2026-10-02 18:00",
+          "playTimeInMinutes": 110,
+          "arenaName": "Folketshus",
+          "arenaCity": "Ulricehamn",
+          "arenaAddress": null
+        }
+      ]
+    }
+  ]
+}

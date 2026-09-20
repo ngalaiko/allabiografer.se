@@ -1,30 +1,38 @@
-"""TMDB movie lookup — async-safe, file-per-movie storage.
+"""TMDB movie lookup — metadata and the title index live in the db, posters in files.
 
 Usage::
 
     from parse.tmdb import lookup
 
     # Returns TMDB ID if found, None otherwise.
-    tmdb_id = lookup("Super Mario Galaxy Filmen", movies_dir=Path("movies"))
+    tmdb_id = lookup("Super Mario Galaxy Filmen", path=Path("data/allabiografer.db"))
 
-Files written::
+Written through :mod:`store`::
 
-    movies/<tmdb_id>.json      — metadata (title, overview, genres, …)
-    movies/<tmdb_id>.w500.jpg  — poster image (may be .png depending on source)
+    write_movie      — metadata (title, overview, genres, …)
+    write_poster     — w500 poster image, a file in ``data/posters/``
+    tmdb_index_set   — title key → tmdb id, to skip repeat searches
 """
 
-import fcntl
-import json
 import logging
 import re
 import time
-import unicodedata
 from pathlib import Path
 from urllib.parse import urljoin
 
 import requests
 
-from store import MOVIES_DIR
+from store import (
+    DB_FILE,
+    Movie,
+    has_poster,
+    read_movie,
+    title_key,
+    tmdb_index_get,
+    tmdb_index_set,
+    write_movie,
+    write_poster,
+)
 
 log = logging.getLogger(__name__)
 
@@ -76,12 +84,17 @@ def _clean_title(title: str) -> str:
     return title.strip()
 
 
-def _title_key(title: str) -> str:
-    return " ".join(re.findall(r"\w+", unicodedata.normalize("NFKC", title).casefold()))
+def _content_type(header: str) -> str:
+    """Normalise a response content-type to a supported poster type."""
+    if "png" in header:
+        return "image/png"
+    if "webp" in header:
+        return "image/webp"
+    return "image/jpeg"
 
 
-def _download_poster(session: requests.Session, poster_path: str, dest: Path) -> bool:
-    """Download poster image. Returns True on success."""
+def _download_poster(session: requests.Session, poster_path: str, tmdb_id: int, path: Path) -> bool:
+    """Download poster image and store it. Returns True on success."""
     url = urljoin(_IMG_BASE, f"{_POSTER_SIZE}{poster_path}")
     try:
         resp = session.get(url, timeout=15)
@@ -90,76 +103,50 @@ def _download_poster(session: requests.Session, poster_path: str, dest: Path) ->
         log.warning("failed to download poster %s", url)
         return False
 
-    # Determine extension from content-type
-    ct = resp.headers.get("content-type", "")
-    if "png" in ct:
-        ext = ".png"
-    elif "webp" in ct:
-        ext = ".webp"
-    else:
-        ext = ".jpg"
-
-    out = dest.with_suffix(f".{_POSTER_SIZE}{ext}")
-    out.write_bytes(resp.content)
+    write_poster(tmdb_id, resp.content, _content_type(resp.headers.get("content-type", "")), path=path)
     return True
 
 
 def lookup(
     title: str,
     *,
-    movies_dir: Path = MOVIES_DIR,
+    path: Path = DB_FILE,
     session: requests.Session | None = None,
     year: int | None = None,
     runtime: int | None = None,
 ) -> int | None:
-    """Search TMDB for *title*, save metadata + poster. Returns TMDB ID or None.
+    """Search TMDB for *title*, store metadata + poster. Returns TMDB ID or None.
 
-    Skips the network call if ``<movies_dir>/<tmdb_id>.json`` already exists
-    for a previously resolved title — uses a local title→id index for that.
+    Skips the network call when the title index already resolves to a stored
+    movie.  Every store call is its own short transaction, so no db lock is
+    held across network calls; concurrent lookups of the same title are
+    harmless because the writes are upserts.
     """
-    movies_dir.mkdir(parents=True, exist_ok=True)
     own_session = session is None
     if own_session:
         session = requests.Session()
+    try:
+        return _lookup(title, path, session, year, runtime)
+    finally:
+        if own_session:
+            session.close()
 
+
+def _lookup(
+    title: str,
+    path: Path,
+    session: requests.Session,
+    year: int | None,
+    runtime: int | None,
+) -> int | None:
     clean = _clean_title(title)
     if year is None and clean in _TITLE_HINTS:
         clean, year = _TITLE_HINTS[clean]
 
     # ------ index: title → tmdb_id (avoids re-searching) ------
-    # Use file locking so concurrent parsers don't corrupt _index.json.
-    index_path = movies_dir / "_index_v2.json"
-    lock_path = movies_dir / "_index_v2.lock"
-
-    with open(lock_path, "w") as lock_fh:
-        fcntl.flock(lock_fh, fcntl.LOCK_EX)
-        try:
-            result = _lookup_locked(clean, title, session, year, runtime, movies_dir, index_path)
-        finally:
-            fcntl.flock(lock_fh, fcntl.LOCK_UN)
-
-    if own_session:
-        session.close()
-
-    return result
-
-
-def _lookup_locked(
-    clean: str,
-    title: str,
-    session: requests.Session,
-    year: int | None,
-    runtime: int | None,
-    movies_dir: Path,
-    index_path: Path,
-) -> int | None:
-    """Runs while holding the index lock."""
-    index: dict[str, int | None] = {}
-    if index_path.exists():
-        index = json.loads(index_path.read_text("utf-8"))
-    cache_key = f"{_title_key(clean)}|{year or ''}|{runtime or ''}"
-    cached = index.get(cache_key)
-    if cached is not None and (movies_dir / f"{cached}.json").exists():
+    cache_key = f"{title_key(clean)}|{year or ''}|{runtime or ''}"
+    cached = tmdb_index_get(cache_key, path=path)
+    if cached is not None and read_movie(cached, path=path) is not None:
         return cached
 
     # ------ search TMDB ------
@@ -180,41 +167,26 @@ def _lookup_locked(
     candidates = {
         result["id"]: result
         for result in results
-        if _title_key(clean) in {_title_key(result.get("title", "")), _title_key(result.get("original_title", ""))}
+        if title_key(clean) in {title_key(result.get("title", "")), title_key(result.get("original_title", ""))}
         and (year is None or result.get("release_date", "").startswith(str(year)))
     }
     if runtime and candidates:
         compatible = {}
         for candidate_id, candidate in candidates.items():
-            cached_path = movies_dir / f"{candidate_id}.json"
-            try:
-                details = (
-                    json.loads(cached_path.read_text("utf-8"))
-                    if cached_path.exists()
-                    else _get(
-                        session,
-                        f"{_API}/movie/{candidate_id}",
-                        language="sv-SE",
-                    )
-                )
-            except requests.RequestException:
-                return None
-            if not details.get("runtime") and cached_path.exists():
+            stored = read_movie(candidate_id, path=path)
+            length = stored.runtime if stored else None
+            if not length:
                 try:
-                    details = _get(session, f"{_API}/movie/{candidate_id}", language="sv-SE")
+                    length = _get(session, f"{_API}/movie/{candidate_id}", language="sv-SE").get("runtime")
                 except requests.RequestException:
                     return None
-            length = details.get("runtime")
             if (length and abs(length - runtime) <= 5) or (not length and len(candidates) == 1):
                 compatible[candidate_id] = candidate
         candidates = compatible
     if len(candidates) != 1:
         log.info("ambiguous or inexact TMDB match for %r; keeping source title", title)
         return None
-    movie = next(iter(candidates.values()))
-    tmdb_id: int = movie["id"]
-
-    meta_path = movies_dir / f"{tmdb_id}.json"
+    tmdb_id: int = next(iter(candidates.values()))["id"]
 
     # ------ fetch full details ------
     try:
@@ -244,29 +216,27 @@ def _lookup_locked(
                     release_date_se = rd[:10]
             break
 
-    meta = {
-        "tmdb_id": tmdb_id,
-        "title_sv": details.get("title", ""),
-        "title_original": details.get("original_title", ""),
-        "overview_sv": details.get("overview", ""),
-        "genres": [g["name"] for g in details.get("genres", [])],
-        "release_date": details.get("release_date", ""),
-        "release_date_se": release_date_se,
-        "runtime": details.get("runtime"),
-        "poster_path": details.get("poster_path", ""),
-        "vote_average": details.get("vote_average"),
-        "age_rating": age_rating,
-    }
-
-    meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), "utf-8")
+    movie = Movie(
+        tmdb_id=tmdb_id,
+        title_sv=details.get("title", ""),
+        title_original=details.get("original_title", ""),
+        overview_sv=details.get("overview", ""),
+        genres=[g["name"] for g in details.get("genres", [])],
+        release_date=details.get("release_date", ""),
+        release_date_se=release_date_se,
+        runtime=details.get("runtime"),
+        poster_path=details.get("poster_path") or "",
+        vote_average=details.get("vote_average"),
+        age_rating=age_rating,
+    )
+    write_movie(movie, path=path)
 
     # ------ poster ------
-    if meta["poster_path"] and not any(movies_dir.glob(f"{tmdb_id}.w500.*")):
-        _download_poster(session, meta["poster_path"], movies_dir / str(tmdb_id))
+    if movie.poster_path and not has_poster(tmdb_id, path=path):
+        _download_poster(session, movie.poster_path, tmdb_id, path)
 
     # ------ update index ------
-    index[cache_key] = tmdb_id
-    index_path.write_text(json.dumps(index, ensure_ascii=False, indent=2), "utf-8")
+    tmdb_index_set(cache_key, tmdb_id, path=path)
 
-    log.info("TMDB %d: %s", tmdb_id, meta["title_sv"] or meta["title_original"])
+    log.info("TMDB %d: %s", tmdb_id, movie.title_sv or movie.title_original)
     return tmdb_id
