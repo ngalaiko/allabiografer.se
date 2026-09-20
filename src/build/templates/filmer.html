@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="index"><div class="index_inner">
+<main class="index"><div class="index_inner">
 {% include "nav.html" %}
 <div class="all-movies">
+{% set posters = namespace(priority_set=false) %}
 {% for film in films %}
-{% include "film_card.html" %}
+{% with eager=loop.index0 < 8, priority=not posters.priority_set %}{% include "film_card.html" %}{% endwith %}
+{% if film.poster_url %}{% set posters.priority_set = true %}{% endif %}
 {% endfor %}
 </div>
-</div></div>
+</div></main>
 {% endblock %}

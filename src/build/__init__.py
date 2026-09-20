@@ -63,6 +63,8 @@ SITE_DESCRIPTION = (
 )
 # Cap structured-data events per film page to keep page weight sane.
 MAX_JSONLD_EVENTS = 100
+SCHEDULE_DAYS = 14
+TIME_ROW_HEIGHT = 32
 
 
 # Residensstäder — capital of each Swedish län.
@@ -162,7 +164,7 @@ def _compute_time_positions(
 
     cell_w = 200
     label_w = 45
-    row_h = 22.5
+    row_h = TIME_ROW_HEIGHT
     pad = 5
 
     result: list[dict] = []
@@ -195,7 +197,7 @@ def _cell_min_height(positions: list[dict]) -> float:
     if not positions:
         return 0
     max_top = max(p["top"] for p in positions)
-    return max_top + 22.5 + 5
+    return max_top + TIME_ROW_HEIGHT + 5
 
 
 # ---------------------------------------------------------------------------
@@ -209,6 +211,7 @@ class SiteData:
     screenings: list[Screening] = field(default_factory=list)
     movies: dict[int, Movie] = field(default_factory=dict)
     poster_keys: dict[int, str] = field(default_factory=dict)  # movie id → poster key
+    poster_urls: dict[str, str] = field(default_factory=dict)
     broken_posters: set[str] = field(default_factory=set)  # poster keys Pillow could not decode
     cities: dict[str, int] = field(default_factory=dict)
     today: date = field(default_factory=lambda: datetime.now(tz=SWEDEN_TZ).date())
@@ -378,10 +381,11 @@ POSTER_CSS_H = 177
 POSTER_W = POSTER_CSS_W * 2  # 250
 POSTER_H = POSTER_CSS_H * 2  # 354
 POSTER_QUALITY = 80
+POSTER_WIDTHS = (104, 125, 250, 500)
 
 
 def _process_poster(src: Path, dest: Path) -> None:
-    """Resize and convert a poster file to @2x WebP."""
+    """Crop and encode responsive WebP posters."""
     with Image.open(src) as img:
         img = img.convert("RGB")
         # Crop to target aspect ratio (centre crop) then resize
@@ -397,21 +401,27 @@ def _process_poster(src: Path, dest: Path) -> None:
             new_h = int(img.width / tgt_ratio)
             offset = (img.height - new_h) // 2
             img = img.crop((0, offset, img.width, offset + new_h))
-        img = img.resize((POSTER_W, POSTER_H), Image.LANCZOS)
-        img.save(dest, "WEBP", quality=POSTER_QUALITY)
+        for width in POSTER_WIDTHS:
+            height = round(width * POSTER_H / POSTER_W)
+            output = dest if width == POSTER_W else dest.with_stem(f"{dest.stem}-{width}")
+            img.resize((width, height), Image.LANCZOS).save(output, "WEBP", quality=POSTER_QUALITY)
 
 
 def _poster_url(sd: SiteData, movie_id: int) -> str | None:
     key = sd.poster_keys.get(movie_id)
     if key is None or key in sd.broken_posters:
         return None
+    if key in sd.poster_urls:
+        return sd.poster_urls[key]
+    src = poster_path(key, path=DB_FILE)
+    if src is None:
+        return None
+    settings = f"{POSTER_WIDTHS}:{POSTER_H}:{POSTER_QUALITY}".encode()
+    version = hashlib.sha256(src.read_bytes() + settings).hexdigest()[:12]
     # The site serves posters from one flat directory.
-    name = key.replace("/", "-")
+    name = f"{key.replace('/', '-')}-{version}"
     dest = sd.out_dir / "posters" / f"{name}.webp"
     if not dest.exists():
-        src = poster_path(key, path=DB_FILE)
-        if src is None:
-            return None
         dest.parent.mkdir(parents=True, exist_ok=True)
         try:
             _process_poster(src, dest)
@@ -420,7 +430,8 @@ def _poster_url(sd: SiteData, movie_id: int) -> str | None:
             dest.unlink(missing_ok=True)
             print(f"  poster {key}: {exc}")
             return None
-    return f"/posters/{name}.webp"
+    sd.poster_urls[key] = f"/posters/{name}.webp"
+    return sd.poster_urls[key]
 
 
 # ---------------------------------------------------------------------------
@@ -530,7 +541,7 @@ def _film_jsonld(sd: SiteData, movie: Movie, screenings: list[Screening], canoni
         movie_node["contentRating"] = movie.age_rating
 
     graph: list[dict] = [movie_node]
-    ordered = sorted(screenings, key=lambda s: (s.date, s.time))[:MAX_JSONLD_EVENTS]
+    ordered = sorted(_schedule_screenings(sd, screenings), key=lambda s: (s.date, s.time))[:MAX_JSONLD_EVENTS]
     for s in ordered:
         start = datetime.combine(s.date, s.time, tzinfo=SWEDEN_TZ).isoformat()
         address: dict = {"@type": "PostalAddress", "addressLocality": s.city, "addressCountry": "SE"}
@@ -612,6 +623,10 @@ def _make_env() -> Environment:
         lstrip_blocks=True,
     )
     env.globals["style_version"] = hashlib.sha256(Path("static/i/style.css").read_bytes()).hexdigest()[:12]
+    env.globals["font_versions"] = {
+        weight: hashlib.sha256(Path(f"static/i/FiraSans-{weight}.woff2").read_bytes()).hexdigest()[:12]
+        for weight in ("Regular", "SemiBold")
+    }
     env.globals["posthog_token"] = os.environ.get("POSTHOG_PROJECT_TOKEN", "").strip()
     env.globals["posthog_host"] = os.environ.get("POSTHOG_HOST", "/salong").strip()
     return env
@@ -767,6 +782,11 @@ def _build_filmer(env: Environment, sd: SiteData) -> None:
 # ---------------------------------------------------------------------------
 # Programme page data preparation
 # ---------------------------------------------------------------------------
+
+
+def _schedule_screenings(sd: SiteData, screenings: list[Screening]) -> list[Screening]:
+    end = sd.today + timedelta(days=SCHEDULE_DAYS)
+    return [s for s in screenings if sd.today <= s.date < end]
 
 
 def _compute_days(screenings: list[Screening]) -> list[date]:
@@ -933,6 +953,7 @@ def _write_programme(
     og_image: str | None = None,
     og_type: str | None = None,
 ) -> None:
+    screenings = _schedule_screenings(sd, screenings)
     page_days = _compute_days(screenings)
     blocks = _prepare_programme_blocks(sd, screenings, page_days, city=city)
     days = [{"label": _format_day(d), "date": d.isoformat()} for d in page_days]
@@ -947,7 +968,7 @@ def _write_programme(
         og_type=og_type,
         breadcrumbs=breadcrumbs,
         days=days,
-        num_days=len(page_days),
+        num_days=max(1, len(page_days)),
         blocks=blocks,
     )
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -979,7 +1000,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
         print(f"  /stad/{slug}/")
         out_path = sd.out_dir / "stad" / slug / "index.html"
         canonical = _register(sd, out_path)
-        n_films = len({s.tmdb_id for s in city_screenings})
+        n_films = len({s.tmdb_id for s in _schedule_screenings(sd, city_screenings)})
         title = f"På bio i {city_name} – speltider och biografer"
         _write_programme(
             env,
@@ -1061,7 +1082,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             if len(movie.overview_sv) > 155:
                 description += "…"
         else:
-            n_cinemas = len({s.cinema_name for s in city_film_screenings})
+            n_cinemas = len({s.cinema_name for s in _schedule_screenings(sd, city_film_screenings)})
             description = (
                 f"Speltider för {film_title} på biografer i {city_name} — "
                 f"visas på {n_cinemas} {'biograf' if n_cinemas == 1 else 'biografer'}."
@@ -1089,7 +1110,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
         out_path = sd.out_dir / "film" / slug / "index.html"
         canonical = _register(sd, out_path)
         movie = next((sd.movies.get(s.tmdb_id) for s in film_screenings if sd.movies.get(s.tmdb_id)), None)
-        n_cities = len({s.city for s in film_screenings})
+        n_cities = len({s.city for s in _schedule_screenings(sd, film_screenings)})
         if movie and movie.overview_sv:
             description = movie.overview_sv[:155].rstrip()
             if len(movie.overview_sv) > 155:

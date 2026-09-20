@@ -22,8 +22,8 @@
 {% if description %}<meta name="twitter:description" content="{{ description }}">{% endif %}
 {% if og_image %}<meta name="twitter:image" content="{{ og_image }}">{% endif %}
 <style>
-@font-face { font-family: 'Fira Sans'; font-style: normal; font-weight: 400; font-display: swap; src: local('Fira Sans Regular'), local('FiraSans-Regular'), url('/i/FiraSans-Regular.woff2') format('woff2'); }
-@font-face { font-family: 'Fira Sans'; font-style: normal; font-weight: 600; font-display: swap; src: local('Fira Sans SemiBold'), local('FiraSans-SemiBold'), url('/i/FiraSans-SemiBold.woff2') format('woff2'); }
+@font-face { font-family: 'Fira Sans'; font-style: normal; font-weight: 400; font-display: swap; src: local('Fira Sans Regular'), local('FiraSans-Regular'), url('/i/FiraSans-Regular.woff2?v={{ font_versions['Regular'] }}') format('woff2'); }
+@font-face { font-family: 'Fira Sans'; font-style: normal; font-weight: 600; font-display: swap; src: local('Fira Sans SemiBold'), local('FiraSans-SemiBold'), url('/i/FiraSans-SemiBold.woff2?v={{ font_versions['SemiBold'] }}') format('woff2'); }
 </style>
 <link href="/i/style.css?v={{ style_version }}" rel="stylesheet" type="text/css">
 <link href="/i/favicon-32x32.png" rel="icon" sizes="32x32">

@@ -1,6 +1,10 @@
 {# Renders a poster image. Grey background shows if no poster. Expects: poster_url #}
 {% if poster_url %}
-<img class="poster" loading="lazy" src="{{ poster_url }}" width="125" height="177">
+<img class="poster" alt="" loading="{{ 'eager' if eager else 'lazy' }}"{% if priority %} fetchpriority="high"{% endif %}
+  src="{{ poster_url }}"
+  srcset="{{ poster_url|replace('.webp', '-125.webp') }} 125w, {{ poster_url }} 250w, {{ poster_url|replace('.webp', '-500.webp') }} 500w"
+  sizes="(max-width: 285px) calc(100vw - 24px), (max-width: 422px) calc((100vw - 36px) / 2), (max-width: 559px) calc((100vw - 48px) / 3), (max-width: 696px) calc((100vw - 60px) / 4), (max-width: 700px) calc((100vw - 72px) / 5), 125px"
+  width="125" height="177">
 {% else %}
 <div class="poster"></div>
 {% endif %}

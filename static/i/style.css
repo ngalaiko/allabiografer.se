@@ -26,6 +26,7 @@ a:hover { color: #FF4F20; text-decoration: underline; }
 html { overscroll-behavior-x: none; }
 body { font: var(--cap-height-11) / 19px 'Fira Sans'; }
 .home:hover { text-decoration: none; border-bottom: 1px solid #FF4F20; }
+.home { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 24px; }
 .home > svg { width: 16px; height: 16px; display: inline-block; }
 
 /** Index **/
@@ -36,7 +37,8 @@ body { font: var(--cap-height-11) / 19px 'Fira Sans'; }
 
 .index h2 { margin-top: 2em; }
 .cities { columns: 7 150px; column-gap: 10px; }
-.cities > li { list-style: none; line-height: 1.1; margin-bottom: 0.4em; }
+.cities > li { list-style: none; line-height: 1.5; margin-bottom: 0.4em; }
+.cities a { display: inline-block; min-height: 24px; }
 .city.large { font-weight: 600; }
 
 /** All Movies **/
@@ -66,9 +68,9 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .cinema-name { grid-column: 2; grid-row: var(--cinema-row); min-height: var(--cinema-height); position: sticky; left: 20px; z-index: 20; padding: 10px var(--schedule-inset); background: #fff; font-size: 15px; line-height: 24px; border: 1px solid var(--border-color); border-bottom: 0; }
 .cinema-location, .cinema-location a { color: #666; font-size: 14px; line-height: 20px; }
 .schedule-cell { grid-column: calc(var(--day-column) + 2); grid-row: var(--cinema-row); position: relative; min-height: var(--cinema-height); background: #fff; border-top: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
-.schedule-cell > a, .schedule-cell > span { position: absolute; left: var(--time-left); top: var(--time-top); padding: 5px; line-height: 10px; text-align: center; font-feature-settings: 'case' 1; font-size: var(--cap-height-10); }
+.schedule-cell > a, .schedule-cell > span { position: absolute; left: var(--time-left); top: var(--time-top); width: 45px; min-height: 28px; padding: 7px 5px; line-height: 14px; white-space: nowrap; text-align: center; font-feature-settings: 'case' 1; font-size: var(--cap-height-10); }
 .schedule-cell > a:hover { text-decoration: none; background: #fee1e4; }
-.schedule-cell .past { color: #999; }
+.schedule-cell .past { color: #666; }
 .no-screenings { padding: 16px 12px; }
 
 @media (max-width: 700px) {
@@ -114,7 +116,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
   body > .site-footer { padding: 24px 12px 12px; }
 }
 
-.site-footer { padding: 2em 20px 1em; margin-top: auto; color: #999; font-size: var(--cap-height-10); text-align: center; line-height: 2; }
-.site-footer a { color: #777; text-decoration: none; }
+.site-footer { padding: 2em 20px 1em; margin-top: auto; color: #666; font-size: var(--cap-height-10); text-align: center; line-height: 2; }
+.site-footer a { color: #666; text-decoration: none; }
 .site-footer a:hover { color: #FF4F20; }
-.site-footer .sep { margin: 0 0.6em; color: #ccc; }
+.site-footer .sep { margin: 0 0.6em; color: #666; }
