@@ -223,32 +223,6 @@ class SiteData:
     sitemap_urls: list[str] = field(default_factory=list)
 
 
-# Chain APIs carry distributor texts; ticketing platforms carry venue prose.
-_FILM_SOURCE_PRIORITY = (
-    "filmstaden_se",
-    "bio_se",
-    "nfbio_se",
-    "biorio_se",
-    "bioroy_se",
-    "soderkopingsbio_se",
-    "osbyborgen_se",
-    "doclounge_se",
-    "wp_theatre",
-    "kiviksbio_se",
-    "palladiumbio_se",
-    "fhbracke_se",
-    "hallundafolketshus_se",
-    "nortic_se",
-)
-
-
-def _source_rank(source: str) -> int:
-    try:
-        return _FILM_SOURCE_PRIORITY.index(source)
-    except ValueError:
-        return len(_FILM_SOURCE_PRIORITY)
-
-
 def _first(films: list[Film], attr: str):
     """First non-empty value of an attribute across films."""
     for film in films:
@@ -273,6 +247,35 @@ def _merge_films(movie: Movie, films: list[Film]) -> Movie:
     )
 
 
+def _aggregate_movies(sd: SiteData) -> dict[int, int]:
+    """Combine same-title movies and screenings under one build-time identity."""
+    by_title: dict[str, list[Movie]] = defaultdict(list)
+    for movie in sd.movies.values():
+        key = title_key(movie.title_sv or movie.title_original)
+        if key:
+            by_title[key].append(movie)
+
+    aliases: dict[int, int] = {}
+    for movies in by_title.values():
+        # Prefer TMDB metadata, with a stable ID tie-breaker.
+        movies.sort(key=lambda movie: (movie.tmdb_id < 0, movie.tmdb_id))
+        canonical, *duplicates = movies
+        values = canonical.to_dict()
+        for movie in duplicates:
+            aliases[movie.tmdb_id] = canonical.tmdb_id
+            for name, value in movie.to_dict().items():
+                if name != "tmdb_id" and not values[name]:
+                    values[name] = value
+            poster = sd.poster_keys.pop(movie.tmdb_id, None)
+            if poster:
+                sd.poster_keys.setdefault(canonical.tmdb_id, poster)
+            del sd.movies[movie.tmdb_id]
+        sd.movies[canonical.tmdb_id] = Movie.from_dict(values)
+
+    sd.screenings = [replace(s, tmdb_id=aliases[s.tmdb_id]) if s.tmdb_id in aliases else s for s in sd.screenings]
+    return aliases
+
+
 def _load_data(out_dir: Path) -> SiteData:
     sd = SiteData(out_dir=out_dir)
     sd.today = datetime.now(tz=SWEDEN_TZ).date()
@@ -289,15 +292,22 @@ def _load_data(out_dir: Path) -> SiteData:
     for f in sorted(all_films, key=lambda f: f.source):
         films_by_title[f.key.partition(":")[2]].append(f)
 
+    source_counts: dict[str, int] = defaultdict(int)
+    for screening in upcoming:
+        source = screening.film_key.partition(":")[0] if screening.film_key else screening.source
+        source_counts[source] += 1
+
+    def _film_rank(film: Film) -> tuple[int, str]:
+        return (-source_counts[film.source], film.source)
+
     def _candidates(film: Film | None, title: str) -> list[Film]:
-        """Same-title films ranked by source priority, the screening's own source breaking ties."""
+        """Same-title films ranked by their source's upcoming showing count."""
         key = film.key.partition(":")[2] if film else (title_key(title) if title else "")
         pool = [film] if film else []
         pool.extend(f for f in films_by_title.get(key, []) if film is None or f.key != film.key)
-        own = film.source if film else ""
-        return sorted(pool, key=lambda f: (_source_rank(f.source), 0 if f.source == own else 1, f.source))
+        return sorted(pool, key=_film_rank)
 
-    # Site metadata backing each movie; the first screening to claim a movie wins.
+    # Site metadata backing each movie.
     films_of: dict[int, list[Film]] = {}
     sd.screenings = []
     for screening in upcoming:
@@ -313,12 +323,12 @@ def _load_data(out_dir: Path) -> SiteData:
                 base = Movie.from_dict(
                     {"tmdb_id": identifier, "title_sv": candidates[0].title if candidates else title}
                 )
-                sd.movies[identifier] = _merge_films(base, candidates)
+                sd.movies[identifier] = base
             screening = replace(screening, tmdb_id=identifier)
         else:
             candidates = _candidates(film, "")
         if candidates:
-            films_of.setdefault(screening.tmdb_id, candidates)
+            films_of.setdefault(screening.tmdb_id, []).extend(candidates)
         sd.screenings.append(screening)
     print(f"  {len(sd.screenings)} screenings ({len(all_screenings) - len(sd.screenings)} past, skipped)")
 
@@ -337,19 +347,25 @@ def _load_data(out_dir: Path) -> SiteData:
 
     stored = poster_keys(path=DB_FILE)
     for movie_id in tmdb_ids:
-        candidates = films_of.get(movie_id, [])
         if movie_id > 0 and str(movie_id) in stored:
             sd.poster_keys[movie_id] = str(movie_id)
-        else:
+
+    aliases = _aggregate_movies(sd)
+    pooled_films: dict[int, dict[str, Film]] = defaultdict(dict)
+    for movie_id, candidates in films_of.items():
+        canonical_id = aliases.get(movie_id, movie_id)
+        pooled_films[canonical_id].update((film.key, film) for film in candidates)
+    for movie_id, movie in sd.movies.items():
+        pool = pooled_films[movie_id]
+        pool.update((film.key, film) for film in _candidates(None, movie.title_sv))
+        candidates = sorted(pool.values(), key=_film_rank)
+        sd.movies[movie_id] = _merge_films(movie, candidates)
+        if movie_id not in sd.poster_keys:
             for film in candidates:
                 film_poster = poster_key_for_film(film.key)
                 if film_poster in stored:
                     sd.poster_keys[movie_id] = film_poster
                     break
-        if movie_id > 0:
-            movie = sd.movies.get(movie_id)
-            if movie:
-                sd.movies[movie_id] = _merge_films(movie, candidates)
     print(f"  {len(sd.movies)} movies, {len(sd.poster_keys)} posters")
 
     print("Reading venues…")

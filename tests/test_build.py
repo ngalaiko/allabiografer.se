@@ -192,7 +192,7 @@ def test_title_only_screening_without_film_key_matches_by_title(db, tmp_path):
     assert sd.poster_keys[neg_id] == poster_key_for_film(f.key)
 
 
-def test_chain_source_outranks_ticketing_platform(db, tmp_path):
+def test_source_with_more_showings_supplies_metadata(db, tmp_path):
     own = film(
         "Heart of the beast",
         key=film_key("nortic_se", "Heart of the beast"),
@@ -206,11 +206,11 @@ def test_chain_source_outranks_ticketing_platform(db, tmp_path):
     sd = build._load_data(tmp_path / "out")
 
     neg_id = sd.screenings[0].tmdb_id
-    assert sd.movies[neg_id].title_sv == "Heart of the Beast"
-    assert sd.movies[neg_id].overview_sv == "Handling från distributören."
+    assert sd.movies[neg_id].title_sv == own.title
+    assert sd.movies[neg_id].overview_sv == own.overview
 
 
-def test_own_source_wins_among_unknown_priorities(db, tmp_path):
+def test_source_with_showings_outranks_unused_source(db, tmp_path):
     own = film(
         UNTITLED,
         key=film_key("zzz_se", UNTITLED),
