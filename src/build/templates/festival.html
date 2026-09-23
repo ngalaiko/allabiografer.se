@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block page %}<div id="festival-page" class="schedule-scroll" role="region" tabindex="0" aria-label="Festivalprogram">{{ super() }}</div>{% endblock %}
+{% block body %}
+{% macro crumbs(tag) %}<nav class="schedule-breadcrumbs festival-crumbs" aria-label="Brödsmulor"><a class="home" href="/" aria-label="Alla städer">{% include "home_icon.html" %}</a> / {{ festival.city }} / <{{ tag }}>{{ festival.name }} {{ festival.year }}</{{ tag }}></nav>{% endmacro %}
+<link rel="stylesheet" href="/i/festival.css?v={{ versions.css }}">
+<main class="program festival" data-festival="{{ festival.slug }}-{{ festival.year }}" style="--day-count: {{ festival.days|length }};">
+<header class="festival-bar">
+<div class="festival-bar-start">
+<div class="festival-tabs" role="group" aria-label="Vy" hidden data-enhanced>
+<button type="button" id="festival-all" aria-pressed="true">Program</button>
+<button type="button" id="festival-selected" aria-pressed="false">Mitt schema <span id="festival-count">0</span></button>
+</div>
+<p class="festival-hint"><span id="festival-status" role="status" aria-live="polite"></span><span class="festival-hint-text" hidden data-enhanced title="Valen sparas i länken. Sluttider beräknas från filmlängden; samtal och resor tillkommer.">Klicka på en tid för att välja visningen.</span></p>
+</div>
+<div class="festival-actions" hidden data-enhanced>
+<button type="button" id="festival-share">Dela schema</button>
+<button type="button" id="festival-export" disabled>Exportera iCal</button>
+</div>
+</header>
+{% if festival.screenings %}
+<div id="festival-program">
+<header class="schedule-header">
+{{ crumbs("h1") }}
+<div class="schedule-dates">{% for day in festival.days %}<time datetime="{{ day.date }}" data-day="{{ day.date }}">{{ day.label }}</time>{% endfor %}</div>
+</header>
+{% for film in festival.films %}
+<article class="schedule-film" data-film="{{ film.id }}" style="--film-rows: {{ film.cinemas|length + 2 }};">
+<div class="film-title"><h2><a href="{{ film.film_url }}">{{ film.title }}</a></h2></div>
+<div class="film-overview">
+<div class="film-poster">{% if film.poster_url %}<img src="{{ film.poster_url }}" alt="" width="125" height="177" loading="{{ 'eager' if loop.first else 'lazy' }}">{% else %}<div class="poster-placeholder"></div>{% endif %}</div>
+<div class="film-description">
+{% set meta = [film.runtime ~ " min" if film.runtime else "", film.genres, film.production_year, film.sections, film.director|trim, film.country]|select|list %}
+{% if meta %}<div class="film-meta">{{ meta|join(" · ") }}</div>{% endif %}
+{% if film.description or film.intro %}<p class="synopsis" id="synopsis-{{ film.id }}">{{ film.description or film.intro }}</p>
+<button type="button" class="synopsis-more" data-more="{{ film.id }}" aria-controls="synopsis-{{ film.id }}" aria-expanded="false" hidden>Visa mer…</button>{% endif %}
+</div>
+</div>
+{% for cinema in film.cinemas %}
+<section class="schedule-cinema" aria-label="{{ cinema.venue }}" style="--cinema-row: {{ loop.index + 2 }}; --cinema-height: {{ cinema.height }}px;">
+<div class="cinema-name">{{ cinema.venue }}<div class="cinema-location">{{ festival.city }}</div></div>
+<div class="schedule-times">
+{% for cell in cinema.cells %}
+<div class="schedule-cell" data-day="{{ cell.date }}" style="--day-column: {{ loop.index }};" aria-label="{{ cell.date }}">
+{% for s in cell.screenings %}
+<div class="festival-screening" data-screening="{{ s.id }}" style="--time-left:{{ s.left }}px;--time-top:{{ s.lane * 40 + 6 }}px" title="{{ s.title }} · {{ s.time }}{% if s.end_time %}–{{ s.end_time }}{% endif %} · {{ s.venue }}{% if s.language %} · {{ s.language }}{% endif %}{% if s.subtitles %} · Text: {{ s.subtitles }}{% endif %}">
+<button type="button" class="festival-time" data-select="{{ s.id }}" aria-pressed="false" aria-label="Välj {{ s.title }}, {{ s.date }} {{ s.time }}, {{ s.venue }}" hidden data-enhanced>{{ s.time }}</button>
+<noscript><a href="{{ s.url }}">{{ s.time }}</a></noscript>
+</div>
+{% endfor %}</div>{% endfor %}
+</div>
+</section>
+{% endfor %}
+</article>
+{% endfor %}
+</div>
+{% else %}{{ crumbs("h1") }}<p class="festival-note">Inga visningar publicerade ännu. Se <a href="{{ festival.url }}">festivalens webbplats</a>.</p>{% endif %}
+<section id="festival-plan" hidden aria-label="Mitt festivalschema">
+<div class="festival-plan-crumbs">{{ crumbs("span") }}</div>
+<div role="region" aria-label="Valda visningar"><div id="festival-calendar" class="festival-calendar"></div></div>
+</section>
+<noscript><p class="festival-note">Aktivera JavaScript för att välja visningar, dela ditt schema och exportera till kalendern.</p></noscript>
+</main>
+<script id="festival-data" type="application/json">{{ festival|tojson }}</script>
+<script src="/i/festival.js?v={{ versions.js }}" defer></script>
+<script src="/i/synopsis.js?v={{ synopsis_version }}" defer></script>
+{% endblock %}

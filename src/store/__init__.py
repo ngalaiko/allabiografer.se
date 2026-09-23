@@ -16,6 +16,10 @@ Tabular data lives in one SQLite file, ``data/allabiografer.db``::
                  metadata from a cinema's own site, filling TMDB gaps
     venues      (city, name) PK, address
     tmdb_index  (key PK, tmdb_id) — title lookup cache
+    festivals   (slug, year) PK, name, city, start, end, url, source
+    festival_screenings
+                (slug, year, id) PK, film and screening details;
+                replaced per edition on each import
 
 Poster images are files beside it, original bytes, keyed by TMDB id or by
 film key::
@@ -38,6 +42,7 @@ from collections.abc import Iterable
 from datetime import date, time
 from pathlib import Path
 
+from store.festival import Festival, FestivalScreening
 from store.film import Film, film_key, poster_key_for_film, title_key
 from store.movie import Movie
 from store.screening import Screening
@@ -47,6 +52,8 @@ __all__ = [
     "DATA_DIR",
     "DB_FILE",
     "POSTERS_DIRNAME",
+    "Festival",
+    "FestivalScreening",
     "Film",
     "Movie",
     "Screening",
@@ -59,6 +66,7 @@ __all__ = [
     "poster_path",
     "posters_dir",
     "read_all_films",
+    "read_festivals",
     "read_film",
     "read_films",
     "read_movie",
@@ -69,6 +77,7 @@ __all__ = [
     "title_key",
     "tmdb_index_get",
     "tmdb_index_set",
+    "write_festival",
     "write_films",
     "write_movie",
     "write_poster",
@@ -106,6 +115,21 @@ CREATE TABLE IF NOT EXISTS venues (
   city TEXT NOT NULL, name TEXT NOT NULL, address TEXT NOT NULL DEFAULT '', PRIMARY KEY (city, name)
 );
 CREATE TABLE IF NOT EXISTS tmdb_index (key TEXT PRIMARY KEY, tmdb_id INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS festivals (
+  slug TEXT NOT NULL, year INTEGER NOT NULL, name TEXT NOT NULL, city TEXT NOT NULL,
+  start TEXT NOT NULL, "end" TEXT NOT NULL, url TEXT NOT NULL, source TEXT NOT NULL,
+  PRIMARY KEY (slug, year)
+);
+CREATE TABLE IF NOT EXISTS festival_screenings (
+  slug TEXT NOT NULL, year INTEGER NOT NULL, id TEXT NOT NULL, film_id TEXT NOT NULL, title TEXT NOT NULL,
+  start TEXT NOT NULL, "end" TEXT NOT NULL DEFAULT '', venue TEXT NOT NULL, url TEXT NOT NULL,
+  language TEXT NOT NULL DEFAULT '', subtitles TEXT NOT NULL DEFAULT '', film_url TEXT NOT NULL DEFAULT '',
+  poster_url TEXT NOT NULL DEFAULT '', description TEXT NOT NULL DEFAULT '', intro TEXT NOT NULL DEFAULT '',
+  runtime INTEGER, genres TEXT NOT NULL DEFAULT '', sections TEXT NOT NULL DEFAULT '',
+  director TEXT NOT NULL DEFAULT '', country TEXT NOT NULL DEFAULT '', production_year TEXT NOT NULL DEFAULT '',
+  PRIMARY KEY (slug, year, id),
+  FOREIGN KEY (slug, year) REFERENCES festivals (slug, year) ON DELETE CASCADE
+);
 """
 
 
@@ -574,3 +598,82 @@ def tmdb_index_set(key: str, tmdb_id: int, *, path: Path = DB_FILE) -> None:
         )
     finally:
         conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Festivals
+# ---------------------------------------------------------------------------
+
+_FESTIVAL_COLUMNS = ("slug", "year", "name", "city", "start", "end", "url", "source")
+_FESTIVAL_SCREENING_COLUMNS = (
+    "id",
+    "film_id",
+    "title",
+    "start",
+    "end",
+    "venue",
+    "url",
+    "language",
+    "subtitles",
+    "film_url",
+    "poster_url",
+    "description",
+    "intro",
+    "runtime",
+    "genres",
+    "sections",
+    "director",
+    "country",
+    "production_year",
+)
+
+
+def _columns(names: Iterable[str]) -> str:
+    return ", ".join(f'"{name}"' for name in names)
+
+
+def write_festival(festival: Festival, screenings: list[FestivalScreening], *, path: Path = DB_FILE) -> int:
+    """Upsert an edition and replace its screenings.  Returns count."""
+    conn = connect(path)
+    try:
+        conn.execute("BEGIN")
+        conn.execute(
+            f"INSERT INTO festivals ({_columns(_FESTIVAL_COLUMNS)}) VALUES ({', '.join('?' * len(_FESTIVAL_COLUMNS))})"
+            " ON CONFLICT (slug, year) DO UPDATE SET"
+            + ", ".join(f' "{c}" = excluded."{c}"' for c in _FESTIVAL_COLUMNS[2:]),
+            tuple(getattr(festival, c) for c in _FESTIVAL_COLUMNS),
+        )
+        conn.execute("DELETE FROM festival_screenings WHERE slug = ? AND year = ?", (festival.slug, festival.year))
+        conn.executemany(
+            f"INSERT INTO festival_screenings (slug, year, {_columns(_FESTIVAL_SCREENING_COLUMNS)})"
+            f" VALUES ({', '.join('?' * (len(_FESTIVAL_SCREENING_COLUMNS) + 2))})",
+            [(festival.slug, festival.year, *(getattr(s, c) for c in _FESTIVAL_SCREENING_COLUMNS)) for s in screenings],
+        )
+        conn.execute("COMMIT")
+    except BaseException:
+        conn.execute("ROLLBACK")
+        raise
+    finally:
+        conn.close()
+    return len(screenings)
+
+
+def read_festivals(*, path: Path = DB_FILE) -> list[tuple[Festival, list[FestivalScreening]]]:
+    """Read every edition with its screenings, by slug and year."""
+    conn = connect(path)
+    try:
+        festivals = conn.execute(f"SELECT {_columns(_FESTIVAL_COLUMNS)} FROM festivals ORDER BY slug, year").fetchall()
+        rows = conn.execute(
+            f"SELECT slug, year, {_columns(_FESTIVAL_SCREENING_COLUMNS)} FROM festival_screenings ORDER BY start, id"
+        ).fetchall()
+    finally:
+        conn.close()
+    screenings: dict[tuple[str, int], list[FestivalScreening]] = {}
+    for slug, year, *values in rows:
+        screenings.setdefault((slug, year), []).append(
+            FestivalScreening(**dict(zip(_FESTIVAL_SCREENING_COLUMNS, values, strict=True)))
+        )
+    return [
+        (Festival(**dict(zip(_FESTIVAL_COLUMNS, row, strict=True))), screenings.get((row[0], row[1]), []))
+        for row in festivals
+    ]

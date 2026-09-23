@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block body %}
+<main class="index"><div class="index_inner">
+{% include "nav.html" %}
+<h2>Filmfestivaler</h2>
+{% for festival in festivals %}
+<p><a href="{{ festival.path }}">{{ festival.name }} {{ festival.year }}</a></p>
+{% else %}<p>Inga festivaler publicerade.</p>{% endfor %}
+</div></main>
+{% endblock %}

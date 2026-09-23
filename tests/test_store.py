@@ -6,6 +6,8 @@ from datetime import date, time
 import pytest
 
 from store import (
+    Festival,
+    FestivalScreening,
     Film,
     Movie,
     Screening,
@@ -17,6 +19,7 @@ from store import (
     poster_keys,
     poster_path,
     posters_dir,
+    read_festivals,
     read_film,
     read_films,
     read_movie,
@@ -27,6 +30,7 @@ from store import (
     title_key,
     tmdb_index_get,
     tmdb_index_set,
+    write_festival,
     write_films,
     write_movie,
     write_poster,
@@ -499,3 +503,48 @@ def test_connect_migrates_old_schema(db):
     rows = read_screenings(path=db)
     assert len(rows) == 1
     assert rows[0].film_key == ""
+
+
+def _festival(**kwargs) -> Festival:
+    defaults = {
+        "slug": "fest",
+        "year": 2026,
+        "name": "Fest",
+        "city": "Göteborg",
+        "start": "2026-10-23",
+        "end": "2026-10-31",
+        "url": "https://example.com/",
+        "source": "prisma",
+    }
+    return Festival(**{**defaults, **kwargs})
+
+
+def _festival_screening(identifier: str, **kwargs) -> FestivalScreening:
+    defaults = {
+        "id": identifier,
+        "film_id": "film",
+        "title": "Film",
+        "start": "2026-10-24T14:00:00+02:00",
+        "venue": "Bio",
+        "url": "https://example.com/film",
+    }
+    return FestivalScreening(**{**defaults, **kwargs})
+
+
+def test_festival_round_trip(tmp_path):
+    db = tmp_path / "db.sqlite"
+    one = _festival_screening("1", end="2026-10-24T15:20:00+02:00", runtime=80, genres="Animation")
+    two = _festival_screening("2", start="2026-10-23T17:30:00+02:00")
+    assert write_festival(_festival(), [one, two], path=db) == 2
+    [(festival, screenings)] = read_festivals(path=db)
+    assert festival == _festival()
+    assert screenings == [two, one]
+
+
+def test_festival_import_replaces_edition_only(tmp_path):
+    db = tmp_path / "db.sqlite"
+    write_festival(_festival(), [_festival_screening("old")], path=db)
+    write_festival(_festival(year=2025), [_festival_screening("kept")], path=db)
+    write_festival(_festival(name="Renamed"), [_festival_screening("new")], path=db)
+    result = {(f.year, f.name): [s.id for s in screenings] for f, screenings in read_festivals(path=db)}
+    assert result == {(2025, "Fest"): ["kept"], (2026, "Renamed"): ["new"]}

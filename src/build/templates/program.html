@@ -19,7 +19,8 @@
   sizes="(max-width: 700px) 52px, 125px" loading="{{ 'eager' if loop.first else 'lazy' }}"{% if loop.first %} fetchpriority="high"{% endif %}>{% else %}<div class="poster-placeholder"></div>{% endif %}</div>
 <div class="film-description">
 {% if block.mi %}<div class="film-meta">{{ block.mi|safe }}</div>{% endif %}
-{% if block.full_desc %}<p>{{ block.full_desc }}</p>{% endif %}
+{% if block.full_desc %}<p class="synopsis" id="synopsis-{{ block.film_id }}">{{ block.full_desc }}</p>
+<button type="button" class="synopsis-more" data-more="{{ block.film_id }}" aria-controls="synopsis-{{ block.film_id }}" aria-expanded="false" hidden>Visa mer…</button>{% endif %}
 </div>
 </div>
 {% for cinema in block.cinemas %}
@@ -44,4 +45,5 @@
 {% endfor %}
 {% if not blocks %}<p class="no-screenings">Inga visningar de närmaste två veckorna.</p>{% endif %}
 </main>
+<script src="/i/synopsis.js?v={{ synopsis_version }}" defer></script>
 {% endblock %}

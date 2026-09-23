@@ -31,6 +31,7 @@ from zoneinfo import ZoneInfo
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from PIL import Image, UnidentifiedImageError
 
+from build.festivals import build_festivals
 from store import (
     DB_FILE,
     Film,
@@ -639,6 +640,7 @@ def _make_env() -> Environment:
         lstrip_blocks=True,
     )
     env.globals["style_version"] = hashlib.sha256(Path("static/i/style.css").read_bytes()).hexdigest()[:12]
+    env.globals["synopsis_version"] = hashlib.sha256(Path("static/i/synopsis.js").read_bytes()).hexdigest()[:12]
     env.globals["font_versions"] = {
         weight: hashlib.sha256(Path(f"static/i/FiraSans-{weight}.woff2").read_bytes()).hexdigest()[:12]
         for weight in ("Regular", "SemiBold")
@@ -942,6 +944,7 @@ def _prepare_programme_blocks(
         blocks.append(
             {
                 "poster_url": _poster_url(sd, tmdb_id),
+                "film_id": film_slug,
                 "film_title": film_title,
                 "film_url": film_url,
                 "mi": " • ".join(mi_parts) if mi_parts else "",
@@ -1247,6 +1250,7 @@ def main() -> None:
     _build_premiarer(env, sd)
     _build_filmer(env, sd)
     _build_programme_pages(env, sd)
+    build_festivals(env, sd, _register, DB_FILE)
 
     _write_robots(out_dir)
     _write_sitemap(sd)

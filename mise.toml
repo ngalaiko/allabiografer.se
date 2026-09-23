@@ -64,6 +64,10 @@ run = "uv run --group parse parse nortic_se"
 description = "Build the static site"
 run = "uv run --group build build www/allabiografer.se"
 
+[tasks."parse:festivals"]
+description = "Refresh festival programmes"
+run = "uv run --group parse python -m parse.festivals"
+
 [tasks.serve]
 description = "Serve the built site locally"
 run = "python -m http.server 8000 -d www/allabiografer.se"
