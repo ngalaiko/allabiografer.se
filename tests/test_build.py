@@ -293,3 +293,18 @@ def test_variant_is_shown_beside_the_title(db, tmp_path):
     assert '<a href="/film/filmen/" title="Filmen">Filmen</a> <span class="film-variant">(IMAX)</span>' in (
         out.read_text()
     )
+
+
+def test_variants_of_a_film_are_adjacent(db, tmp_path):
+    day = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
+    write_movie(Movie.from_dict({"tmdb_id": 7, "title_sv": "Annan"}), path=db)
+    blocks = _blocks(
+        db,
+        tmp_path,
+        [
+            *(screening(tmdb_id=42, date=day, ticket_url=f"https://example.com/a{i}") for i in range(3)),
+            *(screening(tmdb_id=7, date=day, ticket_url=f"https://example.com/b{i}") for i in range(2)),
+            screening(tmdb_id=42, date=day, ticket_url="https://example.com/c", format="IMAX"),
+        ],
+    )
+    assert [(b["film_title"], b["variant"]) for b in blocks] == [("Filmen", ""), ("Filmen", "IMAX"), ("Annan", "")]

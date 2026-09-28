@@ -873,10 +873,20 @@ def _prepare_programme_blocks(
         if block_key not in movie_earliest or key < movie_earliest[block_key]:
             movie_earliest[block_key] = key
 
+    # Films rank by all their variants together; variants of one film stay adjacent.
+    film_score: dict[int, float] = defaultdict(float)
+    film_earliest: dict[int, tuple[date, time]] = {}
+    for (tmdb_id, _), score in movie_score.items():
+        film_score[tmdb_id] += score
+    for (tmdb_id, _), earliest in movie_earliest.items():
+        film_earliest[tmdb_id] = min(earliest, film_earliest.get(tmdb_id, earliest))
+
+    def _rank(bk: tuple[int, str]) -> tuple:
+        tmdb_id = bk[0]
+        return (-film_score[tmdb_id], film_earliest[tmdb_id], tmdb_id, -movie_score[bk], movie_earliest[bk], bk[1])
+
     blocks = []
-    for block_key in sorted(
-        movie_cinemas, key=lambda bk: (-movie_score.get(bk, 0.0), movie_earliest.get(bk, (date.max, time.max)))
-    ):
+    for block_key in sorted(movie_cinemas, key=_rank):
         tmdb_id, variant = block_key
         movie = sd.movies.get(tmdb_id)
         film_title = movie.title_sv if movie else f"Film {tmdb_id}"
