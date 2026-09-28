@@ -3,7 +3,7 @@
 {% block body %}
 <main class="program" aria-label="Bioprogram, rulla i sidled för fler datum" tabindex="0" style="--day-count: {{ num_days }};">
 <header class="schedule-header">
-<nav class="schedule-breadcrumbs" aria-label="Brödsmulor"><a class="home" href="/" aria-label="Alla städer">{% include "home_icon.html" %}</a>{{ breadcrumbs|safe }}</nav>
+<nav class="schedule-breadcrumbs" aria-label="Brödsmulor"><a class="home" href="/" aria-label="Alla städer">{% include "home_icon.html" %}</a><div class="breadcrumb-label">{{ breadcrumbs|safe }}</div></nav>
 <div class="schedule-dates">
 {% for day in days %}<time datetime="{{ day.date }}">{{ day.label }}</time>{% endfor %}
 </div>

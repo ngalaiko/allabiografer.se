@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block page %}<div id="festival-page" class="schedule-scroll" role="region" tabindex="0" aria-label="Festivalprogram">{{ super() }}</div>{% endblock %}
 {% block body %}
-{% macro crumbs(tag) %}<nav class="schedule-breadcrumbs festival-crumbs" aria-label="Brödsmulor"><a class="home" href="/" aria-label="Alla städer">{% include "home_icon.html" %}</a> / {{ festival.city }} / <{{ tag }}>{{ festival.name }} {{ festival.year }}</{{ tag }}></nav>{% endmacro %}
+{% macro crumbs(tag) %}<nav class="schedule-breadcrumbs festival-crumbs" aria-label="Brödsmulor"><a class="home" href="/" aria-label="Alla städer">{% include "home_icon.html" %}</a><div class="breadcrumb-label"> / {{ festival.city }} / <{{ tag }}>{{ festival.name }} {{ festival.year }}</{{ tag }}></div></nav>{% endmacro %}
 <link rel="stylesheet" href="/i/festival.css?v={{ versions.css }}">
 <main class="program festival" data-festival="{{ festival.slug }}-{{ festival.year }}" style="--day-count: {{ festival.days|length }};">
 <header class="festival-bar">

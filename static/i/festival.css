@@ -17,7 +17,7 @@
 .festival-hint { min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; color: #555; font-size: 13px; }
 #festival-status:not(:empty) + .festival-hint-text { display: none; }
 .festival-actions { position: sticky; right: 0; display: flex; gap: 2px; margin-left: auto; padding: 0 5px; }
-.festival-crumbs > h1, .festival-crumbs > span { display: inline; margin: 0; font: inherit; }
+.festival-crumbs .breadcrumb-label > h1, .festival-crumbs .breadcrumb-label > span { display: inline; margin: 0; font: inherit; }
 @keyframes festival-pulse { from { box-shadow: 0 0 0 0 rgb(32 92 66 / .7); } to { box-shadow: 0 0 0 8px rgb(32 92 66 / 0); } }
 #festival-selected.pulse { animation: festival-pulse .6s ease-out; }
 @media (prefers-reduced-motion: reduce) { #festival-selected.pulse { animation: none; } }
