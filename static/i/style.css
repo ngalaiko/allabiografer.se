@@ -37,6 +37,7 @@ body { font: var(--cap-height-11) / 19px 'Fira Sans'; }
 .index_inner { display: flex; flex-direction: column; }
 
 .index h2 { margin-top: 2em; }
+.index_inner > h2:first-child { margin-top: 0; }
 .cities { columns: 7 150px; column-gap: 10px; }
 .cities > li { list-style: none; line-height: 1.5; margin-bottom: 0.4em; }
 .cities a { display: inline-block; min-height: 24px; }
@@ -110,7 +111,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
   .index h1 { margin: 0 0 16px; font-size: 16px; line-height: 1.5; }
   .index h1 > a, .index h1 > span { white-space: nowrap; }
   .index h2 { margin: 24px 0 6px; }
-  .index h1 + h2 { margin-top: 0; }
+  .index h1 + h2, .index_inner > h2:first-child { margin-top: 0; }
   .cities { columns: 2; column-gap: 16px; }
   .cities > li { margin: 0; break-inside: avoid; }
   .cities a { display: inline-block; padding: 6px 0; line-height: 20px; }
