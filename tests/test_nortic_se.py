@@ -85,3 +85,14 @@ def test_version_tags_move_from_title_to_screening():
     s = next(s for s in items if isinstance(s, Screening) and s.cinema_name == "Biocafé Tellus")
     assert (s.title, s.format, s.language, s.film_key) == ("Tony", "3D", "Engelska", "nortic_se:tony")
     assert any(isinstance(f, Film) and f.title == "Tony" for f in items)
+
+
+def test_languages_stated_in_the_description():
+    payload = json.loads(_FIXTURE.read_text())
+    event = next(e for e in payload["events"] if e["title"] == "Tony")
+    event["description"] = (
+        "<p>Drama.</p><p>Originalspråk: Engelskt-tal, Svensk text. Eventuellt kvarvarande biljetter</p>"
+    )
+    items = list(nortic_se._parse_payload(payload))
+    s = next(s for s in items if isinstance(s, Screening) and s.cinema_name == "Biocafé Tellus")
+    assert (s.language, s.subtitles) == ("Engelska", "Svenska")

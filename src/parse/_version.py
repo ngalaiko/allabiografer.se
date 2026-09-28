@@ -6,6 +6,7 @@ Languages are Swedish language names joined by ", ".
 """
 
 import re
+import unicodedata
 
 # Canonical tag → spellings sites use, in display order.
 FORMATS: dict[str, str] = {
@@ -90,7 +91,21 @@ _ALIASES = {
     "zh": "Kinesiska",
 }
 # Words around language names that carry no language.
-_FILLER = {"tal", "talspråk", "text", "textad", "txt", "dubbad", "dubbat", "okänd", "olika", "flera"}
+_FILLER = {
+    "tal",
+    "talspråk",
+    "text",
+    "textad",
+    "txt",
+    "dubbad",
+    "dubbat",
+    "okänd",
+    "olika",
+    "flera",
+    "tba",
+    "tbc",
+    "tbd",
+}
 _SILENT = {"inget", "stum", "stumfilm"}
 _UNSUBTITLED = {"ej", "ingen", "inget", "otextad", "otextat"}
 
@@ -105,7 +120,8 @@ def formats(*texts: str) -> str:
 
 
 def _words(text: str) -> list[str]:
-    return [w for w in re.split(r"[\s,./()]+", text.casefold()) if re.search(r"[^\W\d_]", w)]
+    text = unicodedata.normalize("NFC", text).casefold()
+    return [w for w in re.split(r"[\s,.:/()-]+", text) if re.search(r"[^\W\d_]", w)]
 
 
 def _name(word: str) -> str | None:
@@ -127,8 +143,8 @@ def _names(words: list[str]) -> str:
     for word in words:
         if word in _FILLER:
             continue
-        name = _name(word) or word.capitalize()
-        if name not in names:
+        name = _name(word) or (word.capitalize() if len(word) > 1 else "")
+        if name and name not in names:
             names.append(name)
     return ", ".join(names)
 
@@ -183,3 +199,43 @@ def split_title(title: str) -> tuple[str, str, str, str]:
             fmts.insert(0, m.group("fmt"))
         title = title[: m.start()]
     return title.strip(), formats(*fmts), spoken, subs
+
+
+# Labels that open a stated version: "Originalspråk:", "Språk:", "Tal:", "Undertexter:".
+_TEXT_LABEL = re.compile(r"(?:original)?språk\s*:|\btal\s*:|undertext(?:er)?\s*:", re.IGNORECASE)
+# Words that switch from spoken to subtitle languages: "med svensk text", "textad på svenska".
+_TEXT_SUBTITLE_WORDS = {"text", "textad", "textat", "undertext", "undertexter", "med"}
+_TEXT_SKIP = {"språk", "originalspråk", "tal", "och", "på", "dubbat", "dubbad"}
+
+
+def from_text(text: str) -> tuple[str, str]:
+    """(language, subtitles) stated in a free-text description.
+
+    Reads words after the first version label until one is neither a
+    language nor a connector: "Originalspråk: Svenskt-tal, Svensk text."
+    """
+    # Sites mix composed and decomposed å/ä/ö.
+    text = unicodedata.normalize("NFC", text)
+    m = _TEXT_LABEL.search(text)
+    if not m:
+        return "", ""
+    spoken: list[str] = []
+    subs: list[str] = []
+    target = spoken
+    words = _words(text[m.start() :])
+    for i, word in enumerate(words):
+        following = words[i + 1] if i + 1 < len(words) else ""
+        if word in _TEXT_SKIP:
+            continue
+        if word in _TEXT_SUBTITLE_WORDS:
+            target = subs
+            continue
+        if target is subs and word in _UNSUBTITLED:
+            subs.append(NO_SUBTITLES)
+            continue
+        name = _name(word)
+        if name is None:
+            break
+        # "Svensk text": an adjective before "text" names subtitles; "Engelska Text:" opens a new label.
+        (subs if following == "text" and not word.endswith("a") else target).append(name)
+    return ", ".join(dict.fromkeys(spoken)), ", ".join(dict.fromkeys(subs))

@@ -114,3 +114,38 @@ def test_subtitles(raw, expected):
 )
 def test_split_title(raw, expected):
     assert _version.split_title(raw) == expected
+
+
+@pytest.mark.parametrize("raw", ["TBA", "Tbc", "N/A"])
+def test_placeholders_are_not_languages(raw):
+    assert (_version.language(raw), _version.subtitles(raw)) == ("", "")
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Åldersgräns: Barntillåten Originalspråk: Svenskt-tal, Svensk text. Eventuellt", ("Svenska", "Svenska")),
+        ("Originalspråk: Engelskt-tal, Svensk text.", ("Engelska", "Svenska")),
+        (
+            "➤ Speltid : 82 min ➤ Språk: Svenska, Spanska ➤ Undertexter: Svenska, Engelska ➤ År",
+            (
+                "Svenska, Spanska",
+                "Svenska, Engelska",
+            ),
+        ),
+        ("En film om språk och kärlek.", ("", "")),
+        ("Speltid: 96 minuter Språk: Engelska Text: Svenska Barntillåten", ("Engelska", "Svenska")),
+        ("The Super Mario Galaxy Movie Tal: svenska (dubbat) Åldersgräns: Från 7 år", ("Svenska", "")),
+        ("Originalspråk: Engelskt-tal. Eventuellt kvarvarande biljetter", ("Engelska", "")),
+        ("Land: Sverige Språk: Svenska", ("Svenska", "")),
+        ("Språk: Norska och textad på svenska", ("Norska", "Svenska")),
+        ("Språk: Arabiska och spanska med svensk text", ("Arabiska, Spanska", "Svenska")),
+        ("Vid gala fick han vaska sitt tal och se sig besegrad.", ("", "")),
+    ],
+)
+def test_from_text(text, expected):
+    assert _version.from_text(text) == expected
+
+
+def test_from_text_reads_decomposed_letters():
+    assert _version.from_text("Språk: Svenska") == ("Svenska", "")

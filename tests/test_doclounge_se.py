@@ -71,6 +71,7 @@ def test_film_details_read_poster_synopsis_runtime_original_title_and_year():
     assert details["genres"] == ["Dokumentär"]
     assert details["title_original"] == "Första blatten på månen"
     assert details["release_date"] == "2026"
+    assert (details["language"], details["subtitles"]) == ("Svenska, Spanska", "Svenska, Engelska")
 
 
 def test_parse_yields_one_film_per_title_and_keys_every_screening(monkeypatch):
@@ -87,3 +88,5 @@ def test_parse_yields_one_film_per_title_and_keys_every_screening(monkeypatch):
     assert [f.key for f in films] == [film_key("doclounge_se", f.title) for f in films]
     assert {s.film_key for s in screenings} == {f.key for f in films}
     assert all(s.film_key for s in screenings)
+    # Every film page in the fixture is the same one.
+    assert {(s.language, s.subtitles) for s in screenings} == {("Svenska, Spanska", "Svenska, Engelska")}

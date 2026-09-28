@@ -10,6 +10,7 @@ from urllib.parse import quote, urlparse
 import requests
 from bs4 import BeautifulSoup
 
+from parse import _version
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue
@@ -150,7 +151,7 @@ def _film_slugs(html: str) -> dict[str, str]:
 
 
 def _film_details(html: str) -> dict:
-    """Poster, synopsis, runtime, original title and year from a film page."""
+    """Poster, synopsis, runtime, original title, year and languages from a film page."""
     soup = BeautifulSoup(html, "html.parser")
     script = soup.find("script", id="__NEXT_DATA__")
     if not script or not script.string:
@@ -161,14 +162,19 @@ def _film_details(html: str) -> dict:
     info = content.get("info") or {}
     hero = (movie.get("heroContent") or {}).get("hero") or {}
     year = next((node.get("name", "") for node in (movie.get("yearTax") or {}).get("nodes", [])), "")
+    body = content.get("swedishSynopsis") or content.get("description") or ""
+    # Languages ride in the synopsis' "➤" fact list.
+    language, subtitles = _version.from_text(BeautifulSoup(body, "html.parser").get_text(" "))
 
     return {
         "poster_url": _poster_url((hero.get("thumbnail") or {}).get("mediaItemUrl") or ""),
-        "overview": _synopsis(content.get("swedishSynopsis") or content.get("description") or ""),
+        "overview": _synopsis(body),
         "runtime": info.get("time") or None,
         "genres": list(_GENRES),
         "title_original": info.get("originalTitle") or "",
         "release_date": year if re.fullmatch(r"\d{4}", year) else "",
+        "language": language,
+        "subtitles": subtitles,
     }
 
 
@@ -206,10 +212,14 @@ def parse() -> Iterator[Screening | Venue | Film]:
     slugs = _film_slugs(html)
 
     films: dict[str, Film] = {}
+    # Film pages state one version for every showing: (language, subtitles).
+    versions: dict[str, tuple[str, str]] = {}
     for title in dict.fromkeys(event[0] for event in events):
         slug = slugs.get(title, "")
         url = _FILM_URL + slug if slug else ""
-        film = _films.make(_SOURCE, title, url=url, **(_details(session, url) if url else {}))
+        details = _details(session, url) if url else {}
+        versions[title] = (details.pop("language", ""), details.pop("subtitles", ""))
+        film = _films.make(_SOURCE, title, url=url, **details)
         films[title] = _films.register(film, session=session)
         yield films[title]
 
@@ -228,6 +238,8 @@ def parse() -> Iterator[Screening | Venue | Film]:
             ticket_url=ticket_url,
             cinema_name=cinema_name,
             city=city,
+            language=versions[title][0],
+            subtitles=versions[title][1],
             film_key=films[title].key,
         )
 

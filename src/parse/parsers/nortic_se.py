@@ -82,6 +82,9 @@ def _parse_payload(data: dict) -> Iterator[Screening | Venue | Film]:
     seen_venues: set[tuple[str, str]] = set()
 
     for event, (film_title, fmt, language, subtitles) in versioned:
+        # Descriptions may state "Originalspråk: Svenskt-tal, Svensk text."
+        stated = _version.from_text(_text(event.get("description")))
+        language, subtitles = language or stated[0], subtitles or stated[1]
         tmdb_id = _tmdb(film_title)
         key = film_key(_SOURCE, film_title)
 
