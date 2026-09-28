@@ -23,13 +23,13 @@ def test_showtimes_read_tickster_rows_with_screen_and_audio_tags():
             time(14, 0),
             _TICKETS,
             "Sal 1",
-            "Svenska",
-            "Svenska",
+            "Svenskt tal",
+            "Svensk text",
         ),
-        ("Superhunden Charlie", date(2026, 9, 20), time(15, 0), _TICKETS, "Sal 1", "Svenska", "Svenska"),
-        ("Tony", date(2026, 9, 20), time(18, 30), _TICKETS, "Sal 1", "Engelska", "Svenska"),
+        ("Superhunden Charlie", date(2026, 9, 20), time(15, 0), _TICKETS, "Sal 1", "Svenskt tal", "Svensk text"),
+        ("Tony", date(2026, 9, 20), time(18, 30), _TICKETS, "Sal 1", "Engelskt tal", "Svensk text"),
         ("Stora biodagen 2026", date(2026, 9, 20), time(23, 59), _TICKETS, "Sal 1", "", ""),
-        ("Tony", date(2026, 9, 23), time(18, 30), _TICKETS, "Sal 1", "Engelska", "Svenska"),
+        ("Tony", date(2026, 9, 23), time(18, 30), _TICKETS, "Sal 1", "Engelskt tal", "Svensk text"),
     ]
 
 
@@ -53,16 +53,11 @@ def test_film_details_read_the_movie_api_record():
     )
     assert details["overview"].startswith("En 19-årig Anthony Bourdain")
     assert details["runtime"] == 106
-    assert details["age_rating"] == "11"
+    assert details["age_rating"] == "11 år"
     assert details["title_original"] == "Tony"
     assert details["release_date"] == "2026-09-18"
     # The API carries a genre field, always null.
     assert details["genres"] == []
-
-
-def test_barntillaten_becomes_btl_and_an_unrated_event_no_rating():
-    assert _film_details({"rating": "Barntillåten"})["age_rating"] == "BTL"
-    assert _film_details({"rating": "Ej granskad"})["age_rating"] == ""
 
 
 def test_parse_yields_one_film_per_title_and_keys_every_screening(monkeypatch):
@@ -83,3 +78,7 @@ def test_parse_yields_one_film_per_title_and_keys_every_screening(monkeypatch):
 @contextmanager
 def _page(html: str):
     yield SimpleNamespace(goto=lambda *a, **kw: None, content=lambda: html)
+
+
+def test_parse_title_labels_subtitles():
+    assert soderkopingsbio_se._parse_title("Tony (Sv.Txt) (Eng.Tal)") == ("Tony", "Engelskt tal", "Svensk text")

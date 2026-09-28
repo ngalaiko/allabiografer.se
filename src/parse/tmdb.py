@@ -17,11 +17,13 @@ Written through :mod:`store`::
 import logging
 import re
 import time
+from dataclasses import replace
 from pathlib import Path
 from urllib.parse import urljoin
 
 import requests
 
+from parse._rating import age_rating as _age_rating
 from store import (
     DB_FILE,
     Movie,
@@ -146,7 +148,11 @@ def _lookup(
     # ------ index: title → tmdb_id (avoids re-searching) ------
     cache_key = f"{title_key(clean)}|{year or ''}|{runtime or ''}"
     cached = tmdb_index_get(cache_key, path=path)
-    if cached is not None and read_movie(cached, path=path) is not None:
+    stored = read_movie(cached, path=path) if cached is not None else None
+    if stored is not None:
+        # Movies are fetched once; ratings stored before normalisation are fixed on read.
+        if stored.age_rating != _age_rating(stored.age_rating):
+            write_movie(replace(stored, age_rating=_age_rating(stored.age_rating)), path=path)
         return cached
 
     # ------ search TMDB ------
@@ -208,7 +214,7 @@ def _lookup(
             for entry in country.get("release_dates", []):
                 cert = entry.get("certification", "")
                 if cert and not age_rating:
-                    age_rating = cert
+                    age_rating = _age_rating(cert)
                 # Prefer theatrical (type 3), then limited (2), then premiere (1)
                 rd = entry.get("release_date", "")
                 rtype = entry.get("type", 0)

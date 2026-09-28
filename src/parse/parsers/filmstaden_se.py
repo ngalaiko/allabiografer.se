@@ -22,9 +22,6 @@ _SOURCE = "filmstaden_se"
 # Poster URLs carry a width parameter; the catalog serves any width on demand.
 _POSTER_WIDTH = 800
 
-# Placeholder the API uses for films the censors have not classified.
-_UNRATED = "ej bestämd"
-
 # The image CDN serves posters only to browser user agents.
 _POSTER_UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
@@ -48,7 +45,7 @@ def _screening(
     return Screening(
         tmdb_id=tmdb_id,
         film_key=film_key,
-        title=show["movie"]["title"],
+        title=show["movie"]["title"].strip(),
         date=dt.date(),
         time=dt.time(),
         cinema_name=cinema_name,
@@ -79,11 +76,6 @@ def _release_date(raw: str | None) -> str:
     return day if re.fullmatch(r"\d{4}-\d{2}-\d{2}", day) and not day.startswith("0001") else ""
 
 
-def _age_rating(movie: dict[str, Any]) -> str:
-    name = (movie.get("rating") or {}).get("displayName") or ""
-    return "" if _UNRATED in name.casefold() else name
-
-
 def _film(movie: dict[str, Any], detail: dict[str, Any] | None = None) -> Film:
     """Film metadata from a show's movie object, enriched with its detail payload."""
     detail = detail or {}
@@ -97,7 +89,7 @@ def _film(movie: dict[str, Any], detail: dict[str, Any] | None = None) -> Film:
         runtime=movie.get("length") or None,
         genres=[g["name"] for g in movie.get("genres") or [] if g.get("name")],
         release_date=_release_date(movie.get("releaseDate")),
-        age_rating=_age_rating(movie),
+        age_rating=(movie.get("rating") or {}).get("displayName") or "",
         poster_url=_poster_url(movie),
         url=f"https://www.filmstaden.se/film/{slug}/" if slug else "",
     )
@@ -144,7 +136,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
         for show in shows:
             raw = show.get("time", "")
             movie = show.get("movie", {})
-            film_title = movie.get("title", "")
+            film_title = movie.get("title", "").strip()
             if not raw or not film_title:
                 continue
 

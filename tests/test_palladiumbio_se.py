@@ -12,15 +12,19 @@ _HTML = (_FIXTURES / "program.html").read_text()
 def test_parse_title_reads_txt_abbreviation_for_subtitles():
     assert _parse_title("Practical Magic: Family Legacy  (Tal: Eng)(Txt:Sv)") == (
         "Practical Magic: Family Legacy",
-        "Engelska",
-        "Svenska",
+        "Engelskt tal",
+        "Svensk text",
     )
 
 
 def test_parse_title_reads_tal_and_text_variants():
-    assert _parse_title("Superhunden Charlie  (Tal: Sve)(Text:Sve)") == ("Superhunden Charlie", "Svenska", "Svenska")
-    assert _parse_title("BIODLAREN (Tal:Sv) (Tex:Sv)") == ("BIODLAREN", "Svenska", "Svenska")
-    assert _parse_title("Köln 75  (Tal: Svenska (dubbat))") == ("Köln 75", "Svenska", "")
+    assert _parse_title("Superhunden Charlie  (Tal: Sve)(Text:Sve)") == (
+        "Superhunden Charlie",
+        "Svenskt tal",
+        "Svensk text",
+    )
+    assert _parse_title("BIODLAREN (Tal:Sv) (Tex:Sv)") == ("BIODLAREN", "Svenskt tal", "Svensk text")
+    assert _parse_title("Köln 75  (Tal: Svenska (dubbat))") == ("Köln 75", "Svenskt tal", "")
 
 
 def test_showtimes_read_rows_under_each_date_header():
@@ -31,8 +35,8 @@ def test_showtimes_read_rows_under_each_date_header():
             time(16, 30),
             "https://secure.tickster.com/ncz24uvkek7dwtf",
             "Salong 1",
-            "Svenska",
-            "Svenska",
+            "Svenskt tal",
+            "Svensk text",
         ),
         (
             "Superhunden Charlie",
@@ -40,8 +44,8 @@ def test_showtimes_read_rows_under_each_date_header():
             time(16, 45),
             "https://secure.tickster.com/dj1t13vvferte1v",
             "Salong 2",
-            "Svenska",
-            "Svenska",
+            "Svenskt tal",
+            "Svensk text",
         ),
         (
             "Practical Magic: Family Legacy",
@@ -49,8 +53,8 @@ def test_showtimes_read_rows_under_each_date_header():
             time(19, 0),
             "https://secure.tickster.com/ycryyrnewwt7hna",
             "Salong 2",
-            "Engelska",
-            "Svenska",
+            "Engelskt tal",
+            "Svensk text",
         ),
         (
             "SMYGPREMIÄRHeart of the Beast",
@@ -58,8 +62,8 @@ def test_showtimes_read_rows_under_each_date_header():
             time(19, 15),
             "https://secure.tickster.com/tpp9nuxffryy72t",
             "Salong 1",
-            "Engelska",
-            "Svenska",
+            "Engelskt tal",
+            "Svensk text",
         ),
     ]
 

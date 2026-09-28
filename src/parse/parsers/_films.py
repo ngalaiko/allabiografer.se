@@ -5,6 +5,7 @@ from pathlib import Path
 
 import requests
 
+from parse._rating import age_rating
 from store import DB_FILE, Film, film_key, has_poster, poster_key_for_film, write_poster
 
 log = logging.getLogger(__name__)
@@ -18,7 +19,9 @@ _session = requests.Session()
 
 
 def make(source: str, title: str, **fields) -> Film:
-    """Build a Film with its key derived from source and title."""
+    """Build a Film keyed by source and title, with its age rating normalised."""
+    title = title.strip()
+    fields["age_rating"] = age_rating(fields.get("age_rating", ""))
     return Film(key=film_key(source, title), source=source, title=title, **fields)
 
 

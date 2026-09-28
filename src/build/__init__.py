@@ -315,7 +315,7 @@ def _load_data(out_dir: Path) -> SiteData:
         film = films_by_key.get(screening.film_key) if screening.film_key else None
         if screening.tmdb_id is None:
             # Negative identifiers exist only inside the build, never in TMDB or storage.
-            title = screening.title.strip()
+            title = screening.title
             if not title:
                 raise ValueError("Screening has neither a title nor TMDB metadata")
             identifier = -int.from_bytes(hashlib.sha256(title.casefold().encode()).digest()[:8], "big")
@@ -813,22 +813,6 @@ def _compute_days(screenings: list[Screening]) -> list[date]:
     return sorted(dates)
 
 
-def _speech_label(language: str) -> str:
-    """ "Engelska" → "Engelskt tal", "Engelska, Franska" → "Engelskt, franskt tal"."""
-    if language == "Inget tal":
-        return language
-    words = [name[:-1] + "t" if name.endswith("ska") else name for name in language.split(", ")]
-    return ", ".join([words[0], *(w.lower() for w in words[1:])]) + " tal"
-
-
-def _subtitles_label(subtitles: str) -> str:
-    """ "Svenska" → "Svensk text", "Svenska, Engelska" → "Svensk, engelsk text", "Otextad" → "Ej textad"."""
-    if subtitles == "Otextad":
-        return "Ej textad"
-    words = [name[:-1] if name.endswith("ska") else name for name in subtitles.split(", ")]
-    return ", ".join([words[0], *(w.lower() for w in words[1:])]) + " text"
-
-
 def _variants(screenings: list[Screening]) -> dict[Screening, tuple[str, str]]:
     """(formats, language) per screening; language splits only films playing in several."""
     languages: dict[int, set[str]] = defaultdict(set)
@@ -920,17 +904,11 @@ def _prepare_programme_blocks(
                 h, m = divmod(movie.runtime, 60)
                 mi_parts.append(f"{h} tim. {m} min." if h else f"{m} min.")
             if movie.age_rating:
-                ar = movie.age_rating
-                if ar.isdigit():
-                    mi_parts.append(f"Från {ar} år")
-                elif ar.upper() == "BTL":
-                    mi_parts.append("Barntillåten")
-                else:
-                    mi_parts.append(ar)
+                mi_parts.append(movie.age_rating)
         if language := _only(block_languages[block_key]):
-            mi_parts.append(_speech_label(language))
+            mi_parts.append(language)
         if subtitles := _only(block_subtitles[block_key]):
-            mi_parts.append(_subtitles_label(subtitles))
+            mi_parts.append(subtitles)
 
         desc = ""
         full_desc = ""

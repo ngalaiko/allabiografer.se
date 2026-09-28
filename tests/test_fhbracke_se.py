@@ -46,6 +46,6 @@ def test_listing_and_details_combine_into_a_film():
 
     assert film.key == "fhbracke_se:the dog stars"
     assert film.runtime == 118
-    assert film.age_rating == "Fr.15 år"
+    assert film.age_rating == "Från 15 år"
     assert film.poster_url == show["poster_url"]
     assert film.url == "https://fhbracke.se/film/the-dog-stars/"

@@ -258,9 +258,9 @@ def test_formats_split_a_film_into_variant_blocks(db, tmp_path):
         db,
         tmp_path,
         [
-            screening(tmdb_id=42, date=day, ticket_url="https://example.com/a", language="Engelska"),
-            screening(tmdb_id=42, date=day, ticket_url="https://example.com/b", language="Engelska", format="IMAX"),
-            screening(tmdb_id=42, date=day, ticket_url="https://example.com/c", language="Engelska", format="IMAX"),
+            screening(tmdb_id=42, date=day, ticket_url="https://example.com/a", language="Engelskt tal"),
+            screening(tmdb_id=42, date=day, ticket_url="https://example.com/b", language="Engelskt tal", format="IMAX"),
+            screening(tmdb_id=42, date=day, ticket_url="https://example.com/c", language="Engelskt tal", format="IMAX"),
         ],
     )
     assert [(b["film_title"], b["variant"]) for b in blocks] == [("Filmen", "IMAX"), ("Filmen", "")]
@@ -273,10 +273,10 @@ def test_language_labels_only_films_playing_in_several(db, tmp_path):
         db,
         tmp_path,
         [
-            screening(tmdb_id=42, date=day, ticket_url="https://example.com/a", language="Svenska"),
-            screening(tmdb_id=42, date=day, ticket_url="https://example.com/b", language="Svenska"),
+            screening(tmdb_id=42, date=day, ticket_url="https://example.com/a", language="Svenskt tal"),
+            screening(tmdb_id=42, date=day, ticket_url="https://example.com/b", language="Svenskt tal"),
             screening(
-                tmdb_id=42, date=day, ticket_url="https://example.com/c", language="Engelska", format="Dolby Atmos"
+                tmdb_id=42, date=day, ticket_url="https://example.com/c", language="Engelskt tal", format="Dolby Atmos"
             ),
         ],
     )
@@ -291,7 +291,11 @@ def test_language_and_subtitles_go_in_the_details_line(db, tmp_path):
         tmp_path,
         [
             screening(
-                tmdb_id=42, date=day, ticket_url="https://example.com/a", language="Engelska", subtitles="Svenska"
+                tmdb_id=42,
+                date=day,
+                ticket_url="https://example.com/a",
+                language="Engelskt tal",
+                subtitles="Svensk text",
             ),
             # Unknown language joins the film's only known one.
             screening(tmdb_id=42, date=day, ticket_url="https://example.com/b"),
@@ -329,5 +333,5 @@ def test_variants_of_a_film_are_adjacent(db, tmp_path):
 
 def test_unsubtitled_reads_ej_textad(db, tmp_path):
     day = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
-    blocks = _blocks(db, tmp_path, [screening(tmdb_id=42, date=day, language="Engelska", subtitles="Otextad")])
+    blocks = _blocks(db, tmp_path, [screening(tmdb_id=42, date=day, language="Engelskt tal", subtitles="Ej textad")])
     assert blocks[0]["mi"] == "Engelskt tal • Ej textad"

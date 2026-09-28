@@ -19,9 +19,6 @@ _SOURCE = "bio_se"
 _SITE = "https://bio.se"
 _API = f"{_SITE}/api"
 
-# Ratings the API uses for "not stated".
-_NO_RATING = {"", "-", "ej angivet"}
-
 
 def _ticket_url(payment_link: str) -> str:
     """Build a ticket URL from the API's payment_link field."""
@@ -48,18 +45,6 @@ def _runtime(raw: str) -> int | None:
     return int(digits) or None if digits.isdigit() else None
 
 
-def _age_rating(raw: str) -> str:
-    """Normalise the free-text rating; empty when the API states none."""
-    text = _clean(raw)
-    lowered = text.lower()
-    if lowered in _NO_RATING:
-        return ""
-    if lowered.startswith(("bt", "barntill")):
-        return "Barntillåten"
-    m = re.fullmatch(r"(?:från\s*)?(\d+)\s*(?:\+|år)?", text, re.IGNORECASE)
-    return f"Från {m.group(1)} år" if m else text
-
-
 def _film(movie: dict, title: str) -> Film:
     """Film metadata from an API movie record, under its title without version tags."""
     genres = [g for g in (_clean(part) for part in (movie.get("genre") or "").split(",")) if g]
@@ -69,7 +54,7 @@ def _film(movie: dict, title: str) -> Film:
         overview=_text(movie.get("synopsis", "")),
         runtime=_runtime(movie.get("run_time", "")),
         genres=genres,
-        age_rating=_age_rating(movie.get("rating", "")),
+        age_rating=_clean(movie.get("rating", "")),
         poster_url=_clean(movie.get("poster_url", "")),
         url=f"{_SITE}/movie/{movie['id']}" if movie.get("id") else "",
     )

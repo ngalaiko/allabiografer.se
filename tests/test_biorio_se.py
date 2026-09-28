@@ -58,7 +58,7 @@ def test_film_details_read_poster_synopsis_runtime_genres_and_year():
     assert details["genres"] == ["Drama", "Romantik"]
     # The page states a year, never a full release date.
     assert details["release_date"] == "2000"
-    assert (details["language"], details["subtitles"]) == ("Kinesiska", "Svenska")
+    assert (details["language"], details["subtitles"]) == ("Kinesiskt tal", "Svensk text")
 
 
 def test_parse_yields_one_film_per_title_and_keys_every_screening(monkeypatch):
@@ -74,7 +74,7 @@ def test_parse_yields_one_film_per_title_and_keys_every_screening(monkeypatch):
     assert [f.key for f in films] == [film_key("biorio_se", f.title) for f in films]
     assert len(films) == 6
     assert {s.film_key for s in screenings} == {f.key for f in films}
-    assert {(s.language, s.subtitles) for s in screenings} == {("Kinesiska", "Svenska")}
+    assert {(s.language, s.subtitles) for s in screenings} == {("Kinesiskt tal", "Svensk text")}
 
 
 @contextmanager

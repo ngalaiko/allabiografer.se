@@ -18,8 +18,8 @@ def _map(show):
 def test_dubbed_and_subtitled_versions_are_distinguishable():
     dubbed, original = (_map(s) for s in sorted(_SHOWS, key=lambda s: s["time"], reverse=True))
 
-    assert (dubbed.language, dubbed.subtitles) == ("Svenska", "Svenska")
-    assert (original.language, original.subtitles) == ("Engelska", "Svenska")
+    assert (dubbed.language, dubbed.subtitles) == ("Svenskt tal", "Svensk text")
+    assert (original.language, original.subtitles) == ("Engelskt tal", "Svensk text")
 
 
 def test_show_fields():
@@ -52,7 +52,7 @@ def test_film_metadata_comes_from_show_and_detail():
     assert film.runtime == 109
     assert film.genres == ["Äventyr", "Komedi", "Animerat", "Familj"]
     assert film.release_date == "2026-09-25"
-    assert film.age_rating == "7 år"
+    assert film.age_rating == "Från 7 år"
     assert film.url == "https://www.filmstaden.se/film/bortglomda-on/"
 
 
@@ -78,3 +78,9 @@ def test_unrated_films_have_no_age_rating():
     movie = dict(_SHOWS[0]["movie"], rating={"displayName": "Åldersgräns ej bestämd"})
 
     assert _film(movie).age_rating == ""
+
+
+def test_titles_are_trimmed():
+    show = _SHOWS[0] | {"movie": _SHOWS[0]["movie"] | {"title": "Bortglömda ön "}}
+    assert _map(show).title == "Bortglömda ön"
+    assert _film(show["movie"]).title == "Bortglömda ön"

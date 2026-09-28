@@ -42,8 +42,6 @@ _LANGUAGE_CODE = re.compile(r"^[A-Z]{2}$")
 # "Speltid: 1 timme 46 min"
 _HOURS = re.compile(r"(\d+)\s*timm")
 _MINUTES = re.compile(r"(\d+)\s*min")
-# Censorship labels that carry no rating.
-_UNRATED = {"Åldergräns ej granskad", "Åldersgräns ej granskad"}
 
 
 def _parse_version(text: str) -> tuple[str, str, str]:
@@ -107,7 +105,7 @@ def _listing_film(article, title: str) -> Film:
         _SOURCE,
         title,
         runtime=_parse_duration(duration_el.get_text(" ", strip=True)) if duration_el else None,
-        age_rating="" if age_rating in _UNRATED else age_rating,
+        age_rating=age_rating,
         poster_url=_absolute(poster_el.get("src", "")) if poster_el else "",
         # Film pages render their content only for the ?city= the listing links carry.
         url=_absolute(link_el.get("href", "")) if link_el else "",

@@ -83,7 +83,7 @@ def test_version_tags_move_from_title_to_screening():
     event["title"] = "Tony 3D (Eng. tal)"
     items = list(nortic_se._parse_payload(payload))
     s = next(s for s in items if isinstance(s, Screening) and s.cinema_name == "Biocafé Tellus")
-    assert (s.title, s.format, s.language, s.film_key) == ("Tony", "3D", "Engelska", "nortic_se:tony")
+    assert (s.title, s.format, s.language, s.film_key) == ("Tony", "3D", "Engelskt tal", "nortic_se:tony")
     assert any(isinstance(f, Film) and f.title == "Tony" for f in items)
 
 
@@ -95,4 +95,4 @@ def test_languages_stated_in_the_description():
     )
     items = list(nortic_se._parse_payload(payload))
     s = next(s for s in items if isinstance(s, Screening) and s.cinema_name == "Biocafé Tellus")
-    assert (s.language, s.subtitles) == ("Engelska", "Svenska")
+    assert (s.language, s.subtitles) == ("Engelskt tal", "Svensk text")

@@ -1,82 +1,35 @@
-"""Screening versions — presentation formats and languages, normalised across sites.
+"""Screening versions — site labels normalised to the values in ``store.version``.
 
-Formats are canonical tags joined by ", " in ``FORMATS`` order; defaults (2D,
-digital, 5.1/7.1 sound) and programme labels (Familj, Klassiker…) are dropped.
-Languages are Swedish language names joined by ", ".
+Format defaults (2D, digital, 5.1/7.1 sound) and programme labels (Familj,
+Klassiker…) are dropped.
 """
 
 import re
 import unicodedata
 
-# Canonical tag → spellings sites use, in display order.
-FORMATS: dict[str, str] = {
-    "IMAX": r"imax",
-    "Dolby Cinema": r"dolby\s*cinema",
-    "Dolby Atmos": r"(?:dolby\s*)?atmos",
-    "4DX": r"4dx",
-    "ScreenX": r"screen\s*x",
-    "D-Box": r"d-?box",
-    "iSense": r"isense",
-    "Infinity Vision": r"infinity\s*vision",
-    "3D": r"3d",
-    "70 mm": r"70\s*mm",
-    "35 mm": r"35\s*mm",
-    "4K": r"4k",
-    "Laser": r"laser",
-    "XL": r"xl",
-    "VIP": r"vip",
-    "Syntolkning": r"syntolk\w*",
-}
-_FORMAT_PATTERNS = {tag: re.compile(rf"(?<![\w.]){p}(?!\w)", re.IGNORECASE) for tag, p in FORMATS.items()}
+from store.version import LANGUAGES, NO_SPEECH, NO_SUBTITLES, Format, speech_label, subtitles_label
 
-_LANGUAGES = (
-    "Svenska",
-    "Engelska",
-    "Franska",
-    "Tyska",
-    "Italienska",
-    "Spanska",
-    "Portugisiska",
-    "Japanska",
-    "Koreanska",
-    "Kinesiska",
-    "Mandarin",
-    "Kantonesiska",
-    "Finska",
-    "Norska",
-    "Danska",
-    "Isländska",
-    "Nederländska",
-    "Polska",
-    "Ryska",
-    "Ukrainska",
-    "Tjeckiska",
-    "Ungerska",
-    "Rumänska",
-    "Grekiska",
-    "Turkiska",
-    "Arabiska",
-    "Persiska",
-    "Kurdiska",
-    "Hebreiska",
-    "Hindi",
-    "Kannada",
-    "Tamil",
-    "Telugu",
-    "Thailändska",
-    "Vietnamesiska",
-    "Georgiska",
-    "Katalanska",
-    "Kazakiska",
-    "Azerbajdzjanska",
-    "Serbiska",
-    "Kroatiska",
-    "Bosniska",
-    "Estniska",
-    "Lettiska",
-    "Litauiska",
-    "Somaliska",
-)
+# Spellings sites use for each format.
+_FORMAT_SPELLINGS: dict[Format, str] = {
+    Format.IMAX: r"imax",
+    Format.DOLBY_CINEMA: r"dolby\s*cinema",
+    Format.DOLBY_ATMOS: r"(?:dolby\s*)?atmos",
+    Format.FOUR_DX: r"4dx",
+    Format.SCREENX: r"screen\s*x",
+    Format.D_BOX: r"d-?box",
+    Format.ISENSE: r"isense",
+    Format.INFINITY_VISION: r"infinity\s*vision",
+    Format.THREE_D: r"3d",
+    Format.MM_70: r"70\s*mm",
+    Format.MM_35: r"35\s*mm",
+    Format.K4: r"4k",
+    Format.LASER: r"laser",
+    Format.XL: r"xl",
+    Format.VIP: r"vip",
+    Format.AUDIO_DESCRIPTION: r"syntolk\w*",
+}
+_FORMAT_PATTERNS = {tag: re.compile(rf"(?<![\w.]){_FORMAT_SPELLINGS[tag]}(?!\w)", re.IGNORECASE) for tag in Format}
+
 # Codes that are not a prefix of the language name.
 _ALIASES = {
     "es": "Spanska",
@@ -109,9 +62,6 @@ _FILLER = {
 _SILENT = {"inget", "stum", "stumfilm"}
 _UNSUBTITLED = {"ej", "ingen", "inget", "otextad", "otextat"}
 
-NO_SPEECH = "Inget tal"
-NO_SUBTITLES = "Otextad"
-
 
 def formats(*texts: str) -> str:
     """Canonical format tags found in free-text labels."""
@@ -132,13 +82,13 @@ def _name(word: str) -> str | None:
         return None
     stems = [word, word[:-1]] if word.endswith("t") else [word]
     for stem in stems:
-        matches = [name for name in _LANGUAGES if name.casefold().startswith(stem)]
+        matches = [name for name in LANGUAGES if name.casefold().startswith(stem)]
         if len(matches) == 1:
             return matches[0]
     return None
 
 
-def _names(words: list[str]) -> str:
+def _names(words: list[str]) -> list[str]:
     names: list[str] = []
     for word in words:
         if word in _FILLER:
@@ -146,23 +96,23 @@ def _names(words: list[str]) -> str:
         name = _name(word) or (word.capitalize() if len(word) > 1 else "")
         if name and name not in names:
             names.append(name)
-    return ", ".join(names)
+    return names
 
 
 def language(text: str) -> str:
-    """Spoken language names from a site's language label."""
+    """Speech label from a site's language field."""
     words = _words(text)
     if _SILENT.intersection(words):
         return NO_SPEECH
-    return _names(words)
+    return speech_label(_names(words))
 
 
 def subtitles(text: str) -> str:
-    """Subtitle language names from a site's subtitle label."""
+    """Subtitle label from a site's subtitle field."""
     words = _words(text)
     if _UNSUBTITLED.intersection(words):
         return NO_SUBTITLES
-    return _names(words)
+    return subtitles_label(_names(words))
 
 
 _LANG_WORD = r"[^\W\d_]+"
@@ -187,12 +137,12 @@ def split_title(title: str) -> tuple[str, str, str, str]:
             name = _name(m.group("lang").casefold())
             if name is None:
                 break
-            spoken = spoken or name
+            spoken = spoken or speech_label([name])
         elif m.group("subs"):
             name = _name(m.group("subs").casefold())
             if name is None:
                 break
-            subs = subs or name
+            subs = subs or subtitles_label([name])
         elif m.group("unsub"):
             subs = subs or NO_SUBTITLES
         else:
@@ -238,4 +188,7 @@ def from_text(text: str) -> tuple[str, str]:
             break
         # "Svensk text": an adjective before "text" names subtitles; "Engelska Text:" opens a new label.
         (subs if following == "text" and not word.endswith("a") else target).append(name)
-    return ", ".join(dict.fromkeys(spoken)), ", ".join(dict.fromkeys(subs))
+    spoken_label = speech_label(list(dict.fromkeys(spoken)))
+    if NO_SUBTITLES in subs:
+        return spoken_label, NO_SUBTITLES
+    return spoken_label, subtitles_label(list(dict.fromkeys(subs)))

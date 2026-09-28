@@ -4,7 +4,7 @@ import json
 from datetime import date, time
 from pathlib import Path
 
-from parse.parsers.bio_se import _age_rating, _showtimes, _ticket_url, _venue
+from parse.parsers.bio_se import _showtimes, _ticket_url, _venue
 from store import Venue
 
 _FIXTURES = Path(__file__).parent / "fixtures" / "bio_se"
@@ -47,8 +47,8 @@ def test_showtimes_read_session_fields():
             "https://www.eurostar.se/Boka/f284624",
             "Screen 1",
             "",
-            "Engelska",
-            "Svenska",
+            "Engelskt tal",
+            "Svensk text",
         ),
         (
             "Spider-Man: Brand New Day",
@@ -57,8 +57,8 @@ def test_showtimes_read_session_fields():
             "https://www.eurostar.se/Boka/f285137",
             "Screen 3",
             "",
-            "Engelska",
-            "Svenska",
+            "Engelskt tal",
+            "Svensk text",
         ),
         (
             "Minioner & Monster",
@@ -67,7 +67,7 @@ def test_showtimes_read_session_fields():
             "https://www.eurostar.se/Boka/f285109",
             "Screen 2",
             "",
-            "Svenska",
+            "Svenskt tal",
             "",
         ),
     ]
@@ -82,8 +82,8 @@ def test_showtimes_normalise_languages():
             "https://biljetter.bioaspen.se/#/book/57503",
             "Aspen",
             "",
-            "Engelska",
-            "Svenska",
+            "Engelskt tal",
+            "Svensk text",
         )
     ]
 
@@ -116,9 +116,6 @@ def test_film_leaves_unstated_fields_empty():
 def test_film_normalises_abbreviated_ratings():
     film, *_ = next(iter(_showtimes(_films("stockholm-bio-aspen"))))
     assert film.age_rating == "Barntillåten"
-    assert _age_rating("Från 7år") == "Från 7 år"
-    assert _age_rating("7+") == "Från 7 år"
-    assert _age_rating("Ej angivet") == ""
 
 
 def test_screenings_share_their_film_key():
@@ -158,7 +155,7 @@ def test_version_tags_move_from_title_to_session_fields():
         ]
     }
     assert [row[4:] for row in (tuple(r) for r in _showtimes(payload))] == [
-        ("Salong 1", "Dolby Atmos", "Engelska", "Svenska"),
-        ("Salong 2", "IMAX", "Engelska", "Svenska"),
+        ("Salong 1", "Dolby Atmos", "Engelskt tal", "Svensk text"),
+        ("Salong 2", "IMAX", "Engelskt tal", "Svensk text"),
     ]
     assert [f.title for f, *_ in _showtimes(payload)] == ["Bortglömda ön", "Avengers: Endgame Encore"]

@@ -50,7 +50,7 @@ def test_listing_film_metadata(films):
     film = next(f for f in films if f.title == "Tony")
     assert film.key == "nfbio_se:tony"
     assert film.runtime == 106
-    assert film.age_rating == "11-årsgräns"
+    assert film.age_rating == "Från 11 år"
     assert film.url == "https://www.nfbio.se/tony?city=uppsala"
     assert film.poster_url == (
         "https://www.nfbio.se/sites/nfbio.se/files/styles/movie_poster_teaser/"
@@ -73,7 +73,7 @@ def test_film_page_fills_in_the_rest(films):
     assert film.genres == ["Drama", "Komedi"]
     assert film.release_date == "2026-09-12"
     assert film.title_original == "Tony"
-    assert film.age_rating == "11-årsgräns"
+    assert film.age_rating == "Från 11 år"
     # The film page's poster is larger than the listing's.
     assert "styles/movie_poster/" in film.poster_url
 
@@ -81,8 +81,8 @@ def test_film_page_fills_in_the_rest(films):
 def test_version_splits_into_format_language_subtitles(screenings):
     s = next(s for s in screenings if s.title == "Tony")
     assert s.format == ""
-    assert s.language == "Engelska"
-    assert s.subtitles == "Svenska"
+    assert s.language == "Engelskt tal"
+    assert s.subtitles == "Svensk text"
 
 
 def test_programme_labels_are_not_formats(screenings):
@@ -106,4 +106,4 @@ def test_parse_duration(text, expected):
 
 
 def test_bare_language_code_is_a_language():
-    assert nfbio_se._parse_version("2D, ES, (Sv.text)") == ("", "Spanska", "Svenska")
+    assert nfbio_se._parse_version("2D, ES, (Sv.text)") == ("", "Spanskt tal", "Svensk text")

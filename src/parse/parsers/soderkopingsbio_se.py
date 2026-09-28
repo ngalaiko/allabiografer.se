@@ -9,6 +9,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
+from parse import _version
 from parse.parsers import _films
 from parse.parsers._browser import page as browser_page
 from parse.parsers._tmdb_cache import lookup as _tmdb
@@ -51,7 +52,7 @@ def _parse_title(raw: str) -> tuple[str, str, str]:
         else:
             subtitles = name
 
-    return _TAG.sub("", raw).strip(), language, subtitles
+    return _TAG.sub("", raw).strip(), _version.language(language), _version.subtitles(subtitles)
 
 
 def _showtimes(html: str) -> Iterator[tuple[str, date, time, str, str, str, str]]:
@@ -107,18 +108,10 @@ def _film_details(data: dict) -> dict:
         "overview": (data.get("description") or "").strip(),
         "runtime": duration or None,
         "genres": [g.strip() for g in genre.split(",") if g.strip()],
-        "age_rating": _age_rating(data.get("rating") or ""),
+        "age_rating": data.get("rating") or "",
         "title_original": original,
         "release_date": (data.get("releaseDate") or "")[:10],
     }
-
-
-def _age_rating(text: str) -> str:
-    """'Barntillåten' and '11 år' in the site's wording; 'Ej granskad' is no rating."""
-    if text.casefold().startswith("barntillåten"):
-        return "BTL"
-    m = re.match(r"(\d+)\s*år", text)
-    return m.group(1) if m else ""
 
 
 def parse() -> Iterator[Screening | Venue | Film]:

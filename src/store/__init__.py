@@ -8,8 +8,7 @@ Tabular data lives in one SQLite file, ``data/allabiografer.db``::
     screenings  (city, cinema, date, time, screen, tmdb_id, ticket_url,
                  format, language, subtitles, title, source, film_key)
                  unique on everything but format/language/subtitles;
-                 format holds canonical tags (``parse._version.FORMATS``),
-                 language and subtitles Swedish language names
+                 format, language and subtitles hold ``store.version`` values
     movies      (tmdb_id PK, title_sv, title_original, overview_sv, genres,
                  release_date, release_date_se, runtime, poster_path,
                  vote_average, age_rating)

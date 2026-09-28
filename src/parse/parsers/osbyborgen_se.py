@@ -34,9 +34,6 @@ _MONTHS = {
     "dec": 12,
 }
 
-# Ratings the site uses for "not stated".
-_NO_RATING = {"", "-", "ej angivet"}
-
 
 def _parse_date(text: str) -> date | None:
     m = re.match(r"\w+\s+(\d{1,2})\s+(\w+)", text.strip().lower())
@@ -83,11 +80,6 @@ def _runtime(raw: object) -> int | None:
     return minutes or None
 
 
-def _age_rating(raw: object) -> str:
-    text = " ".join(str(raw or "").split())
-    return "" if text.lower() in _NO_RATING else text
-
-
 def _film_url(film_id: int | str) -> str:
     return f"{_URL}?pg=6&film={film_id}"
 
@@ -102,7 +94,7 @@ def _film(sess: dict, detail: dict) -> Film:
         overview=_text(detail.get("f_synopsis", "")),
         runtime=_runtime(detail.get("f_run_time", "")),
         genres=genres,
-        age_rating=_age_rating(detail.get("f_rating", "")),
+        age_rating=str(detail.get("f_rating") or ""),
         poster_url=detail.get("f_graphic_url") or sess.get("f_graphic_url") or "",
         url=_film_url(sess.get("f_id", "")),
     )

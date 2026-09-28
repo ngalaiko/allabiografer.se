@@ -83,7 +83,7 @@ def _parse_program_list(pl: dict) -> Iterator[Screening | Film]:
     for entry in pl.get("schedule", []):
         feature = features.get(entry.get("featureId")) or {}
         info = feature.get("info") or {}
-        film_title = info.get("title", "")
+        film_title = info.get("title", "").strip()
         if not film_title:
             continue
         if film_title == "Biosalongen abonnerad":
