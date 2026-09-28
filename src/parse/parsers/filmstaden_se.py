@@ -9,6 +9,7 @@ from typing import Any
 import requests
 from curl_cffi import requests as cffi_requests
 
+from parse import _version
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue, film_key
@@ -53,9 +54,12 @@ def _screening(
         cinema_name=cinema_name,
         city=city,
         screen=show.get("screen", {}).get("title", ""),
-        format=", ".join(a["displayName"] for a in attrs if a.get("displayName")),
-        language=(version.get("audioLanguageInfo") or {}).get("displayName", ""),
-        subtitles=(version.get("subtitlesLanguageInfo") or {}).get("displayName", ""),
+        # Version titles tag some formats the attributes miss: "Titel - 70mm".
+        format=_version.formats(
+            *(a.get("displayName") or "" for a in attrs), _version.split_title(version.get("title") or "")[1]
+        ),
+        language=_version.language((version.get("audioLanguageInfo") or {}).get("displayName", "")),
+        subtitles=_version.subtitles((version.get("subtitlesLanguageInfo") or {}).get("displayName", "")),
         ticket_url=f"https://www.filmstaden.se/bokning/kop/{show.get('remoteEntityId', '')}/",
     )
 

@@ -9,6 +9,7 @@ from datetime import date, time
 import requests
 from bs4 import BeautifulSoup
 
+from parse import _version
 from parse._util import infer_year
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
@@ -64,7 +65,7 @@ def _parse_title(raw: str) -> tuple[str, str, str]:
     # Strip everything from first parenthesis for the title
     title = re.sub(r"\s*\(.*", "", raw).strip()
 
-    return title, language, subtitles
+    return title, _version.language(language), _version.subtitles(subtitles)
 
 
 def _parse_screen(venue_text: str) -> str:

@@ -75,3 +75,13 @@ def test_every_screening_carries_its_film_key(items):
     screenings = [s for s in items if isinstance(s, Screening)]
     assert screenings
     assert all(s.film_key in keys for s in screenings)
+
+
+def test_version_tags_move_from_title_to_screening():
+    payload = json.loads(_FIXTURE.read_text())
+    event = next(e for e in payload["events"] if e["title"] == "Tony")
+    event["title"] = "Tony 3D (Eng. tal)"
+    items = list(nortic_se._parse_payload(payload))
+    s = next(s for s in items if isinstance(s, Screening) and s.cinema_name == "Biocafé Tellus")
+    assert (s.title, s.format, s.language, s.film_key) == ("Tony", "3D", "Engelska", "nortic_se:tony")
+    assert any(isinstance(f, Film) and f.title == "Tony" for f in items)

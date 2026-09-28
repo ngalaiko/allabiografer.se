@@ -65,6 +65,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .schedule-film { display: grid; grid-template-columns: 135px 310px repeat(var(--day-count), var(--day-width)); width: var(--sheet-width); background: var(--schedule-surface); border-bottom: 1px solid var(--border-color); }
 .film-title { grid-column: 2 / 4; grid-row: 1; position: sticky; left: 20px; padding: 10px var(--schedule-inset) 0; background: var(--schedule-surface); border-left: 1px solid var(--border-color); }
 .film-title h2 { font-size: 18px; line-height: 24px; margin: 0; }
+.film-variant { font-weight: 400; }
 .film-meta, .film-description { font-size: 14px; line-height: 20px; }
 .film-overview, .schedule-cinema, .schedule-times { display: contents; }
 .film-poster { grid-column: 1; grid-row: 1 / span var(--film-rows); padding: 5px; background: #fff; border-left: 1px solid var(--border-color); }

@@ -9,6 +9,7 @@ from datetime import date, time
 import requests
 from bs4 import BeautifulSoup
 
+from parse import _version
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue
@@ -68,7 +69,7 @@ def _parse_version(text: str) -> tuple[str, str, str]:
             subtitles = part
         else:
             labels.append(part)
-    return ", ".join(labels), language, subtitles
+    return _version.formats(*labels), _version.language(language), _version.subtitles(subtitles)
 
 
 def _parse_duration(text: str) -> int | None:

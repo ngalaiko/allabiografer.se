@@ -35,7 +35,7 @@ def _rows(name: str) -> list[tuple]:
 
 def test_showtimes_unescape_entities_in_titles():
     titles = {t for t, *_ in _rows("falkoping-cosmorama")}
-    assert "Minioner & Monster SV.tal" in titles
+    assert "Minioner & Monster" in titles
 
 
 def test_showtimes_read_session_fields():
@@ -61,7 +61,7 @@ def test_showtimes_read_session_fields():
             "Svenska",
         ),
         (
-            "Minioner & Monster SV.tal",
+            "Minioner & Monster",
             date(2026, 10, 4),
             time(17, 0),
             "https://www.eurostar.se/Boka/f285109",
@@ -73,7 +73,7 @@ def test_showtimes_read_session_fields():
     ]
 
 
-def test_showtimes_trim_padded_subtitles():
+def test_showtimes_normalise_languages():
     assert _rows("stockholm-bio-aspen") == [
         (
             "The Lost Boys",
@@ -82,8 +82,8 @@ def test_showtimes_trim_padded_subtitles():
             "https://biljetter.bioaspen.se/#/book/57503",
             "Aspen",
             "",
-            "Eng.",
-            "Sv.",
+            "Engelska",
+            "Svenska",
         )
     ]
 
@@ -109,7 +109,7 @@ def test_film_reads_metadata_and_strips_escaped_markup():
 
 def test_film_leaves_unstated_fields_empty():
     films = {f.title: f for f, *_ in _showtimes(_films("falkoping-cosmorama"))}
-    film = films["Minioner & Monster SV.tal"]
+    film = films["Minioner & Monster"]
     assert (film.overview, film.runtime, film.genres, film.age_rating, film.poster_url) == ("", None, [], "", "")
 
 
@@ -123,4 +123,42 @@ def test_film_normalises_abbreviated_ratings():
 
 def test_screenings_share_their_film_key():
     keys = {f.key for f, *_ in _showtimes(_films("falkoping-cosmorama"))}
-    assert keys == {"bio_se:spider man brand new day", "bio_se:minioner monster sv tal"}
+    assert keys == {"bio_se:spider man brand new day", "bio_se:minioner monster"}
+
+
+def test_version_tags_move_from_title_to_session_fields():
+    payload = {
+        "movies": [
+            {
+                "movie": {"id": 1, "title": "Bortglömda ön eng. tal ATMOS"},
+                "sessions": [
+                    {
+                        "show_date_time": "2026-10-01T18:00:00",
+                        "payment_link": "https://example.se/1",
+                        "screen_name": "Salong 1",
+                        "format": "2D Digital",
+                        "language": "",
+                        "text": "Svenska",
+                    }
+                ],
+            },
+            {
+                "movie": {"id": 2, "title": "Avengers: Endgame Encore"},
+                "sessions": [
+                    {
+                        "show_date_time": "2026-10-01T20:00:00",
+                        "payment_link": "https://example.se/2",
+                        "screen_name": "Salong 2",
+                        "format": "IMAX",
+                        "language": "Engelska",
+                        "text": "Svenska",
+                    }
+                ],
+            },
+        ]
+    }
+    assert [row[4:] for row in (tuple(r) for r in _showtimes(payload))] == [
+        ("Salong 1", "Dolby Atmos", "Engelska", "Svenska"),
+        ("Salong 2", "IMAX", "Engelska", "Svenska"),
+    ]
+    assert [f.title for f, *_ in _showtimes(payload)] == ["Bortglömda ön", "Avengers: Endgame Encore"]

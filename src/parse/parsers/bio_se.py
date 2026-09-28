@@ -8,6 +8,7 @@ from datetime import date, datetime, time
 
 import requests
 
+from parse import _version
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue
@@ -59,12 +60,12 @@ def _age_rating(raw: str) -> str:
     return f"Från {m.group(1)} år" if m else text
 
 
-def _film(movie: dict) -> Film:
-    """Film metadata from an API movie record."""
+def _film(movie: dict, title: str) -> Film:
+    """Film metadata from an API movie record, under its title without version tags."""
     genres = [g for g in (_clean(part) for part in (movie.get("genre") or "").split(",")) if g]
     return _films.make(
         _SOURCE,
-        _clean(movie.get("title", "")),
+        title,
         overview=_text(movie.get("synopsis", "")),
         runtime=_runtime(movie.get("run_time", "")),
         genres=genres,
@@ -87,7 +88,10 @@ def _venue(cinema: dict) -> Venue | None:
 def _showtimes(payload: dict) -> Iterator[tuple[Film, date, time, str, str, str, str, str]]:
     """Yield (film, date, time, ticket_url, screen, format, language, subtitles) per session."""
     for entry in payload["movies"]:
-        film = _film(entry.get("movie", {}))
+        movie = entry.get("movie", {})
+        # Versions ride in titles: "Bortglömda ön eng. tal ATMOS".
+        title, fmt, language, subtitles = _version.split_title(_clean(movie.get("title", "")))
+        film = _film(movie, title)
         if not film.title:
             continue
         for sess in entry.get("sessions", []):
@@ -104,9 +108,9 @@ def _showtimes(payload: dict) -> Iterator[tuple[Film, date, time, str, str, str,
                 when.time(),
                 url,
                 _clean(sess.get("screen_name", "")),
-                _clean(sess.get("format", "")),
-                _clean(sess.get("language", "")),
-                _clean(sess.get("text", "")),
+                _version.formats(sess.get("format", ""), fmt),
+                _version.language(sess.get("language", "")) or language,
+                _version.subtitles(sess.get("text", "")) or subtitles,
             )
 
 

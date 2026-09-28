@@ -29,8 +29,17 @@ def test_show_fields():
     assert screening.date == date(2026, 9, 26)
     assert screening.time == time(15, 45)
     assert screening.screen == "Salong 5"
-    assert screening.format == "Familj"
+    # Programme labels are not formats.
+    assert screening.format == ""
     assert screening.ticket_url == "https://www.filmstaden.se/bokning/kop/18198ee1-3600-49c5-b213-9dfc1f13529b/"
+
+
+def test_format_comes_from_attributes_and_version_title():
+    show = _SHOWS[0] | {
+        "attributes": [{"alias": "IMAX", "displayName": "IMAX"}, {"alias": "7.1", "displayName": "7.1"}],
+        "movieVersion": _SHOWS[0]["movieVersion"] | {"title": "Bortglömda ön - 70mm"},
+    }
+    assert _map(show).format == "IMAX, 70 mm"
 
 
 def test_film_metadata_comes_from_show_and_detail():

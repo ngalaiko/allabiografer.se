@@ -9,6 +9,7 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 import requests
 from bs4 import BeautifulSoup
 
+from parse import _version
 from parse._util import infer_year
 from parse.parsers import _films
 from parse.parsers._browser import page as browser_page
@@ -108,7 +109,7 @@ def _film_urls(html: str) -> dict[str, str]:
 
 
 def _film_details(html: str) -> dict:
-    """Poster, synopsis, runtime, genres and year from a film page."""
+    """Poster, synopsis, runtime, genres, year and languages from a film page."""
     soup = BeautifulSoup(html, "html.parser")
 
     credits = {}
@@ -129,6 +130,8 @@ def _film_details(html: str) -> dict:
         "runtime": _runtime(credits.get("längd", "")),
         "genres": genres,
         "release_date": _year(soup),
+        "language": _version.language(credits.get("språk", "")),
+        "subtitles": _version.subtitles(credits.get("undertext", "")),
     }
 
 
@@ -176,12 +179,17 @@ def parse() -> Iterator[Screening | Venue | Film]:
     session.headers["User-Agent"] = "Mozilla/5.0 (compatible; bio-parser/1.0)"
 
     films: dict[str, Film] = {}
+    # Film pages state one version for every showing: (language, subtitles).
+    versions: dict[str, tuple[str, str]] = {}
     for title, url in _film_urls(html).items():
-        films[title] = _films.register(_films.make(_SOURCE, title, url=url, **_details(session, url)), session=session)
+        details = _details(session, url)
+        versions[title] = (details.pop("language", ""), details.pop("subtitles", ""))
+        films[title] = _films.register(_films.make(_SOURCE, title, url=url, **details), session=session)
         yield films[title]
 
     for title, d, t, ticket_url, screen in _showtimes(html):
         film = films.get(title)
+        language, subtitles = versions.get(title, ("", ""))
         yield Screening(
             tmdb_id=_tmdb(title),
             title=title,
@@ -191,6 +199,8 @@ def parse() -> Iterator[Screening | Venue | Film]:
             cinema_name=_CINEMA,
             city=_CITY,
             screen=screen,
+            language=language,
+            subtitles=subtitles,
             film_key=film.key if film else "",
         )
 

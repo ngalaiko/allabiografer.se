@@ -12,15 +12,15 @@ _HTML = (_FIXTURES / "program.html").read_text()
 def test_parse_title_reads_txt_abbreviation_for_subtitles():
     assert _parse_title("Practical Magic: Family Legacy  (Tal: Eng)(Txt:Sv)") == (
         "Practical Magic: Family Legacy",
-        "Eng",
-        "Sv",
+        "Engelska",
+        "Svenska",
     )
 
 
 def test_parse_title_reads_tal_and_text_variants():
-    assert _parse_title("Superhunden Charlie  (Tal: Sve)(Text:Sve)") == ("Superhunden Charlie", "Sve", "Sve")
-    assert _parse_title("BIODLAREN (Tal:Sv) (Tex:Sv)") == ("BIODLAREN", "Sv", "Sv")
-    assert _parse_title("Köln 75  (Tal: Svenska (dubbat))") == ("Köln 75", "Svenska (dubbat)", "")
+    assert _parse_title("Superhunden Charlie  (Tal: Sve)(Text:Sve)") == ("Superhunden Charlie", "Svenska", "Svenska")
+    assert _parse_title("BIODLAREN (Tal:Sv) (Tex:Sv)") == ("BIODLAREN", "Svenska", "Svenska")
+    assert _parse_title("Köln 75  (Tal: Svenska (dubbat))") == ("Köln 75", "Svenska", "")
 
 
 def test_showtimes_read_rows_under_each_date_header():
@@ -31,8 +31,8 @@ def test_showtimes_read_rows_under_each_date_header():
             time(16, 30),
             "https://secure.tickster.com/ncz24uvkek7dwtf",
             "Salong 1",
-            "Sve",
-            "Sve",
+            "Svenska",
+            "Svenska",
         ),
         (
             "Superhunden Charlie",
@@ -40,8 +40,8 @@ def test_showtimes_read_rows_under_each_date_header():
             time(16, 45),
             "https://secure.tickster.com/dj1t13vvferte1v",
             "Salong 2",
-            "Sve",
-            "Sve",
+            "Svenska",
+            "Svenska",
         ),
         (
             "Practical Magic: Family Legacy",
@@ -49,8 +49,8 @@ def test_showtimes_read_rows_under_each_date_header():
             time(19, 0),
             "https://secure.tickster.com/ycryyrnewwt7hna",
             "Salong 2",
-            "Eng",
-            "Sv",
+            "Engelska",
+            "Svenska",
         ),
         (
             "SMYGPREMIÄRHeart of the Beast",
@@ -58,8 +58,8 @@ def test_showtimes_read_rows_under_each_date_header():
             time(19, 15),
             "https://secure.tickster.com/tpp9nuxffryy72t",
             "Salong 1",
-            "Eng",
-            "Sve",
+            "Engelska",
+            "Svenska",
         ),
     ]
 

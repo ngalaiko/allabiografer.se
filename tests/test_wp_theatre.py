@@ -85,3 +85,11 @@ def test_series_prefix_stripped_for_tmdb(tmdb_calls):
 )
 def test_lookup_title(text, expected):
     assert wp_theatre._lookup_title(text) == expected
+
+
+def test_version_tags_move_from_title_to_screening(tmdb_calls):
+    html = (_FIXTURES / "production-tony.html").read_text().replace(">Tony</h1>", ">Tony (Sv. tal)</h1>")
+    items = list(wp_theatre._parse_production(html, _SITE))
+    screening = next(i for i in items if not isinstance(i, Film))
+    assert (screening.title, screening.language) == ("Tony", "Svenska")
+    assert next(i for i in items if isinstance(i, Film)).key == "wp_theatre:tony"

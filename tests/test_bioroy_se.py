@@ -40,12 +40,12 @@ def test_private_hire_and_sold_out_excluded(screenings):
 
 def test_languages_from_feature_info(screenings):
     tony = next(s for s in screenings if s.title == "Tony")
-    assert tony.language == "ENG"
-    assert tony.subtitles == "SV"
+    assert tony.language == "Engelska"
+    assert tony.subtitles == "Svenska"
 
     silent = next(s for s in screenings if s.title == "Nosferatu")
-    assert silent.language == "STUM"
-    assert silent.subtitles == "SV"
+    assert silent.language == "Inget tal"
+    assert silent.subtitles == "Svenska"
 
 
 def test_screening_fields(screenings):

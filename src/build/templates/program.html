@@ -11,7 +11,7 @@
 {% for block in blocks %}
 <article class="schedule-film" style="--film-rows: {{ block.cinemas|length + 2 }};">
 <div class="film-title">
-<h2><a href="{{ block.film_url }}" title="{{ block.film_title }}">{{ block.film_title }}</a></h2>
+<h2><a href="{{ block.film_url }}" title="{{ block.film_title }}">{{ block.film_title }}</a>{% if block.variant %} <span class="film-variant">({{ block.variant }})</span>{% endif %}</h2>
 </div>
 <div class="film-overview">
 <div class="film-poster">{% if block.poster_url %}<img src="{{ block.poster_url }}" alt="" width="125" height="177"
@@ -34,7 +34,7 @@
 {% set day_label = days[loop.index0].label %}
 <div class="schedule-cell" style="--day-column: {{ loop.index }};" {% if cell.times %}role="group" aria-label="{{ day_label }}"{% endif %}>
 {% for t in cell.times %}
-{% if t.past %}<span class="past" style="--time-left: {{ t.left }}px; --time-top: {{ t.top }}px;">{{ t.label }}</span>{% else %}<a href="{{ t.url }}" style="--time-left: {{ t.left }}px; --time-top: {{ t.top }}px;" target="_blank" rel="noopener" aria-label="{{ block.film_title }}, {{ cinema.name }}, {{ day_label }} {{ t.label }}">{{ t.label }}</a>{% endif %}
+{% if t.past %}<span class="past" style="--time-left: {{ t.left }}px; --time-top: {{ t.top }}px;">{{ t.label }}</span>{% else %}<a href="{{ t.url }}" style="--time-left: {{ t.left }}px; --time-top: {{ t.top }}px;" target="_blank" rel="noopener" aria-label="{{ block.film_title }}{% if block.variant %} ({{ block.variant }}){% endif %}, {{ cinema.name }}, {{ day_label }} {{ t.label }}">{{ t.label }}</a>{% endif %}
 {% endfor %}
 </div>
 {% endfor %}

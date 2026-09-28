@@ -8,6 +8,7 @@ from datetime import date, time
 
 import requests
 
+from parse import _version
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue, film_key
@@ -41,14 +42,14 @@ def _runtime(event: dict) -> int | None:
     return max(lengths) or None
 
 
-def _film(event: dict) -> Film:
-    """Film metadata carried by one event.
+def _film(event: dict, title: str) -> Film:
+    """Film metadata carried by one event, under its title without version tags.
 
     The API exposes no poster: its images are 16:9 event banners.
     """
     return _films.make(
         _SOURCE,
-        event["title"],
+        title,
         overview=_text(event.get("description")) or _text(event.get("shortDescription")),
         runtime=_runtime(event),
         url=event.get("link") or "",
@@ -71,16 +72,16 @@ def _parse_payload(data: dict) -> Iterator[Screening | Venue | Film]:
     bio_events = [e for e in data["events"] if e.get("category") in _CATEGORIES and e.get("title")]
     log.info("nortic.se: %d bio events", len(bio_events))
 
+    versioned = [(e, _version.split_title(e["title"])) for e in bio_events]
     films: dict[str, Film] = {}
-    for event in bio_events:
-        film = _film(event)
+    for event, (title, *_) in versioned:
+        film = _film(event, title)
         films[film.key] = _merge(films[film.key], film) if film.key in films else film
     yield from films.values()
 
     seen_venues: set[tuple[str, str]] = set()
 
-    for event in bio_events:
-        film_title = event["title"]
+    for event, (film_title, fmt, language, subtitles) in versioned:
         tmdb_id = _tmdb(film_title)
         key = film_key(_SOURCE, film_title)
 
@@ -119,6 +120,9 @@ def _parse_payload(data: dict) -> Iterator[Screening | Venue | Film]:
                 cinema_name=cinema_name,
                 city=city,
                 ticket_url=ticket_url,
+                format=fmt,
+                language=language,
+                subtitles=subtitles,
                 film_key=key,
             )
             count += 1

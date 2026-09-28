@@ -10,6 +10,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import requests
 
+from parse import _version
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue
@@ -110,8 +111,8 @@ def _parse_program_list(pl: dict) -> Iterator[Screening | Film]:
                     cinema_name=_CINEMA,
                     city=_CITY,
                     screen=show.get("saloonLabel", ""),
-                    language=info.get("audioLanguage") or "",
-                    subtitles=info.get("textLanguage") or "",
+                    language=_version.language(info.get("audioLanguage") or ""),
+                    subtitles=_version.subtitles(info.get("textLanguage") or ""),
                     film_key=film.key,
                 )
             )

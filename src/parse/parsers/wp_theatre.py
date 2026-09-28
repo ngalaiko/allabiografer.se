@@ -12,6 +12,7 @@ from datetime import date, time
 import requests
 from bs4 import BeautifulSoup
 
+from parse import _version
 from parse._util import infer_year
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
@@ -136,7 +137,7 @@ def _parse_production(html: str, site: dict) -> Iterator[Screening | Film]:
     psoup = BeautifulSoup(html, "html.parser")
 
     h1 = psoup.select_one("h1.wp_theatre_production_title") or psoup.select_one("h1")
-    film_title = h1.get_text(strip=True) if h1 else ""
+    film_title, fmt, language, subtitles = _version.split_title(h1.get_text(strip=True) if h1 else "")
     if not film_title:
         return
 
@@ -169,6 +170,9 @@ def _parse_production(html: str, site: dict) -> Iterator[Screening | Film]:
             cinema_name=site["name"],
             city=site["city"],
             screen=venue_el.get_text(strip=True) if venue_el else "",
+            format=fmt,
+            language=language,
+            subtitles=subtitles,
             film_key=film.key,
         )
 

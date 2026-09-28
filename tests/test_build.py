@@ -242,3 +242,54 @@ def test_programme_synopsis_has_expand_toggle(db, tmp_path):
     assert 'class="synopsis" id="synopsis-filmen"' in html
     assert 'data-more="filmen" aria-controls="synopsis-filmen"' in html
     assert "/i/synopsis.js?v=" in html
+
+
+def _blocks(db, tmp_path, screenings):
+    write_movie(Movie.from_dict({"tmdb_id": 42, "title_sv": "Filmen"}), path=db)
+    write_screenings(screenings, path=db)
+    sd = build._load_data(tmp_path / "out")
+    days = build._compute_days(sd.screenings)
+    return build._prepare_programme_blocks(sd, sd.screenings, days, city="Stockholm")
+
+
+def test_formats_split_a_film_into_variant_blocks(db, tmp_path):
+    day = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
+    blocks = _blocks(
+        db,
+        tmp_path,
+        [
+            screening(tmdb_id=42, date=day, ticket_url="https://example.com/a", language="Engelska"),
+            screening(tmdb_id=42, date=day, ticket_url="https://example.com/b", language="Engelska", format="IMAX"),
+            screening(tmdb_id=42, date=day, ticket_url="https://example.com/c", language="Engelska", format="IMAX"),
+        ],
+    )
+    assert [(b["film_title"], b["variant"]) for b in blocks] == [("Filmen", "IMAX"), ("Filmen", "")]
+    assert len({b["film_id"] for b in blocks}) == 2
+
+
+def test_language_labels_only_films_playing_in_several(db, tmp_path):
+    day = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
+    blocks = _blocks(
+        db,
+        tmp_path,
+        [
+            screening(tmdb_id=42, date=day, ticket_url="https://example.com/a", language="Svenska"),
+            screening(tmdb_id=42, date=day, ticket_url="https://example.com/b", language="Svenska"),
+            screening(
+                tmdb_id=42, date=day, ticket_url="https://example.com/c", language="Engelska", format="Dolby Atmos"
+            ),
+        ],
+    )
+    assert [b["variant"] for b in blocks] == ["Svenskt tal", "Engelskt tal, Dolby Atmos"]
+
+
+def test_variant_is_shown_beside_the_title(db, tmp_path):
+    day = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
+    write_movie(Movie.from_dict({"tmdb_id": 42, "title_sv": "Filmen"}), path=db)
+    write_screenings([screening(tmdb_id=42, date=day, format="IMAX")], path=db)
+    sd = build._load_data(tmp_path / "out")
+    out = tmp_path / "out" / "index.html"
+    build._write_programme(build._make_env(), sd, sd.screenings, title="T", breadcrumbs="", out_path=out, canonical="/")
+    assert '<a href="/film/filmen/" title="Filmen">Filmen</a> <span class="film-variant">(IMAX)</span>' in (
+        out.read_text()
+    )

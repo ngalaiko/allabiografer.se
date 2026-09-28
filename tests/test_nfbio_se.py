@@ -80,16 +80,16 @@ def test_film_page_fills_in_the_rest(films):
 
 def test_version_splits_into_format_language_subtitles(screenings):
     s = next(s for s in screenings if s.title == "Tony")
-    assert s.format == "2D"
-    assert s.language == "Eng."
-    assert s.subtitles == "Sv."
+    assert s.format == ""
+    assert s.language == "Engelska"
+    assert s.subtitles == "Svenska"
 
 
-def test_extra_version_labels_kept_in_format(screenings):
+def test_programme_labels_are_not_formats(screenings):
     s = next(s for s in screenings if s.date.isoformat() == "2026-09-20")
-    assert s.format == "2D, Biodagen"
+    assert s.format == ""
     s4dx = next(s for s in screenings if "4DX" in s.format)
-    assert s4dx.format == "4DX 3D"
+    assert s4dx.format == "4DX, 3D"
 
 
 @pytest.mark.parametrize(
@@ -106,4 +106,4 @@ def test_parse_duration(text, expected):
 
 
 def test_bare_language_code_is_a_language():
-    assert nfbio_se._parse_version("2D, ES, (Sv.text)") == ("2D", "ES", "Sv.")
+    assert nfbio_se._parse_version("2D, ES, (Sv.text)") == ("", "Spanska", "Svenska")
