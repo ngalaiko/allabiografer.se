@@ -67,6 +67,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .film-title h2 { font-size: 18px; line-height: 24px; margin: 0; }
 .film-variant { font-weight: 400; }
 .film-meta, .film-description { font-size: 14px; line-height: 20px; }
+.film-meta { white-space: nowrap; }
 .film-overview, .schedule-cinema, .schedule-times { display: contents; }
 .film-poster { grid-column: 1; grid-row: 1 / span var(--film-rows); padding: 5px; background: #fff; border-left: 1px solid var(--border-color); }
 .film-poster img, .film-poster .poster-placeholder { position: sticky; top: calc(55px + var(--schedule-top)); width: 125px; height: 177px; object-fit: cover; border-radius: 2px; background: #D5D5D5; }
@@ -93,7 +94,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
   .schedule-film { display: block; background: #fff; border: 0; }
   .film-title { display: flex; align-items: center; left: 0; width: 100vw; height: var(--film-height); top: calc(var(--header-height) + var(--schedule-top)); z-index: 30; padding: 3px var(--schedule-inset); border: 0; border-bottom: 1px solid var(--border-color); }
   .film-title h2 { min-width: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-  .film-meta { margin-bottom: 8px; }
+  .film-meta { margin-bottom: 8px; white-space: normal; }
   .film-overview { position: sticky; left: 0; width: 100vw; display: flex; align-items: flex-start; gap: var(--schedule-inset); padding: 10px var(--schedule-inset); border-bottom: 1px solid var(--border-color); }
   .film-poster { flex: 0 0 52px; padding: 0; border: 0; }
   .film-poster:empty { display: none; }

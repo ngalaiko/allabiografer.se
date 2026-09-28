@@ -822,9 +822,9 @@ def _speech_label(language: str) -> str:
 
 
 def _subtitles_label(subtitles: str) -> str:
-    """ "Svenska" → "Svensk text", "Svenska, Engelska" → "Svensk, engelsk text"."""
+    """ "Svenska" → "Svensk text", "Svenska, Engelska" → "Svensk, engelsk text", "Otextad" → "Ej textad"."""
     if subtitles == "Otextad":
-        return subtitles
+        return "Ej textad"
     words = [name[:-1] if name.endswith("ska") else name for name in subtitles.split(", ")]
     return ", ".join([words[0], *(w.lower() for w in words[1:])]) + " text"
 

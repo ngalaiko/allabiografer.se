@@ -325,3 +325,9 @@ def test_variants_of_a_film_are_adjacent(db, tmp_path):
         ],
     )
     assert [(b["film_title"], b["variant"]) for b in blocks] == [("Filmen", ""), ("Filmen", "IMAX"), ("Annan", "")]
+
+
+def test_unsubtitled_reads_ej_textad(db, tmp_path):
+    day = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
+    blocks = _blocks(db, tmp_path, [screening(tmdb_id=42, date=day, language="Engelska", subtitles="Otextad")])
+    assert blocks[0]["mi"] == "Engelskt tal • Ej textad"
