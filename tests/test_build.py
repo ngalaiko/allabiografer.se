@@ -280,7 +280,24 @@ def test_language_labels_only_films_playing_in_several(db, tmp_path):
             ),
         ],
     )
-    assert [b["variant"] for b in blocks] == ["Svenskt tal", "Engelskt tal, Dolby Atmos"]
+    assert [b["variant"] for b in blocks] == ["", "Dolby Atmos"]
+    assert [b["mi"] for b in blocks] == ["Svenskt tal", "Engelskt tal"]
+
+
+def test_language_and_subtitles_go_in_the_details_line(db, tmp_path):
+    day = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
+    blocks = _blocks(
+        db,
+        tmp_path,
+        [
+            screening(
+                tmdb_id=42, date=day, ticket_url="https://example.com/a", language="Engelska", subtitles="Svenska"
+            ),
+            # Unknown language joins the film's only known one.
+            screening(tmdb_id=42, date=day, ticket_url="https://example.com/b"),
+        ],
+    )
+    assert [(b["variant"], b["mi"]) for b in blocks] == [("", "Engelskt tal • Svensk text")]
 
 
 def test_variant_is_shown_beside_the_title(db, tmp_path):

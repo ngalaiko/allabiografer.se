@@ -821,20 +821,27 @@ def _speech_label(language: str) -> str:
     return ", ".join([words[0], *(w.lower() for w in words[1:])]) + " tal"
 
 
-def _variants(screenings: list[Screening]) -> dict[Screening, str]:
-    """Version label per screening: formats, and speech when a film plays in several languages."""
+def _subtitles_label(subtitles: str) -> str:
+    """ "Svenska" → "Svensk text", "Svenska, Engelska" → "Svensk, engelsk text"."""
+    if subtitles == "Otextad":
+        return subtitles
+    words = [name[:-1] if name.endswith("ska") else name for name in subtitles.split(", ")]
+    return ", ".join([words[0], *(w.lower() for w in words[1:])]) + " text"
+
+
+def _variants(screenings: list[Screening]) -> dict[Screening, tuple[str, str]]:
+    """(formats, language) per screening; language splits only films playing in several."""
     languages: dict[int, set[str]] = defaultdict(set)
     for s in screenings:
         if s.language:
             languages[s.tmdb_id].add(s.language)
-    return {
-        s: ", ".join(
-            part
-            for part in (_speech_label(s.language) if len(languages[s.tmdb_id]) > 1 else "", s.format)
-            if part
-        )
-        for s in screenings
-    }
+    return {s: (s.format, s.language if len(languages[s.tmdb_id]) > 1 else "") for s in screenings}
+
+
+def _only(values: set[str]) -> str:
+    """The one known value, or empty when unknown or mixed."""
+    known = values - {""}
+    return next(iter(known)) if len(known) == 1 else ""
 
 
 def _prepare_programme_blocks(
@@ -851,22 +858,26 @@ def _prepare_programme_blocks(
     filtered = [s for s in screenings if s.date in day_set]
     variants = _variants(filtered)
 
-    # (movie, variant) → (city, cinema) → day → [(time, url)]
-    movie_cinemas: dict[tuple[int, str], dict[tuple[str, str], dict[int, list[tuple[time, str]]]]] = defaultdict(
+    # (movie, formats, language) → (city, cinema) → day → [(time, url)]
+    movie_cinemas: dict[tuple[int, str, str], dict[tuple[str, str], dict[int, list[tuple[time, str]]]]] = defaultdict(
         lambda: defaultdict(lambda: defaultdict(list))
     )
     # Ranking score: each screening contributes more the sooner it is, so films
     # playing a lot in the near columns float to the top rather than films that
     # are blank for weeks and then burst with screenings far in the future.
-    movie_score: dict[tuple[int, str], float] = defaultdict(float)
-    movie_earliest: dict[tuple[int, str], tuple[date, time]] = {}
+    movie_score: dict[tuple[int, str, str], float] = defaultdict(float)
+    movie_earliest: dict[tuple[int, str, str], tuple[date, time]] = {}
+    block_languages: dict[tuple[int, str, str], set[str]] = defaultdict(set)
+    block_subtitles: dict[tuple[int, str, str], set[str]] = defaultdict(set)
 
     for s in filtered:
         try:
             day_idx = days.index(s.date)
         except ValueError:
             continue
-        block_key = (s.tmdb_id, variants[s])
+        block_key = (s.tmdb_id, *variants[s])
+        block_languages[block_key].add(s.language)
+        block_subtitles[block_key].add(s.subtitles)
         movie_cinemas[block_key][(s.city, s.cinema_name)][day_idx].append((s.time, s.ticket_url))
         movie_score[block_key] += 1.0 / (1 + day_idx)
         key = (s.date, s.time)
@@ -876,18 +887,18 @@ def _prepare_programme_blocks(
     # Films rank by all their variants together; variants of one film stay adjacent.
     film_score: dict[int, float] = defaultdict(float)
     film_earliest: dict[int, tuple[date, time]] = {}
-    for (tmdb_id, _), score in movie_score.items():
+    for (tmdb_id, *_), score in movie_score.items():
         film_score[tmdb_id] += score
-    for (tmdb_id, _), earliest in movie_earliest.items():
+    for (tmdb_id, *_), earliest in movie_earliest.items():
         film_earliest[tmdb_id] = min(earliest, film_earliest.get(tmdb_id, earliest))
 
-    def _rank(bk: tuple[int, str]) -> tuple:
+    def _rank(bk: tuple[int, str, str]) -> tuple:
         tmdb_id = bk[0]
-        return (-film_score[tmdb_id], film_earliest[tmdb_id], tmdb_id, -movie_score[bk], movie_earliest[bk], bk[1])
+        return (-film_score[tmdb_id], film_earliest[tmdb_id], tmdb_id, -movie_score[bk], movie_earliest[bk], bk[1:])
 
     blocks = []
     for block_key in sorted(movie_cinemas, key=_rank):
-        tmdb_id, variant = block_key
+        tmdb_id, variant, _ = block_key
         movie = sd.movies.get(tmdb_id)
         film_title = movie.title_sv if movie else f"Film {tmdb_id}"
         film_slug = sd.film_slugs.get(film_title, _slugify_sv(film_title))
@@ -916,6 +927,10 @@ def _prepare_programme_blocks(
                     mi_parts.append("Barntillåten")
                 else:
                     mi_parts.append(ar)
+        if language := _only(block_languages[block_key]):
+            mi_parts.append(_speech_label(language))
+        if subtitles := _only(block_subtitles[block_key]):
+            mi_parts.append(_subtitles_label(subtitles))
 
         desc = ""
         full_desc = ""
@@ -979,7 +994,7 @@ def _prepare_programme_blocks(
         blocks.append(
             {
                 "poster_url": _poster_url(sd, tmdb_id),
-                "film_id": f"{film_slug}-{_slugify_sv(variant)}" if variant else film_slug,
+                "film_id": "-".join([film_slug, *(_slugify_sv(part) for part in block_key[1:] if part)]),
                 "film_title": film_title,
                 "variant": variant,
                 "film_url": film_url,
