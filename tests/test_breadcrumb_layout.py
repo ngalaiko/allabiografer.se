@@ -1,4 +1,4 @@
-"""Browser geometry checks for shared breadcrumbs."""
+"""Browser geometry checks for breadcrumbs and cinema locations."""
 
 from base64 import b64encode
 from pathlib import Path
@@ -61,3 +61,48 @@ def test_breadcrumb_centers(browser, width, template):
         assert geometry["textOffset"] is not None
         assert abs(geometry["textOffset"]) <= 0.5
     page.close()
+
+
+@pytest.mark.parametrize("width", [375, 700, 1280])
+@pytest.mark.parametrize("city", ["", "Göteborg"])
+def test_cinema_address_layout(browser, width, city):
+    html = (
+        _make_env()
+        .get_template("program.html")
+        .render(
+            num_days=1,
+            days=[{"date": "2026-09-30", "label": "Ons 30"}],
+            blocks=[
+                {
+                    "film_title": "Film",
+                    "cinemas": [
+                        {
+                            "name": "Biograf",
+                            "url": "/bio/",
+                            "address": "Storgatan 1",
+                            "city_name": city,
+                            "city_url": "/goteborg/",
+                            "min_height": 60,
+                            "cells": [],
+                        }
+                    ],
+                }
+            ],
+            versions={"css": "test"},
+        )
+    )
+    page = browser.new_page(viewport={"width": width, "height": 800})
+    try:
+        page.set_content(html)
+        page.add_style_tag(content=(ROOT / "static/i/style.css").read_text())
+        address = page.locator(".cinema-address")
+        assert address.is_visible()
+        name_box = page.locator(".cinema-name > a").bounding_box()
+        address_box = address.bounding_box()
+        if width <= 700:
+            assert address_box["x"] > name_box["x"] + name_box["width"]
+            assert abs(address_box["y"] - name_box["y"]) < 4
+        else:
+            assert address_box["y"] > name_box["y"] + name_box["height"]
+    finally:
+        page.close()

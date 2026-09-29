@@ -104,8 +104,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
   .schedule-cinema { display: block; border-bottom: 1px solid var(--border-color); }
   .cinema-name { top: calc(var(--header-height) + var(--film-height) + var(--schedule-top)); left: 0; width: 100vw; min-height: 0; border: 0; border-bottom: 1px solid var(--border-color); }
   .cinema-location { display: inline; }
-  .cinema-location a::before { content: " · "; }
-  .cinema-address { display: none; }
+  .cinema-location::before { content: " · "; }
   .schedule-times { position: relative; display: grid; grid-template-columns: repeat(var(--day-count), var(--day-width)); min-height: var(--cinema-height); }
   .schedule-cell { position: static; grid-column: var(--day-column); grid-row: 1; border-top: 0; }
   .schedule-cell > a, .schedule-cell > span { left: calc((var(--day-column) - 1) * var(--day-width) + var(--time-left)); top: calc(var(--time-top) + 1px); }
