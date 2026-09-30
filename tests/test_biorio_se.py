@@ -5,9 +5,13 @@ from datetime import date, time
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from parse.parsers import biorio_se
 from parse.parsers.biorio_se import _film_details, _film_urls, _showtimes
 from store import Film, Screening, film_key
+
+pytestmark = pytest.mark.usefixtures("parser_clock")
 
 _HTML = (Path(__file__).parent / "fixtures" / "biorio_se" / "kalender.html").read_text()
 

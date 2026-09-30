@@ -3,8 +3,12 @@
 from datetime import date, time
 from pathlib import Path
 
+import pytest
+
 from parse.parsers import _films
 from parse.parsers.fhbracke_se import _SOURCE, _details, _listings
+
+pytestmark = pytest.mark.usefixtures("parser_clock")
 
 _FIXTURES = Path(__file__).parent / "fixtures" / "fhbracke_se"
 _BIO = (_FIXTURES / "bio.html").read_text()

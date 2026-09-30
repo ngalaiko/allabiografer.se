@@ -3,7 +3,11 @@
 from datetime import date, time
 from pathlib import Path
 
+import pytest
+
 from parse.parsers.kiviksbio_se import _overview, _showtimes
+
+pytestmark = pytest.mark.usefixtures("parser_clock")
 
 _FIXTURES = Path(__file__).parent / "fixtures" / "kiviksbio_se"
 _HTML = (_FIXTURES / "evenemang.html").read_text()

@@ -7,6 +7,8 @@ import pytest
 from parse.parsers import wp_theatre
 from store import Film
 
+pytestmark = pytest.mark.usefixtures("parser_clock")
+
 _FIXTURES = Path(__file__).parent / "fixtures" / "wp_theatre"
 _SITE = {"city": "Göteborg", "name": "Capitol"}
 
