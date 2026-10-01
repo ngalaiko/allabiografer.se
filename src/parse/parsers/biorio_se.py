@@ -130,8 +130,8 @@ def _film_details(html: str) -> dict:
         "runtime": _runtime(credits.get("längd", "")),
         "genres": genres,
         "release_date": _year(soup),
-        "language": _version.language(credits.get("språk", "")),
-        "subtitles": _version.subtitles(credits.get("undertext", "")),
+        "original_languages": _version.languages(credits.get("språk", "")),
+        "subtitle_label": _version.subtitles(credits.get("undertext", "")),
     }
 
 
@@ -179,17 +179,15 @@ def parse() -> Iterator[Screening | Venue | Film]:
     session.headers["User-Agent"] = "Mozilla/5.0 (compatible; bio-parser/1.0)"
 
     films: dict[str, Film] = {}
-    # Film pages state one version for every showing: (language, subtitles).
-    versions: dict[str, tuple[str, str]] = {}
+    subtitles: dict[str, str] = {}
     for title, url in _film_urls(html).items():
         details = _details(session, url)
-        versions[title] = (details.pop("language", ""), details.pop("subtitles", ""))
+        subtitles[title] = details.pop("subtitle_label", "")
         films[title] = _films.register(_films.make(_SOURCE, title, url=url, **details), session=session)
         yield films[title]
 
     for title, d, t, ticket_url, screen in _showtimes(html):
         film = films.get(title)
-        language, subtitles = versions.get(title, ("", ""))
         yield Screening(
             tmdb_id=_tmdb(title),
             title=title,
@@ -199,8 +197,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
             cinema_name=_CINEMA,
             city=_CITY,
             screen=screen,
-            language=language,
-            subtitles=subtitles,
+            **_version.screening_facts(subtitles=subtitles.get(title, "")),
             film_key=film.key if film else "",
         )
 

@@ -30,7 +30,7 @@ def test_venue_skips_records_without_a_location():
 
 
 def _rows(name: str) -> list[tuple]:
-    return [(f.title, *rest) for f, *rest in _showtimes(_films(name))]
+    return [tuple((f.title, *rest)[:8]) for f, *rest in _showtimes(_films(name))]
 
 
 def test_showtimes_unescape_entities_in_titles():
@@ -47,7 +47,7 @@ def test_showtimes_read_session_fields():
             "https://www.eurostar.se/Boka/f284624",
             "Screen 1",
             "",
-            "Engelskt tal",
+            "",
             "Svensk text",
         ),
         (
@@ -57,7 +57,7 @@ def test_showtimes_read_session_fields():
             "https://www.eurostar.se/Boka/f285137",
             "Screen 3",
             "",
-            "Engelskt tal",
+            "",
             "Svensk text",
         ),
         (
@@ -82,7 +82,7 @@ def test_showtimes_normalise_languages():
             "https://biljetter.bioaspen.se/#/book/57503",
             "Aspen",
             "",
-            "Engelskt tal",
+            "",
             "Svensk text",
         )
     ]
@@ -105,6 +105,7 @@ def test_film_reads_metadata_and_strips_escaped_markup():
     assert film.age_rating == "Från 11 år"
     assert film.url == "https://bio.se/movie/42156"
     assert film.poster_url.endswith("spider-man-brandnewday_reflection_144")
+    assert {language.value for language in film.original_languages} == {"Engelska"}
 
 
 def test_film_leaves_unstated_fields_empty():
@@ -155,7 +156,7 @@ def test_version_tags_move_from_title_to_session_fields():
         ]
     }
     assert [row[4:] for row in (tuple(r) for r in _showtimes(payload))] == [
-        ("Salong 1", "Dolby Atmos", "Engelskt tal", "Svensk text"),
-        ("Salong 2", "IMAX", "Engelskt tal", "Svensk text"),
+        ("Salong 1", "Dolby Atmos", "Engelskt tal", "Svensk text", "Bortglömda ön eng. tal ATMOS", "2D Digital"),
+        ("Salong 2", "IMAX", "Engelskt tal", "Svensk text", "Avengers: Endgame Encore", "IMAX"),
     ]
     assert [f.title for f, *_ in _showtimes(payload)] == ["Bortglömda ön", "Avengers: Endgame Encore"]

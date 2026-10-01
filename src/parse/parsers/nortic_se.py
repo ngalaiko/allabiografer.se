@@ -47,12 +47,14 @@ def _film(event: dict, title: str) -> Film:
 
     The API exposes no poster: its images are 16:9 event banners.
     """
+    spoken, _ = _version.from_text(_text(event.get("description")))
     return _films.make(
         _SOURCE,
         title,
         overview=_text(event.get("description")) or _text(event.get("shortDescription")),
         runtime=_runtime(event),
         url=event.get("link") or "",
+        original_languages=_version.languages(spoken),
     )
 
 
@@ -65,6 +67,7 @@ def _merge(old: Film, new: Film) -> Film:
         overview=old.overview or new.overview,
         runtime=old.runtime or new.runtime,
         url=old.url or new.url,
+        original_languages=old.original_languages | new.original_languages,
     )
 
 
@@ -81,10 +84,9 @@ def _parse_payload(data: dict) -> Iterator[Screening | Venue | Film]:
 
     seen_venues: set[tuple[str, str]] = set()
 
-    for event, (film_title, fmt, language, subtitles) in versioned:
-        # Descriptions may state "Originalspråk: Svenskt-tal, Svensk text."
-        stated = _version.from_text(_text(event.get("description")))
-        language, subtitles = language or stated[0], subtitles or stated[1]
+    for event, (film_title, fmt, _language, subtitles) in versioned:
+        # Description language describes the film; title suffixes describe this screening.
+        _, stated_subtitles = _version.from_text(_text(event.get("description")))
         tmdb_id = _tmdb(film_title)
         key = film_key(_SOURCE, film_title)
 
@@ -123,9 +125,11 @@ def _parse_payload(data: dict) -> Iterator[Screening | Venue | Film]:
                 cinema_name=cinema_name,
                 city=city,
                 ticket_url=ticket_url,
-                format=fmt,
-                language=language,
-                subtitles=subtitles,
+                **_version.screening_facts(
+                    format=fmt,
+                    subtitles=subtitles or stated_subtitles,
+                    source_texts=_version.title_suffixes(event.get("title", "")),
+                ),
                 film_key=key,
             )
             count += 1

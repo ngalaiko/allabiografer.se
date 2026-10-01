@@ -137,7 +137,9 @@ def _parse_production(html: str, site: dict) -> Iterator[Screening | Film]:
     psoup = BeautifulSoup(html, "html.parser")
 
     h1 = psoup.select_one("h1.wp_theatre_production_title") or psoup.select_one("h1")
-    film_title, fmt, language, subtitles = _version.split_title(h1.get_text(strip=True) if h1 else "")
+    raw_title = h1.get_text(strip=True) if h1 else ""
+    film_title, fmt, language, subtitles = _version.split_title(raw_title)
+    suffixes = _version.title_suffixes(raw_title)
     if not film_title:
         return
 
@@ -170,9 +172,13 @@ def _parse_production(html: str, site: dict) -> Iterator[Screening | Film]:
             cinema_name=site["name"],
             city=site["city"],
             screen=venue_el.get_text(strip=True) if venue_el else "",
-            format=fmt,
-            language=language,
-            subtitles=subtitles,
+            **_version.screening_facts(
+                format=fmt,
+                language=language,
+                subtitles=subtitles,
+                source_texts=suffixes,
+                raw_attributes=suffixes,
+            ),
             film_key=film.key,
         )
 

@@ -6,9 +6,9 @@
 Tabular data lives in one SQLite file, ``data/allabiografer.db``::
 
     screenings  (city, cinema, date, time, screen, tmdb_id, ticket_url,
-                 format, language, subtitles, title, source, film_key)
-                 unique on everything but format/language/subtitles;
-                 format, language and subtitles hold ``store.version`` values
+                 title, source, film_key, version, presentation, accessibility,
+                 raw_attributes)
+                 unique on showtime identity; structured facts are compact JSON
     movies      (tmdb_id PK, title_sv, title_original, overview_sv, genres,
                  release_date, release_date_se, runtime, poster_path,
                  vote_average, age_rating)
@@ -40,7 +40,6 @@ import json
 import os
 import sqlite3
 from collections.abc import Iterable
-from datetime import date, time
 from pathlib import Path
 
 from store.festival import Festival, FestivalScreening
@@ -48,16 +47,48 @@ from store.film import Film, film_key, poster_key_for_film, title_key
 from store.movie import Movie
 from store.screening import Screening
 from store.venue import Venue
+from store.version import (
+    Accessibility,
+    AccessibilityFeature,
+    AgeRating,
+    AudioKind,
+    AudioVersion,
+    AuditoriumAttribute,
+    ContentVersion,
+    Dimension,
+    Language,
+    Presentation,
+    PresentationSystem,
+    ProjectionAttribute,
+    ProjectionMedium,
+    SoundAttribute,
+    SubtitleVersion,
+)
 
 __all__ = [
     "DATA_DIR",
     "DB_FILE",
     "POSTERS_DIRNAME",
+    "Accessibility",
+    "AccessibilityFeature",
+    "AgeRating",
+    "AudioKind",
+    "AudioVersion",
+    "AuditoriumAttribute",
+    "ContentVersion",
+    "Dimension",
     "Festival",
     "FestivalScreening",
     "Film",
+    "Language",
     "Movie",
+    "Presentation",
+    "PresentationSystem",
+    "ProjectionAttribute",
+    "ProjectionMedium",
     "Screening",
+    "SoundAttribute",
+    "SubtitleVersion",
     "Venue",
     "connect",
     "film_key",
@@ -95,7 +126,8 @@ _SCHEMA = """
 CREATE TABLE IF NOT EXISTS screenings (
   city TEXT NOT NULL, cinema TEXT NOT NULL, date TEXT NOT NULL, time TEXT NOT NULL,
   screen TEXT NOT NULL DEFAULT '', tmdb_id INTEGER, ticket_url TEXT NOT NULL,
-  format TEXT NOT NULL DEFAULT '', language TEXT NOT NULL DEFAULT '', subtitles TEXT NOT NULL DEFAULT '',
+  version TEXT NOT NULL DEFAULT '{}', presentation TEXT NOT NULL DEFAULT '{}',
+  accessibility TEXT NOT NULL DEFAULT '[]', raw_attributes TEXT NOT NULL DEFAULT '[]',
   title TEXT NOT NULL DEFAULT '', source TEXT NOT NULL DEFAULT '', film_key TEXT NOT NULL DEFAULT ''
 );
 CREATE UNIQUE INDEX IF NOT EXISTS screenings_key
@@ -110,7 +142,8 @@ CREATE TABLE IF NOT EXISTS films (
   key TEXT PRIMARY KEY, source TEXT NOT NULL, title TEXT NOT NULL,
   title_original TEXT NOT NULL DEFAULT '', overview TEXT NOT NULL DEFAULT '', runtime INTEGER,
   genres TEXT NOT NULL DEFAULT '[]', release_date TEXT NOT NULL DEFAULT '',
-  age_rating TEXT NOT NULL DEFAULT '', poster_url TEXT NOT NULL DEFAULT '', url TEXT NOT NULL DEFAULT ''
+  age_rating TEXT NOT NULL DEFAULT '', poster_url TEXT NOT NULL DEFAULT '', url TEXT NOT NULL DEFAULT '',
+  original_languages TEXT NOT NULL DEFAULT '[]'
 );
 CREATE TABLE IF NOT EXISTS venues (
   city TEXT NOT NULL, name TEXT NOT NULL, address TEXT NOT NULL DEFAULT '', PRIMARY KEY (city, name)
@@ -135,14 +168,43 @@ CREATE TABLE IF NOT EXISTS festival_screenings (
 
 
 def connect(path: Path = DB_FILE) -> sqlite3.Connection:
-    """Open the database, creating file and schema when missing."""
+    """Open the database, creating the structured schema when missing."""
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path, timeout=600, isolation_level=None)
     conn.execute("PRAGMA foreign_keys = ON")
-    conn.executescript(_SCHEMA)
-    columns = {row[1] for row in conn.execute("PRAGMA table_info(screenings)")}
-    if "film_key" not in columns:
-        conn.execute("ALTER TABLE screenings ADD COLUMN film_key TEXT NOT NULL DEFAULT ''")
+    existing_tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+    app_tables = existing_tables & {
+        "screenings",
+        "films",
+        "movies",
+        "venues",
+        "tmdb_index",
+        "festivals",
+        "festival_screenings",
+    }
+    if app_tables and "screenings" not in app_tables:
+        conn.close()
+        raise RuntimeError(
+            f"Legacy database schema at {path}; remove it and reparse to rebuild structured screening data."
+        )
+    if "screenings" in existing_tables:
+        screening_columns = {row[1] for row in conn.execute("PRAGMA table_info(screenings)")}
+        film_columns = (
+            {row[1] for row in conn.execute("PRAGMA table_info(films)")} if "films" in existing_tables else set()
+        )
+        required_screening = {"film_key", "version", "presentation", "accessibility", "raw_attributes"}
+        if not required_screening <= screening_columns or "original_languages" not in film_columns:
+            conn.close()
+            raise RuntimeError(
+                f"Legacy database schema at {path}; remove it and reparse to rebuild structured screening data."
+            )
+    try:
+        conn.executescript(f"BEGIN IMMEDIATE;\n{_SCHEMA}\nCOMMIT;")
+    except BaseException:
+        if conn.in_transaction:
+            conn.execute("ROLLBACK")
+        conn.close()
+        raise
     return conn
 
 
@@ -195,12 +257,13 @@ def write_screenings(
             s.screen,
             s.tmdb_id,
             s.ticket_url,
-            s.format,
-            s.language,
-            s.subtitles,
             s.title,
             source or s.source,
             s.film_key,
+            json.dumps(s.to_dict()["version"], ensure_ascii=False),
+            json.dumps(s.to_dict()["presentation"], ensure_ascii=False),
+            json.dumps(s.to_dict()["accessibility"], ensure_ascii=False),
+            json.dumps(s.to_dict()["raw_attributes"], ensure_ascii=False),
         )
         for s in screenings
     ]
@@ -220,8 +283,9 @@ def write_screenings(
             cur = conn.execute(
                 "INSERT OR IGNORE INTO screenings"
                 " (city, cinema, date, time, screen, tmdb_id, ticket_url,"
-                "  format, language, subtitles, title, source, film_key)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "  title, source, film_key, version,"
+                "  presentation, accessibility, raw_attributes)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 row,
             )
             added += cur.rowcount
@@ -245,30 +309,47 @@ def read_screenings(*, path: Path = DB_FILE) -> list[Screening]:
     try:
         rows = conn.execute(
             "SELECT city, cinema, date, time, screen, tmdb_id, ticket_url,"
-            " format, language, subtitles, title, source, film_key"
+            " version, presentation, accessibility, raw_attributes, title, source, film_key"
             " FROM screenings ORDER BY rowid"
         ).fetchall()
     finally:
         conn.close()
     results = []
     for row in rows:
-        (city, cinema, day, clock, screen, tmdb_id, ticket_url, fmt, language, subtitles, title, source, film) = row
-        h, m = clock.split(":")
+        (
+            city,
+            cinema,
+            day,
+            clock,
+            screen,
+            tmdb_id,
+            ticket_url,
+            version,
+            presentation,
+            accessibility,
+            raw_attributes,
+            title,
+            source,
+            film,
+        ) = row
         results.append(
-            Screening(
-                tmdb_id=tmdb_id,
-                title=title,
-                source=source,
-                film_key=film,
-                date=date.fromisoformat(day),
-                time=time(int(h), int(m)),
-                ticket_url=ticket_url,
-                cinema_name=cinema,
-                city=city,
-                screen=screen,
-                format=fmt,
-                language=language,
-                subtitles=subtitles,
+            Screening.from_dict(
+                {
+                    "tmdb_id": tmdb_id,
+                    "title": title,
+                    "source": source,
+                    "film_key": film,
+                    "date": day,
+                    "time": clock,
+                    "ticket_url": ticket_url,
+                    "cinema_name": cinema,
+                    "city": city,
+                    "screen": screen,
+                    "version": json.loads(version),
+                    "presentation": json.loads(presentation),
+                    "accessibility": json.loads(accessibility),
+                    "raw_attributes": json.loads(raw_attributes),
+                }
             )
         )
     return results
@@ -385,12 +466,14 @@ _FILM_COLUMNS = (
     "age_rating",
     "poster_url",
     "url",
+    "original_languages",
 )
 
 
 def _film_from_row(row: tuple) -> Film:
     d = dict(zip(_FILM_COLUMNS, row, strict=True))
     d["genres"] = json.loads(d["genres"])
+    d["original_languages"] = json.loads(d["original_languages"])
     return Film.from_dict(d)
 
 
@@ -448,14 +531,15 @@ def write_films(films: list[Film], *, path: Path = DB_FILE) -> int:
         conn.executemany(
             "INSERT INTO films"
             " (key, source, title, title_original, overview, runtime, genres,"
-            "  release_date, age_rating, poster_url, url)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "  release_date, age_rating, poster_url, url, original_languages)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             " ON CONFLICT (key) DO UPDATE SET"
             "  source = excluded.source, title = excluded.title,"
             "  title_original = excluded.title_original, overview = excluded.overview,"
             "  runtime = excluded.runtime, genres = excluded.genres,"
             "  release_date = excluded.release_date, age_rating = excluded.age_rating,"
-            "  poster_url = excluded.poster_url, url = excluded.url",
+            "  poster_url = excluded.poster_url, url = excluded.url,"
+            "  original_languages = excluded.original_languages",
             [
                 (
                     f.key,
@@ -469,6 +553,7 @@ def write_films(films: list[Film], *, path: Path = DB_FILE) -> int:
                     f.age_rating,
                     f.poster_url,
                     f.url,
+                    json.dumps(sorted(language.value for language in f.original_languages), ensure_ascii=False),
                 )
                 for f in films
             ],

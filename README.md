@@ -24,6 +24,18 @@ Serve locally:
 mise run serve
 ```
 
+Screenings store typed content versions, presentation, and accessibility in JSON
+columns. Film languages belong to film metadata. Missing audio, subtitles,
+dimension, and projection remain unknown; explicit no subtitles is distinct.
+
+Programme blocks group compatible content and presentation facts, including all
+screening modifiers. Atmos, 4K, Laser, VIP, XL, and audio description each define
+distinct variants. Ambiguous screenings stay separate; the standard presentation
+has no label.
+
+Legacy screening databases require a fresh parse; no data migration runs.
+Parse into a new database with `parse --output /path/to/new.db <parser>`.
+
 ## Deployment
 
 Deployed to [Fly.io](https://fly.io).

@@ -1,6 +1,7 @@
 """Store round trips, source ownership and dedup."""
 
 import sqlite3
+from dataclasses import FrozenInstanceError
 from datetime import date, time
 
 import pytest
@@ -38,6 +39,20 @@ from store import (
     write_venue,
     write_venues,
 )
+from store.version import (
+    Accessibility,
+    AccessibilityFeature,
+    AudioKind,
+    AudioVersion,
+    ContentVersion,
+    Dimension,
+    Language,
+    Presentation,
+    PresentationSystem,
+    ProjectionAttribute,
+    ProjectionMedium,
+    SubtitleVersion,
+)
 
 
 @pytest.fixture
@@ -67,9 +82,18 @@ def test_screenings_round_trip(db):
         title="Film",
         source="a",
         screen="Salong 1",
-        format="3D",
-        language="sv",
-        subtitles="en",
+        version=ContentVersion(
+            audio=AudioVersion(AudioKind.DUBBED, frozenset({Language.SWEDISH})),
+            subtitles=SubtitleVersion(frozenset({Language.ENGLISH})),
+        ),
+        presentation=Presentation(
+            experiences=frozenset({PresentationSystem.IMAX}),
+            dimension=Dimension.THREE_D,
+            medium=ProjectionMedium.DIGITAL,
+            projection=frozenset({ProjectionAttribute.LASER}),
+        ),
+        accessibility=Accessibility(frozenset({AccessibilityFeature.AUDIO_DESCRIPTION})),
+        raw_attributes=("IMAX 3D Svenskt tal",),
     )
     assert write_screenings([original], path=db, source="a") == 1
     assert read_screenings(path=db) == [original]
@@ -92,13 +116,42 @@ def test_dedup_by_key(db):
     assert len(read_screenings(path=db)) == 1
 
 
-def test_dedup_ignores_format_language_subtitles(db):
+def test_dedup_ignores_version_and_presentation(db):
     added = write_screenings(
-        [screening(format="2D"), screening(format="3D")],
+        [screening(), screening(presentation=Presentation(dimension=Dimension.THREE_D))],
         path=db,
         source="a",
     )
     assert added == 1
+
+
+def test_screening_unknown_and_explicit_none_round_trip(db):
+    unknown = screening(ticket_url="https://example.com/unknown")
+    none = screening(
+        ticket_url="https://example.com/none",
+        version=ContentVersion(subtitles=SubtitleVersion(frozenset())),
+    )
+    write_screenings([unknown, none], path=db, source="a")
+    stored = read_screenings(path=db)
+    assert stored[0].version.subtitles.languages is None
+    assert stored[1].version.subtitles.languages == frozenset()
+
+
+def test_screening_dict_round_trip_uses_canonical_immutable_languages():
+    original = screening(
+        version=ContentVersion(
+            audio=AudioVersion(AudioKind.DUBBED, frozenset({Language.SWEDISH, Language.ENGLISH})),
+            subtitles=SubtitleVersion(frozenset({Language.SPANISH})),
+        )
+    )
+    restored = Screening.from_dict(original.to_dict())
+    assert restored == original
+    assert restored.version.audio.languages == frozenset({Language.SWEDISH, Language.ENGLISH})
+    assert restored.version.subtitles.languages == frozenset({Language.SPANISH})
+    with pytest.raises(FrozenInstanceError):
+        restored.version.audio.kind = AudioKind.ORIGINAL
+    with pytest.raises(AttributeError):
+        restored.version.audio.languages.add(Language.ARABIC)
 
 
 def test_source_rewrite_replaces_own_rows_only(db):
@@ -389,13 +442,13 @@ def film(**kwargs) -> Film:
 
 
 def test_film_round_trip(db):
-    f = film()
+    f = film(original_languages=frozenset({Language.ARABIC, Language.SPANISH}))
     assert write_films([f], path=db) == 1
     assert read_film("bio_se:filmen", path=db) == f
 
 
 def test_film_to_dict_inverse_of_from_dict():
-    f = film()
+    f = film(original_languages=frozenset({Language.ARABIC, Language.SPANISH}))
     assert Film.from_dict(f.to_dict()) == f
 
 
@@ -466,7 +519,7 @@ def test_poster_key_for_film_truncates():
 
 
 # ---------------------------------------------------------------------------
-# Schema migration
+# Legacy schema handling
 # ---------------------------------------------------------------------------
 
 _OLD_SCHEMA = """
@@ -481,7 +534,7 @@ CREATE UNIQUE INDEX screenings_key
 """
 
 
-def test_connect_migrates_old_schema(db):
+def test_connect_rejects_legacy_schema_without_modifying_it(db):
     old = sqlite3.connect(db)
     old.executescript(_OLD_SCHEMA)
     old.execute(
@@ -491,18 +544,45 @@ def test_connect_migrates_old_schema(db):
     old.commit()
     old.close()
 
-    conn = connect(db)
+    with pytest.raises(RuntimeError, match=r"remove .* and reparse"):
+        connect(db)
+    conn = sqlite3.connect(db)
     try:
         columns = {row[1] for row in conn.execute("PRAGMA table_info(screenings)")}
         tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
     finally:
         conn.close()
-    assert "film_key" in columns
-    assert "films" in tables
+    assert "version" not in columns
+    assert tables == {"screenings"}
 
-    rows = read_screenings(path=db)
-    assert len(rows) == 1
-    assert rows[0].film_key == ""
+
+def test_connect_rejects_partial_legacy_schema_without_modifying_it(db):
+    old = sqlite3.connect(db)
+    old.executescript(
+        "CREATE TABLE films (key TEXT PRIMARY KEY, source TEXT NOT NULL, title TEXT NOT NULL);"
+        "CREATE TABLE venues (city TEXT NOT NULL, name TEXT NOT NULL);"
+    )
+    old.commit()
+    old.close()
+
+    with pytest.raises(RuntimeError, match=r"remove .* and reparse"):
+        connect(db)
+    conn = sqlite3.connect(db)
+    try:
+        tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+    finally:
+        conn.close()
+    assert tables == {"films", "venues"}
+
+
+def test_fresh_schema_contains_only_structured_screening_facts(db):
+    conn = connect(db)
+    try:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(screenings)")}
+    finally:
+        conn.close()
+    assert {"version", "presentation", "accessibility", "raw_attributes"} <= columns
+    assert not {"format", "language", "subtitles"} & columns
 
 
 def _festival(**kwargs) -> Festival:

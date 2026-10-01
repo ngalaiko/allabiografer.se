@@ -5,6 +5,8 @@ import unicodedata
 from dataclasses import dataclass, field
 from typing import Self
 
+from store.version import Language
+
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Film:
@@ -21,6 +23,7 @@ class Film:
     age_rating: str = ""
     poster_url: str = ""
     url: str = ""
+    original_languages: frozenset[Language] = frozenset()
 
     def to_dict(self) -> dict:
         return {
@@ -35,6 +38,7 @@ class Film:
             "age_rating": self.age_rating,
             "poster_url": self.poster_url,
             "url": self.url,
+            "original_languages": sorted(language.value for language in self.original_languages),
         }
 
     @classmethod
@@ -51,6 +55,7 @@ class Film:
             age_rating=d.get("age_rating") or "",
             poster_url=d.get("poster_url") or "",
             url=d.get("url") or "",
+            original_languages=frozenset(Language(v) for v in d.get("original_languages", ())),
         )
 
 

@@ -6,6 +6,7 @@ import pytest
 
 from parse.parsers import nfbio_se
 from store import Film
+from store.version import Dimension, Language, PresentationSystem
 
 _LISTING = Path(__file__).parent / "fixtures" / "nfbio_se" / "listing.html"
 _FILM = Path(__file__).parent / "fixtures" / "nfbio_se" / "film.html"
@@ -80,16 +81,16 @@ def test_film_page_fills_in_the_rest(films):
 
 def test_version_splits_into_format_language_subtitles(screenings):
     s = next(s for s in screenings if s.title == "Tony")
-    assert s.format == ""
-    assert s.language == "Engelskt tal"
-    assert s.subtitles == "Svensk text"
+    assert s.presentation.dimension is Dimension.TWO_D
+    assert s.version.audio.languages == frozenset({Language.ENGLISH})
+    assert s.version.subtitles.languages == frozenset({Language.SWEDISH})
 
 
 def test_programme_labels_are_not_formats(screenings):
     s = next(s for s in screenings if s.date.isoformat() == "2026-09-20")
-    assert s.format == ""
-    s4dx = next(s for s in screenings if "4DX" in s.format)
-    assert s4dx.format == "4DX, 3D"
+    assert s.presentation.experiences == frozenset()
+    s4dx = next(s for s in screenings if PresentationSystem.FOUR_DX in s.presentation.experiences)
+    assert s4dx.presentation.dimension is Dimension.THREE_D
 
 
 @pytest.mark.parametrize(

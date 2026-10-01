@@ -1,41 +1,140 @@
-"""Valid screening version and rating values — what parse stores and build shows.
+"""Typed screening content, presentation, and accessibility facts."""
 
-Screening fields hold these values verbatim:
-
-    format      Format members joined by ", " in declaration order
-    language    speech label: "Engelskt tal", "Engelskt, franskt tal", NO_SPEECH
-    subtitles   subtitle label: "Svensk text", "Svensk, engelsk text", NO_SUBTITLES
-
-Film and movie ``age_rating`` holds an AgeRating value or "".
-"""
-
+from dataclasses import dataclass, field
 from enum import StrEnum
 
 
-class Format(StrEnum):
-    """Presentation formats, in display order."""
+class Language(StrEnum):
+    SWEDISH = "Svenska"
+    ENGLISH = "Engelska"
+    FRENCH = "Franska"
+    GERMAN = "Tyska"
+    ITALIAN = "Italienska"
+    SPANISH = "Spanska"
+    PORTUGUESE = "Portugisiska"
+    JAPANESE = "Japanska"
+    KOREAN = "Koreanska"
+    CHINESE = "Kinesiska"
+    MANDARIN = "Mandarin"
+    CANTONESE = "Kantonesiska"
+    FINNISH = "Finska"
+    NORWEGIAN = "Norska"
+    DANISH = "Danska"
+    ICELANDIC = "Isländska"
+    DUTCH = "Nederländska"
+    POLISH = "Polska"
+    RUSSIAN = "Ryska"
+    UKRAINIAN = "Ukrainska"
+    CZECH = "Tjeckiska"
+    HUNGARIAN = "Ungerska"
+    ROMANIAN = "Rumänska"
+    GREEK = "Grekiska"
+    TURKISH = "Turkiska"
+    ARABIC = "Arabiska"
+    PERSIAN = "Persiska"
+    KURDISH = "Kurdiska"
+    HEBREW = "Hebreiska"
+    HINDI = "Hindi"
+    KANNADA = "Kannada"
+    TAMIL = "Tamil"
+    TELUGU = "Telugu"
+    THAI = "Thailändska"
+    VIETNAMESE = "Vietnamesiska"
+    GEORGIAN = "Georgiska"
+    CATALAN = "Katalanska"
+    KAZAKH = "Kazakiska"
+    AZERBAIJANI = "Azerbajdzjanska"
+    SERBIAN = "Serbiska"
+    CROATIAN = "Kroatiska"
+    BOSNIAN = "Bosniska"
+    ESTONIAN = "Estniska"
+    LATVIAN = "Lettiska"
+    LITHUANIAN = "Litauiska"
+    SOMALI = "Somaliska"
 
+
+class AudioKind(StrEnum):
+    UNKNOWN = "unknown"
+    ORIGINAL = "original"
+    DUBBED = "dubbed"
+    SILENT = "silent"
+
+
+@dataclass(frozen=True, slots=True)
+class AudioVersion:
+    kind: AudioKind = AudioKind.UNKNOWN
+    languages: frozenset[Language] = frozenset()
+
+
+@dataclass(frozen=True, slots=True)
+class SubtitleVersion:
+    languages: frozenset[Language] | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ContentVersion:
+    audio: AudioVersion = field(default_factory=AudioVersion)
+    subtitles: SubtitleVersion = field(default_factory=SubtitleVersion)
+    edition: str | None = None
+
+
+class PresentationSystem(StrEnum):
     IMAX = "IMAX"
     DOLBY_CINEMA = "Dolby Cinema"
-    DOLBY_ATMOS = "Dolby Atmos"
     FOUR_DX = "4DX"
     SCREENX = "ScreenX"
     D_BOX = "D-Box"
     ISENSE = "iSense"
     INFINITY_VISION = "Infinity Vision"
+
+
+class Dimension(StrEnum):
+    UNKNOWN = "unknown"
+    TWO_D = "2D"
     THREE_D = "3D"
-    MM_70 = "70 mm"
+
+
+class ProjectionMedium(StrEnum):
+    UNKNOWN = "unknown"
+    DIGITAL = "digital"
     MM_35 = "35 mm"
+    MM_70 = "70 mm"
+
+
+class ProjectionAttribute(StrEnum):
     K4 = "4K"
     LASER = "Laser"
-    XL = "XL"
+
+
+class SoundAttribute(StrEnum):
+    DOLBY_ATMOS = "Dolby Atmos"
+
+
+class AuditoriumAttribute(StrEnum):
     VIP = "VIP"
+    XL = "XL"
+
+
+@dataclass(frozen=True, slots=True)
+class Presentation:
+    experiences: frozenset[PresentationSystem] = frozenset()
+    dimension: Dimension = Dimension.UNKNOWN
+    medium: ProjectionMedium = ProjectionMedium.UNKNOWN
+    projection: frozenset[ProjectionAttribute] = frozenset()
+    sound: frozenset[SoundAttribute] = frozenset()
+    auditorium: frozenset[AuditoriumAttribute] = frozenset()
+
+
+class AccessibilityFeature(StrEnum):
     AUDIO_DESCRIPTION = "Syntolkning"
 
 
-class AgeRating(StrEnum):
-    """Swedish cinema age limits."""
+@dataclass(frozen=True, slots=True)
+class Accessibility:
+    features: frozenset[AccessibilityFeature] = frozenset()
 
+
+class AgeRating(StrEnum):
     ALL = "Barntillåten"
     FROM_7 = "Från 7 år"
     FROM_11 = "Från 11 år"
@@ -43,64 +142,12 @@ class AgeRating(StrEnum):
     FROM_18 = "Från 18 år"
 
 
-LANGUAGES = (
-    "Svenska",
-    "Engelska",
-    "Franska",
-    "Tyska",
-    "Italienska",
-    "Spanska",
-    "Portugisiska",
-    "Japanska",
-    "Koreanska",
-    "Kinesiska",
-    "Mandarin",
-    "Kantonesiska",
-    "Finska",
-    "Norska",
-    "Danska",
-    "Isländska",
-    "Nederländska",
-    "Polska",
-    "Ryska",
-    "Ukrainska",
-    "Tjeckiska",
-    "Ungerska",
-    "Rumänska",
-    "Grekiska",
-    "Turkiska",
-    "Arabiska",
-    "Persiska",
-    "Kurdiska",
-    "Hebreiska",
-    "Hindi",
-    "Kannada",
-    "Tamil",
-    "Telugu",
-    "Thailändska",
-    "Vietnamesiska",
-    "Georgiska",
-    "Katalanska",
-    "Kazakiska",
-    "Azerbajdzjanska",
-    "Serbiska",
-    "Kroatiska",
-    "Bosniska",
-    "Estniska",
-    "Lettiska",
-    "Litauiska",
-    "Somaliska",
-)
-
-NO_SPEECH = "Inget tal"
-NO_SUBTITLES = "Ej textad"
+LANGUAGES = tuple(language.value for language in Language)
 
 
 def _label(names: list[str], ending: str, noun: str) -> str:
-    """["Engelska", "Franska"] → "Engelsk{ending}, fransk{ending} {noun}"; ["Hindi"] → "{Noun} på hindi"."""
     if not names:
         return ""
-    # Only "-ska" names have an adjective form.
     if not all(name.endswith("ska") for name in names):
         return f"{noun.capitalize()} på " + ", ".join(name.lower() for name in names)
     words = [name[:-1] + ending for name in names]
@@ -108,10 +155,8 @@ def _label(names: list[str], ending: str, noun: str) -> str:
 
 
 def speech_label(names: list[str]) -> str:
-    """["Engelska"] → "Engelskt tal"; ["Mandarin"] → "Tal på mandarin"."""
     return _label(names, "t", "tal")
 
 
 def subtitles_label(names: list[str]) -> str:
-    """["Svenska"] → "Svensk text"; ["Hindi"] → "Text på hindi"."""
     return _label(names, "", "text")

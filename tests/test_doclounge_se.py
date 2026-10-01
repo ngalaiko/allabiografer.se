@@ -6,6 +6,7 @@ from pathlib import Path
 from parse.parsers import doclounge_se
 from parse.parsers.doclounge_se import _events, _film_details, _film_slugs
 from store import Film, Screening, film_key
+from store.version import Language
 
 _HTML = (Path(__file__).parent / "fixtures" / "doclounge_se" / "events-screenings.html").read_text()
 
@@ -71,7 +72,8 @@ def test_film_details_read_poster_synopsis_runtime_original_title_and_year():
     assert details["genres"] == ["Dokumentär"]
     assert details["title_original"] == "Första blatten på månen"
     assert details["release_date"] == "2026"
-    assert (details["language"], details["subtitles"]) == ("Svenskt, spanskt tal", "Svensk, engelsk text")
+    assert details["original_languages"] == frozenset({Language.SWEDISH, Language.SPANISH})
+    assert details["subtitle_label"] == "Svensk, engelsk text"
 
 
 def test_parse_yields_one_film_per_title_and_keys_every_screening(monkeypatch):
@@ -89,4 +91,5 @@ def test_parse_yields_one_film_per_title_and_keys_every_screening(monkeypatch):
     assert {s.film_key for s in screenings} == {f.key for f in films}
     assert all(s.film_key for s in screenings)
     # Every film page in the fixture is the same one.
-    assert {(s.language, s.subtitles) for s in screenings} == {("Svenskt, spanskt tal", "Svensk, engelsk text")}
+    assert all(not s.version.audio.languages for s in screenings)
+    assert {s.version.subtitles.languages for s in screenings} == {frozenset({Language.SWEDISH, Language.ENGLISH})}

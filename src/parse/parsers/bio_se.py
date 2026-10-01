@@ -57,6 +57,7 @@ def _film(movie: dict, title: str) -> Film:
         age_rating=_clean(movie.get("rating", "")),
         poster_url=_clean(movie.get("poster_url", "")),
         url=f"{_SITE}/movie/{movie['id']}" if movie.get("id") else "",
+        original_languages=_version.languages(_clean(movie.get("language", ""))),
     )
 
 
@@ -70,12 +71,24 @@ def _venue(cinema: dict) -> Venue | None:
     return Venue(name=name, city=city or name.split()[0], address=address)
 
 
-def _showtimes(payload: dict) -> Iterator[tuple[Film, date, time, str, str, str, str, str]]:
-    """Yield (film, date, time, ticket_url, screen, format, language, subtitles) per session."""
+def _screening_audio(film: Film, raw: str, title_language: str) -> str:
+    if title_language:
+        return title_language
+    raw = _clean(raw)
+    if not raw:
+        return ""
+    if film.original_languages and _version.languages(raw) == film.original_languages:
+        return ""
+    return _version.language(raw)
+
+
+def _showtimes(payload: dict) -> Iterator[tuple[Film, date, time, str, str, str, str, str, str, str]]:
+    """Yield showtime fields and raw title/format source labels."""
     for entry in payload["movies"]:
         movie = entry.get("movie", {})
         # Versions ride in titles: "Bortglömda ön eng. tal ATMOS".
-        title, fmt, language, subtitles = _version.split_title(_clean(movie.get("title", "")))
+        title_raw = _clean(movie.get("title", ""))
+        title, fmt, language, subtitles = _version.split_title(title_raw)
         film = _film(movie, title)
         if not film.title:
             continue
@@ -94,8 +107,10 @@ def _showtimes(payload: dict) -> Iterator[tuple[Film, date, time, str, str, str,
                 url,
                 _clean(sess.get("screen_name", "")),
                 _version.formats(sess.get("format", ""), fmt),
-                _version.language(sess.get("language", "")) or language,
+                _screening_audio(film, sess.get("language", ""), language),
                 _version.subtitles(sess.get("text", "")) or subtitles,
+                title_raw,
+                _clean(sess.get("format", "")),
             )
 
 
@@ -121,7 +136,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
         resp.raise_for_status()
 
         count = 0
-        for film, d, t, url, screen, fmt, language, subtitles in _showtimes(resp.json()):
+        for film, d, t, url, screen, fmt, language, subtitles, title_raw, format_raw in _showtimes(resp.json()):
             if film.key not in seen:
                 seen.add(film.key)
                 yield _films.register(film)
@@ -133,9 +148,12 @@ def parse() -> Iterator[Screening | Venue | Film]:
                 time=t,
                 cinema_name=venue.name,
                 city=venue.city,
-                language=language,
-                subtitles=subtitles,
-                format=fmt,
+                **_version.screening_facts(
+                    format=fmt,
+                    language=language,
+                    subtitles=subtitles,
+                    source_texts=(format_raw, *_version.title_suffixes(title_raw)),
+                ),
                 screen=screen,
                 ticket_url=url,
             )

@@ -6,6 +6,7 @@ import pytest
 
 from parse.parsers import wp_theatre
 from store import Film
+from store.version import Language
 
 pytestmark = pytest.mark.usefixtures("parser_clock")
 
@@ -93,5 +94,6 @@ def test_version_tags_move_from_title_to_screening(tmdb_calls):
     html = (_FIXTURES / "production-tony.html").read_text().replace(">Tony</h1>", ">Tony (Sv. tal)</h1>")
     items = list(wp_theatre._parse_production(html, _SITE))
     screening = next(i for i in items if not isinstance(i, Film))
-    assert (screening.title, screening.language) == ("Tony", "Svenskt tal")
+    assert screening.title == "Tony"
+    assert screening.version.audio.languages == frozenset({Language.SWEDISH})
     assert next(i for i in items if isinstance(i, Film)).key == "wp_theatre:tony"

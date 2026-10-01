@@ -3,6 +3,7 @@
 import pytest
 
 from parse import _version
+from store.version import AudioKind, Dimension, ProjectionMedium
 
 
 @pytest.mark.parametrize(
@@ -153,3 +154,116 @@ def test_from_text(text, expected):
 
 def test_from_text_reads_decomposed_letters():
     assert _version.from_text("Språk: Svenska") == ("Svenskt tal", "")
+
+
+def test_normalize_returns_structured_facts_and_keeps_non_variant_attributes():
+    version, presentation, accessibility = _version.normalize("2D Digital Dolby Atmos Laser 4K VIP XL Syntolkning")
+
+    assert presentation.dimension is Dimension.TWO_D
+    assert presentation.medium is ProjectionMedium.DIGITAL
+    assert presentation.sound == frozenset({"Dolby Atmos"})
+    assert presentation.projection == frozenset({"Laser", "4K"})
+    assert presentation.auditorium == frozenset({"VIP", "XL"})
+    assert accessibility.features == frozenset({"Syntolkning"})
+    assert version.audio.kind is AudioKind.UNKNOWN
+    assert version.subtitles.languages is None
+
+
+def test_normalize_classifies_experience_dimension_and_film_medium():
+    _, imax, _ = _version.normalize("IMAX Laser")
+    _, film, _ = _version.normalize("70mm XL")
+    _, three_d, _ = _version.normalize("3D")
+
+    assert imax.experiences == frozenset({"IMAX"})
+    assert imax.projection == frozenset({"Laser"})
+    assert film.medium is ProjectionMedium.MM_70
+    assert film.auditorium == frozenset({"XL"})
+    assert three_d.dimension is Dimension.THREE_D
+
+
+def test_normalize_preserves_explicit_empty_subtitles_and_audio_kind():
+    version, _, _ = _version.normalize(audio_text="Svenska dubbad", subtitle_text="Ej textad")
+
+    assert version.audio.kind is AudioKind.DUBBED
+    assert version.subtitles.languages == frozenset()
+
+
+def test_normalize_leaves_unstated_values_unknown():
+    version, presentation, _ = _version.normalize()
+
+    assert version.audio.kind is AudioKind.UNKNOWN
+    assert version.subtitles.languages is None
+    assert presentation.dimension is Dimension.UNKNOWN
+    assert presentation.medium is ProjectionMedium.UNKNOWN
+
+
+def test_normalize_reads_roles_and_non_swedish_language_names():
+    original, _, _ = _version.normalize(audio_text="Original English", subtitle_text="Swedish")
+    dubbed, _, _ = _version.normalize(audio_text="English dubbed", subtitle_text="unknown")
+
+    assert original.audio.kind is AudioKind.ORIGINAL
+    assert original.audio.languages == frozenset({_version.Language.ENGLISH})
+    assert original.subtitles.languages == frozenset({_version.Language.SWEDISH})
+    assert dubbed.audio.kind is AudioKind.DUBBED
+    assert dubbed.audio.languages == frozenset({_version.Language.ENGLISH})
+    assert dubbed.subtitles.languages is None
+
+
+def test_normalize_reads_suffix_language_without_inventing_subtitles():
+    version, _, _ = _version.normalize("IMAX Laser Svenskt tal")
+
+    assert version.audio.languages == frozenset({_version.Language.SWEDISH})
+    assert version.subtitles.languages is None
+
+
+def test_title_suffix_keeps_explicit_dub_marker():
+    version, _, _ = _version.normalize(*_version.title_suffixes("Tony (Sv. tal) (dubbat)"))
+
+    assert version.audio.kind is AudioKind.DUBBED
+    assert version.audio.languages == frozenset({_version.Language.SWEDISH})
+
+
+@pytest.mark.parametrize(
+    ("raw", "title", "kind", "language"),
+    [
+        ("Vaiana Svenska (dubbad)", "Vaiana", AudioKind.DUBBED, _version.Language.SWEDISH),
+        ("Vaiana (English original)", "Vaiana", AudioKind.ORIGINAL, _version.Language.ENGLISH),
+    ],
+)
+def test_role_suffix_keeps_its_language(raw, title, kind, language):
+    clean_title, *_ = _version.split_title(raw)
+    version, _, _ = _version.normalize(*_version.title_suffixes(raw))
+
+    assert clean_title == title
+    assert version.audio.kind is kind
+    assert version.audio.languages == frozenset({language})
+
+
+def test_normalize_keeps_audio_and_subtitle_roles_explicit():
+    audio, _, _ = _version.normalize("English audio")
+    no_subtitles, _, _ = _version.normalize("Ej textad")
+
+    assert audio.audio.languages == frozenset({_version.Language.ENGLISH})
+    assert audio.audio.kind is AudioKind.UNKNOWN
+    assert no_subtitles.subtitles.languages == frozenset()
+
+
+def test_screening_facts_prefers_structured_values_over_title_suffixes():
+    facts = _version.screening_facts(format="2D digital", source_texts=("3D", "70 mm"))
+    presentation = facts["presentation"]
+
+    assert presentation.dimension is Dimension.TWO_D
+    assert presentation.medium is ProjectionMedium.DIGITAL
+
+
+def test_normalize_understands_english_no_subtitles_marker():
+    version, _, _ = _version.normalize(subtitle_text="English audio; no subtitles")
+
+    assert version.subtitles.languages == frozenset()
+
+
+def test_subtitle_role_does_not_set_audio_role():
+    version, _, _ = _version.normalize(audio_text="Svenska", subtitle_text="Original Swedish subtitles")
+
+    assert version.audio.kind is AudioKind.UNKNOWN
+    assert version.audio.languages == frozenset({_version.Language.SWEDISH})

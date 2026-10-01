@@ -7,6 +7,7 @@ import pytest
 
 from parse.parsers import nortic_se
 from store import Film, Screening, Venue
+from store.version import Dimension, Language
 
 _FIXTURE = Path(__file__).parent / "fixtures" / "nortic_se" / "shows.json"
 
@@ -83,7 +84,12 @@ def test_version_tags_move_from_title_to_screening():
     event["title"] = "Tony 3D (Eng. tal)"
     items = list(nortic_se._parse_payload(payload))
     s = next(s for s in items if isinstance(s, Screening) and s.cinema_name == "Biocafé Tellus")
-    assert (s.title, s.format, s.language, s.film_key) == ("Tony", "3D", "Engelskt tal", "nortic_se:tony")
+    assert (s.title, s.presentation.dimension, s.version.audio.languages, s.film_key) == (
+        "Tony",
+        Dimension.THREE_D,
+        frozenset({Language.ENGLISH}),
+        "nortic_se:tony",
+    )
     assert any(isinstance(f, Film) and f.title == "Tony" for f in items)
 
 
@@ -95,4 +101,7 @@ def test_languages_stated_in_the_description():
     )
     items = list(nortic_se._parse_payload(payload))
     s = next(s for s in items if isinstance(s, Screening) and s.cinema_name == "Biocafé Tellus")
-    assert (s.language, s.subtitles) == ("Engelskt tal", "Svensk text")
+    assert not s.version.audio.languages
+    assert s.version.subtitles.languages == frozenset({Language.SWEDISH})
+    film = next(f for f in items if isinstance(f, Film) and f.title == "Tony")
+    assert film.original_languages == frozenset({Language.ENGLISH})

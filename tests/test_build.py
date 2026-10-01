@@ -17,6 +17,15 @@ from store import (
     write_poster,
     write_screenings,
 )
+from store.version import (
+    AudioKind,
+    AudioVersion,
+    ContentVersion,
+    Language,
+    Presentation,
+    PresentationSystem,
+    SubtitleVersion,
+)
 
 # sha256("okänd film 4")[:8] exceeds 2**63, so its negated synthetic id
 # falls outside SQLite's signed 64-bit INTEGER range.
@@ -234,7 +243,10 @@ def test_source_with_showings_outranks_unused_source(db, tmp_path):
 
 def test_programme_synopsis_has_expand_toggle(db, tmp_path):
     write_movie(Movie.from_dict({"tmdb_id": 42, "title_sv": "Filmen", "overview_sv": "Handling."}), path=db)
-    write_screenings([screening(tmdb_id=42, date=datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1))], path=db)
+    write_screenings(
+        [screening(tmdb_id=42, date=datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1))],
+        path=db,
+    )
     sd = build._load_data(tmp_path / "out")
     out = tmp_path / "out" / "index.html"
     build._write_programme(build._make_env(), sd, sd.screenings, title="T", breadcrumbs="", out_path=out, canonical="/")
@@ -258,12 +270,25 @@ def test_formats_split_a_film_into_variant_blocks(db, tmp_path):
         db,
         tmp_path,
         [
-            screening(tmdb_id=42, date=day, ticket_url="https://example.com/a", language="Engelskt tal"),
-            screening(tmdb_id=42, date=day, ticket_url="https://example.com/b", language="Engelskt tal", format="IMAX"),
-            screening(tmdb_id=42, date=day, ticket_url="https://example.com/c", language="Engelskt tal", format="IMAX"),
+            screening(tmdb_id=42, date=day, ticket_url="https://example.com/a"),
+            screening(
+                tmdb_id=42,
+                date=day,
+                ticket_url="https://example.com/b",
+                presentation=Presentation(experiences=frozenset({PresentationSystem.IMAX})),
+            ),
+            screening(
+                tmdb_id=42,
+                date=day,
+                ticket_url="https://example.com/c",
+                presentation=Presentation(experiences=frozenset({PresentationSystem.IMAX})),
+            ),
         ],
     )
-    assert [(b["film_title"], b["variant"]) for b in blocks] == [("Filmen", "IMAX"), ("Filmen", "")]
+    assert {(b["film_title"], b["variant"]) for b in blocks} == {
+        ("Filmen", "IMAX"),
+        ("Filmen", ""),
+    }
     assert len({b["film_id"] for b in blocks}) == 2
 
 
@@ -273,15 +298,30 @@ def test_language_labels_only_films_playing_in_several(db, tmp_path):
         db,
         tmp_path,
         [
-            screening(tmdb_id=42, date=day, ticket_url="https://example.com/a", language="Svenskt tal"),
-            screening(tmdb_id=42, date=day, ticket_url="https://example.com/b", language="Svenskt tal"),
             screening(
-                tmdb_id=42, date=day, ticket_url="https://example.com/c", language="Engelskt tal", format="Dolby Atmos"
+                tmdb_id=42,
+                date=day,
+                ticket_url="https://example.com/a",
+                version=ContentVersion(audio=AudioVersion(AudioKind.DUBBED, frozenset({Language.SWEDISH}))),
+            ),
+            screening(
+                tmdb_id=42,
+                date=day,
+                ticket_url="https://example.com/b",
+                version=ContentVersion(audio=AudioVersion(AudioKind.DUBBED, frozenset({Language.SWEDISH}))),
+            ),
+            screening(
+                tmdb_id=42,
+                date=day,
+                ticket_url="https://example.com/c",
+                version=ContentVersion(audio=AudioVersion(AudioKind.ORIGINAL, frozenset({Language.ENGLISH}))),
             ),
         ],
     )
-    assert [b["variant"] for b in blocks] == ["", "Dolby Atmos"]
-    assert [b["mi"] for b in blocks] == ["Svenskt tal", "Engelskt tal"]
+    assert {b["variant"]: b["mi"] for b in blocks} == {
+        "Svenskt tal": "Svenskt tal",
+        "Originalversion · Engelskt tal": "Engelskt tal",
+    }
 
 
 def test_language_and_subtitles_go_in_the_details_line(db, tmp_path):
@@ -294,8 +334,10 @@ def test_language_and_subtitles_go_in_the_details_line(db, tmp_path):
                 tmdb_id=42,
                 date=day,
                 ticket_url="https://example.com/a",
-                language="Engelskt tal",
-                subtitles="Svensk text",
+                version=ContentVersion(
+                    audio=AudioVersion(AudioKind.ORIGINAL, frozenset({Language.ENGLISH})),
+                    subtitles=SubtitleVersion(frozenset({Language.SWEDISH})),
+                ),
             ),
             # Unknown language joins the film's only known one.
             screening(tmdb_id=42, date=day, ticket_url="https://example.com/b"),
@@ -307,7 +349,10 @@ def test_language_and_subtitles_go_in_the_details_line(db, tmp_path):
 def test_variant_is_shown_beside_the_title(db, tmp_path):
     day = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
     write_movie(Movie.from_dict({"tmdb_id": 42, "title_sv": "Filmen"}), path=db)
-    write_screenings([screening(tmdb_id=42, date=day, format="IMAX")], path=db)
+    write_screenings(
+        [screening(tmdb_id=42, date=day, presentation=Presentation(experiences=frozenset({PresentationSystem.IMAX})))],
+        path=db,
+    )
     sd = build._load_data(tmp_path / "out")
     out = tmp_path / "out" / "index.html"
     build._write_programme(build._make_env(), sd, sd.screenings, title="T", breadcrumbs="", out_path=out, canonical="/")
@@ -325,13 +370,32 @@ def test_variants_of_a_film_are_adjacent(db, tmp_path):
         [
             *(screening(tmdb_id=42, date=day, ticket_url=f"https://example.com/a{i}") for i in range(3)),
             *(screening(tmdb_id=7, date=day, ticket_url=f"https://example.com/b{i}") for i in range(2)),
-            screening(tmdb_id=42, date=day, ticket_url="https://example.com/c", format="IMAX"),
+            screening(
+                tmdb_id=42,
+                date=day,
+                ticket_url="https://example.com/c",
+                presentation=Presentation(experiences=frozenset({PresentationSystem.IMAX})),
+            ),
         ],
     )
-    assert [(b["film_title"], b["variant"]) for b in blocks] == [("Filmen", ""), ("Filmen", "IMAX"), ("Annan", "")]
+    assert [b["film_title"] for b in blocks] == ["Filmen", "Filmen", "Annan"]
+    assert {b["variant"] for b in blocks[:2]} == {"", "IMAX"}
 
 
 def test_unsubtitled_reads_ej_textad(db, tmp_path):
     day = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
-    blocks = _blocks(db, tmp_path, [screening(tmdb_id=42, date=day, language="Engelskt tal", subtitles="Ej textad")])
+    blocks = _blocks(
+        db,
+        tmp_path,
+        [
+            screening(
+                tmdb_id=42,
+                date=day,
+                version=ContentVersion(
+                    audio=AudioVersion(AudioKind.ORIGINAL, frozenset({Language.ENGLISH})),
+                    subtitles=SubtitleVersion(frozenset()),
+                ),
+            )
+        ],
+    )
     assert blocks[0]["mi"] == "Engelskt tal • Ej textad"

@@ -141,8 +141,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
             cinema_name=_CINEMA,
             city=_CITY,
             screen=screen,
-            language=language,
-            subtitles=subtitles,
+            **_version.screening_facts(language=language, subtitles=subtitles),
             film_key=film.key if film else "",
         )
 

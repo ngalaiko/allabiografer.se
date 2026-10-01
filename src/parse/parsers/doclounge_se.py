@@ -173,8 +173,8 @@ def _film_details(html: str) -> dict:
         "genres": list(_GENRES),
         "title_original": info.get("originalTitle") or "",
         "release_date": year if re.fullmatch(r"\d{4}", year) else "",
-        "language": language,
-        "subtitles": subtitles,
+        "original_languages": _version.languages(language),
+        "subtitle_label": subtitles,
     }
 
 
@@ -212,13 +212,12 @@ def parse() -> Iterator[Screening | Venue | Film]:
     slugs = _film_slugs(html)
 
     films: dict[str, Film] = {}
-    # Film pages state one version for every showing: (language, subtitles).
-    versions: dict[str, tuple[str, str]] = {}
+    subtitles: dict[str, str] = {}
     for title in dict.fromkeys(event[0] for event in events):
         slug = slugs.get(title, "")
         url = _FILM_URL + slug if slug else ""
         details = _details(session, url) if url else {}
-        versions[title] = (details.pop("language", ""), details.pop("subtitles", ""))
+        subtitles[title] = details.pop("subtitle_label", "")
         film = _films.make(_SOURCE, title, url=url, **details)
         films[title] = _films.register(film, session=session)
         yield films[title]
@@ -238,8 +237,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
             ticket_url=ticket_url,
             cinema_name=cinema_name,
             city=city,
-            language=versions[title][0],
-            subtitles=versions[title][1],
+            **_version.screening_facts(subtitles=subtitles.get(title, "")),
             film_key=films[title].key,
         )
 

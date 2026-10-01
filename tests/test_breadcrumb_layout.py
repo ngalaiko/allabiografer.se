@@ -106,3 +106,68 @@ def test_cinema_address_layout(browser, width, city):
             assert address_box["y"] > name_box["y"] + name_box["height"]
     finally:
         page.close()
+
+
+@pytest.mark.parametrize("width", [375, 1280])
+def test_dense_showtimes_render_only_time_without_overlap(browser, width):
+    from datetime import time
+
+    from build import _compute_time_positions
+
+    times = _compute_time_positions(
+        [
+            (time(18, 0), "/a"),
+            (time(18, 5), "/b"),
+            (time(18, 15), "/c"),
+            (time(21, 0), "/d"),
+        ]
+    )
+    for item in times:
+        item["past"] = False
+        item["attributes"] = ["VIP"]
+    html = (
+        _make_env()
+        .get_template("program.html")
+        .render(
+            num_days=1,
+            days=[{"date": "2026-10-02", "label": "Fre 2"}],
+            blocks=[
+                {
+                    "film_title": "Film",
+                    "film_url": "/film/",
+                    "film_id": "film",
+                    "variant": "",
+                    "cinemas": [
+                        {
+                            "name": "Bio",
+                            "url": "/bio/",
+                            "address": "",
+                            "city_name": None,
+                            "city_url": None,
+                            "min_height": 250,
+                            "cells": [{"times": times}],
+                        }
+                    ],
+                }
+            ],
+            versions={"css": "test"},
+        )
+    )
+    page = browser.new_page(viewport={"width": width, "height": 800})
+    try:
+        page.set_content(html)
+        page.add_style_tag(content=(ROOT / "static/i/style.css").read_text())
+        entries = page.locator(".schedule-cell > a").all()
+        boxes = [entry.bounding_box() for entry in entries]
+        assert page.locator(".showtime-attributes").count() == 0
+        assert [entry.inner_text() for entry in entries] == ["18:00", "18:05", "18:15", "21:00"]
+        container = page.locator(".schedule-times" if width <= 700 else ".schedule-cell").bounding_box()
+        assert all(box["x"] >= container["x"] for box in boxes)
+        assert all(box["x"] + box["width"] <= container["x"] + container["width"] for box in boxes)
+        for index, left in enumerate(boxes):
+            for right in boxes[index + 1 :]:
+                overlaps_x = left["x"] < right["x"] + right["width"] and right["x"] < left["x"] + left["width"]
+                overlaps_y = left["y"] < right["y"] + right["height"] and right["y"] < left["y"] + left["height"]
+                assert not (overlaps_x and overlaps_y)
+    finally:
+        page.close()

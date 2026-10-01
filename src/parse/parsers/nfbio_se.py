@@ -171,7 +171,7 @@ def _parse_listing(html: str, cinema_name: str, city: str) -> Iterator[Screening
                 room_el = btn.select_one(".room")
                 version_el = btn.select_one(".version")
                 version = " ".join(version_el.get_text(" ", strip=True).split()) if version_el else ""
-                fmt, language, subtitles = _parse_version(version)
+                _fmt, language, subtitles = _parse_version(version)
 
                 yield Screening(
                     tmdb_id=tmdb_id,
@@ -182,9 +182,13 @@ def _parse_listing(html: str, cinema_name: str, city: str) -> Iterator[Screening
                     cinema_name=cinema_name,
                     city=city,
                     screen=room_el.get_text(strip=True) if room_el else "",
-                    format=fmt,
-                    language=language,
-                    subtitles=subtitles,
+                    **_version.screening_facts(
+                        format=version,
+                        language=language,
+                        subtitles=subtitles,
+                        source_texts=(version,),
+                        raw_attributes=(version,) if version else (),
+                    ),
                     film_key=film.key,
                 )
 

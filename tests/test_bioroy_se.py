@@ -7,6 +7,7 @@ import pytest
 
 from parse.parsers import bioroy_se
 from store import Film
+from store.version import AudioKind, Language
 
 _FIXTURE = Path(__file__).parent / "fixtures" / "bioroy_se" / "program.json"
 
@@ -40,12 +41,12 @@ def test_private_hire_and_sold_out_excluded(screenings):
 
 def test_languages_from_feature_info(screenings):
     tony = next(s for s in screenings if s.title == "Tony")
-    assert tony.language == "Engelskt tal"
-    assert tony.subtitles == "Svensk text"
+    assert tony.version.audio.languages == frozenset({Language.ENGLISH})
+    assert tony.version.subtitles.languages == frozenset({Language.SWEDISH})
 
     silent = next(s for s in screenings if s.title == "Nosferatu")
-    assert silent.language == "Inget tal"
-    assert silent.subtitles == "Svensk text"
+    assert silent.version.audio.kind is AudioKind.SILENT
+    assert silent.version.subtitles.languages == frozenset({Language.SWEDISH})
 
 
 def test_screening_fields(screenings):

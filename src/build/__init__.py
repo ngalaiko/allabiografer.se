@@ -47,6 +47,14 @@ from store import (
     read_venues,
     title_key,
 )
+from store.version import (
+    AudioKind,
+    Dimension,
+    Language,
+    ProjectionMedium,
+    speech_label,
+    subtitles_label,
+)
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -154,9 +162,7 @@ def _swedish_sort_key(name: str) -> tuple[int, str]:
 # ---------------------------------------------------------------------------
 
 
-def _compute_time_positions(
-    times: list[tuple[time, str]],
-) -> list[dict]:
+def _compute_time_positions(times: list[tuple[time, str]]) -> list[dict]:
     """Return list of dicts {label, url, left, top, past} for template."""
     if not times:
         return []
@@ -164,41 +170,44 @@ def _compute_time_positions(
     sorted_times = sorted(times, key=lambda t: (t[0].hour, t[0].minute))
 
     cell_w = 200
-    label_w = 45
-    row_h = TIME_ROW_HEIGHT
     pad = 5
 
-    result: list[dict] = []
+    placed: list[dict] = []
     row_rights: list[float] = []
+    row_heights: list[float] = []
 
-    for t, url in sorted_times:
+    for entry in sorted_times:
+        t, url = entry
+        width = 45
         minutes = t.hour * 60 + t.minute
         frac = max(0, (minutes - 360)) / 1080
-        left = pad + frac * (cell_w - label_w - 2 * pad)
-        left = max(pad, min(left, cell_w - label_w - pad))
+        left = pad + frac * (cell_w - width - 2 * pad)
+        left = max(pad, min(left, cell_w - width - pad))
 
-        placed = False
+        is_placed = False
         for row_idx, right in enumerate(row_rights):
             if left >= right:
-                row_rights[row_idx] = left + label_w
-                top = pad + row_idx * row_h + pad / 2
-                result.append({"label": t.strftime("%H:%M"), "url": url, "left": round(left, 1), "top": round(top, 2)})
-                placed = True
+                row_rights[row_idx] = left + width
+                row_heights[row_idx] = max(row_heights[row_idx], TIME_ROW_HEIGHT)
+                placed.append({"label": t.strftime("%H:%M"), "url": url, "left": round(left, 1), "row": row_idx})
+                is_placed = True
                 break
-        if not placed:
+        if not is_placed:
             row_idx = len(row_rights)
-            row_rights.append(left + label_w)
-            top = pad + row_idx * row_h + pad / 2
-            result.append({"label": t.strftime("%H:%M"), "url": url, "left": round(left, 1), "top": round(top, 2)})
+            row_rights.append(left + width)
+            row_heights.append(TIME_ROW_HEIGHT)
+            placed.append({"label": t.strftime("%H:%M"), "url": url, "left": round(left, 1), "row": row_idx})
 
-    return result
+    for item in placed:
+        row = item.pop("row")
+        item["top"] = round(pad + sum(row_heights[:row]) + pad / 2, 2)
+    return placed
 
 
 def _cell_min_height(positions: list[dict]) -> float:
     if not positions:
         return 0
-    max_top = max(p["top"] for p in positions)
-    return max_top + TIME_ROW_HEIGHT + 5
+    return max(p["top"] for p in positions) + TIME_ROW_HEIGHT + 5
 
 
 # ---------------------------------------------------------------------------
@@ -813,19 +822,214 @@ def _compute_days(screenings: list[Screening]) -> list[date]:
     return sorted(dates)
 
 
+def _variant_profile(screening: Screening) -> tuple:
+    """Return only facts that define a user-facing screening variant."""
+    version = screening.version
+    presentation = screening.presentation
+    audio = version.audio
+    subtitle_languages = version.subtitles.languages
+    return (
+        audio.kind if audio.kind != AudioKind.UNKNOWN else None,
+        frozenset(audio.languages) or None,
+        frozenset(subtitle_languages) if subtitle_languages is not None else None,
+        version.edition,
+        frozenset(presentation.experiences),
+        presentation.dimension if presentation.dimension != Dimension.UNKNOWN else None,
+        presentation.medium,
+        frozenset(presentation.projection),
+        frozenset(presentation.sound),
+        frozenset(presentation.auditorium),
+        frozenset(screening.accessibility.features),
+    )
+
+
+def _profiles_compatible(left: tuple, right: tuple) -> bool:
+    """Match unknown facts by axis; 3D and film projection are material variants."""
+    for index, (a, b) in enumerate(zip(left, right, strict=True)):
+        # Unknown medium may join digital. Film formats (35/70 mm) stay distinct.
+        if index == 6 and {a, b} == {ProjectionMedium.UNKNOWN, ProjectionMedium.DIGITAL}:
+            continue
+        # Missing dimension may join 2D, but 3D remains distinct in every
+        # presentation system and projection medium.
+        if index == 5 and (a is None) != (b is None):
+            known = b if a is None else a
+            if known == Dimension.THREE_D:
+                return False
+        if a is not None and b is not None and a != b:
+            return False
+    return True
+
+
+def _merge_profiles(left: tuple, right: tuple) -> tuple:
+    merged = []
+    for index, (a, b) in enumerate(zip(left, right, strict=True)):
+        if index == 6 and {a, b} == {ProjectionMedium.UNKNOWN, ProjectionMedium.DIGITAL}:
+            merged.append(ProjectionMedium.DIGITAL)
+        else:
+            merged.append(a if a is not None else b)
+    return tuple(merged)
+
+
+def _profile_sort_key(profile: tuple) -> str:
+    def value(item):
+        if isinstance(item, (set, frozenset)):
+            return sorted(part.value for part in item)
+        return item.value if hasattr(item, "value") else item
+
+    return json.dumps([value(item) for item in profile], ensure_ascii=False, sort_keys=True)
+
+
+def _maximal_compatible_sets(profiles: list[tuple]) -> list[frozenset[int]]:
+    """Enumerate maximal pairwise-compatible sets of distinct profiles."""
+    neighbors = {
+        i: {j for j, other in enumerate(profiles) if i != j and _profiles_compatible(profile, other)}
+        for i, profile in enumerate(profiles)
+    }
+    maximal: list[frozenset[int]] = []
+
+    def visit(current: set[int], candidates: set[int], excluded: set[int]) -> None:
+        if not candidates and not excluded:
+            maximal.append(frozenset(current))
+            return
+        pivot_pool = candidates | excluded
+        pivot = max(pivot_pool, key=lambda item: len(candidates & neighbors[item])) if pivot_pool else None
+        for node in sorted(candidates - (neighbors[pivot] if pivot is not None else set())):
+            visit(current | {node}, candidates & neighbors[node], excluded & neighbors[node])
+            candidates.remove(node)
+            excluded.add(node)
+
+    visit(set(), set(range(len(profiles))), set())
+    return maximal
+
+
+def _group_variant_profiles(screenings: list[Screening]) -> list[tuple[list[Screening], tuple]]:
+    """Group profiles shared by one maximal compatibility set only."""
+    by_film: dict[int | None, list[Screening]] = defaultdict(list)
+    for screening in screenings:
+        by_film[screening.tmdb_id].append(screening)
+
+    result = []
+    for film_id in sorted(by_film, key=lambda value: -1 if value is None else value):
+        profile_members: dict[tuple, list[Screening]] = defaultdict(list)
+        for screening in by_film[film_id]:
+            profile_members[_variant_profile(screening)].append(screening)
+        profiles = sorted(profile_members, key=_profile_sort_key)
+        maximal_sets = _maximal_compatible_sets(profiles)
+        memberships: dict[int, list[frozenset[int]]] = defaultdict(list)
+        for group in maximal_sets:
+            for index in group:
+                memberships[index].append(group)
+
+        assigned: dict[frozenset[int], list[int]] = defaultdict(list)
+        ambiguous = []
+        for index in range(len(profiles)):
+            if len(memberships[index]) == 1:
+                assigned[memberships[index][0]].append(index)
+            else:
+                ambiguous.append(index)
+
+        for member_indices in assigned.values():
+            merged = profiles[member_indices[0]]
+            for index in member_indices[1:]:
+                merged = _merge_profiles(merged, profiles[index])
+            members = [s for index in member_indices for s in profile_members[profiles[index]]]
+            result.append((members, merged))
+        result.extend((profile_members[profiles[index]], profiles[index]) for index in ambiguous)
+    return result
+
+
+def _audio_label(profile: tuple) -> str:
+    kind, languages = profile[0], profile[1]
+    speech = speech_label(sorted(language.value for language in languages or ()))
+    if kind == AudioKind.DUBBED:
+        return speech or "Dubbad version"
+    if kind == AudioKind.ORIGINAL:
+        return "Originalversion"
+    if kind == AudioKind.SILENT:
+        return "Stum version"
+    if speech:
+        return f"{speech} (typ okänd)"
+    return "Ljudversion okänd"
+
+
+def _subtitle_label(languages: frozenset[Language] | None) -> str:
+    if languages is None:
+        return "Textning okänd"
+    if not languages:
+        return "Ej textad"
+    return subtitles_label(sorted(language.value for language in languages))
+
+
+def _profile_component_label(index: int, profile: tuple) -> str:
+    value = profile[index]
+    if index == 0:
+        return _audio_label(profile)
+    if index == 1:
+        return speech_label(sorted(language.value for language in profile[1] or ())) or _audio_label(profile)
+    if index == 2:
+        return _subtitle_label(value)
+    if index == 3:
+        return value or "Edition okänd"
+    if index == 4:
+        return ", ".join(sorted(system.value for system in value)) if value else ""
+    if index == 5:
+        return value.value if value else "Dimension okänd"
+    if index == 6:
+        if value in (ProjectionMedium.UNKNOWN, ProjectionMedium.DIGITAL):
+            return ""
+        return value.value if value else "Projektion okänd"
+    if index in (7, 8, 9, 10):
+        return ", ".join(sorted(attribute.value for attribute in value))
+    return ""
+
+
 def _variants(screenings: list[Screening]) -> dict[Screening, tuple[str, str]]:
-    """(formats, language) per screening; language splits only films playing in several."""
-    languages: dict[int, set[str]] = defaultdict(set)
-    for s in screenings:
-        if s.language:
-            languages[s.tmdb_id].add(s.language)
-    return {s: (s.format, s.language if len(languages[s.tmdb_id]) > 1 else "") for s in screenings}
+    """Return a stable group key and a clear label for each screening."""
+    groups = _group_variant_profiles(screenings)
+    by_film: dict[int | None, list[tuple[list[Screening], tuple]]] = defaultdict(list)
+    for members, profile in groups:
+        by_film[members[0].tmdb_id].append((members, profile))
 
-
-def _only(values: set[str]) -> str:
-    """The one known value, or empty when unknown or mixed."""
-    known = values - {""}
-    return next(iter(known)) if len(known) == 1 else ""
+    result: dict[int, tuple[str, str]] = {}
+    for film_groups in by_film.values():
+        profiles = [profile for _, profile in film_groups]
+        split_axes = set()
+        if len({profile[0] for profile in profiles}) > 1:
+            split_axes.add(0)
+        if len({profile[1] for profile in profiles}) > 1:
+            split_axes.add(1)
+        if len({profile[2] for profile in profiles}) > 1:
+            split_axes.add(2)
+        if len({profile[3] for profile in profiles}) > 1:
+            split_axes.add(3)
+        if len({profile[4] for profile in profiles}) > 1 or any(profile[4] for profile in profiles):
+            split_axes.add(4)
+        known_dimensions = {profile[5] for profile in profiles if profile[5] is not None}
+        if len(known_dimensions) > 1 or any(profile[5] == Dimension.THREE_D for profile in profiles):
+            split_axes.add(5)
+        if any(profile[6] in (ProjectionMedium.MM_35, ProjectionMedium.MM_70) for profile in profiles):
+            split_axes.add(6)
+        for index in (7, 8, 9, 10):
+            if any(profile[index] for profile in profiles):
+                split_axes.add(index)
+        for members, profile in film_groups:
+            labels = []
+            for index in sorted(split_axes):
+                value = profile[index]
+                if value is None:
+                    if index != 5 or len(known_dimensions) > 1:
+                        text = _profile_component_label(index, profile)
+                        if text:
+                            labels.append(text)
+                else:
+                    text = _profile_component_label(index, profile)
+                    if text:
+                        labels.append(text)
+            label = " · ".join(dict.fromkeys(labels))
+            identity = hashlib.sha256(_profile_sort_key(profile).encode()).hexdigest()[:12]
+            for screening in members:
+                result[id(screening)] = (identity, label)
+    return result
 
 
 def _prepare_programme_blocks(
@@ -842,7 +1046,7 @@ def _prepare_programme_blocks(
     filtered = [s for s in screenings if s.date in day_set]
     variants = _variants(filtered)
 
-    # (movie, formats, language) → (city, cinema) → day → [(time, url)]
+    # (movie, variant) → (city, cinema) → day → [(time, url)]
     movie_cinemas: dict[tuple[int, str, str], dict[tuple[str, str], dict[int, list[tuple[time, str]]]]] = defaultdict(
         lambda: defaultdict(lambda: defaultdict(list))
     )
@@ -851,17 +1055,17 @@ def _prepare_programme_blocks(
     # are blank for weeks and then burst with screenings far in the future.
     movie_score: dict[tuple[int, str, str], float] = defaultdict(float)
     movie_earliest: dict[tuple[int, str, str], tuple[date, time]] = {}
-    block_languages: dict[tuple[int, str, str], set[str]] = defaultdict(set)
-    block_subtitles: dict[tuple[int, str, str], set[str]] = defaultdict(set)
-
+    block_profiles: dict[tuple[int, str, str], tuple] = {}
     for s in filtered:
         try:
             day_idx = days.index(s.date)
         except ValueError:
             continue
-        block_key = (s.tmdb_id, *variants[s])
-        block_languages[block_key].add(s.language)
-        block_subtitles[block_key].add(s.subtitles)
+        block_key = (s.tmdb_id, *variants[id(s)])
+        profile = _variant_profile(s)
+        block_profiles[block_key] = (
+            _merge_profiles(block_profiles[block_key], profile) if block_key in block_profiles else profile
+        )
         movie_cinemas[block_key][(s.city, s.cinema_name)][day_idx].append((s.time, s.ticket_url))
         movie_score[block_key] += 1.0 / (1 + day_idx)
         key = (s.date, s.time)
@@ -877,12 +1081,15 @@ def _prepare_programme_blocks(
         film_earliest[tmdb_id] = min(earliest, film_earliest.get(tmdb_id, earliest))
 
     def _rank(bk: tuple[int, str, str]) -> tuple:
-        tmdb_id = bk[0]
-        return (-film_score[tmdb_id], film_earliest[tmdb_id], tmdb_id, -movie_score[bk], movie_earliest[bk], bk[1:])
+        tmdb_id, identity, label = bk
+        return (-film_score[tmdb_id], film_earliest[tmdb_id], tmdb_id, bool(label), label.casefold(), identity)
 
     blocks = []
+    label_counts: dict[int, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    for block_key in movie_cinemas:
+        label_counts[block_key[0]][block_key[2]] += 1
     for block_key in sorted(movie_cinemas, key=_rank):
-        tmdb_id, variant, _ = block_key
+        tmdb_id, _, variant = block_key
         movie = sd.movies.get(tmdb_id)
         film_title = movie.title_sv if movie else f"Film {tmdb_id}"
         film_slug = sd.film_slugs.get(film_title, _slugify_sv(film_title))
@@ -905,11 +1112,13 @@ def _prepare_programme_blocks(
                 mi_parts.append(f"{h} tim. {m} min." if h else f"{m} min.")
             if movie.age_rating:
                 mi_parts.append(movie.age_rating)
-        if language := _only(block_languages[block_key]):
-            mi_parts.append(language)
-        if subtitles := _only(block_subtitles[block_key]):
-            mi_parts.append(subtitles)
-
+        profile = block_profiles[block_key]
+        if profile[1]:
+            mi_parts.append(speech_label(sorted(language.value for language in profile[1])))
+        if profile[2] is not None:
+            mi_parts.append(
+                subtitles_label(sorted(language.value for language in profile[2])) if profile[2] else "Ej textad"
+            )
         desc = ""
         full_desc = ""
         if movie and movie.overview_sv:
@@ -972,7 +1181,13 @@ def _prepare_programme_blocks(
         blocks.append(
             {
                 "poster_url": _poster_url(sd, tmdb_id),
-                "film_id": "-".join([film_slug, *(_slugify_sv(part) for part in block_key[1:] if part)]),
+                "film_id": "-".join(
+                    [
+                        film_slug,
+                        _slugify_sv(variant) if variant else "",
+                        block_key[1] if label_counts[tmdb_id][variant] > 1 else "",
+                    ]
+                ).strip("-"),
                 "film_title": film_title,
                 "variant": variant,
                 "film_url": film_url,

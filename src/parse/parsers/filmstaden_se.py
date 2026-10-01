@@ -42,6 +42,21 @@ def _screening(
     dt = datetime.fromisoformat(show["time"])
     attrs = show.get("attributes", [])
     version = show.get("movieVersion") or {}
+    version_attrs = version.get("attributes") or []
+    attr_names = tuple(
+        dict.fromkeys(a.get("displayName") or "" for a in (*attrs, *version_attrs) if a.get("displayName"))
+    )
+    audio_languages = version.get("audioLanguages") or []
+    audio_info = version.get("audioLanguageInfo") or {}
+    audio_text = (
+        ", ".join(item.get("displayName") or item.get("alias") or "" for item in audio_languages).strip(", ")
+        or audio_info.get("displayName")
+        or audio_info.get("alias", "")
+    )
+    audio_role_text = ", ".join(item.get("description") or "" for item in audio_languages)
+    audio_role_text = audio_role_text or audio_info.get("description", "")
+    subtitles = version.get("subtitlesLanguageInfo") or {}
+    title = version.get("title") or ""
     return Screening(
         tmdb_id=tmdb_id,
         film_key=film_key,
@@ -51,12 +66,21 @@ def _screening(
         cinema_name=cinema_name,
         city=city,
         screen=show.get("screen", {}).get("title", ""),
-        # Version titles tag some formats the attributes miss: "Titel - 70mm".
-        format=_version.formats(
-            *(a.get("displayName") or "" for a in attrs), _version.split_title(version.get("title") or "")[1]
+        **_version.screening_facts(
+            format=", ".join(attr_names),
+            language=audio_text,
+            subtitles=subtitles.get("displayName") or subtitles.get("alias") or subtitles.get("description", ""),
+            audio_role_text=audio_role_text,
+            source_texts=_version.title_suffixes(title),
+            raw_attributes=(
+                *attr_names,
+                *(item.get("description") or "" for item in audio_languages),
+                *(item.get("displayName") or "" for item in audio_languages),
+                audio_info.get("description", ""),
+                subtitles.get("description", ""),
+                subtitles.get("displayName", "") or subtitles.get("alias", ""),
+            ),
         ),
-        language=_version.language((version.get("audioLanguageInfo") or {}).get("displayName", "")),
-        subtitles=_version.subtitles((version.get("subtitlesLanguageInfo") or {}).get("displayName", "")),
         ticket_url=f"https://www.filmstaden.se/bokning/kop/{show.get('remoteEntityId', '')}/",
     )
 
