@@ -174,6 +174,61 @@ def test_unknown_audio_labels_only_the_known_speech_language(monkeypatch):
     assert {block["variant"] for block in result} == {"Svenskt tal", "Engelskt tal"}
 
 
+def test_overlapping_speech_languages_merge_and_union_metadata(monkeypatch):
+    english_korean = screening(
+        0,
+        audio=AudioVersion(languages=frozenset({Language.ENGLISH, Language.KOREAN})),
+    )
+    korean = screening(1, audio=AudioVersion(languages=frozenset({Language.KOREAN})))
+
+    def grouped(items):
+        return blocks(monkeypatch, items)
+
+    first = grouped([english_korean, korean])
+    reversed_order = grouped([korean, english_korean])
+    assert len(first) == len(reversed_order) == 1
+    assert first[0]["variant"] == reversed_order[0]["variant"]
+    assert first[0]["mi"] == reversed_order[0]["mi"]
+    assert "Engelskt" in first[0]["mi"]
+    assert "koreanskt" in first[0]["mi"]
+    profile = build._variant_profile(english_korean)
+    assert profile[1] == frozenset({Language.ENGLISH, Language.KOREAN})
+    merged = build._merge_profiles(profile, build._variant_profile(korean))
+    assert merged[1] == frozenset({Language.ENGLISH, Language.KOREAN})
+
+
+def test_disjoint_speech_languages_remain_separate(monkeypatch):
+    result = blocks(
+        monkeypatch,
+        [
+            screening(0, audio=AudioVersion(languages=frozenset({Language.ENGLISH}))),
+            screening(1, audio=AudioVersion(languages=frozenset({Language.KOREAN}))),
+        ],
+    )
+    assert len(result) == 2
+
+
+def test_overlapping_speech_language_cannot_bridge_disjoint_variants(monkeypatch):
+    screenings = [
+        screening(0, audio=AudioVersion(languages=frozenset({Language.ENGLISH}))),
+        screening(1, audio=AudioVersion(languages=frozenset({Language.ENGLISH, Language.KOREAN}))),
+        screening(2, audio=AudioVersion(languages=frozenset({Language.KOREAN}))),
+    ]
+    for items in (screenings, list(reversed(screenings))):
+        result = blocks(monkeypatch, items)
+        assert len(result) == 3
+
+
+def test_unknown_subtitles_do_not_appear_in_variant_heading(monkeypatch):
+    unknown = blocks(monkeypatch, [screening(0)])
+    no_subtitles = blocks(
+        monkeypatch,
+        [screening(1, subtitles=frozenset()), screening(2, subtitles=frozenset({Language.SWEDISH}))],
+    )
+    assert unknown[0]["variant"] == ""
+    assert "Ej textad" in {block["variant"] for block in no_subtitles}
+
+
 def test_digital_metadata_does_not_add_a_label_to_audio_variants(monkeypatch):
     result = blocks(
         monkeypatch,

@@ -30,8 +30,9 @@ dimension, and projection remain unknown; explicit no subtitles is distinct.
 
 Programme blocks group compatible content and presentation facts, including all
 screening modifiers. Atmos, 4K, Laser, VIP, XL, and audio description each define
-distinct variants. Ambiguous screenings stay separate; the standard presentation
-has no label.
+distinct variants. Overlapping spoken-language facts merge; disjoint facts and
+ambiguous screenings stay separate. Unknown subtitle facts have no heading;
+explicit no subtitles remains distinct. The standard presentation has no label.
 
 Legacy screening databases require a fresh parse; no data migration runs.
 Parse into a new database with `parse --output /path/to/new.db <parser>`.

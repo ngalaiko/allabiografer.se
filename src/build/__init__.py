@@ -846,6 +846,10 @@ def _variant_profile(screening: Screening) -> tuple:
 def _profiles_compatible(left: tuple, right: tuple) -> bool:
     """Match unknown facts by axis; 3D and film projection are material variants."""
     for index, (a, b) in enumerate(zip(left, right, strict=True)):
+        if index == 1 and a is not None and b is not None:
+            if not a.intersection(b):
+                return False
+            continue
         # Unknown medium may join digital. Film formats (35/70 mm) stay distinct.
         if index == 6 and {a, b} == {ProjectionMedium.UNKNOWN, ProjectionMedium.DIGITAL}:
             continue
@@ -863,6 +867,9 @@ def _profiles_compatible(left: tuple, right: tuple) -> bool:
 def _merge_profiles(left: tuple, right: tuple) -> tuple:
     merged = []
     for index, (a, b) in enumerate(zip(left, right, strict=True)):
+        if index == 1 and a is not None and b is not None:
+            merged.append(a.union(b))
+            continue
         if index == 6 and {a, b} == {ProjectionMedium.UNKNOWN, ProjectionMedium.DIGITAL}:
             merged.append(ProjectionMedium.DIGITAL)
         else:
@@ -954,7 +961,7 @@ def _audio_label(profile: tuple) -> str:
 
 def _subtitle_label(languages: frozenset[Language] | None) -> str:
     if languages is None:
-        return "Textning okänd"
+        return ""
     if not languages:
         return "Ej textad"
     return subtitles_label(sorted(language.value for language in languages))

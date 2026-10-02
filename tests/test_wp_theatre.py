@@ -63,7 +63,8 @@ def test_series_category_is_not_a_genre(tmdb_calls):
     film = _film("production-cinemateket.html")
     assert film.genres == []
     assert film.overview == ""
-    assert film.title == "Cinemateket: Blade Runner"
+    assert film.title == "Blade Runner"
+    assert film.key == "wp_theatre:blade runner"
 
 
 def test_runtime_is_passed_to_tmdb(tmdb_calls):
@@ -74,15 +75,31 @@ def test_runtime_is_passed_to_tmdb(tmdb_calls):
 def test_series_prefix_stripped_for_tmdb(tmdb_calls):
     screenings = _parse("production-cinemateket.html")
     assert tmdb_calls == [("Blade Runner", None)]
-    # The displayed title keeps the series label.
-    assert screenings[0].title == "Cinemateket: Blade Runner"
+    assert screenings[0].title == "Blade Runner"
+
+
+def test_series_prefix_is_removed_before_film_matching_and_storage(tmdb_calls):
+    html = (
+        (_FIXTURES / "production-cinemateket.html")
+        .read_text()
+        .replace("Cinemateket: Blade Runner", "Cinemateket: In The Mood For Love")
+    )
+    items = list(wp_theatre._parse_production(html, _SITE))
+    film = next(i for i in items if isinstance(i, Film))
+    screening = next(i for i in items if not isinstance(i, Film))
+
+    assert tmdb_calls == [("In The Mood For Love", None)]
+    assert film.key == "wp_theatre:in the mood for love"
+    assert film.title == screening.title == "In The Mood For Love"
 
 
 @pytest.mark.parametrize(
     ("text", "expected"),
     [
         ("Cinemateket: Blade Runner", "Blade Runner"),
+        ("Cinemateket — Blade Runner", "Blade Runner"),
         ("Unga Cinemateket: När Marnie var där (Sv. tal)", "När Marnie var där (Sv. tal)"),
+        ("Cinemateket: Love: Actually", "Love: Actually"),
         ("Tony", "Tony"),
     ],
 )

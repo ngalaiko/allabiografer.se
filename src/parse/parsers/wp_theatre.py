@@ -46,7 +46,7 @@ _NOT_GENRES = {"cinemateket", "unga-cinemateket"}
 _GENRE_NAMES = {"dokumentar": "Dokumentär"}
 
 # Programme series prefixed to the film title, e.g. "Cinemateket: Blade Runner".
-_SERIES_PREFIX = re.compile(r"^(?:unga\s+)?cinemateket\s*:\s*", re.IGNORECASE)
+_SERIES_PREFIX = re.compile(r"^(?:unga\s+)?cinemateket\s*(?::|[-–—])\s*", re.IGNORECASE)
 # "1 tim 46 min"
 _HOURS = re.compile(r"(\d+)\s*tim")
 _MINUTES = re.compile(r"(\d+)\s*min")
@@ -137,7 +137,7 @@ def _parse_production(html: str, site: dict) -> Iterator[Screening | Film]:
     psoup = BeautifulSoup(html, "html.parser")
 
     h1 = psoup.select_one("h1.wp_theatre_production_title") or psoup.select_one("h1")
-    raw_title = h1.get_text(strip=True) if h1 else ""
+    raw_title = _lookup_title(h1.get_text(strip=True) if h1 else "")
     film_title, fmt, language, subtitles = _version.split_title(raw_title)
     suffixes = _version.title_suffixes(raw_title)
     if not film_title:
