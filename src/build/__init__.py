@@ -652,6 +652,7 @@ def _make_env() -> Environment:
     )
     env.globals["style_version"] = hashlib.sha256(Path("static/i/style.css").read_bytes()).hexdigest()[:12]
     env.globals["synopsis_version"] = hashlib.sha256(Path("static/i/synopsis.js").read_bytes()).hexdigest()[:12]
+    env.globals["links_version"] = hashlib.sha256(Path("static/i/links.js").read_bytes()).hexdigest()[:12]
     env.globals["font_versions"] = {
         weight: hashlib.sha256(Path(f"static/i/FiraSans-{weight}.woff2").read_bytes()).hexdigest()[:12]
         for weight in ("Regular", "SemiBold")

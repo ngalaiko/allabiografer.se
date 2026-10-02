@@ -1,10 +1,19 @@
-/* Two-line synopses with "Visa mer…"; expanded films are kept in the URL. */
+/* Two-line synopses with per-page expansion stored locally. */
 (() => {
   const buttons = [...document.querySelectorAll("[data-more]")];
   if (!buttons.length) return;
   const ids = new Set(buttons.map(button => button.dataset.more));
-  const read = () => new Set((new URL(location.href).searchParams.get("expanded") || "").split(",").filter(id => ids.has(id)));
-  let expanded = read();
+  const key = `synopsis:${location.pathname}`;
+  let expanded = new Set();
+  try {
+    const saved = JSON.parse(localStorage.getItem(key) || "[]");
+    if (Array.isArray(saved)) expanded = new Set(saved.filter(id => ids.has(id)));
+  } catch {}
+  const url = new URL(location.href);
+  if (url.searchParams.has("expanded")) {
+    url.searchParams.delete("expanded");
+    history.replaceState(history.state, "", url);
+  }
   const text = button => document.getElementById(button.getAttribute("aria-controls"));
   function render() {
     for (const button of buttons) {
@@ -20,16 +29,12 @@
     button.addEventListener("click", () => {
       const id = button.dataset.more;
       if (expanded.has(id)) expanded.delete(id); else expanded.add(id);
-      const url = new URL(location.href);
-      if (expanded.size) url.searchParams.set("expanded", [...expanded].sort().join(","));
-      else url.searchParams.delete("expanded");
-      history.replaceState(history.state, "", url);
+      try { localStorage.setItem(key, JSON.stringify([...expanded].sort())); } catch {}
       render();
     });
   }
   // Re-measures when a hidden view is shown or the layout width changes.
   const observer = new ResizeObserver(render);
   for (const button of buttons) observer.observe(text(button));
-  addEventListener("popstate", () => { expanded = read(); render(); });
   render();
 })();
