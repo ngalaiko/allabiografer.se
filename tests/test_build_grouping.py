@@ -256,8 +256,8 @@ def test_original_and_dubbed_same_language_keep_unknown_choice_separate(monkeypa
     assert {block["variant"] for block in result} == {
         "Originalversion",
         "Svenskt tal",
-        "Svenskt tal (typ okänd)",
     }
+    assert len(result) == 3
 
 
 def test_unknown_subtitles_join_one_unambiguous_variant(monkeypatch):
@@ -302,6 +302,7 @@ def test_unknown_audio_stays_separate_from_ambiguous_known_versions(monkeypatch)
     ]
     result = blocks(monkeypatch, screenings)
     assert len(result) == 3
+    assert {block["variant"] for block in result} == {"Svenskt tal", "Originalversion · Engelskt tal", ""}
     assert len({id(s) for s in screenings}) == 3
 
 

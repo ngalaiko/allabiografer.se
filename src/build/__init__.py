@@ -958,9 +958,7 @@ def _audio_label(profile: tuple) -> str:
         return "Originalversion"
     if kind == AudioKind.SILENT:
         return "Stum version"
-    if speech:
-        return f"{speech} (typ okänd)"
-    return "Ljudversion okänd"
+    return speech
 
 
 def _subtitle_label(languages: frozenset[Language] | None) -> str:
