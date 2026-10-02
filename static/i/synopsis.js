@@ -15,17 +15,29 @@
     history.replaceState(history.state, "", url);
   }
   const text = button => document.getElementById(button.getAttribute("aria-controls"));
+  const measure = document.createElement("canvas").getContext("2d");
+  function needsCollapse(paragraph) {
+    paragraph.classList.remove("clamped");
+    const range = document.createRange();
+    range.selectNodeContents(paragraph);
+    const lines = [...range.getClientRects()];
+    const overflow = lines.slice(2).reduce((width, line) => width + line.width, 0);
+    measure.font = getComputedStyle(paragraph).font;
+    return overflow > measure.measureText("Visa mer…").width + 1;
+  }
   function render() {
     for (const button of buttons) {
+      const paragraph = text(button);
+      const collapsible = needsCollapse(paragraph);
       const open = expanded.has(button.dataset.more);
-      text(button).classList.toggle("expanded", open);
+      paragraph.classList.toggle("clamped", collapsible);
+      paragraph.classList.toggle("expanded", open);
       button.setAttribute("aria-expanded", String(open));
       button.textContent = open ? "Visa mindre" : "Visa mer…";
-      button.hidden = !open && text(button).scrollHeight <= text(button).clientHeight + 1;
+      button.hidden = !collapsible;
     }
   }
   for (const button of buttons) {
-    text(button).classList.add("clamped");
     button.addEventListener("click", () => {
       const id = button.dataset.more;
       if (expanded.has(id)) expanded.delete(id); else expanded.add(id);
@@ -36,5 +48,6 @@
   // Re-measures when a hidden view is shown or the layout width changes.
   const observer = new ResizeObserver(render);
   for (const button of buttons) observer.observe(text(button));
+  document.fonts?.addEventListener("loadingdone", render);
   render();
 })();

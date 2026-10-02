@@ -103,12 +103,6 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .schedule-cell .past { color: var(--past); }
 .no-screenings { padding: 16px 12px; }
 
-.synopsis-short { display: none; }
-@media (min-width: 701px) {
-  .program:not(.festival) .synopsis, .program:not(.festival) .synopsis-more { display: none; }
-  .synopsis-short { display: block; }
-}
-
 @media (max-width: 700px) {
   .program { --schedule-inset: 12px; }
   .schedule-breadcrumbs { height: var(--schedule-nav-height); padding-block: 0; }

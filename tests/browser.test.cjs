@@ -8,6 +8,7 @@ function synopsis(storage = new Map(), href = 'https://allabiografer.se/stad/var
   const classes = new Set();
   const paragraph = { scrollHeight: 100, clientHeight: 40, classList: {
     add: value => classes.add(value),
+    remove: value => classes.delete(value),
     toggle: (value, enabled) => enabled ? classes.add(value) : classes.delete(value),
   } };
   const button = { dataset: { more: 'digger' }, attributes: {},
@@ -16,7 +17,12 @@ function synopsis(storage = new Map(), href = 'https://allabiografer.se/stad/var
     addEventListener(name, handler) { this[name] = handler; },
   };
   vm.runInNewContext(fs.readFileSync('static/i/synopsis.js', 'utf8'), {
-    URL, location, document: { querySelectorAll: () => [button], getElementById: () => paragraph },
+    URL, location, document: {
+      querySelectorAll: () => [button], getElementById: () => paragraph,
+      createElement: () => ({ getContext: () => ({ measureText: () => ({ width: 60 }) }) }),
+      createRange: () => ({ selectNodeContents() {}, getClientRects: () => Array(4).fill({ width: 200 }) }),
+    },
+    getComputedStyle: () => ({ font: '16px sans-serif' }),
     localStorage: {
       getItem(key) { if (blocked) throw Error('blocked'); return storage.get(key) ?? null; },
       setItem(key, value) { if (blocked) throw Error('blocked'); storage.set(key, value); },
