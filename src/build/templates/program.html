@@ -3,7 +3,7 @@
 {% block body %}
 <main class="program" aria-label="Bioprogram, rulla i sidled för fler datum" tabindex="0" style="--day-count: {{ num_days }};">
 <header class="schedule-header">
-<nav class="schedule-breadcrumbs" aria-label="Brödsmulor"><a class="home" href="/" aria-label="Alla städer">{% include "home_icon.html" %}</a><div class="breadcrumb-label">{{ breadcrumbs|safe }}</div></nav>
+<nav class="schedule-breadcrumbs" aria-label="Brödsmulor"><a class="home" href="/" aria-label="Alla städer">{% include "home_icon.html" %}</a><div class="breadcrumb-label">{{ breadcrumbs|safe }}{% if clear_filter_url %} <a class="filter-close" href="{{ clear_filter_url }}" aria-label="Ta bort filter"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4.5 4.5L11.5 11.5M11.5 4.5L4.5 11.5" stroke="currentColor" stroke-width="1.5"/></svg></a>{% endif %}</div></nav>
 <div class="schedule-dates">
 {% for day in days %}<time datetime="{{ day.date }}">{{ day.label }}</time>{% endfor %}
 </div>
@@ -11,7 +11,7 @@
 {% for block in blocks %}
 <article class="schedule-film" style="--film-rows: {{ block.cinemas|length + 2 }};">
 <div class="film-title">
-<h2><a href="{{ block.film_url }}" title="{{ block.film_title }}">{{ block.film_title }}</a>{% if block.variant %} <span class="film-variant">({{ block.variant }})</span>{% endif %}</h2>
+<h2>{% if canonical and canonical.endswith(block.film_url) %}{{ block.film_title }}{% else %}<a href="{{ block.film_url }}" title="{{ block.film_title }}">{{ block.film_title }}</a>{% endif %}{% if block.variant %} <span class="film-variant">({{ block.variant }})</span>{% endif %}</h2>
 </div>
 <div class="film-overview">
 <div class="film-poster">{% if block.poster_url %}<img src="{{ block.poster_url }}" alt="" width="125" height="177"
@@ -19,7 +19,7 @@
   sizes="(max-width: 700px) 52px, 125px" loading="{{ 'eager' if loop.first else 'lazy' }}"{% if loop.first %} fetchpriority="high"{% endif %}>{% else %}<div class="poster-placeholder"></div>{% endif %}</div>
 <div class="film-description">
 {% if block.mi %}<div class="film-meta">{{ block.mi|safe }}</div>{% endif %}
-{% if block.full_desc %}<p class="synopsis" id="synopsis-{{ block.film_id }}">{{ block.full_desc }}</p>
+{% if block.full_desc %}<div class="synopsis-short" title="{{ block.full_desc }}">{{ block.desc }}</div><p class="synopsis" id="synopsis-{{ block.film_id }}">{{ block.full_desc }}</p>
 <button type="button" class="synopsis-more" data-more="{{ block.film_id }}" aria-controls="synopsis-{{ block.film_id }}" aria-expanded="false" hidden>Visa mer…</button>{% endif %}
 </div>
 </div>

@@ -391,5 +391,5 @@ def test_dense_times_get_non_overlapping_slots():
     for index, left in enumerate(positions):
         for right in positions[index + 1 :]:
             overlap_x = left["left"] < right["left"] + 45 and right["left"] < left["left"] + 45
-            overlap_y = left["top"] < right["top"] + 28 and right["top"] < left["top"] + 28
+            overlap_y = left["top"] < right["top"] + 20 and right["top"] < left["top"] + 20
             assert not (overlap_x and overlap_y)

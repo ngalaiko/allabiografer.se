@@ -73,7 +73,9 @@ SITE_DESCRIPTION = (
 # Cap structured-data events per film page to keep page weight sane.
 MAX_JSONLD_EVENTS = 100
 SCHEDULE_DAYS = 14
-TIME_ROW_HEIGHT = 32
+TIME_ROW_HEIGHT = 22.5
+TIME_LINK_HEIGHT = 20
+TIME_VERTICAL_PADDING = 6.25
 
 
 # Residensstäder — capital of each Swedish län.
@@ -200,14 +202,14 @@ def _compute_time_positions(times: list[tuple[time, str]]) -> list[dict]:
 
     for item in placed:
         row = item.pop("row")
-        item["top"] = round(pad + sum(row_heights[:row]) + pad / 2, 2)
+        item["top"] = round(TIME_VERTICAL_PADDING + sum(row_heights[:row]), 2)
     return placed
 
 
 def _cell_min_height(positions: list[dict]) -> float:
     if not positions:
         return 0
-    return max(p["top"] for p in positions) + TIME_ROW_HEIGHT + 5
+    return max(p["top"] for p in positions) + TIME_LINK_HEIGHT + TIME_VERTICAL_PADDING
 
 
 # ---------------------------------------------------------------------------
@@ -1222,6 +1224,7 @@ def _write_programme(
     jsonld: str | None = None,
     og_image: str | None = None,
     og_type: str | None = None,
+    clear_filter_url: str | None = None,
 ) -> None:
     screenings = _schedule_screenings(sd, screenings)
     page_days = _compute_days(screenings)
@@ -1237,6 +1240,7 @@ def _write_programme(
         og_image=og_image,
         og_type=og_type,
         breadcrumbs=breadcrumbs,
+        clear_filter_url=clear_filter_url,
         days=days,
         num_days=max(1, len(page_days)),
         blocks=blocks,
@@ -1309,6 +1313,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             canonical=canonical,
             jsonld=_cinema_jsonld(sd, city_name, cinema_name, canonical),
             breadcrumbs=f' / <a href="/stad/{city_slug}/">{city_name}</a> / {cinema_name}',
+            clear_filter_url=f"/stad/{city_slug}/",
             out_path=out_path,
             city=city_name,
         )
@@ -1336,6 +1341,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
                 ],
             ),
             breadcrumbs=f' / <a href="/stad/{city_slug}/">{city_name}</a> / {genre}',
+            clear_filter_url=f"/stad/{city_slug}/",
             out_path=out_path,
             city=city_name,
         )
@@ -1370,6 +1376,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             og_image=og_image,
             og_type="video.movie",
             breadcrumbs=f' / <a href="/stad/{city_slug}/">{city_name}</a> / {film_title}',
+            clear_filter_url=f"/stad/{city_slug}/",
             out_path=out_path,
             city=city_name,
         )
@@ -1403,6 +1410,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             og_image=og_image,
             og_type="video.movie",
             breadcrumbs=f" / {film_title}",
+            clear_filter_url="/",
             out_path=out_path,
         )
 

@@ -15,76 +15,106 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
   --cap-height-9-5: calc(9.5px / var(--em));
   --gap-v: 10px;
   --gap-h: 10px;
-  --border-color: #DDD;
-  --schedule-surface: #f5f5f5;
-  --schedule-nav-height: 30px;
-  --schedule-day-height: 30px;
-  --schedule-inset: 12px;
+  color-scheme: light dark;
+  --background: light-dark(#FFF, #171B20);
+  --schedule-surface: light-dark(#F5F5F5, #232930);
+  --text: light-dark(#15191D, #E1E6EC);
+  --muted: light-dark(#767676, #A4AEBB);
+  --past: light-dark(#999, #808C99);
+  --link: light-dark(#0060A0, #80C5F7);
+  --hover: light-dark(#D43B16, #FF9975);
+  --hover-background: light-dark(#FEE1E4, #48302E);
+  --border-color: light-dark(#DDD, #3B444F);
+  --poster: light-dark(#D5D5D5, #343D48);
+  --schedule-nav-height: 32px;
+  --schedule-day-height: 32px;
+  --schedule-inset: 5px;
 }
-a { text-decoration: none; color: #0060a0; text-decoration-thickness: 1px; }
-a:hover { color: #FF4F20; text-decoration: underline; }
-html { overscroll-behavior-x: none; }
-body { font: var(--cap-height-11) / 19px 'Fira Sans'; }
+a { text-decoration: none; color: var(--link); text-decoration-thickness: 1px; }
+a:hover { color: var(--hover); text-decoration: underline; }
+html { overscroll-behavior-x: none; background: var(--background); color: var(--text); }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
+body { font: var(--cap-height-11) / 19px 'Fira Sans'; background: var(--background); }
 .home:hover { text-decoration: none; }
-.home { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 24px; }
+.home { display: inline-flex; align-items: center; justify-content: center; min-width: 16px; min-height: 16px; }
 .home > svg { width: 16px; height: 16px; display: inline-block; }
-.schedule-breadcrumbs .home { flex: 0 0 24px; }
-.breadcrumb-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.schedule-breadcrumbs .home { flex: 0 0 16px; }
+.breadcrumb-label { min-width: 0; overflow-wrap: anywhere; }
+.filter-close { display: inline-flex; vertical-align: middle; margin-left: 5px; }
+.filter-close:hover { text-decoration: none; }
+.filter-close svg { width: 16px; height: 16px; }
 
 /** Index **/
-.index { min-width: 100vw; min-height: 100vh; padding: 2em; display: flex; justify-content: center; }
+.index { width: 100%; min-height: 100vh; padding: 2em; display: flex; justify-content: center; }
 .index h1 { margin: 1em 0 0 0; line-height: 2em; font-weight: 400; }
 .index h1 > span { font-weight: 700; }
-.index_inner { display: flex; flex-direction: column; }
+.index_inner { display: flex; flex-direction: column; min-width: 0; max-width: 100%; }
 
 .index h2 { margin-top: 2em; }
 .index_inner > h2:first-child { margin-top: 0; }
 .cities { columns: 7 150px; column-gap: 10px; }
-.cities > li { list-style: none; line-height: 1.5; margin-bottom: 0.4em; }
-.cities a { display: inline-block; min-height: 24px; }
+.cities > li { list-style: none; line-height: 1.1; margin-bottom: 0.4em; }
+.cities a { display: inline-block; }
 .city.large { font-weight: 600; }
 
 /** All Movies **/
-.all-movies { display: grid; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); column-gap: 15px; row-gap: 20px; width: calc(min(90vw, 1110px)); }
+.all-movies { display: grid; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); column-gap: 15px; row-gap: 20px; width: calc(min(90vw, 1110px)); max-width: 100%; }
 .all-movies > .date { grid-column-start: 1; grid-column-end: -1; margin: 1em 0 0 0; }
 .all-movies > .film { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.5em; }
-.all-movies .poster { width: 125px; height: 177px; display: block; background: #D5D5D5; border-radius: 4px; object-fit: cover; }
+.all-movies .film > a { display: flex; flex-direction: column; align-items: center; gap: 0.5em; }
+.all-movies .poster { width: 125px; height: 177px; display: block; background: var(--poster); border-radius: 4px; object-fit: cover; }
+
+.premieres .film > a { color: var(--text); }
+.premieres .film > a:hover { color: var(--hover); }
 
 /** Program **/
 /* As wide as the schedule, so the footer can stay in view while it scrolls sideways. */
 .schedule-scroll { display: flex; flex-direction: column; flex: 1 0 auto; width: max-content; min-width: 100%; }
 .schedule-scroll > .site-footer { position: sticky; left: 0; width: 100vw; box-sizing: border-box; padding-top: 20px; }
 h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
-/* --frame: white margin around the sheet; --schedule-top: rows above the sticky header. */
+/* --frame: margin around the sheet; --schedule-top: rows above the sticky header. */
 .program { --frame: 20px; --schedule-top: 0px; --day-width: 200px; --sheet-width: calc(445px + var(--day-count) * var(--day-width)); padding: 20px 20px 0; cursor: default; width: max-content; position: relative; }
-.program::before { content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 20px; z-index: 50; background: #fff; }
-.program::after { content: ""; position: fixed; top: 0; left: 0; width: 20px; height: 100vh; z-index: 55; background: #fff; }
+.program::before { content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 20px; z-index: 50; background: var(--background); }
+.program::after { content: ""; position: fixed; top: 0; left: 0; width: 20px; height: 100vh; z-index: 55; background: var(--background); }
 .schedule-header { position: sticky; top: calc(var(--frame) + var(--schedule-top)); z-index: 50; width: var(--sheet-width); display: grid; grid-template-columns: 445px 1fr; background: var(--schedule-surface); }
-.schedule-breadcrumbs { position: sticky; left: 20px; z-index: 60; width: 445px; height: var(--schedule-nav-height); display: flex; align-items: center; gap: 4px; padding: 0 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--schedule-surface); border: 1px solid var(--border-color); }
+.schedule-breadcrumbs { position: sticky; left: 20px; z-index: 60; width: 445px; min-height: var(--schedule-nav-height); display: flex; align-items: center; gap: 5px; padding: 5px; background: var(--schedule-surface); border: 1px solid var(--border-color); }
 .schedule-dates { display: grid; grid-template-columns: repeat(var(--day-count), var(--day-width)); }
-.schedule-dates > time { height: var(--schedule-day-height); padding: 4px; line-height: 20px; text-align: center; background: var(--schedule-surface); border-block: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
+.schedule-dates > time { min-height: var(--schedule-day-height); padding: 5px; line-height: 20px; text-align: center; background: var(--schedule-surface); border-block: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
 .schedule-film { display: grid; grid-template-columns: 135px 310px repeat(var(--day-count), var(--day-width)); width: var(--sheet-width); background: var(--schedule-surface); border-bottom: 1px solid var(--border-color); }
-.film-title { grid-column: 2 / 4; grid-row: 1; position: sticky; left: 20px; padding: 10px var(--schedule-inset) 0; background: var(--schedule-surface); border-left: 1px solid var(--border-color); }
-.film-title h2 { font-size: 18px; line-height: 24px; margin: 0; }
-.film-variant { font-weight: 400; }
-.film-meta, .film-description { font-size: 14px; line-height: 20px; }
-.film-meta { white-space: nowrap; }
+.film-title { grid-column: 2 / 4; grid-row: 1; position: sticky; left: 20px; padding: 5px var(--schedule-inset) 0; background: var(--schedule-surface); border-left: 1px solid var(--border-color); }
+.film-title h2 { font-size: var(--cap-height-13); line-height: 19px; margin: 0 0 7px; }
+.film-variant { font-weight: inherit; }
+.film-meta, .film-description { font-size: var(--cap-height-9-5); line-height: 19px; }
+.film-meta { white-space: normal; }
 .film-overview, .schedule-cinema, .schedule-times { display: contents; }
-.film-poster { grid-column: 1; grid-row: 1 / span var(--film-rows); padding: 5px; background: #fff; border-left: 1px solid var(--border-color); }
-.film-poster img, .film-poster .poster-placeholder { position: sticky; top: calc(55px + var(--schedule-top)); width: 125px; height: 177px; object-fit: cover; border-radius: 2px; background: #D5D5D5; }
-.film-description { grid-column: 2 / 4; grid-row: 2; position: sticky; left: 20px; padding: 0 var(--schedule-inset) 10px; background: var(--schedule-surface); border-left: 1px solid var(--border-color); }
+.film-poster { grid-column: 1; grid-row: 1 / span var(--film-rows); padding: 5px; background: var(--background); border-left: 1px solid var(--border-color); }
+.film-poster img, .film-poster .poster-placeholder { position: sticky; top: calc(55px + var(--schedule-top)); width: 125px; height: 177px; object-fit: cover; border-radius: 0; background: var(--poster); }
+.film-description { grid-column: 2 / 4; grid-row: 2; position: sticky; left: 20px; padding: 0 var(--schedule-inset) 5px; background: var(--schedule-surface); border-left: 1px solid var(--border-color); }
 .synopsis { margin: 0; }
 .synopsis.clamped:not(.expanded) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .synopsis-more { font: inherit; padding: 0; border: 0; background: none; color: inherit; text-decoration: underline; cursor: pointer; }
-.cinema-name { grid-column: 2; grid-row: var(--cinema-row); min-height: var(--cinema-height); position: sticky; left: 20px; z-index: 20; padding: 10px var(--schedule-inset); background: #fff; font-size: 15px; line-height: 24px; border: 1px solid var(--border-color); border-bottom: 0; }
-.cinema-location, .cinema-location a { color: #666; font-size: 14px; line-height: 20px; }
-.schedule-cell { grid-column: calc(var(--day-column) + 2); grid-row: var(--cinema-row); position: relative; min-height: var(--cinema-height); background: #fff; border-top: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
-.schedule-cell > a, .schedule-cell > span { position: absolute; left: var(--time-left); top: var(--time-top); width: 45px; min-height: 28px; padding: 7px 5px; line-height: 14px; white-space: nowrap; text-align: center; font-feature-settings: 'case' 1; font-size: var(--cap-height-10); }
-.schedule-cell > a:hover { text-decoration: none; background: #fee1e4; }
-.schedule-cell .past { color: #666; }
+.cinema-name { grid-column: 2; grid-row: var(--cinema-row); min-height: var(--cinema-height); position: sticky; left: 20px; z-index: 20; padding: 5px var(--schedule-inset); background: var(--background); font-size: var(--cap-height-11); line-height: 19px; border: 1px solid var(--border-color); border-bottom: 0; }
+.cinema-location, .cinema-location a { color: var(--muted); font-size: var(--cap-height-9-5); line-height: 19px; }
+.cinema-location a { text-decoration: underline; }
+.cinema-location a:hover { color: var(--hover); }
+.schedule-cell { grid-column: calc(var(--day-column) + 2); grid-row: var(--cinema-row); position: relative; min-height: var(--cinema-height); background: var(--background); border-top: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
+.schedule-cell > a, .schedule-cell > span { position: absolute; left: var(--time-left); top: var(--time-top); width: 45px; min-height: 20px; padding: 5px; line-height: 10px; white-space: nowrap; text-align: center; font-feature-settings: 'case' 1; font-size: var(--cap-height-10); }
+.schedule-cell > a:hover { text-decoration: none; background: var(--hover-background); }
+.schedule-cell .past { color: var(--past); }
 .no-screenings { padding: 16px 12px; }
 
+.synopsis-short { display: none; }
+@media (min-width: 701px) {
+  .program:not(.festival) .synopsis, .program:not(.festival) .synopsis-more { display: none; }
+  .synopsis-short { display: block; }
+}
+
 @media (max-width: 700px) {
+  .program { --schedule-inset: 12px; }
+  .schedule-breadcrumbs { height: var(--schedule-nav-height); padding-block: 0; }
+  .breadcrumb-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .home { min-width: 24px; min-height: 24px; }
+  .schedule-breadcrumbs .home { flex-basis: 24px; }
   .schedule-scroll { display: block; width: 100%; height: 100dvh; overflow: auto; scroll-padding-top: 186px; }
   .schedule-scroll > .site-footer { position: sticky; left: 0; width: 100%; padding-top: 12px; }
   .program { --frame: 0px; padding: 0; width: max-content; --day-width: 200px; --sheet-width: max(100vw, calc(var(--day-count) * var(--day-width))); --header-height: calc(var(--schedule-nav-height) + var(--schedule-day-height)); --film-height: 56px; scroll-padding-top: calc(var(--header-height) + var(--film-height) + 70px); }
@@ -92,15 +122,15 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
   .schedule-header { display: block; top: var(--schedule-top); z-index: 40; }
   .schedule-breadcrumbs { left: 0; width: 100vw; border: 0; }
   .schedule-dates > time:first-child { border-left: 1px solid var(--border-color); }
-  .schedule-film { display: block; background: #fff; border: 0; }
+  .schedule-film { display: block; background: var(--background); border: 0; }
   .film-title { display: flex; align-items: center; left: 0; width: 100vw; height: var(--film-height); top: calc(var(--header-height) + var(--schedule-top)); z-index: 30; padding: 3px var(--schedule-inset); border: 0; border-bottom: 1px solid var(--border-color); }
-  .film-title h2 { min-width: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+  .film-title h2 { margin: 0; min-width: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
   .film-meta { margin-bottom: 8px; white-space: normal; }
   .film-overview { position: sticky; left: 0; width: 100vw; display: flex; align-items: flex-start; gap: var(--schedule-inset); padding: 10px var(--schedule-inset); border-bottom: 1px solid var(--border-color); }
   .film-poster { flex: 0 0 52px; padding: 0; border: 0; }
   .film-poster:empty { display: none; }
   .film-poster img, .film-poster .poster-placeholder { position: static; width: 52px; height: 74px; }
-  .film-description { flex: 1; min-width: 0; position: static; padding: 0; border: 0; background: #fff; }
+  .film-description { flex: 1; min-width: 0; position: static; padding: 0; border: 0; background: var(--background); }
   .schedule-cinema { display: block; border-bottom: 1px solid var(--border-color); }
   .cinema-name { top: calc(var(--header-height) + var(--film-height) + var(--schedule-top)); left: 0; width: 100vw; min-height: 0; border: 0; border-bottom: 1px solid var(--border-color); }
   .cinema-location { display: inline; }
@@ -118,7 +148,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
   .cities > li { margin: 0; break-inside: avoid; }
   .cities a { display: inline-block; padding: 6px 0; line-height: 20px; }
   .all-movies { width: 100%; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); gap: 20px 12px; }
-  .all-movies .film > a { width: 100%; }
+  .all-movies .film > a { width: 100%; gap: 0; }
   .all-movies .poster { width: 100%; height: auto; aspect-ratio: 125 / 177; }
   .all-movies .title { margin-top: 6px; overflow-wrap: anywhere; }
   .all-movies > .date { margin: 8px 0 -8px; }
@@ -126,7 +156,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
   body > .site-footer { padding: 24px 12px 12px; }
 }
 
-.site-footer { padding: 2em 20px 1em; margin-top: auto; color: #666; font-size: var(--cap-height-10); text-align: center; line-height: 2; }
-.site-footer a { color: #666; text-decoration: none; }
-.site-footer a:hover { color: #FF4F20; }
-.site-footer .sep { margin: 0 0.6em; color: #666; }
+.site-footer { padding: 2em 20px 1em; margin-top: auto; color: var(--muted); font-size: var(--cap-height-10); text-align: center; line-height: 2; }
+.site-footer a { color: var(--muted); text-decoration: none; }
+.site-footer a:hover { color: var(--hover); }
+.site-footer .sep { margin: 0 0.6em; color: var(--muted); }

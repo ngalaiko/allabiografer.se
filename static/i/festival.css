@@ -1,20 +1,28 @@
+.festival {
+  --selected: light-dark(#E0EEE5, #253C32);
+  --selected-text: light-dark(#17452F, #B3DDC3);
+  --selected-border: light-dark(#8BAD98, #527B63);
+  --conflict: light-dark(#FFF0D8, #45351E);
+  --conflict-border: light-dark(#A66B0E, #C99744);
+  --calendar-line: light-dark(#EEE, #3B444F);
+}
 /* Festival planner on the schedule page's frame (.program, .schedule-scroll); the top row adds one --schedule-top. */
 .festival { --schedule-top: var(--schedule-nav-height); min-width: 100%; }
 .festival [hidden] { display: none !important; }
 .festival p { line-height: 1.5; }
-.festival-note { position: sticky; left: var(--frame); margin: 14px 0; padding-inline: var(--schedule-inset); color: #555; font-size: 14px; }
-.festival button:not(.synopsis-more, .festival-time) { font: inherit; font-size: 14px; padding: 9px 12px; border: 1px solid #bbb; background: #fff; color: #222; border-radius: 4px; min-height: 40px; }
+.festival-note { position: sticky; left: var(--frame); margin: 14px 0; padding-inline: var(--schedule-inset); color: var(--muted); font-size: 14px; }
+.festival button:not(.synopsis-more, .festival-time) { font: inherit; font-size: 14px; padding: 9px 12px; border: 1px solid var(--border-color); background: var(--background); color: var(--text); border-radius: 4px; min-height: 40px; }
 .festival button { cursor: pointer; }
 .festival button:disabled { opacity: .45; cursor: default; }
 .festival button[aria-pressed="true"]:not(.festival-time) { background: #205c42; color: #fff; border-color: #205c42; }
-.festival :focus-visible { outline: 3px solid #0060a0; outline-offset: 2px; }
+.festival :focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
 
 /* Top row: spans the sheet; its two ends stay in view. Below the frame masks (z 50/55). */
 .festival-bar { position: sticky; top: var(--frame); z-index: 52; display: flex; align-items: center; height: var(--schedule-nav-height); background: var(--schedule-surface); border: 1px solid var(--border-color); border-bottom: 0; font-size: 14px; white-space: nowrap; }
 .festival-bar-start { position: sticky; left: var(--frame); display: flex; align-items: center; gap: 12px; min-width: 0; padding: 0 5px; }
 .festival-tabs { display: flex; gap: 2px; }
 .festival .festival-bar button { min-height: 22px; padding: 1px 8px; font-size: 13px; border-radius: 3px; }
-.festival-hint { min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; color: #555; font-size: 13px; }
+.festival-hint { min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; color: var(--muted); font-size: 13px; }
 #festival-status:not(:empty) + .festival-hint-text { display: none; }
 .festival-actions { position: sticky; right: 0; display: flex; gap: 2px; margin-left: auto; padding: 0 5px; }
 .festival-crumbs .breadcrumb-label > h1, .festival-crumbs .breadcrumb-label > span { display: inline; margin: 0; font: inherit; }
@@ -24,10 +32,10 @@
 
 /* Programme screenings: the time selects the screening. */
 .festival-screening { display: flex; position: absolute; left: var(--time-left); top: var(--time-top); height: 32px; width: 50px; border-radius: 3px; }
-.festival-screening a, .festival-time { width: 100%; padding: 7px 3px; font: inherit; font-size: 14px; line-height: 18px; text-align: center; border: 0; border-radius: 3px; background: transparent; color: #0060a0; }
-.festival-screening:hover { background: #fee1e4; }
-.festival-screening.selected { background: #e0eee5; }
-.festival-screening.selected > .festival-time { color: #17452f; }
+.festival-screening a, .festival-time { width: 100%; padding: 7px 3px; font: inherit; font-size: 14px; line-height: 18px; text-align: center; border: 0; border-radius: 3px; background: transparent; color: var(--link); }
+.festival-screening:hover { background: var(--hover-background); }
+.festival-screening.selected { background: var(--selected); }
+.festival-screening.selected > .festival-time { color: var(--selected-text); }
 
 /* Personal calendar, below the top row and a breadcrumb row. */
 .festival-plan-crumbs { position: sticky; top: calc(var(--frame) + var(--schedule-nav-height)); z-index: 51; background: var(--schedule-surface); }
@@ -35,14 +43,14 @@
 .festival-calendar { display: grid; width: max-content; grid-template-rows: 40px 1440px; }
 .festival-calendar-day { grid-row: 1; position: sticky; top: calc(var(--frame) + 2 * var(--schedule-nav-height)); z-index: 3; text-align: center; padding: 10px; background: var(--schedule-surface); border-right: 1px solid var(--border-color); }
 .festival-calendar-corner { grid-row: 1; grid-column: 1; position: sticky; top: calc(var(--frame) + 2 * var(--schedule-nav-height)); left: var(--frame); z-index: 2; padding: 10px; background: var(--schedule-surface); border-left: 1px solid var(--border-color); }
-.festival-calendar-hours { grid-row: 2; grid-column: 1; position: sticky; left: var(--frame); z-index: 1; background: #fff; font-size: 12px; border-inline: 1px solid var(--border-color); }
-.festival-calendar-hours > div { height: 60px; border-top: 1px solid #eee; padding: 3px; }
-.festival-calendar-track { grid-row: 2; position: relative; border-right: 1px solid var(--border-color); background: repeating-linear-gradient(transparent, transparent 59px, #eee 59px, #eee 60px); }
-.festival-calendar-event { position: absolute; background: #e0eee5; border: 1px solid #8bad98; padding: 6px; overflow: auto; border-radius: 4px; font-size: 12px; line-height: 16px; cursor: pointer; }
-.festival-calendar-event > a { font-weight: 600; color: #17452f; }
-.festival-calendar-event.conflict { background: #fff0d8; border-color: #a66b0e; }
+.festival-calendar-hours { grid-row: 2; grid-column: 1; position: sticky; left: var(--frame); z-index: 1; background: var(--background); font-size: 12px; border-inline: 1px solid var(--border-color); }
+.festival-calendar-hours > div { height: 60px; border-top: 1px solid var(--calendar-line); padding: 3px; }
+.festival-calendar-track { grid-row: 2; position: relative; border-right: 1px solid var(--border-color); background: repeating-linear-gradient(transparent, transparent 59px, var(--calendar-line) 59px, var(--calendar-line) 60px); }
+.festival-calendar-event { position: absolute; background: var(--selected); border: 1px solid var(--selected-border); padding: 6px; overflow: auto; border-radius: 4px; font-size: 12px; line-height: 16px; cursor: pointer; }
+.festival-calendar-event > a { font-weight: 600; color: var(--selected-text); }
+.festival-calendar-event.conflict { background: var(--conflict); border-color: var(--conflict-border); }
 .festival-calendar-event > strong { display: block; }
-.festival-calendar-event:hover, .festival-calendar-event:focus-visible { background: #f8c9cd; border-color: #c4323f; }
+.festival-calendar-event:hover, .festival-calendar-event:focus-visible { background: var(--hover-background); border-color: var(--hover); }
 
 @media (max-width: 700px) {
   .festival-hint { display: none; }
