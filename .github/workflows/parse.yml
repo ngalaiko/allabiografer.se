@@ -24,6 +24,10 @@ jobs:
       - run: |
           for attempt in 1 2 3; do
             mise run parse && break
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::Parse failed after 3 attempts"
+              exit 1
+            fi
             echo "Attempt $attempt failed, retrying in 30s..."
             sleep 30
           done
