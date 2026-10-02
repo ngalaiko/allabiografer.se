@@ -393,3 +393,20 @@ def test_dense_times_get_non_overlapping_slots():
             overlap_x = left["left"] < right["left"] + 45 and right["left"] < left["left"] + 45
             overlap_y = left["top"] < right["top"] + 20 and right["top"] < left["top"] + 20
             assert not (overlap_x and overlap_y)
+
+
+def test_showtime_contains_stockholm_offset(monkeypatch):
+    result = blocks(monkeypatch, [screening(0)])
+    showtime = result[0]["cinemas"][0]["cells"][0]["times"][0]
+    assert showtime["start"] == "2030-01-01T18:00:00+01:00"
+    html = (
+        build._make_env()
+        .get_template("program.html")
+        .render(
+            blocks=result,
+            days=[{"date": "2030-01-01", "label": "Tis 1"}],
+            num_days=1,
+        )
+    )
+    assert 'data-start="2030-01-01T18:00:00+01:00"' in html
+    assert html.count("/i/showtimes.js?v=") == 1

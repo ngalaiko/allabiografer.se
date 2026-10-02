@@ -34,7 +34,7 @@
 {% set day_label = days[loop.index0].label %}
 <div class="schedule-cell" style="--day-column: {{ loop.index }};" {% if cell.times %}role="group" aria-label="{{ day_label }}"{% endif %}>
 {% for t in cell.times %}
-{% if t.past %}<span class="past" style="--time-left: {{ t.left }}px; --time-top: {{ t.top }}px;">{{ t.label }}</span>{% else %}<a href="{{ t.url }}" style="--time-left: {{ t.left }}px; --time-top: {{ t.top }}px;" target="_blank" rel="noopener" aria-label="{{ block.film_title }}{% if block.variant %} ({{ block.variant }}){% endif %}, {{ cinema.name }}, {{ day_label }} {{ t.label }}">{{ t.label }}</a>{% endif %}
+{% if t.past %}<span class="past" style="--time-left: {{ t.left }}px; --time-top: {{ t.top }}px;">{{ t.label }}</span>{% else %}<a href="{{ t.url }}" data-start="{{ t.start }}" style="--time-left: {{ t.left }}px; --time-top: {{ t.top }}px;" target="_blank" rel="noopener" aria-label="{{ block.film_title }}{% if block.variant %} ({{ block.variant }}){% endif %}, {{ cinema.name }}, {{ day_label }} {{ t.label }}">{{ t.label }}</a>{% endif %}
 {% endfor %}
 </div>
 {% endfor %}
@@ -46,4 +46,5 @@
 {% if not blocks %}<p class="no-screenings">Inga visningar de närmaste två veckorna.</p>{% endif %}
 </main>
 <script src="/i/synopsis.js?v={{ synopsis_version }}" defer></script>
+<script src="/i/showtimes.js?v={{ showtimes_version }}" defer></script>
 {% endblock %}

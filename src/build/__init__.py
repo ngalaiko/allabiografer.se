@@ -653,6 +653,7 @@ def _make_env() -> Environment:
     env.globals["style_version"] = hashlib.sha256(Path("static/i/style.css").read_bytes()).hexdigest()[:12]
     env.globals["synopsis_version"] = hashlib.sha256(Path("static/i/synopsis.js").read_bytes()).hexdigest()[:12]
     env.globals["links_version"] = hashlib.sha256(Path("static/i/links.js").read_bytes()).hexdigest()[:12]
+    env.globals["showtimes_version"] = hashlib.sha256(Path("static/i/showtimes.js").read_bytes()).hexdigest()[:12]
     env.globals["font_versions"] = {
         weight: hashlib.sha256(Path(f"static/i/FiraSans-{weight}.woff2").read_bytes()).hexdigest()[:12]
         for weight in ("Regular", "SemiBold")
@@ -1149,6 +1150,7 @@ def _prepare_programme_blocks(
                 for p in positions:
                     dt = datetime.combine(days[day_idx], time(*map(int, p["label"].split(":"))), tzinfo=SWEDEN_TZ)
                     p["past"] = dt < now
+                    p["start"] = dt.isoformat()
                 h = _cell_min_height(positions)
                 if h > max_h:
                     max_h = h
