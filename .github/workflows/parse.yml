@@ -13,6 +13,7 @@ permissions:
 jobs:
   parse:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,16 +22,10 @@ jobs:
       - run: git lfs install
       - uses: jdx/mise-action@v2
       - run: uv run --group parse playwright install --with-deps chromium
-      - run: |
-          for attempt in 1 2 3; do
-            mise run parse && break
-            if [ "$attempt" -eq 3 ]; then
-              echo "::error::Parse failed after 3 attempts"
-              exit 1
-            fi
-            echo "Attempt $attempt failed, retrying in 30s..."
-            sleep 30
-          done
+      # Each parser replaces only its own source; failed ones keep previous data.
+      - id: parse
+        continue-on-error: true
+        run: mise run --continue-on-error parse
       - name: Create PR with changes
         env:
           GH_TOKEN: ${{ secrets.PAT }}
@@ -46,3 +41,8 @@ jobs:
           git push origin "$BRANCH"
           PR_URL=$(gh pr create --title "Update screenings" --body "Automated update of screenings data" --base master)
           gh pr merge "$PR_URL" --rebase
+      - name: Fail on parser errors
+        if: steps.parse.outcome == 'failure'
+        run: |
+          echo "::error::Some parsers failed; see the parse step log"
+          exit 1

@@ -12,7 +12,7 @@ from datetime import date, time
 import requests
 from bs4 import BeautifulSoup
 
-from parse import _version
+from parse import _http, _version
 from parse._util import infer_year
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
@@ -184,8 +184,7 @@ def _parse_production(html: str, site: dict) -> Iterator[Screening | Film]:
 
 
 def parse() -> Iterator[Screening | Venue | Film]:
-    session = requests.Session()
-    session.headers["User-Agent"] = "Mozilla/5.0 (compatible; bio-parser/1.0)"
+    session = _http.session()
 
     for site in _SITES:
         yield Venue(name=site["name"], city=site["city"], address=site.get("address", ""))

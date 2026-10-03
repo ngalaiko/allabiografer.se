@@ -23,6 +23,7 @@ from urllib.parse import urljoin
 
 import requests
 
+from parse import _http
 from parse._rating import age_rating as _age_rating
 from store import (
     DB_FILE,
@@ -126,7 +127,7 @@ def lookup(
     """
     own_session = session is None
     if own_session:
-        session = requests.Session()
+        session = _http.session()
     try:
         return _lookup(title, path, session, year, runtime)
     finally:

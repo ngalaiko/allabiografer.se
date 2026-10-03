@@ -8,6 +8,7 @@ from datetime import date, time
 import requests
 from bs4 import BeautifulSoup
 
+from parse import _http
 from parse._util import infer_year
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
@@ -21,7 +22,7 @@ _CITY = "Norsborg"
 _ADDRESS = "Borgvägen 1"
 _SOURCE = "hallundafolketshus_se"
 
-_HEADERS = {"User-Agent": "Mozilla/5.0"}
+_SESSION = _http.session("Mozilla/5.0")
 
 # Site chrome that shares the uploads directory with film posters.
 _NOT_A_POSTER = re.compile(r"logo|favicon|icon", re.IGNORECASE)
@@ -117,7 +118,7 @@ def _details(html: str) -> dict:
 
 
 def _fetch(url: str) -> str:
-    resp = requests.get(url, timeout=15, headers=_HEADERS)
+    resp = _SESSION.get(url, timeout=15)
     resp.raise_for_status()
     return resp.text
 

@@ -6,10 +6,9 @@ from collections.abc import Iterator
 from dataclasses import replace
 from datetime import date, time
 
-import requests
 from bs4 import BeautifulSoup
 
-from parse import _version
+from parse import _http, _version
 from parse._util import infer_year
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
@@ -137,8 +136,7 @@ def _showtimes(html: str) -> Iterator[tuple[Film, date, time, str, str, str, str
 def parse() -> Iterator[Screening | Venue | Film]:
     yield Venue(name=_CINEMA, city=_CITY, address=_ADDRESS)
 
-    session = requests.Session()
-    session.headers.update({"User-Agent": "Mozilla/5.0"})
+    session = _http.session("Mozilla/5.0")
     resp = session.get(_URL, timeout=15)
     resp.raise_for_status()
 

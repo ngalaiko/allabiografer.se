@@ -9,7 +9,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from parse import _version
+from parse import _http, _version
 from parse.parsers import _films
 from parse.parsers._browser import page as browser_page
 from parse.parsers._tmdb_cache import lookup as _tmdb
@@ -121,7 +121,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
         page.goto(_URL, wait_until="networkidle", timeout=30000)
         html = page.content()
 
-    session = requests.Session()
+    session = _http.session()
 
     films: dict[str, Film] = {}
     for title, slug in _film_slugs(html).items():

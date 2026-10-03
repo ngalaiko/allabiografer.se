@@ -9,7 +9,7 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 import requests
 from bs4 import BeautifulSoup
 
-from parse import _version
+from parse import _http, _version
 from parse._util import infer_year
 from parse.parsers import _films
 from parse.parsers._browser import page as browser_page
@@ -175,8 +175,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
         page.goto(_URL, wait_until="networkidle", timeout=30000)
         html = page.content()
 
-    session = requests.Session()
-    session.headers["User-Agent"] = "Mozilla/5.0 (compatible; bio-parser/1.0)"
+    session = _http.session()
 
     films: dict[str, Film] = {}
     subtitles: dict[str, str] = {}

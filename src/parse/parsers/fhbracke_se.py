@@ -8,6 +8,7 @@ from datetime import date, time
 import requests
 from bs4 import BeautifulSoup
 
+from parse import _http
 from parse._util import infer_year
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
@@ -22,7 +23,7 @@ _CITY = "Bräcke"
 _ADDRESS = "Hantverksgatan 27"
 _SOURCE = "fhbracke_se"
 
-_HEADERS = {"User-Agent": "Mozilla/5.0"}
+_SESSION = _http.session("Mozilla/5.0")
 
 _MONTHS = {
     "januari": 1,
@@ -131,7 +132,7 @@ def _details(html: str) -> dict:
 
 
 def _fetch(url: str) -> str:
-    resp = requests.get(url, timeout=15, headers=_HEADERS)
+    resp = _SESSION.get(url, timeout=15)
     resp.raise_for_status()
     return resp.text
 

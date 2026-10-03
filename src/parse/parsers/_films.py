@@ -5,6 +5,7 @@ from pathlib import Path
 
 import requests
 
+from parse import _http
 from parse._rating import age_rating
 from store import DB_FILE, Film, film_key, has_poster, poster_key_for_film, write_poster
 
@@ -15,7 +16,7 @@ db_path: Path = DB_FILE
 
 _MAX_BYTES = 8 * 1024 * 1024
 
-_session = requests.Session()
+_session = _http.session()
 
 
 def make(source: str, title: str, **fields) -> Film:

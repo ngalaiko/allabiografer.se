@@ -8,9 +8,7 @@ from collections.abc import Iterator
 from datetime import datetime
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-import requests
-
-from parse import _version
+from parse import _http, _version
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue
@@ -29,8 +27,7 @@ _POSTER_SIZE = {"width": "500", "height": "750"}
 
 def parse() -> Iterator[Screening | Venue | Film]:
     yield Venue(name=_CINEMA, city=_CITY, address=_ADDRESS)
-    session = requests.Session()
-    session.headers["User-Agent"] = "Mozilla/5.0 (compatible; bio-parser/1.0)"
+    session = _http.session()
 
     resp = session.get(_URL, timeout=30)
     resp.raise_for_status()

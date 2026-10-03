@@ -6,9 +6,7 @@ import re
 from collections.abc import Iterator
 from datetime import date, datetime, time
 
-import requests
-
-from parse import _version
+from parse import _http, _version
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue
@@ -116,8 +114,8 @@ def _showtimes(payload: dict) -> Iterator[tuple[Film, date, time, str, str, str,
 
 def parse() -> Iterator[Screening | Venue | Film]:
     seen: set[str] = set()
-    session = requests.Session()
-    session.headers.update({"User-Agent": "Mozilla/5.0 (compatible; bio-parser/1.0)", "Accept": "application/json"})
+    session = _http.session()
+    session.headers["Accept"] = "application/json"
 
     resp = session.get(f"{_API}/cinemas", timeout=30)
     resp.raise_for_status()

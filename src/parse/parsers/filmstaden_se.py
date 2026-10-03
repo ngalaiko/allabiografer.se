@@ -6,10 +6,9 @@ from collections.abc import Iterator
 from datetime import datetime
 from typing import Any
 
-import requests
 from curl_cffi import requests as cffi_requests
 
-from parse import _version
+from parse import _http, _version
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue, film_key
@@ -131,8 +130,7 @@ def _detail(session: cffi_requests.Session, ncg_id: str) -> dict[str, Any]:
 
 def parse() -> Iterator[Screening | Venue | Film]:
     session = cffi_requests.Session()
-    posters = requests.Session()
-    posters.headers.update({"User-Agent": _POSTER_UA})
+    posters = _http.session(_POSTER_UA)
     cinemas = _get(session, f"{_API}/cinema/sv/1/1024")["items"]
     log.info("filmstaden: %d cinemas", len(cinemas))
 

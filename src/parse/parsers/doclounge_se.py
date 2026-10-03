@@ -10,7 +10,7 @@ from urllib.parse import quote, urlparse
 import requests
 from bs4 import BeautifulSoup
 
-from parse import _version
+from parse import _http, _version
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue
@@ -203,8 +203,7 @@ def _synopsis(html: str) -> str:
 
 
 def parse() -> Iterator[Screening | Venue | Film]:
-    session = requests.Session()
-    session.headers["User-Agent"] = "Mozilla/5.0 (compatible; bio-parser/1.0)"
+    session = _http.session()
 
     html = _fetch(session, _URL)
 

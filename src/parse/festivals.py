@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 import requests
 from bs4 import BeautifulSoup
 
+from parse import _http
 from store import Festival, FestivalScreening, read_festivals, write_festival
 
 STOCKHOLM = "https://www.stockholmfilmfestival.se/"
@@ -258,7 +259,7 @@ def main() -> None:
     parser.add_argument("slugs", nargs="*", help="festival slugs; all when omitted")
     args = parser.parse_args()
     stored = {(f.slug, f.year): screenings for f, screenings in read_festivals()}
-    with requests.Session() as session:
+    with _http.session() as session:
         for festival in FESTIVALS:
             if args.slugs and festival.slug not in args.slugs:
                 continue

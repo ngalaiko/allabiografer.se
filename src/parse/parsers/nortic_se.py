@@ -6,9 +6,7 @@ import re
 from collections.abc import Iterator
 from datetime import date, time
 
-import requests
-
-from parse import _version
+from parse import _http, _version
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue, film_key
@@ -22,8 +20,7 @@ _CATEGORIES = {"Bio", "Film"}
 
 
 def parse() -> Iterator[Screening | Venue | Film]:
-    session = requests.Session()
-    session.headers["User-Agent"] = "Mozilla/5.0 (compatible; bio-parser/1.0)"
+    session = _http.session()
 
     resp = session.get(_API, timeout=30)
     resp.raise_for_status()
