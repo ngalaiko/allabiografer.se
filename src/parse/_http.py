@@ -12,11 +12,15 @@ _STATUSES = (429, 500, 502, 503, 504)
 
 
 def session(user_agent: str = USER_AGENT) -> requests.Session:
-    """Session retrying connection errors, timeouts and 429/5xx with exponential backoff."""
+    """Session retrying connection errors, timeouts and 429/5xx with exponential backoff.
+
+    Every method is retried: parsers only read, including through POST queries.
+    """
     retry = Retry(
         total=_TOTAL,
         backoff_factor=_BACKOFF,
         status_forcelist=_STATUSES,
+        allowed_methods=None,
         raise_on_status=False,
     )
     adapter = HTTPAdapter(max_retries=retry)

@@ -47,7 +47,7 @@ def mark_dubbed(
 ) -> list[Screening]:
     """Mark audio of unknown kind dubbed when none of its languages is an original language of the film.
 
-    TMDB's original language wins over the site's; site languages apply when TMDB has none.
+    TMDB's original and spoken languages win over the site's; site languages apply when TMDB has none.
     """
     originals = {f.key: f.original_languages for f in films}
     tmdb_languages = tmdb_languages or {}
@@ -68,9 +68,14 @@ def mark_dubbed(
 
 
 def tmdb_languages(screenings: Iterable[Screening], *, path: Path) -> dict[int, frozenset[Language]]:
-    """TMDB original languages of the screenings' stored movies."""
+    """TMDB original and spoken languages of the screenings' stored movies."""
     ids = {s.tmdb_id for s in screenings if s.tmdb_id is not None}
-    return {tmdb_id: tmdb.languages(m.original_language) for tmdb_id, m in store.read_movies(ids, path=path).items()}
+    return {
+        tmdb_id: frozenset().union(
+            *(tmdb.languages(code) for code in [m.original_language, *(m.spoken_languages or [])])
+        )
+        for tmdb_id, m in store.read_movies(ids, path=path).items()
+    }
 
 
 def main() -> None:
@@ -98,6 +103,11 @@ def main() -> None:
             films.append(item)
         else:
             screenings.append(item)
+
+    # An empty parse more likely means a changed site than an empty programme.
+    if not screenings:
+        log.warning("parser=%s found no screenings; keeping stored data", args.parser)
+        return
 
     screenings = mark_dubbed(screenings, films, tmdb_languages(screenings, path=args.output))
     n = store.write_screenings(screenings, path=args.output, source=args.parser, venues=venues)

@@ -10,7 +10,16 @@ from store.version import Language
 def test_cached_movie_rating_is_normalised(tmp_path):
     db = tmp_path / "test.db"
     write_movie(
-        Movie.from_dict({"tmdb_id": 42, "title_sv": "Filmen", "age_rating": "15", "original_language": "sv"}), path=db
+        Movie.from_dict(
+            {
+                "tmdb_id": 42,
+                "title_sv": "Filmen",
+                "age_rating": "15",
+                "original_language": "sv",
+                "spoken_languages": ["sv"],
+            }
+        ),
+        path=db,
     )
     tmdb_index_set(f"{title_key('Filmen')}||", 42, path=db)
 
@@ -48,7 +57,8 @@ def test_by_id_stores_details_for_a_known_id(tmp_path):
 
 def test_by_id_skips_the_network_for_a_stored_movie(tmp_path):
     db = tmp_path / "test.db"
-    write_movie(Movie.from_dict({"tmdb_id": 7, "title_sv": "Filmen", "original_language": "sv"}), path=db)
+    movie = {"tmdb_id": 7, "title_sv": "Filmen", "original_language": "sv", "spoken_languages": ["sv"]}
+    write_movie(Movie.from_dict(movie), path=db)
     session = _Session({})
 
     assert tmdb.by_id(7, path=db, session=session) == 7
@@ -86,3 +96,30 @@ def test_stored_movie_without_original_language_is_refetched(tmp_path):
 )
 def test_languages_map_iso_codes(code, expected):
     assert tmdb.languages(code) == expected
+
+
+def test_fetch_stores_the_spoken_languages(tmp_path):
+    db = tmp_path / "test.db"
+    session = _Session(
+        {
+            "id": 7,
+            "title": "Fjord",
+            "original_language": "ro",
+            "spoken_languages": [{"iso_639_1": "en"}, {"iso_639_1": "no"}],
+        }
+    )
+
+    tmdb.by_id(7, path=db, session=session)
+
+    assert read_movie(7, path=db).spoken_languages == ["en", "no"]
+
+
+def test_stored_movie_without_spoken_languages_is_refetched(tmp_path):
+    db = tmp_path / "test.db"
+    write_movie(Movie.from_dict({"tmdb_id": 7, "title_sv": "Filmen", "original_language": "ro"}), path=db)
+    tmdb_index_set(f"{title_key('Filmen')}||", 7, path=db)
+    session = _Session({"id": 7, "title": "Filmen", "original_language": "ro", "spoken_languages": []})
+
+    assert tmdb.lookup("Filmen", path=db, session=session) == 7
+    assert read_movie(7, path=db).spoken_languages == []
+    assert tmdb.by_id(7, path=db, session=_Session({})) == 7

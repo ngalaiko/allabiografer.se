@@ -23,6 +23,9 @@ def server():
             self.end_headers()
             self.wfile.write(b"ok")
 
+        def do_POST(self):
+            self.do_GET()
+
         def log_message(self, *_):
             pass
 
@@ -43,6 +46,14 @@ def test_retries_server_errors(server):
     resp = _http.session().get(url, timeout=5)
     assert resp.status_code == 200
     assert len(hits) == 3
+
+
+def test_retries_post_server_errors(server):
+    url, statuses, hits = server
+    statuses.append(503)
+    resp = _http.session().post(url, timeout=5)
+    assert resp.status_code == 200
+    assert len(hits) == 2
 
 
 def test_gives_up(server):

@@ -1,10 +1,13 @@
 """Cross-parser post-processing in the parse CLI."""
 
 import dataclasses
+import sys
+import types
 from datetime import date, time
 
+import parse
 from parse import mark_dubbed, tmdb_languages
-from store import Film, Movie, Screening, write_movie
+from store import Film, Movie, Screening, read_screenings, write_movie, write_screenings
 from store.version import AudioKind, AudioVersion, ContentVersion, Language
 
 
@@ -83,3 +86,37 @@ def test_tmdb_languages_read_stored_movies(tmp_path):
     screenings = [dataclasses.replace(_screening("s:a", AudioKind.UNKNOWN), tmdb_id=i) for i in (1, 2, 3)]
 
     assert tmdb_languages(screenings, path=db) == {1: {Language.ENGLISH}, 2: set()}
+
+
+def test_tmdb_languages_include_spoken_languages(tmp_path):
+    db = tmp_path / "test.db"
+    movie = {"tmdb_id": 1, "title_sv": "Fjord", "original_language": "ro", "spoken_languages": ["en", "no"]}
+    write_movie(Movie.from_dict(movie), path=db)
+    screenings = [dataclasses.replace(_screening("s:a", AudioKind.UNKNOWN), tmdb_id=1)]
+
+    assert tmdb_languages(screenings, path=db) == {1: {Language.ROMANIAN, Language.ENGLISH, Language.NORWEGIAN}}
+
+
+def _run(monkeypatch, db, items):
+    module = types.SimpleNamespace(parse=lambda: iter(items))
+    monkeypatch.setattr(parse.importlib, "import_module", lambda name: module)
+    monkeypatch.setattr(sys, "argv", ["parse", "--output", str(db), "bio_se"])
+    parse.main()
+
+
+def test_empty_parse_keeps_stored_screenings(monkeypatch, tmp_path):
+    db = tmp_path / "test.db"
+    write_screenings([_screening("s:a", AudioKind.UNKNOWN)], path=db, source="bio_se")
+
+    _run(monkeypatch, db, [])
+
+    assert len(read_screenings(path=db)) == 1
+
+
+def test_parse_replaces_stored_screenings(monkeypatch, tmp_path):
+    db = tmp_path / "test.db"
+    write_screenings([_screening("s:a", AudioKind.UNKNOWN)], path=db, source="bio_se")
+
+    _run(monkeypatch, db, [dataclasses.replace(_screening("s:b", AudioKind.UNKNOWN), time=time(20, 0))])
+
+    assert [s.time for s in read_screenings(path=db)] == [time(20, 0)]

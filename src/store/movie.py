@@ -21,6 +21,8 @@ class Movie:
     age_rating: str
     # ISO 639-1 code, e.g. "en".
     original_language: str = ""
+    # ISO 639-1 codes; None until fetched.
+    spoken_languages: list[str] | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -36,6 +38,7 @@ class Movie:
             "vote_average": self.vote_average,
             "age_rating": self.age_rating,
             "original_language": self.original_language,
+            "spoken_languages": self.spoken_languages,
         }
 
     @classmethod
@@ -53,4 +56,5 @@ class Movie:
             vote_average=d.get("vote_average"),
             age_rating=d.get("age_rating") or "",
             original_language=d.get("original_language") or "",
+            spoken_languages=d.get("spoken_languages"),
         )

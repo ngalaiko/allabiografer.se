@@ -155,7 +155,7 @@ def _lookup(
         # Movies are fetched once; ratings stored before normalisation are fixed on read.
         if stored.age_rating != _age_rating(stored.age_rating):
             write_movie(replace(stored, age_rating=_age_rating(stored.age_rating)), path=path)
-        if not stored.original_language:
+        if _incomplete(stored):
             _fetch(cached, path, session)
         return cached
 
@@ -209,7 +209,7 @@ def _lookup(
 def by_id(tmdb_id: int, *, path: Path = DB_FILE, session: requests.Session | None = None) -> int | None:
     """Store metadata + poster for a TMDB id a site states. Returns the id, or None when the fetch fails."""
     stored = read_movie(tmdb_id, path=path)
-    if stored is not None and stored.original_language:
+    if stored is not None and not _incomplete(stored):
         return tmdb_id
     own_session = session is None
     if own_session:
@@ -219,6 +219,11 @@ def by_id(tmdb_id: int, *, path: Path = DB_FILE, session: requests.Session | Non
     finally:
         if own_session:
             session.close()
+
+
+def _incomplete(movie: Movie) -> bool:
+    """Whether *movie* was stored before its languages were fetched."""
+    return not movie.original_language or movie.spoken_languages is None
 
 
 def _fetch(tmdb_id: int, path: Path, session: requests.Session) -> bool:
@@ -264,6 +269,7 @@ def _fetch(tmdb_id: int, path: Path, session: requests.Session) -> bool:
         vote_average=details.get("vote_average"),
         age_rating=age_rating,
         original_language=details.get("original_language") or "",
+        spoken_languages=[s["iso_639_1"] for s in details.get("spoken_languages", []) if s.get("iso_639_1")],
     )
     write_movie(movie, path=path)
 
