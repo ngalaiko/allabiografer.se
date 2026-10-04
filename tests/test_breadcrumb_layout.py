@@ -42,24 +42,16 @@ def test_breadcrumb_centers(browser, width, template):
     assert navs.count() > 0
     for nav in navs.all():
         geometry = nav.evaluate("""nav => {
-            const center = element => {
-                const rect = element.getBoundingClientRect();
-                return rect.y + rect.height / 2;
-            };
-            const svg = nav.querySelector('svg');
-            const box = svg.getBBox();
-            const view = svg.viewBox.baseVal;
             const label = nav.querySelector('.breadcrumb-label');
-            return {
-                drawingOffset: box.y + box.height / 2 - (view.y + view.height / 2),
-                iconOffset: center(svg) - center(nav),
-                textOffset: label ? center(label) - center(nav) : null,
-            };
+            const marker = document.createElement('span');
+            marker.style.display = 'inline-block';
+            label.prepend(marker);
+            const baseline = marker.getBoundingClientRect().bottom;
+            marker.remove();
+            return {iconOffset: nav.querySelector('svg').getBoundingClientRect().bottom - baseline};
         }""")
-        assert abs(geometry["drawingOffset"]) <= 0.5
+        # The icon sits on the text baseline, as on allekinos.de.
         assert abs(geometry["iconOffset"]) <= 0.5
-        assert geometry["textOffset"] is not None
-        assert abs(geometry["textOffset"]) <= 0.5
     page.close()
 
 

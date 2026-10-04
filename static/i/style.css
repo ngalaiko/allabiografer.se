@@ -36,7 +36,6 @@ html { overscroll-behavior-x: none; background: var(--background); color: var(--
 :focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
 body { font: var(--cap-height-11) / 19px 'Fira Sans'; background: var(--background); }
 .home:hover { text-decoration: none; }
-.home { display: inline-flex; align-items: center; justify-content: center; min-width: 16px; min-height: 16px; }
 .home > svg { width: 16px; height: 16px; display: inline-block; }
 .schedule-breadcrumbs .home { flex: 0 0 16px; }
 .breadcrumb-label { min-width: 0; overflow-wrap: anywhere; }
@@ -107,7 +106,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
   .program { --schedule-inset: 12px; }
   .schedule-breadcrumbs { height: var(--schedule-nav-height); padding-block: 0; }
   .breadcrumb-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .home { min-width: 24px; min-height: 24px; }
+  .home { padding-block: 2px; text-align: center; }
   .schedule-breadcrumbs .home { flex-basis: 24px; }
   .schedule-scroll { display: block; width: 100%; height: 100dvh; overflow: auto; scroll-padding-top: 186px; }
   .schedule-scroll > .site-footer { position: sticky; left: 0; width: 100%; padding-top: 12px; }
