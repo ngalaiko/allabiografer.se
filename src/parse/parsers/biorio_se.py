@@ -25,8 +25,16 @@ _CINEMA = "Bio Rio"
 _CITY = "Stockholm"
 _ADDRESS = "Hornstulls strand 3"
 
-# Posters go through the site's Next.js image proxy, which serves JPEG for AVIF originals.
+# Posters go through the site's Next.js image proxy, scaled to this width.  It answers
+# JPEG unless the request's Accept header lists AVIF or WebP, but passes through unscaled
+# an original it cannot decode: many AVIF posters, an 8268x11812 PNG.  The JPEG
+# rendition the API names as ogImageUrl scales.
 _POSTER_WIDTH = "640"
+
+# Programmes of several films: "Dune: Part One + Two", "Sagan om ringen-maraton".
+_MULTI_FILM = re.compile(r"\s\+\s|maraton|marathon|double feature", re.IGNORECASE)
+# Showtime statuses the box office will not sell.
+_CANCELLED = re.compile(r"cancel", re.IGNORECASE)
 
 # Placeholders the API writes for an unstated language.
 _UNSTATED = {"", "-", "n/a", "tba", "tbc", "ej angivet"}
@@ -51,13 +59,20 @@ def _film(movie: dict) -> Film:
         _SOURCE,
         movie["title"],
         url=f"{_SITE}/sv/filmer/{movie['slug']}",
-        poster_url=_poster_url(movie.get("posterPath") or ""),
+        poster_url=_poster_url(movie.get("ogImageUrl") or movie.get("posterPath") or ""),
         overview=(movie.get("synopsis") or "").strip(),
         runtime=movie.get("duration") or None,
         genres=list(movie.get("genres") or []),
-        release_date=movie.get("releaseDate") or str(movie.get("releaseYear") or ""),
+        release_date=_release_date(movie),
         original_languages=frozenset() if dubbed else _version.languages(language),
     )
+
+
+def _release_date(movie: dict) -> str:
+    """releaseDate where it falls in releaseYear; it is otherwise a Swedish premiere or booking date."""
+    year = str(movie.get("releaseYear") or "")
+    full = movie.get("releaseDate") or ""
+    return full if year and full[:4] == year else year
 
 
 def _screening(show: dict, *, tmdb_id: int | None, film_key: str) -> Screening:
@@ -83,7 +98,9 @@ def _screening(show: dict, *, tmdb_id: int | None, film_key: str) -> Screening:
 
 
 def _tmdb_id(movie: dict) -> int | None:
-    """The site's own TMDB id where it resolves, else a title lookup."""
+    """The site's own TMDB id where it resolves, else a title lookup; none for a multi-film programme."""
+    if _MULTI_FILM.search(movie["title"]):
+        return None
     raw = str(movie.get("tmdbId") or "")
     if raw.isdigit() and (tmdb_id := _tmdb_by_id(int(raw))) is not None:
         return tmdb_id
@@ -95,7 +112,11 @@ def parse() -> Iterator[Screening | Venue | Film]:
     session = _http.session()
 
     # Members-only shows are not sold to the public.
-    shows = [s for s in _get_json(session, _SHOWTIMES_URL)["showtimes"] if not s.get("membersOnly")]
+    shows = [
+        s
+        for s in _get_json(session, _SHOWTIMES_URL)["showtimes"]
+        if not s.get("membersOnly") and not _CANCELLED.search(s.get("status") or "")
+    ]
 
     films: dict[int, tuple[Film, int | None]] = {}
     for show in shows:

@@ -1,9 +1,11 @@
 """Site-sourced film metadata for parsers — builds Films and stores their posters."""
 
+import io
 import logging
 from pathlib import Path
 
 import requests
+from PIL import Image
 
 from parse import _http
 from parse._rating import age_rating
@@ -15,6 +17,8 @@ log = logging.getLogger(__name__)
 db_path: Path = DB_FILE
 
 _MAX_BYTES = 8 * 1024 * 1024
+# Wider posters are scaled down to this width and stored as JPEG.
+_MAX_WIDTH = 1000
 
 _session = _http.session()
 
@@ -48,6 +52,22 @@ def _download(url: str, key: str, session: requests.Session) -> None:
                 if len(data) > _MAX_BYTES:
                     log.warning("poster %s exceeds %d bytes", url, _MAX_BYTES)
                     return
-        write_poster(key, bytes(data), content_type, path=db_path)
-    except (requests.RequestException, OSError) as exc:
+        data, content_type = _fit(bytes(data), content_type)
+        write_poster(key, data, content_type, path=db_path)
+    except (requests.RequestException, OSError, Image.DecompressionBombError) as exc:
         log.warning("failed to download poster %s: %s", url, exc)
+
+
+def _fit(data: bytes, content_type: str) -> tuple[bytes, str]:
+    """Image bytes no wider than _MAX_WIDTH; unchanged when already within it or undecodable."""
+    try:
+        image = Image.open(io.BytesIO(data))
+        width, height = image.size
+    except OSError:
+        return data, content_type
+    if width <= _MAX_WIDTH:
+        return data, content_type
+    image.thumbnail((_MAX_WIDTH, round(height * _MAX_WIDTH / width)))
+    out = io.BytesIO()
+    image.convert("RGB").save(out, "JPEG", quality=85)
+    return out.getvalue(), "image/jpeg"

@@ -19,6 +19,8 @@ class Movie:
     poster_path: str
     vote_average: float | None
     age_rating: str
+    # ISO 639-1 code, e.g. "en".
+    original_language: str = ""
 
     def to_dict(self) -> dict:
         return {
@@ -33,6 +35,7 @@ class Movie:
             "poster_path": self.poster_path,
             "vote_average": self.vote_average,
             "age_rating": self.age_rating,
+            "original_language": self.original_language,
         }
 
     @classmethod
@@ -49,4 +52,5 @@ class Movie:
             poster_path=d.get("poster_path") or "",
             vote_average=d.get("vote_average"),
             age_rating=d.get("age_rating") or "",
+            original_language=d.get("original_language") or "",
         )

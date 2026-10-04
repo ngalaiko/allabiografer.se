@@ -2,11 +2,13 @@
 
 import logging
 import re
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from dataclasses import replace
 from datetime import date, time
+from typing import NamedTuple
 from urllib.parse import urljoin
 
+import requests
 from bs4 import BeautifulSoup
 
 from parse import _http, _version
@@ -14,6 +16,7 @@ from parse._util import infer_year
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue
+from store.version import Language
 
 log = logging.getLogger(__name__)
 
@@ -119,8 +122,15 @@ def _norm(title: str) -> str:
     return "".join(c for c in title.casefold() if c.isalnum())
 
 
-def _posters(html: str) -> dict[str, str]:
-    """Portrait posters from the "Aktuellt" carousel, keyed by normalised card title.
+class _Posters(NamedTuple):
+    """Carousel posters keyed by normalised card title, and by the part before a card's colon."""
+
+    cards: dict[str, str]
+    prefixes: dict[str, str]
+
+
+def _posters(html: str) -> _Posters:
+    """Portrait posters from the "Aktuellt" carousel.
 
     Cards carry no link; "DIGGER:BIO PASSET" also keys by the part before the colon.
     """
@@ -131,15 +141,29 @@ def _posters(html: str) -> dict[str, str]:
         img = card.select_one("img[src]")
         if title_el and img:
             cards.append((title_el.get_text(strip=True), urljoin(_URL, img.get("src", ""))))
-    posters = {_norm(title): src for title, src in cards}
+    full = {_norm(title): src for title, src in cards}
+    prefixes: dict[str, str] = {}
     for title, src in cards:
-        posters.setdefault(_norm(title.split(":")[0]), src)
-    posters.pop("", None)
-    return posters
+        prefixes.setdefault(_norm(title.split(":")[0]), src)
+    full.pop("", None)
+    prefixes.pop("", None)
+    return _Posters(full, prefixes)
 
 
-def _poster(posters: dict[str, str], title: str) -> str:
-    return posters.get(_norm(title), "")
+def _poster(posters: _Posters, title: str, programme: Iterable[str] = ()) -> str:
+    """Poster of the card naming *title*.
+
+    A card shortened to the part before the title's colon ("SMÅSTADSLIV") matches only
+    when no other film in *programme* shares that part.
+    """
+    key = _norm(title)
+    if src := posters.cards.get(key) or posters.prefixes.get(key):
+        return src
+    if ":" not in title:
+        return ""
+    prefix = _norm(title.split(":")[0])
+    sharing = {_norm(t) for t in programme if _norm(t.split(":")[0]) == prefix}
+    return posters.cards.get(prefix, "") if len(sharing) == 1 else ""
 
 
 def _hero(page: str) -> str:
@@ -210,20 +234,25 @@ def parse() -> Iterator[Screening | Venue | Film]:
     resp.raise_for_status()
 
     posters = _posters(resp.text)
+    rows = list(_showtimes(resp.text))
+    programme = {film.title for film, *_ in rows}
+    # Swedish cinemas dub only into Swedish: any other audio is original.
+    originals: dict[str, frozenset[Language]] = {}
+    for film, *_, language, _subtitles, _attributes in rows:
+        spoken = _version.languages(language) - {Language.SWEDISH}
+        originals[film.key] = originals.get(film.key, frozenset()) | spoken
+
     count = 0
     seen: set[str] = set()
-    for film, d, t, ticket_url, screen, language, subtitles, attributes in _showtimes(resp.text):
+    for film, d, t, ticket_url, screen, language, subtitles, attributes in rows:
         if film.key not in seen:
             seen.add(film.key)
-            film = replace(film, poster_url=_poster(posters, film.title))
-            if film.url:
-                detail = session.get(film.url, timeout=15)
-                if detail.ok:
-                    # Prefer the carousel's portrait poster to the event page's landscape hero.
-                    film = replace(
-                        film, overview=_overview(detail.text), poster_url=film.poster_url or _hero(detail.text)
-                    )
-            yield _films.register(film, session=session)
+            film = replace(
+                film,
+                poster_url=_poster(posters, film.title, programme),
+                original_languages=originals[film.key],
+            )
+            yield _films.register(_fetch_details(session, film), session=session)
         yield Screening(
             tmdb_id=_tmdb(film.title),
             title=film.title,
@@ -239,3 +268,17 @@ def parse() -> Iterator[Screening | Venue | Film]:
         count += 1
 
     log.info("palladiumbio.se: %d screenings", count)
+
+
+def _fetch_details(session: requests.Session, film: Film) -> Film:
+    """Film with the synopsis and hero image of its event page."""
+    if not film.url:
+        return film
+    try:
+        detail = session.get(film.url, timeout=15)
+        detail.raise_for_status()
+    except requests.RequestException as exc:
+        log.warning("failed to fetch film page %s: %s", film.url, exc)
+        return film
+    # Prefer the carousel's portrait poster to the event page's landscape hero.
+    return replace(film, overview=_overview(detail.text), poster_url=film.poster_url or _hero(detail.text))

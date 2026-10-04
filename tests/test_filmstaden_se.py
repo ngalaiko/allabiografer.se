@@ -190,3 +190,59 @@ def test_programme_suffixes_leave_original_titles_and_club_screenings():
     assert (_film(movie, detail).title, _film(movie, detail).title_original) == ("Palestina 36", "")
     movie = _CLASSIC["movie"] | {"title": "Paraplyerna i Cherbourg- Everdahl & Karlssons Filmklubb"}
     assert _film(movie).title == "Paraplyerna i Cherbourg"
+
+
+def test_raw_attributes_skip_empties_and_duplicates():
+    show = _SHOWS[0] | {
+        "attributes": [{"displayName": "Klassiker"}],
+        "movieVersion": _SHOWS[0]["movieVersion"] | {"attributes": [{"displayName": "Klassiker"}]},
+    }
+    attrs = _map(show).raw_attributes
+    assert "" not in attrs
+    assert len(attrs) == len(set(attrs))
+    assert attrs[0] == "Klassiker"
+
+
+def test_titles_collapse_inner_whitespace():
+    show = _SHOWS[0] | {"movie": _SHOWS[0]["movie"] | {"title": "Gabbys dockskåp:  Filmen"}}
+    assert _map(show).title == "Gabbys dockskåp: Filmen"
+    assert _film(show["movie"]).title == "Gabbys dockskåp: Filmen"
+
+
+def test_original_title_differing_only_in_punctuation_is_dropped():
+    movie = _CLASSIC["movie"] | {"title": "Blir du ledsen om jag dör?"}
+    detail = _CLASSIC["detail"] | {"originalTitle": "Blir du ledsen om jag dör"}
+    assert _film(movie, detail).title_original == ""
+
+
+def test_programme_labels_in_version_titles_become_raw_attributes():
+    for version_title, label in (
+        ("Arkipelag - Q&A med Alex Schulman och Fredrik Wikingson", "Q&A med Alex Schulman och Fredrik Wikingson"),
+        ("Arkipelag - Smygpremiär - Rigoletto", "Smygpremiär"),
+        ("Kärlek över Tanger - Med besök", "Med besök"),
+        ("Fjord - pensionärsbio", "pensionärsbio"),
+        ("Arkipelag - Stickbio ", "Stickbio"),
+        ("Arkipelag - regissörsbesök", "regissörsbesök"),
+    ):
+        show = _SHOWS[0] | {"movieVersion": _SHOWS[0]["movieVersion"] | {"title": version_title}}
+        assert label in _map(show).raw_attributes, version_title
+    show = _SHOWS[0] | {"movieVersion": _SHOWS[0]["movieVersion"] | {"title": "Fjord - Drömland"}}
+    assert "Drömland" not in _map(show).raw_attributes
+
+
+def test_programme_labels_repeating_an_attribute_are_dropped():
+    show = _SHOWS[0] | {
+        "attributes": [{"displayName": "Smygpremiär"}],
+        "movieVersion": _SHOWS[0]["movieVersion"] | {"title": "Arkipelag - smygpremiär"},
+    }
+    attrs = _map(show).raw_attributes
+    assert "Smygpremiär" in attrs
+    assert "smygpremiär" not in attrs
+
+
+def test_genres_drop_noise_and_read_family_category():
+    movie = _SHOWS[0]["movie"] | {
+        "genres": [{"name": "Drama"}, {"name": "FLC"}],
+        "categories": [{"displayName": "Barn och Familj"}, {"displayName": "Möten och Events filmlista"}],
+    }
+    assert _film(movie).genres == ["Drama", "Familj"]

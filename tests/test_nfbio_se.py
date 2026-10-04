@@ -1,8 +1,10 @@
 """nfbio.se listing page parsing."""
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+import requests
 
 from parse.parsers import nfbio_se
 from store import Film
@@ -165,3 +167,80 @@ def test_parse_duration(text, expected):
 
 def test_bare_language_code_is_a_language():
     assert nfbio_se._parse_version("2D, ES, (Sv.text)") == ("", "Spanskt tal", "Svensk text")
+
+
+_ACTORS = """<div class="field field--name-field-actors field--type-string field--label-inline">
+<div class="field__label">Skådespelare</div>
+<div class="field__items">
+<div class="field__item">Maja Söderström</div>
+<div class="field__item">Svenska röster</div>
+<div class="field__item">Ebbe Skoug</div>
+</div>
+</div>
+"""
+
+
+def test_swedish_voice_cast_means_swedish_is_not_original():
+    film = nfbio_se._films.make("nfbio_se", "Tony")
+    html = (
+        _FILM.read_text()
+        .replace('<div class="field__item">EN</div>', '<div class="field__item">SV</div>')
+        .replace('<div class="field field--name-field-genre', _ACTORS + '<div class="field field--name-field-genre')
+    )
+    assert nfbio_se._enrich(film, html).original_languages == frozenset()
+
+
+def test_placeholder_genre_is_dropped(films):
+    html = _FILM.read_text().replace(">Komedi<", ">Ej angivet<")
+    assert nfbio_se._enrich(next(f for f in films if f.title == "Tony"), html).genres == ["Drama"]
+
+
+_GENRE = '<div class="field field--name-field-genre'
+_DISTRIBUTOR = """<div class="field field--name-field-copyright field--type-string field--label-inline">
+<div class="field__label">Distributör</div>
+<div class="field__item">Warner Bros. Entertainment</div>
+</div>
+"""
+
+
+@pytest.mark.parametrize(
+    ("original", "expected"),
+    [
+        ("Dune: Part Three (Wb/Legendary)", "Dune: Part Three"),
+        ("Dune: Part Three (Warner Bros.)", "Dune: Part Three"),
+        ("Dune (1984)", "Dune (1984)"),
+        ("(500) Days of Summer", "(500) Days of Summer"),
+    ],
+)
+def test_original_title_drops_distributor_tag(films, original, expected):
+    html = (
+        _FILM.read_text()
+        .replace('<div class="field__item">Tony</div>', f'<div class="field__item">{original}</div>')
+        .replace(
+            '<div class="field field--name-field-genre', _DISTRIBUTOR + '<div class="field field--name-field-genre'
+        )
+    )
+    assert nfbio_se._enrich(next(f for f in films if f.title == "Tony"), html).title_original == expected
+
+
+class _Session:
+    def __init__(self, pages: dict[str, str]):
+        self.pages = pages
+
+    def get(self, url, timeout=None):
+        assert "/screening/" not in url
+        if url not in self.pages:
+            raise requests.ConnectionError(url)
+        return SimpleNamespace(text=self.pages[url], raise_for_status=lambda: None)
+
+
+def test_original_languages_span_both_cinemas(monkeypatch):
+    malmo = _LISTING.read_text()
+    uppsala = malmo.replace("(Eng. tal)", "(Sv. tal)")
+    pages = {nfbio_se._BASE + c["url"]: html for c, html in zip(nfbio_se._CINEMAS, (uppsala, malmo), strict=True)}
+    monkeypatch.setattr(nfbio_se._http, "session", lambda *a: _Session(pages))
+    monkeypatch.setattr(nfbio_se._films, "register", lambda film, session=None: film)
+
+    films = [i for i in nfbio_se.parse() if isinstance(i, Film)]
+    assert [f.title for f in films].count("Tony") == 1
+    assert next(f for f in films if f.title == "Tony").original_languages == frozenset({Language.ENGLISH})

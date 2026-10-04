@@ -628,3 +628,20 @@ def test_festival_import_replaces_edition_only(tmp_path):
     write_festival(_festival(name="Renamed"), [_festival_screening("new")], path=db)
     result = {(f.year, f.name): [s.id for s in screenings] for f, screenings in read_festivals(path=db)}
     assert result == {(2025, "Fest"): ["kept"], (2026, "Renamed"): ["new"]}
+
+
+def test_movie_original_language_round_trips(db):
+    write_movie(movie(tmdb_id=1, original_language="en"), path=db)
+    assert read_movie(1, path=db).original_language == "en"
+
+
+def test_movies_table_gains_original_language_column(tmp_path):
+    db = tmp_path / "old.db"
+    connect(db).close()
+    conn = sqlite3.connect(db)
+    conn.execute("ALTER TABLE movies DROP COLUMN original_language")
+    conn.execute("INSERT INTO movies (tmdb_id, title_sv) VALUES (1, 'Filmen')")
+    conn.commit()
+    conn.close()
+
+    assert read_movie(1, path=db).original_language == ""

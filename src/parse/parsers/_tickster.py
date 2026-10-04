@@ -46,6 +46,8 @@ _LABEL = re.compile(r"(\d{1,2})\s+([a-zåäö]{3})\w*\s+(\d{4}),\s*([^,]+)", re.
 # "(Tal: Engelska)", "(Text: Svenska)"; titles are cut at 50 characters, which can drop the ")".
 _TAG = re.compile(r"\(\s*(Tal|Text|Txt)\s*:\s*([^()]*?)\s*(?:\)|$)", re.IGNORECASE)
 _PARENS = re.compile(r"\([^)]*\)?")
+# Listing titles longer than this may be cut mid-word.
+_CUT = 45
 
 
 class _Session(Protocol):
@@ -136,6 +138,12 @@ def version(title: str) -> tuple[str, str, str]:
     return rest, language or spoken, subtitles or subs
 
 
+def labels(title: str) -> tuple[str, ...]:
+    """Parenthesised programme tags other than the version: "(Dagbio)"."""
+    rest = version(title)[0]
+    return tuple(tag for m in re.findall(r"\(([^()]*)\)", rest) if (tag := " ".join(m.split())))
+
+
 def _words(title: str) -> list[str]:
     return re.findall(r"\w+", _PARENS.sub(" ", title).casefold())
 
@@ -149,6 +157,19 @@ def _prefix(title: str, other: str) -> bool:
     a, b = _words(title), _words(other)
     short, long = sorted((a, b), key=len)
     return bool(short) and long[: len(short)] == short
+
+
+def same_title(title: str, other: str) -> bool:
+    """Titles name the same work, ignoring tags, case and a trailing extension."""
+    return _same(title, other) or _prefix(title, other)
+
+
+def _cut(title: str, listed: str) -> bool:
+    """*listed* is *title* cut mid-word at Tickster's title limit."""
+    if len(listed) < _CUT:
+        return False
+    whole = _words(listed)[:-1]
+    return bool(whole) and _words(title)[: len(whole)] == whole
 
 
 class Programme:
@@ -178,7 +199,11 @@ class Programme:
     def find(self, title: str, day: date, start: time) -> Event | None:
         """The showing of *title* at *day* *start*; None when none or several fit."""
         same_day = [e for e in self.events if e.date == day]
-        candidates = [e for e in same_day if _same(title, e.title)] or [e for e in same_day if _prefix(title, e.title)]
+        candidates = (
+            [e for e in same_day if _same(title, e.title)]
+            or [e for e in same_day if _prefix(title, e.title)]
+            or [e for e in same_day if _cut(title, e.title)]
+        )
         if len(candidates) == 1 and candidates[0].start is None:
             return candidates[0]
         timed = [e for e in map(self._timed, candidates) if e.start and e.start.time() == start]

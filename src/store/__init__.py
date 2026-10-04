@@ -36,6 +36,7 @@ The file is committed to the repository, so the journal stays in DELETE
 mode: no stray ``-wal``/``-shm`` siblings.
 """
 
+import contextlib
 import json
 import os
 import sqlite3
@@ -136,7 +137,7 @@ CREATE TABLE IF NOT EXISTS movies (
   tmdb_id INTEGER PRIMARY KEY, title_sv TEXT NOT NULL DEFAULT '', title_original TEXT NOT NULL DEFAULT '',
   overview_sv TEXT NOT NULL DEFAULT '', genres TEXT NOT NULL DEFAULT '[]', release_date TEXT NOT NULL DEFAULT '',
   release_date_se TEXT NOT NULL DEFAULT '', runtime INTEGER, poster_path TEXT NOT NULL DEFAULT '',
-  vote_average REAL, age_rating TEXT NOT NULL DEFAULT ''
+  vote_average REAL, age_rating TEXT NOT NULL DEFAULT '', original_language TEXT NOT NULL DEFAULT ''
 );
 CREATE TABLE IF NOT EXISTS films (
   key TEXT PRIMARY KEY, source TEXT NOT NULL, title TEXT NOT NULL,
@@ -200,6 +201,11 @@ def connect(path: Path = DB_FILE) -> sqlite3.Connection:
             )
     try:
         conn.executescript(f"BEGIN IMMEDIATE;\n{_SCHEMA}\nCOMMIT;")
+        movie_columns = {row[1] for row in conn.execute("PRAGMA table_info(movies)")}
+        if "original_language" not in movie_columns:
+            # Concurrent parsers may race to add it.
+            with contextlib.suppress(sqlite3.OperationalError):
+                conn.execute("ALTER TABLE movies ADD COLUMN original_language TEXT NOT NULL DEFAULT ''")
     except BaseException:
         if conn.in_transaction:
             conn.execute("ROLLBACK")
@@ -371,6 +377,7 @@ _MOVIE_COLUMNS = (
     "poster_path",
     "vote_average",
     "age_rating",
+    "original_language",
 )
 
 
@@ -424,14 +431,15 @@ def write_movie(movie: Movie, *, path: Path = DB_FILE) -> None:
         conn.execute(
             "INSERT INTO movies"
             " (tmdb_id, title_sv, title_original, overview_sv, genres, release_date,"
-            "  release_date_se, runtime, poster_path, vote_average, age_rating)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "  release_date_se, runtime, poster_path, vote_average, age_rating, original_language)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             " ON CONFLICT (tmdb_id) DO UPDATE SET"
             "  title_sv = excluded.title_sv, title_original = excluded.title_original,"
             "  overview_sv = excluded.overview_sv, genres = excluded.genres,"
             "  release_date = excluded.release_date, release_date_se = excluded.release_date_se,"
             "  runtime = excluded.runtime, poster_path = excluded.poster_path,"
-            "  vote_average = excluded.vote_average, age_rating = excluded.age_rating",
+            "  vote_average = excluded.vote_average, age_rating = excluded.age_rating,"
+            "  original_language = excluded.original_language",
             (
                 movie.tmdb_id,
                 movie.title_sv or "",
@@ -444,6 +452,7 @@ def write_movie(movie: Movie, *, path: Path = DB_FILE) -> None:
                 movie.poster_path or "",
                 movie.vote_average,
                 movie.age_rating or "",
+                movie.original_language or "",
             ),
         )
     finally:

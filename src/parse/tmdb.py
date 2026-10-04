@@ -36,6 +36,7 @@ from store import (
     write_movie,
     write_poster,
 )
+from store.version import Language
 
 log = logging.getLogger(__name__)
 
@@ -154,6 +155,8 @@ def _lookup(
         # Movies are fetched once; ratings stored before normalisation are fixed on read.
         if stored.age_rating != _age_rating(stored.age_rating):
             write_movie(replace(stored, age_rating=_age_rating(stored.age_rating)), path=path)
+        if not stored.original_language:
+            _fetch(cached, path, session)
         return cached
 
     # ------ search TMDB ------
@@ -205,13 +208,14 @@ def _lookup(
 
 def by_id(tmdb_id: int, *, path: Path = DB_FILE, session: requests.Session | None = None) -> int | None:
     """Store metadata + poster for a TMDB id a site states. Returns the id, or None when the fetch fails."""
-    if read_movie(tmdb_id, path=path) is not None:
+    stored = read_movie(tmdb_id, path=path)
+    if stored is not None and stored.original_language:
         return tmdb_id
     own_session = session is None
     if own_session:
         session = _http.session()
     try:
-        return tmdb_id if _fetch(tmdb_id, path, session) else None
+        return tmdb_id if _fetch(tmdb_id, path, session) or stored is not None else None
     finally:
         if own_session:
             session.close()
@@ -259,6 +263,7 @@ def _fetch(tmdb_id: int, path: Path, session: requests.Session) -> bool:
         poster_path=details.get("poster_path") or "",
         vote_average=details.get("vote_average"),
         age_rating=age_rating,
+        original_language=details.get("original_language") or "",
     )
     write_movie(movie, path=path)
 
@@ -268,3 +273,61 @@ def _fetch(tmdb_id: int, path: Path, session: requests.Session) -> bool:
 
     log.info("TMDB %d: %s", tmdb_id, movie.title_sv or movie.title_original)
     return True
+
+
+# TMDB original_language codes (ISO 639-1; "cn" is TMDB's Cantonese).
+_LANGUAGES = {
+    "sv": Language.SWEDISH,
+    "en": Language.ENGLISH,
+    "fr": Language.FRENCH,
+    "de": Language.GERMAN,
+    "it": Language.ITALIAN,
+    "es": Language.SPANISH,
+    "pt": Language.PORTUGUESE,
+    "ja": Language.JAPANESE,
+    "ko": Language.KOREAN,
+    "zh": Language.CHINESE,
+    "cn": Language.CANTONESE,
+    "fi": Language.FINNISH,
+    "no": Language.NORWEGIAN,
+    "nb": Language.NORWEGIAN,
+    "nn": Language.NORWEGIAN,
+    "da": Language.DANISH,
+    "is": Language.ICELANDIC,
+    "nl": Language.DUTCH,
+    "pl": Language.POLISH,
+    "ru": Language.RUSSIAN,
+    "uk": Language.UKRAINIAN,
+    "cs": Language.CZECH,
+    "hu": Language.HUNGARIAN,
+    "ro": Language.ROMANIAN,
+    "el": Language.GREEK,
+    "tr": Language.TURKISH,
+    "ar": Language.ARABIC,
+    "fa": Language.PERSIAN,
+    "ku": Language.KURDISH,
+    "he": Language.HEBREW,
+    "hi": Language.HINDI,
+    "kn": Language.KANNADA,
+    "ta": Language.TAMIL,
+    "te": Language.TELUGU,
+    "th": Language.THAI,
+    "vi": Language.VIETNAMESE,
+    "ka": Language.GEORGIAN,
+    "ca": Language.CATALAN,
+    "kk": Language.KAZAKH,
+    "az": Language.AZERBAIJANI,
+    "sr": Language.SERBIAN,
+    "hr": Language.CROATIAN,
+    "bs": Language.BOSNIAN,
+    "et": Language.ESTONIAN,
+    "lv": Language.LATVIAN,
+    "lt": Language.LITHUANIAN,
+    "so": Language.SOMALI,
+}
+
+
+def languages(code: str) -> frozenset[Language]:
+    """Languages for a TMDB original_language code; empty when unknown."""
+    language = _LANGUAGES.get(code)
+    return frozenset({language}) if language else frozenset()

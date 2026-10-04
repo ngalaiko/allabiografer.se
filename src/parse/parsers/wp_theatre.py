@@ -55,11 +55,18 @@ _GENRE_NAMES = {"dokumentar": "Dokumentär"}
 
 # Programme series prefixed to the film title, e.g. "Cinemateket: Blade Runner".
 _SERIES_PREFIX = re.compile(r"^(?:unga\s+)?cinemateket\s*(?::|[-–—])\s*", re.IGNORECASE)
-# "1 tim 46 min"
-_HOURS = re.compile(r"(\d+)\s*tim")
-_MINUTES = re.compile(r"(\d+)\s*min")
-# "Japanskt tal, svensk text.", "Dialog på norska, rumänska, engelska och svenska. Svensk text."
-_SPOKEN = re.compile(r"\b[^\W\d_]+t\s+tal\b|\bdialog\s+på\b", re.IGNORECASE)
+# "1 tim 46 min" opening a paragraph.
+_RUNTIME = re.compile(r"^(?:(\d+)\s*tim\w*)?\s*(?:(\d+)\s*min\b)?", re.IGNORECASE)
+_SENTENCE = re.compile(r"(?<=[.!?])\s+")
+# "Japanskt och engelskt tal", "Dialog på norska", "Originalspråk: engelska", "Svensk text".
+_SPOKEN = re.compile(
+    r"\b(?:[^\W\d_]+t(?:\s*,\s*|\s+och\s+))*[^\W\d_]+t\s+tal\b|\bdialog\s+på\b|\b(?:original)?språk\s*:",
+    re.IGNORECASE,
+)
+_SUBTITLED = re.compile(r"^[^\W\d_]+\s+text\b", re.IGNORECASE)
+_DUBBED = re.compile(r"\bdubba[dt]\b", re.IGNORECASE)
+# Ticket links name the date: "…&datum=2026-10-04".
+_TICKET_DATE = re.compile(r"datum=(\d{4}-\d{2}-\d{2})")
 # Ticket links name the auditorium: "…tomovie@salongnr=3&tid=18:30&datum=…".
 _SALONG = re.compile(r"salongnr=(\d+)")
 # Event remarks about ticket sales rather than the screening.
@@ -88,12 +95,11 @@ def _lookup_title(title: str) -> str:
 
 
 def _parse_runtime(text: str) -> int | None:
-    """Runtime in minutes from "1 tim 46 min"."""
-    hours = _HOURS.search(text)
-    minutes = _MINUTES.search(text)
-    if not hours and not minutes:
+    """Runtime in minutes from a paragraph opening with "1 tim 46 min"."""
+    m = _RUNTIME.match(text)
+    if not m or not (m.group(1) or m.group(2)):
         return None
-    return int(hours.group(1) if hours else 0) * 60 + int(minutes.group(1) if minutes else 0)
+    return int(m.group(1) or 0) * 60 + int(m.group(2) or 0)
 
 
 def _meta(soup: BeautifulSoup, prop: str) -> str:
@@ -135,13 +141,22 @@ def _synopsis(soup: BeautifulSoup) -> tuple[str, int | None, str]:
     return " ".join(paragraphs), runtime, " ".join(notes)
 
 
-def _spoken(notes: str) -> tuple[str, str]:
-    """(language, subtitles) the body notes state: "Italienskt tal, svensk text."."""
-    m = _SPOKEN.search(notes)
-    if not m:
-        return "", ""
-    text = notes[m.end() :] if m.group(0).casefold().startswith("dialog") else notes[m.start() :]
-    return _version.from_text("Tal: " + text)
+def _spoken(notes: str) -> tuple[str, str, bool]:
+    """(language, subtitles, dubbed) the body notes state: "Italienskt tal, svensk text."."""
+    language = subtitles = ""
+    dubbed = False
+    for sentence in _SENTENCE.split(_RUNTIME.sub("", notes.strip(), count=1).strip()):
+        if m := _SPOKEN.search(sentence):
+            text = sentence[m.end() :] if m.group(0).casefold().startswith("dialog") else sentence[m.start() :]
+        elif _SUBTITLED.match(sentence):
+            text = sentence
+        else:
+            continue
+        spoken, subtitled = _version.from_text("Tal: " + text)
+        if spoken and not language:
+            language, dubbed = spoken, bool(_DUBBED.search(sentence))
+        subtitles = subtitles or subtitled
+    return language, subtitles, dubbed
 
 
 def _remark(ev) -> tuple[str, str]:
@@ -155,6 +170,7 @@ def _remark(ev) -> tuple[str, str]:
 def _film(soup: BeautifulSoup, title: str) -> tuple[Film, int | None, str]:
     """Film metadata a production page carries, its runtime and body notes."""
     overview, runtime, notes = _synopsis(soup)
+    language, _subtitles, dubbed = _spoken(notes)
     return (
         _films.make(
             _SOURCE,
@@ -164,7 +180,7 @@ def _film(soup: BeautifulSoup, title: str) -> tuple[Film, int | None, str]:
             genres=_genres(soup),
             poster_url=_meta(soup, "og:image:secure_url") or _meta(soup, "og:image"),
             url=_meta(soup, "og:url"),
-            original_languages=_version.languages(_spoken(notes)[0]),
+            original_languages=frozenset() if dubbed else _version.languages(language),
         ),
         runtime,
         notes,
@@ -183,7 +199,8 @@ def _parse_production(html: str, site: dict) -> Iterator[Screening | Film]:
         return
 
     film, runtime, notes = _film(psoup, film_title)
-    spoken, subtitled = _spoken(notes)
+    spoken, subtitled, dubbed = _spoken(notes)
+    dubbed = dubbed and not language
     language = language or spoken
     subtitles = subtitles or subtitled
     yield film
@@ -204,6 +221,11 @@ def _parse_production(html: str, site: dict) -> Iterator[Screening | Film]:
         ticket_url = ticket_el.get("href", "") if ticket_el else ""
         if not ticket_url:
             continue
+        if dated := _TICKET_DATE.search(ticket_url):
+            try:
+                d = date.fromisoformat(dated.group(1))
+            except ValueError:
+                log.warning("bad ticket date %r for %r", dated.group(1), film_title)
 
         venue = venue_el.get_text(strip=True) if venue_el else ""
         salong = _SALONG.search(ticket_url)
@@ -228,6 +250,7 @@ def _parse_production(html: str, site: dict) -> Iterator[Screening | Film]:
                 format=fmt,
                 language=language,
                 subtitles=remark_subtitles or subtitles,
+                audio_role_text="dubbad" if dubbed else "",
                 source_texts=suffixes,
                 raw_attributes=attributes,
             ),
@@ -264,9 +287,9 @@ def _parse_site(session: requests.Session, site: dict) -> Iterator[Screening | F
         try:
             resp = session.get(url, timeout=15)
             resp.raise_for_status()
-        except requests.RequestException:
-            log.exception("error fetching %s", url)
-            raise
+        except requests.RequestException as exc:
+            log.warning("failed to fetch production %s: %s", url, exc)
+            continue
 
         for item in _parse_production(resp.text, site):
             if isinstance(item, Film):

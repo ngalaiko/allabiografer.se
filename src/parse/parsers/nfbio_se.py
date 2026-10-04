@@ -44,6 +44,10 @@ _LANGUAGE_CODE = re.compile(r"^[A-Z]{2}$")
 # "Speltid: 1 timme 46 min"
 _HOURS = re.compile(r"(\d+)\s*timm")
 _MINUTES = re.compile(r"(\d+)\s*min")
+# Genre placeholder for films without one.
+_NO_GENRE = "Ej angivet"
+# "Dune: Part Three (Wb/Legendary)" — trailing distributor tag.
+_TRAILING_TAG = re.compile(r"\s*\(([^()]+)\)$")
 # Unreleased films carry a one-minute placeholder runtime; nothing sold as a screening is this short.
 _MIN_RUNTIME = 5
 
@@ -145,16 +149,30 @@ def _poster(soup: BeautifulSoup) -> str:
     return ""
 
 
+def _items(node, field: str) -> list[str]:
+    return [i.get_text(strip=True) for i in node.select(f".field--name-field-{field} .field__item")]
+
+
+def _title_original(node) -> str:
+    """Original title without a trailing distributor tag: "(Wb/Legendary)", "(Warner Bros.)"."""
+    title = next(iter(_items(node, "original-title")), "")
+    distributors = " ".join(_items(node, "copyright")).casefold()
+    m = _TRAILING_TAG.search(title)
+    if m and ("/" in m.group(1) or m.group(1).casefold().rstrip(".") in distributors):
+        return title[: m.start()]
+    return title
+
+
 def _original_languages(film: Film, node, title_original: str) -> frozenset[Language]:
     """The page's language, which names the Swedish dub of imported family films.
 
-    Swedish counts only for a film shown in no other language under its original title.
+    Swedish counts only for a film shown in no other language under its original title
+    and credited with no Swedish voice cast.
     """
-    stated = frozenset().union(
-        *(_version.languages(i.get_text(strip=True)) for i in node.select(".field--name-field-language .field__item"))
-    )
+    stated = frozenset().union(*(_version.languages(i) for i in _items(node, "language")))
     retitled = bool(title_original) and title_original.casefold() != film.title.casefold()
-    if Language.SWEDISH in stated and (film.original_languages or retitled):
+    dubbed = "svenska röster" in (a.casefold() for a in _items(node, "actors"))
+    if Language.SWEDISH in stated and (film.original_languages or retitled or dubbed):
         stated -= {Language.SWEDISH}
     return film.original_languages | stated
 
@@ -168,13 +186,12 @@ def _enrich(film: Film, html: str) -> Film:
 
     body = node.select_one(".field--name-body")
     premiere = node.select_one(".field--name-field-premiere-date time[datetime]")
-    original = node.select_one(".field--name-field-original-title .field__item")
     poster = node.select_one(".field--name-field-image img[src]")
-    title_original = original.get_text(strip=True) if original else ""
+    title_original = _title_original(node)
     return replace(
         film,
         overview=body.get_text(" ", strip=True) if body else "",
-        genres=[i.get_text(strip=True) for i in node.select(".field--name-field-genre .field__item")],
+        genres=[g for g in _items(node, "genre") if g != _NO_GENRE],
         release_date=(premiere.get("datetime", "") or "")[:10],
         title_original=title_original,
         original_languages=_original_languages(film, node, title_original),
@@ -248,7 +265,8 @@ def _parse_listing(html: str, cinema_name: str, city: str) -> Iterator[Screening
 def parse() -> Iterator[Screening | Venue | Film]:
     session = _http.session()
 
-    seen_films: set[str] = set()
+    listings: list[tuple[str, list[Screening]]] = []
+    films: dict[str, Film] = {}
     for cinema in _CINEMAS:
         city = cinema["city"]
         name = cinema["name"]
@@ -258,19 +276,23 @@ def parse() -> Iterator[Screening | Venue | Film]:
         resp = session.get(_BASE + cinema["url"], timeout=30)
         resp.raise_for_status()
 
-        count = 0
+        screenings: list[Screening] = []
         for item in _parse_listing(resp.text, name, city):
-            if isinstance(item, Film):
-                # Both cinemas list most of the same films; fetch each page once.
-                if item.key in seen_films:
-                    continue
-                seen_films.add(item.key)
-                yield _films.register(_fetch_film(session, item), session=session)
-                continue
-            yield item
-            count += 1
+            if not isinstance(item, Film):
+                screenings.append(item)
+            elif first := films.get(item.key):
+                # Each cinema screens its own versions; the first listing keeps its URL.
+                films[item.key] = replace(first, original_languages=first.original_languages | item.original_languages)
+            else:
+                films[item.key] = item
+        listings.append((name, screenings))
 
-        log.info("  %s: %d screenings", name, count)
+    # Both cinemas list most of the same films; fetch each page once.
+    for film in films.values():
+        yield _films.register(_fetch_film(session, film), session=session)
+    for name, screenings in listings:
+        yield from screenings
+        log.info("  %s: %d screenings", name, len(screenings))
 
 
 def _fetch_film(session: requests.Session, film: Film) -> Film:

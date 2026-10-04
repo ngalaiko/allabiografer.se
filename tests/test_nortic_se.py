@@ -194,3 +194,70 @@ def test_opera_broadcasts_are_included_and_stage_operas_skipped(live):
     titles = set(_films(live))
     assert {"Macbeth", "Così fan tutte", "Manon"} <= titles
     assert "Violetta tar bussen" not in titles
+
+
+def test_stated_speech_sets_screening_audio(live):
+    [rebuilding, *_] = _screenings(live, "Rebuilding")
+    assert rebuilding.version.audio.languages == frozenset({Language.ENGLISH})
+    assert rebuilding.version.audio.kind is AudioKind.UNKNOWN
+    assert rebuilding.version.subtitles.languages == frozenset({Language.SWEDISH})
+
+
+def test_genres_under_the_bio_label(live):
+    assert _films(live)["Monsterfabriken"].genres == ["Animerad familjefilm"]
+    payload = json.loads((_FIXTURE.parent / "live.json").read_text())
+    event = next(e for e in payload["events"] if e["title"] == "Monsterfabriken")
+    event["description"] = "<p>Bio: Drama, komedi, romantik Åldersgräns: Ej angivet</p>"
+    assert _films(nortic_se._parse_payload(payload))["Monsterfabriken"].genres == ["Drama", "Komedi", "Romantik"]
+    event["description"] = "<p>Bio: Ej angivet Åldersgräns: Ej angivet</p>"
+    assert _films(nortic_se._parse_payload(payload))["Monsterfabriken"].genres == []
+
+
+def _event(title: str, *, category: str = "Bio", organizer: int = 1, show_id: int = 1, description: str = "") -> dict:
+    return {
+        "id": show_id,
+        "title": title,
+        "category": category,
+        "organizerId": organizer,
+        "description": description,
+        "link": f"https://tickets.nortic.se/ticket/event/{show_id}",
+        "shows": [
+            {
+                "startDate": "2026-12-05 18:00",
+                "link": f"https://tickets.nortic.se/ticket/show/{show_id}",
+                "arenaName": "Bio Laxen",
+                "arenaCity": "Mörrum",
+            }
+        ],
+    }
+
+
+def test_opera_composer_suffix_is_stripped():
+    payload = {
+        "events": [
+            _event("Live på bio: Simson och Delila", category="Opera", organizer=2, show_id=1),
+            _event("Simson & Delila/ Camille Saint-Saenss", category="Opera", organizer=2, show_id=2),
+            _event("Manon/ Massenet", category="Opera", organizer=2, show_id=3),
+            _event("Otello/Verdi", category="Opera", organizer=2, show_id=4),
+            _event("Face/Off", show_id=5),
+        ]
+    }
+    items = list(nortic_se._parse_payload(payload))
+    assert set(_films(items)) == {"Simson och Delila", "Manon", "Otello", "Face/Off"}
+    assert {s.film_key for s in items if isinstance(s, Screening)} == {
+        "nortic_se:simson och delila",
+        "nortic_se:manon",
+        "nortic_se:otello",
+        "nortic_se:face off",
+    }
+
+
+def test_season_passes_and_festival_packages_are_skipped():
+    payload = {
+        "events": [
+            _event("Wernamo Filmstudio hösten 2026", show_id=1),
+            _event("Minifilmfestival Höst 26", show_id=2),
+            _event("Höstsonaten", show_id=3),
+        ]
+    }
+    assert set(_films(nortic_se._parse_payload(payload))) == {"Höstsonaten"}

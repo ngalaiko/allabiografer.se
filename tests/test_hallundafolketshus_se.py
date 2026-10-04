@@ -8,7 +8,7 @@ import pytest
 import requests
 
 from parse.parsers import _films, hallundafolketshus_se
-from parse.parsers.hallundafolketshus_se import _SOURCE, _details, _events
+from parse.parsers.hallundafolketshus_se import _SOURCE, _details, _events, _title
 from store import Film, Language, Screening
 
 pytestmark = pytest.mark.usefixtures("parser_clock")
@@ -35,24 +35,28 @@ def test_events_link_to_their_own_event_page():
             date(2026, 9, 22),
             time(13, 0),
             "https://www.hallundafolketshus.se/events/autofiktion",
+            (),
         ),
         (
             "Resan till Piemonte",
             date(2026, 9, 29),
             time(13, 0),
             "https://www.hallundafolketshus.se/events/resan-till-piemonte",
+            (),
         ),
         (
-            "Första blatten på månen",
+            "FÖRSTA BLATTEN PÅ MÅNEN",
             date(2026, 10, 5),
             time(19, 0),
             "https://www.hallundafolketshus.se/events/forsta-blatten-pa-manen",
+            (),
         ),
         (
-            "Macbeth",
+            "MACBETH",
             date(2026, 10, 17),
             time(19, 0),
             "https://www.hallundafolketshus.se/events/macbeth-2",
+            (),
         ),
     ]
 
@@ -160,3 +164,128 @@ def test_tickster_failure_keeps_the_site_ticket_link(monkeypatch):
 
     assert screenings["Autofiktion"].ticket_url == _TICKSTER + "x2gxuyawxe3285x"
     assert screenings["Autofiktion"].screen == ""
+
+
+_ALL = (_FIXTURES / "all.html").read_text()
+_COSI = (_FIXTURES / "event_cosi.html").read_text()
+_LUST = (_FIXTURES / "event_lust.html").read_text()
+
+
+def test_event_listing_reads_every_upcoming_screening():
+    events = list(_events(_ALL))
+
+    assert [title for title, *_ in events] == [
+        "FÖRSTA BLATTEN PÅ MÅNEN",
+        "Pressure",
+        "Digger",
+        "MACBETH",
+        "Heart of the Beast",
+        "Kärlek över Tanger",
+        "Arkipelag",
+        "COSì FAN TUTTE",
+        "Sense and Sensibility",
+        "LUST FOR LIFE",
+        "SIMSON OCH DELILA",
+        "FLICKAN FRÅN VILDA VÄSTERN",
+        "OTELLO",
+        "PARSIFAL",
+    ]
+    assert events[9][1:] == (
+        date(2026, 11, 20),
+        time(19, 0),
+        "https://www.hallundafolketshus.se/events/lust-for-life",
+        ("Drive-in-Bio",),
+    )
+    assert events[12][1] == date(2027, 4, 24)
+
+
+def test_event_listing_keeps_same_day_showings():
+    item = (
+        '<div class="em-event em-item"><div class="em-item-cat">CaféBio</div>'
+        '<h3 class="em-item-title"><a href="/events/digger{n}">Digger</a></h3>'
+        '<div class="em-date-time">14/10 {t} - 15:09</div></div>'
+    )
+    html = item.format(n="", t="13:00") + item.format(n="-2", t="18:00")
+
+    assert [(d, t) for _, d, t, *_ in _events(html)] == [
+        (date(2026, 10, 14), time(13, 0)),
+        (date(2026, 10, 14), time(18, 0)),
+    ]
+
+
+def test_title_takes_the_ticket_casing_of_a_capitalised_title():
+    assert _title("COSì FAN TUTTE", "Così fan Tutte - Live på bio från Metropolitan") == "Così fan Tutte"
+    assert _title("LUST FOR LIFE", "Lust for life  (Tal: Tyska) (Text: Svenska)") == "Lust for life"
+    assert _title("SIMSON OCH DELILA", "Simson och Delila - Live på bio från Metropolitan") == "Simson och Delila"
+    assert _title("COSì FAN TUTTE", "") == "Così fan tutte"
+    assert _title("MACBETH", "Otello") == "Macbeth"
+    assert _title("Heart of the Beast", "heart of the beast") == "Heart of the Beast"
+
+
+def test_opera_synopsis_leaves_out_credits_and_broadcast_dates():
+    overview = _details(_COSI)["overview"]
+
+    assert overview.startswith(
+        "Met-säsongen inleds med Mozarts komedi om kärlek. Phelim McDermotts färgstarka uppsättning"
+    )
+    assert "\n\nCosì fan tutte är ett av Mozarts sista verk" in overview
+    assert overview.endswith("Despina.")
+    for junk in ("Medverkande", "Fiordiligi –", "Upplev den live på bio", "Speltid", "Regi"):
+        assert junk not in overview
+
+
+def test_opera_synopsis_reads_every_descriptive_paragraph():
+    overview = _details(_OPERA)["overview"]
+
+    assert "Live på bio 17 oktober 2026" not in overview
+    assert "\n\nEfter tidigare succéer" in overview
+    assert overview.endswith("som Banquo.")
+
+
+def test_film_synopsis_reads_every_paragraph_after_the_facts():
+    overview = _details(_FILM)["overview"]
+
+    assert overview.startswith("Dogge Doggelito var rösten")
+    assert overview.endswith("fullständigt omöjlig att ignorera.")
+    assert overview.count("\n\n") == 2
+
+
+def test_labelled_facts_sharing_a_paragraph_are_read():
+    details = _details(_LUST)
+
+    assert details["genres"] == ["Dokumentär"]
+    assert details["runtime"] == 89
+    assert details["overview"].startswith("Under en tioårsperiod")
+
+
+def test_screenings_take_the_ticket_title_casing_and_keep_the_programme_prefix(monkeypatch):
+    pages = {
+        hallundafolketshus_se._URL: _ALL,
+        _SITE + "cosi-fan-tutte": _COSI,
+        _SITE + "lust-for-life": _LUST,
+        _TICKSTER + "9918cuxmbrv8h8h": (_FIXTURES / "tickster_cosi.html").read_text(),
+        _TICKSTER + "wbp6tub1m48jd4x": (_FIXTURES / "tickster_lust.html").read_text(),
+    }
+    items = _parse(monkeypatch, pages)
+    screenings = {s.title: s for s in items if isinstance(s, Screening)}
+    films = {f.title for f in items if isinstance(f, Film)}
+
+    assert {"Così fan Tutte", "Lust for life", "Simson och delila"} <= films
+    cosi = screenings["Così fan Tutte"]
+    assert cosi.ticket_url == _TICKSTER + "9918cuxmbrv8h8h/2026-11-07/cosi-fan-tutte-live-pa-bio-fran-metropolitan"
+    assert cosi.film_key == "hallundafolketshus_se:così fan tutte"
+    assert screenings["Lust for life"].raw_attributes == ("Drive-in-Bio",)
+    assert len(screenings) == 14
+
+
+def test_synopsis_drops_every_form_of_broadcast_date_sentence():
+    page = (
+        "<article><p>Puccinis spännande drama återvänder i en ny uppsättning av Richard Jones, den första på 30 år. "
+        "Livesänds på bio 23 januari 2027.</p><p>En av dagens ledande tenorer tar sig an titelrollen i operans "
+        "största tragedi. Otello livesänds till biografer världen över, 24 april 2027.</p></article>"
+    )
+
+    assert _details(page)["overview"] == (
+        "Puccinis spännande drama återvänder i en ny uppsättning av Richard Jones, den första på 30 år."
+        "\n\nEn av dagens ledande tenorer tar sig an titelrollen i operans största tragedi."
+    )

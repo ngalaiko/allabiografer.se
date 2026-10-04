@@ -24,6 +24,10 @@ _LIVE_EVENT = 2
 _LABEL_LANGUAGE = re.compile(r"\bpå\s+([^\W\d_]+)", re.IGNORECASE)
 # "Ny tid kl 14.00" — a schedule change, already reflected in the session time.
 _SCHEDULE_NOTE = re.compile(r"^ny tid\b", re.IGNORECASE)
+# Distributor contact paragraphs that follow the synopsis.
+_CONTACT = re.compile(r"pressansvarig|distributionsansvarig|pressbilder|\S+@\S+\.\w+|\b0\d{1,3}-\d", re.IGNORECASE)
+# The site's catch-all category.
+_NOT_A_GENRE = {"film"}
 
 _MONTHS = {
     "jan": 1,
@@ -73,6 +77,27 @@ def _text(raw: object) -> str:
     return " ".join(html.unescape(re.sub(r"<[^>]+>", " ", str(raw or ""))).split())
 
 
+def _overview(raw: object) -> str:
+    """Synopsis paragraphs, separated by blank lines, up to the distributor contacts."""
+    paragraphs: list[str] = []
+    for part in re.split(r"</p\s*>|<p\b[^>]*>", str(raw or ""), flags=re.IGNORECASE):
+        text = _text(part)
+        if _CONTACT.search(text):
+            break
+        if text:
+            paragraphs.append(text)
+    return "\n\n".join(paragraphs)
+
+
+def _genre(raw: str) -> str:
+    """ "Spanskt drama" is a drama; the nationality is not a genre."""
+    words = raw.split()
+    if len(words) > 1 and _version.languages(words[0]):
+        words = words[1:]
+    genre = " ".join(words).capitalize()
+    return "" if genre.lower() in _NOT_A_GENRE else genre
+
+
 def _runtime(raw: object) -> int | None:
     """Minutes from a "1 tim 21", "2 h inkl p", "105 min" or "2:10" length."""
     text = str(raw or "").strip().lower()
@@ -86,10 +111,13 @@ def _runtime(raw: object) -> int | None:
     return minutes or None
 
 
-def _label_facts(raw: object) -> dict[str, object]:
-    """Screening version fields from a session label: "på svenska", "dagbio<br>på spanska"."""
+def _label_facts(raw: object, film_label: object = "") -> dict[str, object]:
+    """Screening version fields from a session label: "på svenska", "dagbio<br>på spanska".
+
+    The film page's label supplies the language when the session's holds none.
+    """
     label = _text(raw)
-    m = _LABEL_LANGUAGE.search(label)
+    m = _LABEL_LANGUAGE.search(label) or _LABEL_LANGUAGE.search(_text(film_label))
     return _version.screening_facts(
         language=_version.language(m.group(1)) if m else "",
         raw_attributes=(label,) if label and not _SCHEDULE_NOTE.match(label) else (),
@@ -103,11 +131,11 @@ def _film_url(film_id: int | str) -> str:
 def _film(sess: dict, detail: dict) -> Film:
     """Film metadata from a session record and its film page."""
     genre = detail.get("f_genre") or sess.get("f_genre") or ""
-    genres = [g for g in (" ".join(part.split()).capitalize() for part in genre.split(",")) if g]
+    genres = [g for g in (_genre(part) for part in genre.split(",")) if g]
     return _films.make(
         _SOURCE,
         " ".join(sess.get("f_title", "").split()),
-        overview=_text(detail.get("f_synopsis", "")),
+        overview=_overview(detail.get("f_synopsis", "")),
         runtime=_runtime(detail.get("f_run_time", "")),
         genres=genres,
         age_rating=str(detail.get("f_rating") or ""),
@@ -123,6 +151,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
     resp.raise_for_status()
 
     films: dict[str, Film] = {}
+    labels: dict[str, str] = {}
     for sess in _sessions(resp.text):
         film_title = " ".join(sess.get("f_title", "").split())
         t = _parse_time(sess.get("f_time", ""))
@@ -133,9 +162,11 @@ def parse() -> Iterator[Screening | Venue | Film]:
 
         film = films.get(film_title)
         if film is None:
-            detail = session.get(_film_url(sess.get("f_id", "")), timeout=12)
-            film = _film(sess, _detail(detail.text) if detail.ok else {})
+            resp = session.get(_film_url(sess.get("f_id", "")), timeout=12)
+            detail = _detail(resp.text) if resp.ok else {}
+            film = _film(sess, detail)
             films[film_title] = film
+            labels[film_title] = detail.get("f_label") or ""
             yield _films.register(film, session=session)
 
         yield Screening(
@@ -147,5 +178,5 @@ def parse() -> Iterator[Screening | Venue | Film]:
             ticket_url=ticket_url,
             cinema_name=_CINEMA,
             city=_CITY,
-            **_label_facts(sess.get("f_label")),
+            **_label_facts(sess.get("f_label"), labels[film_title]),
         )

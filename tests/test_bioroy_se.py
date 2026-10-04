@@ -137,3 +137,47 @@ def test_film_page_poster_replaces_the_cropped_still(films):
 def test_film_page_poster_url():
     assert bioroy_se._page_poster(_FILM_HTML) == _DIGGER_POSTER
     assert bioroy_se._page_poster("<html></html>") == ""
+
+
+def _picker_page(src: str, media: dict | None) -> str:
+    picker = {"id": 1, "url": f"http://localhost:8080{src}"}
+    if media is not None:
+        picker["umbracoContent"] = {"mediaData": media}
+    path = ["page", "documentData", "connectedFeature", "umbracoContent", "compositions", "posterImageComposition"]
+    node: dict = {"posterImagePicker": picker}
+    for key in reversed(path):
+        node = {key: node}
+    data = json.dumps({"props": {"pageProps": node}})
+    return f'<script id="__NEXT_DATA__" type="application/json">{data}</script>'
+
+
+def test_a_landscape_page_image_is_not_a_poster():
+    # notknapparen_hero.jpg, 800x400; the programme's 2:3 crop takes over.
+    assert (
+        bioroy_se._page_poster(_picker_page("/media/y4tn5jyd/notknapparen_hero.jpg", {"width": 800, "height": 400}))
+        == ""
+    )
+    # kinky_boots_teaser.jpg, 291x300.
+    assert (
+        bioroy_se._page_poster(_picker_page("/media/3cbmewfn/kinky_boots_teaser.jpg", {"width": 291, "height": 300}))
+        == ""
+    )
+
+
+def test_a_page_image_of_unknown_size_is_cropped_to_2_3():
+    assert bioroy_se._page_poster(_picker_page("/media/x/a.webp", None)) == (
+        "https://www.bioroy.se/media/x/a.webp?width=500&height=750&rmode=crop&format=jpg"
+    )
+
+
+def test_a_zero_duration_is_no_runtime(monkeypatch):
+    runtimes = []
+    monkeypatch.setattr(bioroy_se, "_tmdb", lambda title, runtime=None: runtimes.append(runtime))
+    data = json.loads(_FIXTURE.read_text())
+    pl = data["props"]["pageProps"]["programList"]
+    next(f for f in pl["features"] if f["id"] == 16746)["info"]["duration"] = 0
+
+    films = [i for i in bioroy_se._parse_program_list(pl) if isinstance(i, Film)]
+
+    assert next(f for f in films if f.title == "Tony").runtime is None
+    assert 0 not in runtimes

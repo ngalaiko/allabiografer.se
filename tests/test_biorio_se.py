@@ -92,7 +92,7 @@ def test_film_metadata(films):
     assert film.poster_url == (
         "https://www.biorio.se/_next/image"
         "?url=https%3A%2F%2Frio.ams3.digitaloceanspaces.com%2Fbiorio%2Fmovies%2Fmovies%2F5923"
-        "%2Fposters%2F1780057673672-yirxwl.avif&w=640&q=85"
+        "%2Fposters%2F1780057673672-yirxwl.jpg&w=640&q=85"
     )
     assert film.overview.startswith("Året är 1965.")
     assert film.runtime == 120
@@ -121,3 +121,61 @@ def test_a_resolvable_tmdb_id_skips_the_title_lookup(monkeypatch):
 
     assert {s.title: s.tmdb_id for s in screenings}["Dune: Part Three"] == 1170608
     assert {s.title: s.tmdb_id for s in screenings}["Quadrophenia"] == -1
+
+
+@pytest.mark.parametrize(
+    "title", ["Dune: Part One + Two", "Sagan om ringen-maraton (Ext. versions)", "Alien Double Feature"]
+)
+def test_a_multi_film_programme_takes_no_single_tmdb_id(monkeypatch, title):
+    monkeypatch.setattr(biorio_se, "_tmdb", lambda title: -1)
+    monkeypatch.setattr(biorio_se, "_tmdb_by_id", lambda tmdb_id: tmdb_id)
+
+    assert biorio_se._tmdb_id({"title": title, "tmdbId": "438631"}) is None
+
+
+def test_superhunden_charlie_release_date_falls_back_to_the_year(films):
+    # The API's releaseDate is the Swedish premiere (2026-09-11); releaseYear is 2025.
+    assert films["Superhunden Charlie"].release_date == "2025"
+
+
+@pytest.mark.parametrize(
+    ("release_date", "release_year", "expected"),
+    [
+        ("1979-09-14", 1979, "1979-09-14"),
+        ("1950-11-20", 2014, "2014"),
+        ("2024-09-07", None, ""),
+        (None, 2014, "2014"),
+    ],
+)
+def test_release_date_is_kept_only_when_it_agrees_with_the_year(release_date, release_year, expected):
+    movie = {"title": "X", "slug": "x", "releaseDate": release_date, "releaseYear": release_year}
+    assert biorio_se._film(movie).release_date == expected
+
+
+def test_cancelled_shows_are_skipped(monkeypatch):
+    showtimes = json.loads(json.dumps(_SHOWTIMES))
+    statuses = {2814: "cancelled", 2582: "sold_out"}
+    for show in showtimes["showtimes"]:
+        show["status"] = statuses.get(show["id"], show["status"])
+    monkeypatch.setattr(
+        biorio_se,
+        "_get_json",
+        lambda s, url: showtimes if url.startswith(biorio_se._SHOWTIMES_URL) else _get_json(s, url),
+    )
+    monkeypatch.setattr(biorio_se._films, "register", lambda film, session=None: film)
+    monkeypatch.setattr(biorio_se, "_tmdb", lambda title: None)
+    monkeypatch.setattr(biorio_se, "_tmdb_by_id", lambda tmdb_id: None)
+
+    items = list(biorio_se.parse())
+    ids = {s.ticket_url.rsplit("/", 1)[1] for s in items if isinstance(s, Screening)}
+
+    assert "2814" not in ids
+    assert "2582" in ids
+    assert "Superhunden Charlie" not in {f.title for f in items if isinstance(f, Film)}
+
+
+def test_a_poster_without_a_jpeg_rendition_takes_the_original():
+    movie = {"title": "X", "slug": "x", "posterPath": "https://rio.example/p.avif"}
+    assert biorio_se._film(movie).poster_url == (
+        "https://www.biorio.se/_next/image?url=https%3A%2F%2Frio.example%2Fp.avif&w=640&q=85"
+    )

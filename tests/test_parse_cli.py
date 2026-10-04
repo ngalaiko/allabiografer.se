@@ -1,9 +1,10 @@
 """Cross-parser post-processing in the parse CLI."""
 
+import dataclasses
 from datetime import date, time
 
-from parse import mark_dubbed
-from store import Film, Screening
+from parse import mark_dubbed, tmdb_languages
+from store import Film, Movie, Screening, write_movie
 from store.version import AudioKind, AudioVersion, ContentVersion, Language
 
 
@@ -50,3 +51,35 @@ def test_stated_audio_kind_is_kept():
     films = [_film("s:a", Language.ENGLISH)]
     [s] = mark_dubbed([_screening("s:a", AudioKind.SILENT, Language.SWEDISH)], films)
     assert s.version.audio.kind is AudioKind.SILENT
+
+
+def test_chinese_variants_count_as_one_language():
+    films = [_film("s:a", Language.CANTONESE)]
+    screenings = [
+        _screening("s:a", AudioKind.UNKNOWN, Language.CHINESE),
+        _screening("s:a", AudioKind.UNKNOWN, Language.MANDARIN),
+    ]
+    assert [s.version.audio.kind for s in mark_dubbed(screenings, films)] == [AudioKind.UNKNOWN] * 2
+
+
+def test_tmdb_original_language_overrides_the_site():
+    films = [_film("s:a", Language.SWEDISH)]
+    s = dataclasses.replace(_screening("s:a", AudioKind.UNKNOWN, Language.SWEDISH), tmdb_id=1)
+    [s] = mark_dubbed([s], films, {1: frozenset({Language.ENGLISH})})
+    assert s.version.audio.kind is AudioKind.DUBBED
+
+
+def test_site_original_language_applies_without_tmdb_language():
+    films = [_film("s:a", Language.ENGLISH)]
+    s = dataclasses.replace(_screening("s:a", AudioKind.UNKNOWN, Language.SWEDISH), tmdb_id=1)
+    [s] = mark_dubbed([s], films, {1: frozenset()})
+    assert s.version.audio.kind is AudioKind.DUBBED
+
+
+def test_tmdb_languages_read_stored_movies(tmp_path):
+    db = tmp_path / "test.db"
+    write_movie(Movie.from_dict({"tmdb_id": 1, "title_sv": "A", "original_language": "en"}), path=db)
+    write_movie(Movie.from_dict({"tmdb_id": 2, "title_sv": "B"}), path=db)
+    screenings = [dataclasses.replace(_screening("s:a", AudioKind.UNKNOWN), tmdb_id=i) for i in (1, 2, 3)]
+
+    assert tmdb_languages(screenings, path=db) == {1: {Language.ENGLISH}, 2: set()}

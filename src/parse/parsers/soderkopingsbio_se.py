@@ -50,6 +50,17 @@ def _parse_title(raw: str) -> tuple[str, str, str]:
     return _TAG.sub("", raw).strip(), language, subtitles
 
 
+def _ticket_version(ticket_title: str, language: str, subtitles: str) -> tuple[str, str]:
+    """(language, subtitles), preferring the Tickster title's tags over the schedule's.
+
+    Tickster tags subtitled showings "(Sv. txt)"; one tagged only "(Sv. tal)" is unsubtitled.
+    """
+    _, spoken, subs = _tickster.version(ticket_title)
+    if not spoken and not subs:
+        return language, subtitles
+    return spoken or language, subs or _version.NO_SUBTITLES
+
+
 def _showtimes(items: list[dict]) -> Iterator[tuple[str, date, time, str, str, str, dict, str]]:
     """Yield (title, date, time, screen, language, subtitles, movie, booking_url) per schedule row."""
     for item in items:
@@ -116,6 +127,8 @@ def parse() -> Iterator[Screening | Venue | Film]:
             yield film
 
         event = programme.find(title, d, t)
+        if event:
+            language, subtitles = _ticket_version(event.title, language, subtitles)
         yield Screening(
             tmdb_id=_tmdb(title),
             title=title,
@@ -125,6 +138,10 @@ def parse() -> Iterator[Screening | Venue | Film]:
             cinema_name=_CINEMA,
             city=_CITY,
             screen=screen,
-            **_version.screening_facts(language=language, subtitles=subtitles),
+            **_version.screening_facts(
+                language=language,
+                subtitles=subtitles,
+                raw_attributes=_tickster.labels(event.title) if event else (),
+            ),
             film_key=film.key,
         )

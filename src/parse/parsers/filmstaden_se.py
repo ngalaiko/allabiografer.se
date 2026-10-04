@@ -12,7 +12,7 @@ from curl_cffi import requests as cffi_requests
 from parse import _http, _version
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
-from store import Film, Screening, Venue, film_key
+from store import Film, Screening, Venue, film_key, title_key
 
 log = logging.getLogger(__name__)
 
@@ -36,12 +36,35 @@ _TITLE_SUFFIX = re.compile(r"\s*-\s+(klassiker|med samtal\b.*|[^-]*filmklubb)$",
 # Labels that override the version's subtitle language.
 _SUBTITLE_ATTRIBUTES = {"English subtitles": "Engelska"}
 
+# Programme labels in version titles: "Arkipelag - Q&A med Alex Schulman…", "Fjord - pensionärsbio".
+# Other segments name formats or venues ("- IMAX", "- Drömland").
+_VERSION_PROGRAMME = re.compile(r"q&a|besök|pensionärsbio|stickbio|smygpremiär|samtal|maraton", re.IGNORECASE)
+
+# Genre labels that classify nothing.
+_NOISE_GENRES = {"FLC"}
+# Catalogue categories that name a genre.
+_CATEGORY_GENRES = {"Barn och Familj": "Familj"}
+
 
 def _title(raw: str) -> tuple[str, str]:
     """(film title, programme suffix) from an API title."""
-    title = raw.strip()
+    title = " ".join(raw.split())
     m = _TITLE_SUFFIX.search(title)
     return (title[: m.start()].strip(), m.group(1)) if m else (title, "")
+
+
+def _version_programmes(title: str) -> tuple[str, ...]:
+    """Programme labels among a version title's dash-separated segments."""
+    return tuple(part for part in re.split(r"\s+-\s+", title.strip())[1:] if _VERSION_PROGRAMME.search(part))
+
+
+def _unique(*labels: str) -> tuple[str, ...]:
+    """Non-empty labels in order, the first spelling of each regardless of case."""
+    first: dict[str, str] = {}
+    for label in labels:
+        if label:
+            first.setdefault(label.casefold(), label)
+    return tuple(first.values())
 
 
 def _get(session: cffi_requests.Session, url: str, **kw: Any) -> Any:
@@ -92,9 +115,10 @@ def _screening(
             subtitles=subtitle_text,
             audio_role_text=audio_role_text,
             source_texts=_version.title_suffixes(title),
-            raw_attributes=(
+            raw_attributes=_unique(
                 *attr_names,
                 programme,
+                *_version_programmes(title),
                 *(item.get("description") or "" for item in audio_languages),
                 *(item.get("displayName") or "" for item in audio_languages),
                 audio_info.get("description", ""),
@@ -150,13 +174,18 @@ def _film(movie: dict[str, Any], detail: dict[str, Any] | None = None) -> Film:
     title, _ = _title(movie["title"])
     original, _ = _title(detail.get("originalTitle") or "")
     slug = movie.get("slug") or ""
+    genres = [g["name"] for g in movie.get("genres") or [] if g.get("name") and g["name"] not in _NOISE_GENRES]
+    for category in movie.get("categories") or []:
+        genre = _CATEGORY_GENRES.get(category.get("displayName") or "")
+        if genre and genre not in genres:
+            genres.append(genre)
     return _films.make(
         _SOURCE,
         title,
-        title_original="" if original == title else original,
+        title_original="" if title_key(original) == title_key(title) else original,
         overview=_overview(detail),
         runtime=movie.get("length") or None,
-        genres=[g["name"] for g in movie.get("genres") or [] if g.get("name")],
+        genres=genres,
         release_date=_release_date(movie.get("releaseDate"), detail.get("productionYear")),
         age_rating=(movie.get("rating") or {}).get("displayName") or "",
         poster_url=_poster_url(movie),

@@ -86,3 +86,37 @@ def test_label_is_kept_as_raw_attribute():
 
 def test_label_drops_schedule_notes():
     assert _facts("Fåret Shaun och monstret på bondgården")["raw_attributes"] == ()
+
+
+_SHAUN = (
+    "<p>I den tredje biofilmen om f&aring;ret Shaun.</p>\r\n"
+    "<p>N&auml;r Shaun <em>f&ouml;rvandlas</em> g&aring;r det fort.</p>\r\n"
+    "<p>Pressansvarig och kontakt f&ouml;r materialfr&aring;gor: Mona Holmquist MonaH@scanbox.com 0701-857612.</p>\r\n"
+    "<p>Distributionsansvarig (kontakt f&ouml;r filmbokning) Andreas Degerhammar "
+    "andreasd@scanbox.com 070-761 38 05.</p>"
+)
+
+
+def test_overview_keeps_paragraphs_and_stops_at_distributor_contacts():
+    film = _film(_sessions(_INDEX)[0], {"f_synopsis": _SHAUN})
+    assert film.overview == "I den tredje biofilmen om fåret Shaun.\n\nNär Shaun förvandlas går det fort."
+
+
+def test_overview_drops_a_trailing_contact_line():
+    film = _film(_sessions(_INDEX)[0], _detail(_FILM))
+    assert "Distributionsansvarig" not in film.overview
+
+
+def test_genres_drop_the_catch_all_and_nationality():
+    sess = _sessions(_INDEX)[0]
+    assert _film(sess, {"f_genre": "Film"}).genres == []
+    assert _film(sess, {"f_genre": "Spanskt drama"}).genres == ["Drama"]
+    assert _film(sess, {"f_genre": "Norskt Drama"}).genres == ["Drama"]
+    assert _film(sess, {"f_genre": "Romantisk komedi"}).genres == ["Romantisk komedi"]
+
+
+def test_film_page_label_supplies_the_language_a_schedule_note_lacks():
+    facts = _label_facts("Ny tid<br>\nkl 11.00", "på svenska")
+    assert facts["version"].audio.languages == {Language.SWEDISH}
+    assert facts["raw_attributes"] == ()
+    assert _label_facts("dagbio<br>på spanska", "på svenska")["version"].audio.languages == {Language.SPANISH}

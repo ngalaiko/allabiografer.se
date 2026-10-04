@@ -2,10 +2,15 @@
 
 from datetime import date, time
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+import requests
 
+from parse.parsers import palladiumbio_se
 from parse.parsers.palladiumbio_se import _hero, _overview, _parse_title, _poster, _posters, _showtimes
+from store import Film, Screening
+from store.version import Language
 
 pytestmark = pytest.mark.usefixtures("parser_clock")
 
@@ -130,3 +135,72 @@ def test_hero_image_from_event_page():
     assert _hero((_FIXTURES / "film.html").read_text()) == (
         "https://palladiumbio.se/assets/components/tickster/cache/eventImages/ncz24uvkek7dwtf.jpg"
     )
+
+
+_CARDS = """<div class="multiCarousel">{}</div>"""
+_CARD = """<div class="card"><img src="/{src}.jpg"><p class="card-title">{title}</p></div>"""
+
+
+def _cards(*titles: str):
+    return _posters(_CARDS.format("".join(_CARD.format(src=t.lower(), title=t) for t in titles)))
+
+
+def test_carousel_poster_matches_title_before_colon():
+    posters = _cards("SMÅSTADSLIV")
+    title = "Småstadsliv: Mellan himmel och körtburkar"
+    assert _poster(posters, title, [title]) == "https://palladiumbio.se/småstadsliv.jpg"
+
+
+def test_title_before_colon_shared_by_two_films_matches_neither():
+    posters = _cards("SPIDER-MAN")
+    titles = ["Spider-Man: Brand New Day", "Spider-Man: Across the Spider-Verse"]
+    assert [_poster(posters, t, titles) for t in titles] == ["", ""]
+
+
+def test_title_before_colon_does_not_match_another_cards_prefix():
+    # "NELLY RAPP:PORTEN TILL UNDERJORDEN" names one sequel, not the series.
+    title = "Nelly Rapp: Spökagenten"
+    assert _poster(_cards("NELLY RAPP:PORTEN TILL UNDERJORDEN"), title, [title]) == ""
+
+
+def test_exact_match_wins_over_title_before_colon():
+    posters = _cards("DUNE", "DUNE: PART THREE")
+    title = "Dune: Part Three"
+    assert _poster(posters, title, [title]) == "https://palladiumbio.se/dune: part three.jpg"
+
+
+class _Session:
+    def __init__(self, pages: dict[str, str]):
+        self.pages = pages
+
+    def get(self, url, timeout=None):
+        if url not in self.pages:
+            raise requests.ConnectionError(url)
+        return SimpleNamespace(text=self.pages[url], ok=True, raise_for_status=lambda: None)
+
+
+def _parse(monkeypatch, pages: dict[str, str]) -> list:
+    monkeypatch.setattr(palladiumbio_se._http, "session", lambda *a: _Session(pages))
+    monkeypatch.setattr(palladiumbio_se._films, "register", lambda film, session=None: film)
+    monkeypatch.setattr(palladiumbio_se, "_tmdb", lambda title: None)
+    return list(palladiumbio_se.parse())
+
+
+def test_film_page_failure_skips_only_its_details(monkeypatch):
+    film_page = (_FIXTURES / "film.html").read_text()
+    items = _parse(
+        monkeypatch, {palladiumbio_se._URL: _HTML, "https://palladiumbio.se/film.html?event=ycryyrnewwt7hna": film_page}
+    )
+    films = {f.title: f for f in items if isinstance(f, Film)}
+    assert len(films) == 4
+    assert films["Practical Magic: Family Legacy"].overview.startswith("Din bästa vän")
+    assert films["Bortglömda ön"].overview == ""
+    assert len([i for i in items if isinstance(i, Screening)]) == 4
+
+
+def test_non_swedish_audio_is_original_language(monkeypatch):
+    films = {f.title: f for f in _parse(monkeypatch, {palladiumbio_se._URL: _HTML}) if isinstance(f, Film)}
+    assert films["Practical Magic: Family Legacy"].original_languages == frozenset({Language.ENGLISH})
+    assert films["Heart of the Beast"].original_languages == frozenset({Language.ENGLISH})
+    # Swedish audio alone may be a dub.
+    assert films["Bortglömda ön"].original_languages == frozenset()

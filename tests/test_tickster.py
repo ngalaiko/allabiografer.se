@@ -153,3 +153,35 @@ def test_fetch_event_failure_is_none():
     assert _tickster.fetch_event(_EVENING_URL, _Session({_EVENING_URL: _EVENING})).start == datetime(
         2026, 10, 7, 18, 30, tzinfo=_TZ
     )
+
+
+def test_find_matches_titles_tickster_cut_mid_word():
+    events = [
+        _tickster.Event(
+            url="https://www.tickster.com/se/sv/events/abc/2026-10-25/lilla-spoket-laban",
+            title="Lilla spöket Laban och den förtrollade borgens hemlig",
+            date=date(2026, 10, 25),
+            venue="",
+        )
+    ]
+    programme = _tickster.Programme(events, _Session({}))
+
+    assert (
+        programme.find("Lilla spöket Laban och den förtrollade borgens hemligheter", date(2026, 10, 25), time(14, 0))
+        == events[0]
+    )
+    assert programme.find("Lilla spöket Laban", date(2026, 10, 25), time(14, 0)) == events[0]
+    assert programme.find("Lilla spöket", date(2026, 10, 25), time(14, 0)) == events[0]
+
+
+def test_find_ignores_short_titles_that_merely_share_a_word_stem():
+    events = [_tickster.Event(url="u", title="Tony (Sv. txt)", date=date(2026, 10, 7), venue="")]
+    programme = _tickster.Programme(events, _Session({}))
+
+    assert programme.find("Tonya", date(2026, 10, 7), time(15, 30)) is None
+
+
+def test_labels_are_the_programme_tags_besides_the_version():
+    assert _tickster.labels("Resan till Piemonte (Dagbio) (Sv. txt)") == ("Dagbio",)
+    assert _tickster.labels("Digger (Tal: Engelska) (Text: Svenska)") == ()
+    assert _tickster.labels("Sense and Sensibility  (Tal: Engelska) (Text: Sven") == ()

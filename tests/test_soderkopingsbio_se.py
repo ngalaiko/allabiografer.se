@@ -9,7 +9,7 @@ import requests
 
 from parse.parsers import soderkopingsbio_se
 from parse.parsers.soderkopingsbio_se import _film_details, _showtimes
-from store import Film, Screening, film_key
+from store import Film, Language, Screening, film_key
 
 _FIXTURES = Path(__file__).parent / "fixtures" / "soderkopingsbio_se"
 _SCHEDULE = json.loads((_FIXTURES / "eventschedules.json").read_text())
@@ -128,3 +128,43 @@ def test_parse_title_reads_any_known_language_code():
 
 def test_parse_title_drops_unknown_language_codes():
     assert soderkopingsbio_se._parse_title("Film (Xq.Tal)") == ("Film", "", "")
+
+
+def test_parse_keeps_tickster_programme_tags_as_raw_attributes(monkeypatch):
+    items = _parse(
+        monkeypatch,
+        {
+            soderkopingsbio_se._SCHEDULE: _SCHEDULE,
+            soderkopingsbio_se._TICKSTER: _ORGANISER,
+            _MATINEE_URL: _MATINEE,
+            _EVENING_URL: _EVENING,
+        },
+    )
+    screenings = [i for i in items if isinstance(i, Screening)]
+
+    assert [s.raw_attributes for s in screenings] == [(), ("Dagbio",), ("Dagbio",), ()]
+
+
+def _card(path: str, title: str, label: str) -> str:
+    return (
+        f'<div class="c-card"><a href="/se/sv/events/{path}" class="c-card__body">'
+        f'<h2 class="c-card__title">{title}</h2></a>'
+        f'<span class="c-card__label">{label}, Söderköpings Bio</span></div>'
+    )
+
+
+def test_tickster_version_overrides_the_schedule_tags(monkeypatch):
+    schedule = [
+        {"eventName": "Bortglömda ön (Sv.Txt) (Sv. Tal)", "startDate": "2026-10-18T15:00:00", "venueName": "Sal 1"},
+        {"eventName": "Digger (Sv.Txt) (Eng.Tal)", "startDate": "2026-10-18T18:30:00", "venueName": "Sal 1"},
+    ]
+    organiser = _card("a/2026-10-18/bortglomda-on-sv-tal", "Bortglömda ön (Sv. tal)", "18 okt 2026") + _card(
+        "b/2026-10-18/digger-sv-txt", "Digger (Sv. txt)", "18 okt 2026"
+    )
+    items = _parse(monkeypatch, {soderkopingsbio_se._SCHEDULE: schedule, soderkopingsbio_se._TICKSTER: organiser})
+    island, digger = [i for i in items if isinstance(i, Screening)]
+
+    assert island.version.audio.languages == {Language.SWEDISH}
+    assert island.version.subtitles.languages == frozenset()
+    assert digger.version.audio.languages == {Language.ENGLISH}
+    assert digger.version.subtitles.languages == {Language.SWEDISH}

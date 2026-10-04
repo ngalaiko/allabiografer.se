@@ -22,8 +22,20 @@ _ADDRESS = "Ordensgatan 5"
 # The listing's only non-genre category.
 _NOT_A_GENRE = {"film"}
 
-# Title prefixes: "Extra-visning (2) ", "Höstlovsfilm! ", "PREMIÄR! ".
-_TITLE_PREFIX = re.compile(r"^(?:(?P<extra>extra-?visning)(?:\s*\(\d+\))?|(?P<word>[^\W\d_][\w-]*)!)\s+", re.IGNORECASE)
+# Title prefixes: "Extra-visning (2) ", "Höstlovsfilm! ", "PREMIÄR! ", "Direkt från Metropolitanoperan: ".
+_TITLE_PREFIX = re.compile(
+    r"^(?:(?P<extra>extra-?visning)(?:\s*\(\d+\))?|(?P<word>[^\W\d_][\w-]*)!"
+    r"|(?P<broadcast>direkt\s+från\s+[^:]+|met\s+live|live\s+på\s+bio)\s*:)\s+",
+    re.IGNORECASE,
+)
+# End time the listing gives events without a known length.
+_NO_END = "23:59"
+# Block elements whose text forms a paragraph.
+_BLOCKS = ["p", "div", "li", "h1", "h2", "h3", "h4", "h5", "h6"]
+# "Otello ." — a space the editor left before punctuation.
+_LOOSE_PUNCTUATION = re.compile(r" +([.,;:!?])(?=\s|$)")
+# Marks block boundaries; source newlines are formatting whitespace.
+_BREAK = "\u2029"
 # Credits, prices and side events that follow the synopsis.
 _TRAILER = re.compile(
     r"\b(?:Regi|Dirigent|Land|Pris)\s*:|\bTextas\s+på\b|\bFöreställningen har\b|\bOBS!",
@@ -51,7 +63,7 @@ _MONTHS = {
 def _runtime(start: time, end_text: str) -> int | None:
     """Minutes between the listed start and end times."""
     m = re.match(r"(\d{1,2}):(\d{2})", end_text)
-    if not m:
+    if not m or m.group(0) == _NO_END:
         return None
     minutes = (int(m.group(1)) * 60 + int(m.group(2))) - (start.hour * 60 + start.minute)
     if minutes <= 0:
@@ -63,7 +75,7 @@ def _split_title(title: str) -> tuple[str, tuple[str, ...]]:
     """Title without its programme prefixes, and the prefixes."""
     labels: list[str] = []
     while m := _TITLE_PREFIX.match(title):
-        labels.append(m.group("extra") or m.group("word"))
+        labels.append(" ".join((m.group("extra") or m.group("word") or m.group("broadcast")).split()))
         title = title[m.end() :]
     return title, tuple(labels)
 
@@ -90,9 +102,17 @@ def _film(ev: Tag, title: str, url: str, runtime: int | None) -> Film:
 
 
 def _content(page: str) -> str:
-    """Event page body text."""
+    """Event page body text, one paragraph per block element, separated by blank lines."""
     content = BeautifulSoup(page, "html.parser").select_one(".em-event-content")
-    return " ".join(content.get_text(" ").split()) if content else ""
+    if not content:
+        return ""
+    for br in content.find_all("br"):
+        br.replace_with(" ")
+    for block in content.find_all(_BLOCKS):
+        block.insert_before(_BREAK)
+        block.insert_after(_BREAK)
+    paragraphs = (" ".join(part.split()) for part in content.get_text("").split(_BREAK))
+    return _LOOSE_PUNCTUATION.sub(r"\1", "\n\n".join(p for p in paragraphs if p))
 
 
 def _overview(page: str) -> str:

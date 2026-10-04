@@ -15,14 +15,14 @@ import dataclasses
 import importlib
 import logging
 import pkgutil
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from pathlib import Path
 
 import store
-from parse import parsers
+from parse import parsers, tmdb
 from parse.parsers import _films, _tmdb_cache
 from store import Film, Screening, Venue
-from store.version import AudioKind, AudioVersion
+from store.version import AudioKind, AudioVersion, Language
 
 log = logging.getLogger(__name__)
 
@@ -32,18 +32,45 @@ def _available() -> list[str]:
     return sorted(info.name for info in pkgutil.iter_modules([pkg_dir]) if not info.name.startswith("_"))
 
 
-def mark_dubbed(screenings: Iterable[Screening], films: Iterable[Film]) -> list[Screening]:
-    """Mark audio of unknown kind dubbed when none of its languages is an original language of the film."""
+# Languages counted as one when comparing audio with the original.
+_FAMILY = {Language.MANDARIN: Language.CHINESE, Language.CANTONESE: Language.CHINESE}
+
+
+def _families(languages: frozenset[Language]) -> frozenset[Language]:
+    return frozenset(_FAMILY.get(language, language) for language in languages)
+
+
+def mark_dubbed(
+    screenings: Iterable[Screening],
+    films: Iterable[Film],
+    tmdb_languages: Mapping[int, frozenset[Language]] | None = None,
+) -> list[Screening]:
+    """Mark audio of unknown kind dubbed when none of its languages is an original language of the film.
+
+    TMDB's original language wins over the site's; site languages apply when TMDB has none.
+    """
     originals = {f.key: f.original_languages for f in films}
+    tmdb_languages = tmdb_languages or {}
     result = []
     for s in screenings:
         audio = s.version.audio
-        original = originals.get(s.film_key)
-        if audio.kind is AudioKind.UNKNOWN and audio.languages and original and not audio.languages & original:
+        original = (s.tmdb_id is not None and tmdb_languages.get(s.tmdb_id)) or originals.get(s.film_key)
+        if (
+            audio.kind is AudioKind.UNKNOWN
+            and audio.languages
+            and original
+            and not _families(audio.languages) & _families(original)
+        ):
             version = dataclasses.replace(s.version, audio=AudioVersion(AudioKind.DUBBED, audio.languages))
             s = dataclasses.replace(s, version=version)
         result.append(s)
     return result
+
+
+def tmdb_languages(screenings: Iterable[Screening], *, path: Path) -> dict[int, frozenset[Language]]:
+    """TMDB original languages of the screenings' stored movies."""
+    ids = {s.tmdb_id for s in screenings if s.tmdb_id is not None}
+    return {tmdb_id: tmdb.languages(m.original_language) for tmdb_id, m in store.read_movies(ids, path=path).items()}
 
 
 def main() -> None:
@@ -72,7 +99,7 @@ def main() -> None:
         else:
             screenings.append(item)
 
-    screenings = mark_dubbed(screenings, films)
+    screenings = mark_dubbed(screenings, films, tmdb_languages(screenings, path=args.output))
     n = store.write_screenings(screenings, path=args.output, source=args.parser, venues=venues)
     nv = store.write_venues(venues, path=args.output)
     nf = store.write_films(films, path=args.output)

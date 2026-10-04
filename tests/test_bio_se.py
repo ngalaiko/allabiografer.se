@@ -209,10 +209,11 @@ def test_session_language_matching_the_movie_still_sets_audio():
     assert _facts(row)["version"].audio.languages == frozenset({Language.ENGLISH})
 
 
-def test_swedish_title_tag_marks_a_dubbed_version_not_the_original_language():
+def test_swedish_title_tag_with_swedish_listing_reads_as_swedish():
+    # Other listings' non-Swedish languages override it on merge.
     [row] = list(_showtimes(_films("falkoping-cosmorama")))[2:]
     assert row[0].title == "Minioner & Monster"
-    assert row[0].original_languages == frozenset()
+    assert row[0].original_languages == frozenset({Language.SWEDISH})
 
 
 def test_sessions_without_payment_link_fall_back_to_the_cinema_page():
@@ -260,3 +261,69 @@ def test_merge_fills_fields_missing_from_the_first_entry():
     assert (merged.overview, merged.age_rating, merged.runtime) == ("Synopsis", "Från 11 år", 90)
     assert merged.original_languages == frozenset({Language.ENGLISH})
     assert merged.url == "https://bio.se/movie/1"
+
+
+def test_merge_prefers_non_swedish_original_languages():
+    swedish = _films_mod.make("bio_se", "Hexe", original_languages=frozenset({Language.SWEDISH}))
+    english = _films_mod.make("bio_se", "Hexe", original_languages=frozenset({Language.ENGLISH}))
+    assert _merge(swedish, english).original_languages == frozenset({Language.ENGLISH})
+    assert _merge(english, swedish).original_languages == frozenset({Language.ENGLISH})
+    assert _merge(swedish, _films_mod.make("bio_se", "Hexe")).original_languages == frozenset({Language.SWEDISH})
+
+
+def test_english_subtitles_label_overrides_the_text_field():
+    payload = _payload(
+        {"language": "Japanska"}, _session(text="Sv.", session_attributes_names={"custom": ["English subtitles"]})
+    )
+    [row] = _showtimes(payload)
+    assert _facts(row)["version"].subtitles.languages == frozenset({Language.ENGLISH})
+
+
+def test_swedish_title_tag_keeps_a_swedish_listed_language():
+    payload = _payload({"title": "Flyg! sa Alfons Åberg (Sv. tal)", "language": "Sv."}, _session())
+    [row] = _showtimes(payload)
+    assert row[0].original_languages == frozenset({Language.SWEDISH})
+
+
+def test_non_film_sessions_are_dropped_unless_broadcast():
+    payload = {
+        "movies": [
+            {
+                "movie": {"id": 1, "title": "Melodikrysset", "genre": "Unknown"},
+                "sessions": [_session(format="Inte en film")],
+            },
+            {
+                "movie": {"id": 2, "title": "Otello", "genre": "Opera", "label": "Live på bio"},
+                "sessions": [_session(format="Inte en film")],
+            },
+            {
+                "movie": {"id": 3, "title": "Così fan tutte", "genre": "Opera"},
+                "sessions": [_session(format="Inte en film")],
+            },
+            {"movie": {"id": 4, "title": "Film", "label": "Klassiker"}, "sessions": [_session(format="2D Digital")]},
+        ]
+    }
+    assert [f.title for f, *_ in _showtimes(payload)] == ["Otello", "Così fan tutte", "Film"]
+
+
+def test_movie_label_and_short_session_info_become_raw_attributes():
+    payload = _payload(
+        {"label": "Klassiker"},
+        _session(format="2D Digital", sessionInfoText="Barnvagnsbio"),
+        _session(sessionInfoText="ONUMRERADE PLATSER\r\n\r\nFrån och med maj 2026 är platserna onumrerade i salongen."),
+    )
+    short, prose = _showtimes(payload)
+    assert short[-1] == ("2D Digital", "Klassiker", "Barnvagnsbio")
+    assert prose[-1] == ("Klassiker",)
+
+
+def test_noise_genres_are_dropped():
+    [row] = _showtimes(_payload({"genre": "Unknown,Drama,Film,Event,Alternative Content"}, _session()))
+    assert row[0].genres == ["Drama"]
+
+
+def test_overview_unescapes_nested_entities():
+    [row] = _showtimes(
+        _payload({"synopsis": "Teater &amp;amp;quot;bäst&amp;amp;quot;&lt;br&gt;Marilyn &amp;amp; Edith"}, _session())
+    )
+    assert row[0].overview == 'Teater "bäst" Marilyn & Edith'

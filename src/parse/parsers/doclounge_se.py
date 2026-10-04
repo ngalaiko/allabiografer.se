@@ -1,5 +1,6 @@
 """doclounge.se — Doc Lounge documentary screenings, Next.js SSR with __NEXT_DATA__."""
 
+import itertools
 import json
 import logging
 import re
@@ -9,6 +10,7 @@ from urllib.parse import quote, urlparse
 
 import requests
 from bs4 import BeautifulSoup
+from PIL import ImageFile
 
 from parse import _http, _version
 from parse.parsers import _films
@@ -54,6 +56,23 @@ _DASH = re.compile(r"\s+[–—-]\s+")
 
 # "Norra Parkgatan 2", "Karlsgatan 7", "Stora Varvsgatan 6A" — a street, not a venue.
 _STREET = re.compile(r"^.*(?:gatan|gatu|vägen|väg|torget|plan|gränd)\s+\d+\w*$", re.IGNORECASE)
+# The last word of a street and its number: "Södra Storgatan 39A" and "Storgatan 39a" share "storgatan 39a".
+_STREET_KEY = re.compile(r"([^\W\d_]+(?:gatan|gatu|vägen|väg|torget|plan|gränd))\s+(\d+)\s?([a-z]?)\b", re.IGNORECASE)
+
+# "The Beauty of Errors (Det finaste av Finland)": the Swedish title trails in parentheses.
+_ALT_TITLE = re.compile(r"\s*\((?=[^()]*[^\W\d_])[^()]+\)$")
+
+# A "Synopsis" heading or label opens the synopsis proper.
+_SYNOPSIS = re.compile(r"^synopsis\b\s*:?\s*", re.IGNORECASE)
+# A short paragraph ending in a colon heads the next section: "Directors statement:".
+_HEADING = re.compile(r".{1,40}:")
+# Screening lists and booking lines: "25/1 Världspremiär…", "Bokning: maja@doclounge.se".
+_LISTING = re.compile(r"\bvisning|\bbokning|biljett|premiär|klicka här|@|\b\d{1,2}/\d{1,2}\b", re.IGNORECASE)
+_MAX_LISTING = 200
+_AGE_LIMIT = re.compile(r"Åldersgräns\s*:\s*(\w+)", re.IGNORECASE)
+
+# Image header bytes read to learn an image's size.
+_MAX_HEADER = 1024 * 1024
 
 
 Event = tuple[str, date, time, str, str, str, str, tuple[str, ...]]
@@ -72,17 +91,35 @@ def _events(html: str) -> Iterator[Event]:
 
     parsed = [row for row in (_row(event) for event in events) if row]
     venue_cities = {cinema.casefold(): city for _, _, _, _, cinema, city, _, _ in parsed if city}
+    located: list[Event] = []
+    for title, d, t, ticket_url, cinema, city, address, raw in parsed:
+        city = city or venue_cities.get(cinema.casefold(), "") or _city_from_address(address)
+        if city:
+            located.append((title, d, t, ticket_url, cinema, city, address, raw))
+    # A street-only address takes the name of a venue seen at the same street.
+    named: dict[tuple[str, str], str] = {}
+    for _, _, _, _, cinema, city, address, _ in located:
+        if cinema and (street := _street_key(address)):
+            named.setdefault((city, street), cinema)
     # The site spells a venue inconsistently across events ("Skeppet Gbg", "Skeppet GBG");
     # the first spelling seen wins, so newest events set the name.
     canonical: dict[tuple[str, str], str] = {}
 
-    for title, d, t, ticket_url, cinema, city, address, raw in parsed:
-        city = city or venue_cities.get(cinema.casefold(), "") or _city_from_address(address)
-        if not city:
-            continue
-        cinema = cinema or f"Doc Lounge {city}"
+    for title, d, t, ticket_url, cinema, city, address, raw in located:
+        if not cinema:
+            street = address.split(",")[0].strip()
+            cinema = named.get((city, _street_key(address))) or street or f"Doc Lounge {city}"
         cinema = canonical.setdefault((city, cinema.casefold()), cinema)
         yield title, d, t, ticket_url, cinema, city, address, raw
+
+
+def _street_key(address: str) -> str:
+    m = _STREET_KEY.search(address)
+    return " ".join(m.group(1, 2)).casefold() + m.group(3).casefold() if m else ""
+
+
+def _title(raw: str) -> str:
+    return _ALT_TITLE.sub("", raw).strip() or raw.strip()
 
 
 def _row(event: dict) -> Event | None:
@@ -108,7 +145,7 @@ def _row(event: dict) -> Event | None:
         return None
 
     movie = content.get("movie") or {}
-    title = movie.get("title") or event.get("title", "")
+    title = _title(movie.get("title") or event.get("title") or "")
     if not title:
         return None
 
@@ -167,7 +204,7 @@ def _film_slugs(html: str) -> dict[str, str]:
     slugs: dict[str, str] = {}
     for event in json.loads(script.string)["props"]["pageProps"]["events"]["nodes"]:
         movie = (event.get("gqlEventContent") or {}).get("movie") or {}
-        title = movie.get("title") or ""
+        title = _title(movie.get("title") or "")
         uri = movie.get("uri") or ""
         # Unpublished films link to a preview host instead of a path on the site.
         if title and uri.startswith("/"):
@@ -176,7 +213,7 @@ def _film_slugs(html: str) -> dict[str, str]:
 
 
 def _listed_details(html: str) -> dict[str, dict]:
-    """Poster and genres per event title from the events page, for films without a published page."""
+    """Poster candidates and genres per event title from the events page, for films without a published page."""
     soup = BeautifulSoup(html, "html.parser")
     script = soup.find("script", id="__NEXT_DATA__")
     if not script or not script.string:
@@ -186,14 +223,16 @@ def _listed_details(html: str) -> dict[str, dict]:
     for event in json.loads(script.string)["props"]["pageProps"]["events"]["nodes"]:
         movie = (event.get("gqlEventContent") or {}).get("movie") or {}
         hero = (movie.get("GQLMovieHeroContent") or {}).get("hero") or {}
-        poster = _poster_url((hero.get("thumbnail") or {}).get("mediaItemUrl") or "")
+        images = [(hero.get(key) or {}).get("mediaItemUrl") or "" for key in ("thumbnail", "heroImage")]
         if movie.get("title"):
-            details.setdefault(movie["title"], {"poster_url": poster, "genres": list(_GENRES)})
+            details.setdefault(
+                _title(movie["title"]), {"posters": list(dict.fromkeys(filter(None, images))), "genres": list(_GENRES)}
+            )
     return details
 
 
 def _film_details(html: str) -> dict:
-    """Poster, synopsis, runtime, original title, year and languages from a film page."""
+    """Poster, synopsis, runtime, original title, year, age limit and languages from a film page."""
     soup = BeautifulSoup(html, "html.parser")
     script = soup.find("script", id="__NEXT_DATA__")
     if not script or not script.string:
@@ -205,17 +244,21 @@ def _film_details(html: str) -> dict:
     hero = (movie.get("heroContent") or {}).get("hero") or {}
     year = next((node.get("name", "") for node in (movie.get("yearTax") or {}).get("nodes", [])), "")
     body = content.get("swedishSynopsis") or content.get("description") or ""
-    # Languages ride in the synopsis' "➤" fact list.
-    language, subtitles = _version.from_text(BeautifulSoup(body, "html.parser").get_text(" "))
+    # Languages and age limit ride in the synopsis' "➤" fact list.
+    facts = BeautifulSoup(body, "html.parser").get_text(" ")
+    language, subtitles = _version.from_text(facts)
+    age = _AGE_LIMIT.search(facts)
 
     return {
         "poster_url": _poster_url((hero.get("thumbnail") or {}).get("mediaItemUrl") or ""),
         "overview": _synopsis(body),
         "runtime": info.get("time") or None,
         "genres": list(_GENRES),
-        "title_original": info.get("originalTitle") or "",
+        "title_original": (info.get("originalTitle") or "").strip(),
         "release_date": year if re.fullmatch(r"\d{4}", year) else "",
+        "age_rating": age.group(1) if age else "",
         "original_languages": _version.languages(language),
+        "language_label": language,
         "subtitle_label": subtitles,
     }
 
@@ -227,10 +270,12 @@ def _poster_url(url: str) -> str:
 
 
 def _synopsis(html: str) -> str:
-    """Plain text of the leading paragraphs.
+    """Plain text of the synopsis.
 
-    The field mixes the synopsis with a trailing fact list bulleted with "➤"
-    and with paragraphs that hold nothing but a trailer or ticket link.
+    The field mixes the synopsis with screening lists, booking details, a
+    trailing fact list bulleted with "➤" and paragraphs that hold nothing but
+    a trailer or ticket link.  A "Synopsis" heading, where present, opens the
+    synopsis and the next heading ends it.
     """
     paragraphs: list[str] = []
     for p in BeautifulSoup(html, "html.parser").find_all("p"):
@@ -241,7 +286,17 @@ def _synopsis(html: str) -> str:
         if not text or (link and link.get_text(" ", strip=True) == text):
             continue
         paragraphs.append(text)
-    return "\n\n".join(paragraphs)
+    start = next((i for i, text in enumerate(paragraphs) if _SYNOPSIS.match(text)), None)
+    if start is not None:
+        head = _SYNOPSIS.sub("", paragraphs[start], count=1)
+        rest = ([head] if head else []) + paragraphs[start + 1 :]
+        paragraphs = list(itertools.takewhile(lambda text: not _HEADING.fullmatch(text), rest))
+    return "\n\n".join(text for text in paragraphs if not _listing(text))
+
+
+def _listing(text: str) -> bool:
+    """A screening list or booking line: "GÖTEBORG:", "1/4 Visning + samtal…"."""
+    return len(text) <= _MAX_LISTING and (text.isupper() or bool(_LISTING.search(text)))
 
 
 def parse() -> Iterator[Screening | Venue | Film]:
@@ -254,13 +309,21 @@ def parse() -> Iterator[Screening | Venue | Film]:
     listed = _listed_details(html)
 
     films: dict[str, Film] = {}
+    languages: dict[str, str] = {}
     subtitles: dict[str, str] = {}
     for title in dict.fromkeys(event[0] for event in events):
         slug = slugs.get(title, "")
         url = _FILM_URL + slug if slug else ""
         details = _details(session, url) if url else {}
+        # Documentaries are screened in their original language.
+        languages[title] = details.pop("language_label", "")
         subtitles[title] = details.pop("subtitle_label", "")
-        details = listed.get(title, {}) | {k: v for k, v in details.items() if v}
+        candidates = listed.get(title, {}).get("posters", [])
+        details = {k: v for k, v in listed.get(title, {}).items() if k != "posters"} | {
+            k: v for k, v in details.items() if v
+        }
+        if not details.get("poster_url"):
+            details["poster_url"] = _portrait_poster(session, candidates)
         film = _films.make(_SOURCE, title, url=url, **details)
         films[title] = _films.register(film, session=session)
         yield films[title]
@@ -280,7 +343,9 @@ def parse() -> Iterator[Screening | Venue | Film]:
             ticket_url=ticket_url,
             cinema_name=cinema_name,
             city=city,
-            **_version.screening_facts(subtitles=subtitles.get(title, ""), raw_attributes=raw),
+            **_version.screening_facts(
+                language=languages.get(title, ""), subtitles=subtitles.get(title, ""), raw_attributes=raw
+            ),
             film_key=films[title].key,
         )
 
@@ -297,3 +362,30 @@ def _details(session: requests.Session, url: str) -> dict:
     except requests.RequestException as exc:
         log.warning("doclounge.se: film page %s failed: %s", url, exc)
         return {}
+
+
+def _portrait_poster(session: requests.Session, urls: list[str]) -> str:
+    """The first portrait image; event images are often landscape stills."""
+    for url in urls:
+        size = _image_size(session, url)
+        if size and size[1] > size[0]:
+            return _poster_url(url)
+    return ""
+
+
+def _image_size(session: requests.Session, url: str) -> tuple[int, int] | None:
+    """Width and height from the image's leading bytes."""
+    parser = ImageFile.Parser()
+    try:
+        with session.get(url, timeout=30, stream=True) as resp:
+            resp.raise_for_status()
+            read = 0
+            for chunk in resp.iter_content(64 * 1024):
+                parser.feed(chunk)
+                read += len(chunk)
+                if parser.image or read >= _MAX_HEADER:
+                    break
+    except (requests.RequestException, OSError) as exc:
+        log.warning("doclounge.se: image %s failed: %s", url, exc)
+        return None
+    return parser.image.size if parser.image else None

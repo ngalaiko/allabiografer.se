@@ -28,6 +28,9 @@ _ADDRESS = "Kungsportsavenyen 45"
 _POSTER_SIZE = {"width": "500", "height": "750"}
 # Film pages carry the poster itself; the programme only a 2:3 crop of a still.
 _PAGE_POSTER_SIZE = {**_POSTER_SIZE, "rmode": "max", "format": "jpg"}
+_CROPPED_PAGE_POSTER_SIZE = {**_PAGE_POSTER_SIZE, "rmode": "crop"}
+# Height over width below which a picked image is no poster; posters are 1.5.
+_MIN_PORTRAIT = 1.25
 _PRIVATE_HIRE = "Biosalongen abonnerad"
 # Audio codes for a track without speech.
 _SILENT = {"STUM"}
@@ -73,7 +76,11 @@ def _poster(session: requests.Session, url: str) -> str:
 
 
 def _page_poster(page: str) -> str:
-    """The poster image picked on a film page, re-requested at poster size."""
+    """The poster image picked on a film page, re-requested at poster size.
+
+    Editors sometimes pick a landscape hero; that is no poster.  An image of
+    unstated size is cropped to 2:3.
+    """
     m = re.search(r'<script[^>]*type="application/json"[^>]*>(.*?)</script>', page, re.DOTALL)
     if not m:
         return ""
@@ -88,12 +95,20 @@ def _page_poster(page: str) -> str:
         "compositions",
         "posterImageComposition",
         "posterImagePicker",
-        "url",
     ):
         node = node.get(key) if isinstance(node, dict) else None
-    if not node:
+    url = node.get("url") if isinstance(node, dict) else None
+    if not url:
         return ""
-    return urlunsplit(("https", _HOST, urlsplit(node).path, urlencode(_PAGE_POSTER_SIZE), ""))
+    media = (node.get("umbracoContent") or {}).get("mediaData") or {}
+    width, height = media.get("width"), media.get("height")
+    if width and height:
+        if height < width * _MIN_PORTRAIT:
+            return ""
+        size = _PAGE_POSTER_SIZE
+    else:
+        size = _CROPPED_PAGE_POSTER_SIZE
+    return urlunsplit(("https", _HOST, urlsplit(url).path, urlencode(size), ""))
 
 
 def _text(raw: str | None) -> str:
@@ -134,7 +149,7 @@ def _film(feature: dict, poster_url: str = "") -> Film:
         _SOURCE,
         info["title"],
         overview=_text(info.get("synopsis")),
-        runtime=info.get("duration"),
+        runtime=info.get("duration") or None,
         genres=[g["name"] for g in info.get("genres") or [] if g.get("name")],
         age_rating=info.get("ageLimit") or "",
         release_date=(feature.get("premiereDate") or "")[:10],
@@ -157,7 +172,7 @@ def _parse_program_list(pl: dict, *, posters: dict[int, str] | None = None) -> I
             continue
         if film_title == _PRIVATE_HIRE:
             continue
-        tmdb_id = _tmdb(film_title, runtime=info.get("duration"))
+        tmdb_id = _tmdb(film_title, runtime=info.get("duration") or None)
         film = _film(feature, (posters or {}).get(feature["id"], ""))
         themes = tuple(t["label"].strip() for t in entry.get("themes") or [] if (t.get("label") or "").strip())
         silent = any("stumfilm" in theme.casefold() for theme in themes)

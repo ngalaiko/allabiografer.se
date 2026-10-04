@@ -1,12 +1,14 @@
 """WordPress Theater production page parsing."""
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+import requests
 
 from parse.parsers import wp_theatre
 from store import Film
-from store.version import Language
+from store.version import AudioKind, Language
 
 pytestmark = pytest.mark.usefixtures("parser_clock")
 
@@ -173,3 +175,72 @@ def test_screen_comes_from_ticket_salong():
     assert tony.screen == "CAPITOL 1"
     # The venue names the screen itself; only the remark remains.
     assert tony.raw_attributes == ("STORA BIODAGEN - Halva priset",)
+
+
+_KOKUHO = (_FIXTURES / "production-kokuho.html").read_text()
+_KOKUHO_NOTES = "<p>2 tim 55 min Japanskt tal, svensk text.</p>"
+
+
+def _kokuho(notes: str) -> list:
+    return _items("", _KOKUHO.replace(_KOKUHO_NOTES, notes))
+
+
+def test_duration_mid_sentence_is_not_the_runtime():
+    talk = "<p>Efter visningen blir det ett 30 min samtal med regissören.</p>"
+    items = _kokuho(talk + _KOKUHO_NOTES)
+    film = next(i for i in items if isinstance(i, Film))
+    assert film.runtime == 175
+    assert film.overview.endswith("samtal med regissören.")
+
+
+@pytest.mark.parametrize(
+    ("notes", "audio", "subtitles"),
+    [
+        ("Japanskt och engelskt tal, svensk text.", {Language.JAPANESE, Language.ENGLISH}, {Language.SWEDISH}),
+        ("Svensk text. Japanskt tal.", {Language.JAPANESE}, {Language.SWEDISH}),
+        ("Originalspråk: japanska.", {Language.JAPANESE}, None),
+    ],
+)
+def test_body_language_statements(notes, audio, subtitles):
+    items = _kokuho(f"<p>2 tim 55 min</p><p>{notes}</p>")
+    film = next(i for i in items if isinstance(i, Film))
+    s = next(i for i in items if not isinstance(i, Film))
+    assert film.original_languages == frozenset(audio)
+    assert s.version.audio.languages == frozenset(audio)
+    assert s.version.subtitles.languages == (frozenset(subtitles) if subtitles else None)
+
+
+def test_dubbed_swedish_is_not_original():
+    items = _kokuho("<p>2 tim 55 min svenskt tal (dubbad)</p>")
+    film = next(i for i in items if isinstance(i, Film))
+    s = next(i for i in items if not isinstance(i, Film))
+    assert film.original_languages == frozenset()
+    assert s.version.audio.languages == frozenset({Language.SWEDISH})
+    assert s.version.audio.kind is AudioKind.DUBBED
+
+
+@pytest.mark.parametrize("parser_clock", ["2026-12-20T12:00:00+01:00"], indirect=True)
+def test_ticket_date_wins_over_inferred_year():
+    # Seen in late December, "4 oktober" would infer the next year.
+    s = _kokuho(_KOKUHO_NOTES)
+    assert [i.date.isoformat() for i in s if not isinstance(i, Film)] == ["2026-10-04", "2026-10-07"]
+
+
+class _Session:
+    def __init__(self, pages: dict[str, str]):
+        self.pages = pages
+
+    def get(self, url, timeout=None):
+        if url not in self.pages:
+            raise requests.ConnectionError(url)
+        return SimpleNamespace(text=self.pages[url], raise_for_status=lambda: None)
+
+
+def test_failed_production_page_skips_only_that_production(monkeypatch):
+    home = """<div class="wp_theatre_event_title"><a href="https://x/produktion/a/">A</a></div>
+<div class="wp_theatre_event_title"><a href="https://x/produktion/kokuho/">Kokuho</a></div>"""
+    pages = {"https://x/": home, "https://x/produktion/kokuho/": _KOKUHO}
+    monkeypatch.setattr(wp_theatre._films, "register", lambda film, session=None: film)
+    items = list(wp_theatre._parse_site(_Session(pages), {**_SITE, "url": "https://x/"}))
+    assert [i.title for i in items if isinstance(i, Film)] == ["Kokuho"]
+    assert len(items) == 3

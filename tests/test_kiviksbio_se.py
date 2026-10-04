@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from parse.parsers.kiviksbio_se import _overview, _showtimes, _subtitles
+from parse.parsers.kiviksbio_se import _overview, _runtime, _showtimes, _subtitles
 from store.version import Language
 
 pytestmark = pytest.mark.usefixtures("parser_clock")
@@ -23,7 +23,7 @@ def test_showtimes_collapse_whitespace_runs_inside_titles():
             "https://www.kiviksbio.se/program/autofiktion/",
         ),
         (
-            "Direkt från Metropolitanoperan: Così fan Tutte",
+            "Così fan Tutte",
             date(2026, 10, 3),
             time(19, 0),
             "https://www.kiviksbio.se/program/direkt-fran-metropolitanoperan-i-new-york-cosi-fan-tutte/",
@@ -101,3 +101,33 @@ def test_showtimes_move_title_prefixes_to_labels():
 def test_overview_matches_credit_labels_in_any_case():
     page = '<section class="em-event-content"><p>En opera.</p><p>RegI: Darko Tresnjak</p></section>'
     assert _overview(page) == "En opera."
+
+
+def test_showtimes_move_broadcast_prefixes_to_labels():
+    assert [labels for *_, labels in _showtimes(_HTML)][1] == ("Direkt från Metropolitanoperan",)
+
+
+def test_runtime_from_a_placeholder_end_time_is_unknown():
+    assert _runtime(time(14, 0), "23:59") is None
+    assert _runtime(time(18, 0), "22:30") == 270
+
+
+def test_overview_keeps_inline_markup_inside_words():
+    page = (
+        '<section class="em-event-content"><p>Så här har ingen sett <strong>Tom Cruise t</strong>idigare. '
+        "Mästerregissören <strong>Alejandro Inàritu</strong> (<em>Birdman, Babel,</em> m.fl.) "
+        "regisserar <em>Otello</em>.</p><p>Andra<br/>stycket.</p><p><strong>Regi: X</strong></p></section>"
+    )
+    assert _overview(page) == (
+        "Så här har ingen sett Tom Cruise tidigare. "
+        "Mästerregissören Alejandro Inàritu (Birdman, Babel, m.fl.) regisserar Otello."
+        "\n\nAndra stycket."
+    )
+
+
+def test_overview_drops_spaces_before_punctuation():
+    page = (
+        '<section class="em-event-content">'
+        "<p>Operans största tragedi<strong> – Otello .<br/></strong>Verdis Otello.</p></section>"
+    )
+    assert _overview(page) == "Operans största tragedi – Otello. Verdis Otello."

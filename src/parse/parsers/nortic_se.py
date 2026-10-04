@@ -41,6 +41,15 @@ _LABELS = (
 )
 _FIELD_END = rf"(?=\s+(?:{_LABELS})(?:\s*(?:&|och)\s*\w+)?\s*:|\.\s|\.?$)"
 _DUBBED = re.compile(r"\b(?:tal|språk|originalspråk)\s*:[^.:]*dubb", re.IGNORECASE)
+# Labels stating the screening's speech; "Originalspråk:" states the film's.
+_SPEECH = re.compile(r"\b(?:tal|språk|language)\s*:", re.IGNORECASE)
+# Values of a genre field that name no genre: "Bio: Ej angivet", "Bio: Live på bio".
+_NOT_GENRES = {"ej angivet", "live på bio"}
+
+# Season passes and multi-film packages: "Wernamo Filmstudio hösten 2026", "Minifilmfestival Höst 26".
+_PACKAGE = re.compile(r"\b(?:höst|vår)(?:en)?\s+(?:20)?\d{2}\b", re.IGNORECASE)
+# Composer after an opera title: "Manon/ Massenet", "Simson & Delila/ Camille Saint-Saenss".
+_COMPOSER = re.compile(r"\s*/\s*[A-ZÀ-Þ][\w-]*(?:\s+[A-ZÀ-Þ][\w-]*)*$")
 
 # Arena names that are a hall of a cinema named elsewhere.
 _ARENAS = {"Götasalen": ("Bio Göta Lejon", "Götasalen")}
@@ -83,8 +92,13 @@ def _runtime(text: str) -> int | None:
 
 
 def _genres(text: str) -> list[str]:
-    value = _field(text, "genre")
-    return [g[:1].upper() + g[1:] for g in (p.strip() for p in re.split(r"[/,]|\s+och\s+", value)) if g]
+    """Genres under "Genre:", else under "Bio:" as some organizers label them."""
+    value = _field(text, "genre") or _field(text, "bio")
+    return [
+        g[:1].upper() + g[1:]
+        for g in (p.strip() for p in re.split(r"[/,]|\s+och\s+", value))
+        if g and g.casefold() not in _NOT_GENRES
+    ]
 
 
 def _title(raw: str) -> tuple[str, tuple[str, ...]]:
@@ -174,7 +188,7 @@ def _cinema_names(events: list[dict]) -> dict[tuple[object, str, str], str]:
 
 
 def _is_screening(event: dict, broadcasters: set[object]) -> bool:
-    if not event.get("title"):
+    if not event.get("title") or _PACKAGE.search(event["title"]):
         return False
     if event.get("category") in _CATEGORIES:
         return True
@@ -196,7 +210,15 @@ def _parse_payload(data: dict) -> Iterator[Screening | Venue | Film]:
     versioned = []
     for event in bio_events:
         title, labels = _title(event["title"])
+        if event.get("category") == "Opera":
+            title = _COMPOSER.sub("", title)
         versioned.append((event, labels, _version.split_title(title)))
+    # "Simson & Delila" joins "Simson och Delila" when another event spells it so.
+    keys = {film_key(_SOURCE, title) for _, _, (title, *_) in versioned}
+    for i, (event, labels, (title, *rest)) in enumerate(versioned):
+        spelled = re.sub(r"\s+&\s+", " och ", title)
+        if spelled != title and film_key(_SOURCE, spelled) in keys:
+            versioned[i] = (event, labels, (spelled, *rest))
     films: dict[str, Film] = {}
     for event, _, (title, *_) in versioned:
         film = _film(event, title)
@@ -211,6 +233,7 @@ def _parse_payload(data: dict) -> Iterator[Screening | Venue | Film]:
         # Description language describes the film; title suffixes describe this screening.
         spoken, stated_subtitles = _version.from_text(text)
         dubbed = bool(_DUBBED.search(text))
+        stated = dubbed or bool(_SPEECH.search(text))
         tmdb_id = _tmdb(film_title)
         key = film_key(_SOURCE, film_title)
 
@@ -251,7 +274,7 @@ def _parse_payload(data: dict) -> Iterator[Screening | Venue | Film]:
                 ticket_url=ticket_url,
                 **_version.screening_facts(
                     format=fmt,
-                    language=spoken if dubbed else "",
+                    language=spoken if stated else "",
                     subtitles=subtitles or stated_subtitles,
                     audio_role_text="dubbat" if dubbed else "",
                     source_texts=(*_version.title_suffixes(event.get("title", "")), *labels),
