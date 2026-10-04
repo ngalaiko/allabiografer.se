@@ -4,7 +4,12 @@ import json
 from datetime import date, time
 from pathlib import Path
 
+import pytest
+from curl_cffi import requests as cffi_requests
+
+from parse.parsers import filmstaden_se
 from parse.parsers.filmstaden_se import _film, _screening
+from store import Screening, Venue
 from store.version import AudioKind, Dimension, Language, PresentationSystem, ProjectionMedium
 
 _FIXTURES = Path(__file__).parent / "fixtures" / "filmstaden_se"
@@ -246,3 +251,106 @@ def test_genres_drop_noise_and_read_family_category():
         "categories": [{"displayName": "Barn och Familj"}, {"displayName": "Möten och Events filmlista"}],
     }
     assert _film(movie).genres == ["Drama", "Familj"]
+
+
+class _Resp:
+    def __init__(self, status: int, body: object = None):
+        self.status_code = status
+        self.body = body
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise cffi_requests.exceptions.HTTPError(str(self.status_code))
+
+    def json(self):
+        return self.body
+
+
+class _Session:
+    def __init__(self, *outcomes):
+        self.outcomes = list(outcomes)
+        self.calls = 0
+
+    def get(self, url, **kw):
+        self.calls += 1
+        outcome = self.outcomes.pop(0)
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+
+def test_get_retries_transient_failures(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(filmstaden_se, "_sleep", sleeps.append)
+    session = _Session(cffi_requests.exceptions.ConnectionError("reset"), _Resp(503), _Resp(200, {"ok": True}))
+
+    assert filmstaden_se._get(session, "https://example.se") == {"ok": True}
+    assert session.calls == 3
+    assert len(sleeps) == 2
+
+
+def test_get_gives_up_after_retries_and_skips_client_errors(monkeypatch):
+    monkeypatch.setattr(filmstaden_se, "_sleep", lambda s: None)
+    session = _Session(*[_Resp(502)] * 10)
+    with pytest.raises(cffi_requests.exceptions.HTTPError):
+        filmstaden_se._get(session, "https://example.se")
+    assert session.calls == filmstaden_se._RETRIES + 1
+
+    session = _Session(_Resp(404), _Resp(200, {}))
+    with pytest.raises(cffi_requests.exceptions.HTTPError):
+        filmstaden_se._get(session, "https://example.se")
+    assert session.calls == 1
+
+
+def test_null_screen_and_attributes_are_tolerated():
+    screening = _map(_SHOWS[0] | {"screen": None, "attributes": None})
+    assert screening.screen == ""
+    assert screening.title == "Bortglömda ön"
+
+
+def test_marathon_and_new_suffixes_are_stripped_from_titles():
+    show = _SHOWS[0] | {"movie": _SHOWS[0]["movie"] | {"title": "The Conjuring - Maraton"}}
+    screening = _map(show)
+    assert screening.title == "The Conjuring"
+    assert "Maraton" in screening.raw_attributes
+    assert _film(show["movie"]).title == "The Conjuring"
+    movie = _SHOWS[0]["movie"] | {"title": "Seventeen World Tour NEW_"}
+    assert _film(movie).title == "Seventeen World Tour"
+
+
+def test_raw_attributes_collapse_whitespace():
+    show = _SHOWS[0] | {
+        "movieVersion": _SHOWS[0]["movieVersion"]
+        | {"audioLanguages": [{"displayName": "Engelska", "description": "Engelskt tal, \nEnglish dialogue"}]},
+    }
+    assert "Engelskt tal, English dialogue" in _map(show).raw_attributes
+
+
+def _parse(monkeypatch, cinema: dict) -> list:
+    shows = [_SHOWS[0] | {"screen": None}]
+
+    def get(session, url, **kw):
+        if "/cinema/" in url:
+            return {"items": [cinema]}
+        if "/show/" in url:
+            return {"items": shows, "totalNbrOfItems": len(shows)}
+        return {}
+
+    monkeypatch.setattr(filmstaden_se, "_get", get)
+    monkeypatch.setattr(filmstaden_se._films, "register", lambda film, session=None: film)
+    monkeypatch.setattr(filmstaden_se, "_tmdb", lambda title, runtime=None: None)
+    return list(filmstaden_se.parse())
+
+
+def test_parse_tolerates_null_city_and_strips_venue_status(monkeypatch):
+    items = _parse(
+        monkeypatch,
+        {"ncgId": "1", "title": "Filmstaden Söder (Tillfälligt stängd)", "address": {"city": None}},
+    )
+    [venue] = [i for i in items if isinstance(i, Venue)]
+    [screening] = [i for i in items if isinstance(i, Screening)]
+    assert (venue.name, venue.city) == ("Filmstaden Söder", "Unknown")
+    assert screening.cinema_name == "Filmstaden Söder"
+
+    items = _parse(monkeypatch, {"ncgId": "1", "title": "Filmstaden Söder", "address": None})
+    assert [i.city for i in items if isinstance(i, Venue)] == ["Unknown"]

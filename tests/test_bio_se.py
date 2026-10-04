@@ -4,10 +4,14 @@ import json
 from datetime import date, time
 from pathlib import Path
 
+import pytest
+import requests
+
 from parse import _version
 from parse.parsers import _films as _films_mod
+from parse.parsers import bio_se
 from parse.parsers.bio_se import _cinema_url, _merge, _showtimes, _ticket_url, _venue
-from store import Venue
+from store import Screening, Venue
 from store.version import AudioKind, Language
 
 _FIXTURES = Path(__file__).parent / "fixtures" / "bio_se"
@@ -158,7 +162,7 @@ def test_version_tags_move_from_title_to_session_fields():
             },
         ]
     }
-    assert [row[4:] for row in (tuple(r) for r in _showtimes(payload))] == [
+    assert [row[4:10] for row in (tuple(r) for r in _showtimes(payload))] == [
         (
             "Salong 1",
             "Dolby Atmos",
@@ -189,7 +193,7 @@ def _payload(movie: dict, *sessions: dict) -> dict:
 
 
 def _facts(row: tuple) -> dict:
-    _, _, _, _, _, fmt, language, subtitles, source_texts, raw_attributes = row
+    _, _, _, _, _, fmt, language, subtitles, source_texts, raw_attributes, _ = row
     return _version.screening_facts(
         format=fmt, language=language, subtitles=subtitles, source_texts=source_texts, raw_attributes=raw_attributes
     )
@@ -313,8 +317,8 @@ def test_movie_label_and_short_session_info_become_raw_attributes():
         _session(sessionInfoText="ONUMRERADE PLATSER\r\n\r\nFrån och med maj 2026 är platserna onumrerade i salongen."),
     )
     short, prose = _showtimes(payload)
-    assert short[-1] == ("2D Digital", "Klassiker", "Barnvagnsbio")
-    assert prose[-1] == ("Klassiker",)
+    assert short[-2] == ("2D Digital", "Klassiker", "Barnvagnsbio")
+    assert prose[-2] == ("Klassiker",)
 
 
 def test_noise_genres_are_dropped():
@@ -327,3 +331,73 @@ def test_overview_unescapes_nested_entities():
         _payload({"synopsis": "Teater &amp;amp;quot;bäst&amp;amp;quot;&lt;br&gt;Marilyn &amp;amp; Edith"}, _session())
     )
     assert row[0].overview == 'Teater "bäst" Marilyn & Edith'
+
+
+def test_null_sessions_are_skipped():
+    payload = {"movies": [{"movie": {"id": 1, "title": "Film"}, "sessions": None}]}
+    assert list(_showtimes(payload)) == []
+
+
+def test_malformed_session_times_are_skipped():
+    payload = _payload({}, _session(show_date_time="i morgon"), _session())
+    assert [(d, t) for _, d, t, *_ in _showtimes(payload)] == [(date(2026, 10, 1), time(18, 0))]
+
+
+class _Resp:
+    def __init__(self, body: object):
+        self.body = body
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return self.body
+
+
+class _Session:
+    def __init__(self, cinemas: list, films: dict):
+        self.headers = {}
+        self.cinemas = cinemas
+        self.films = films
+
+    def get(self, url, timeout=None):
+        return _Resp({"cinemas": self.cinemas})
+
+    def post(self, url, json=None, timeout=None):
+        body = self.films[json["cinemaId"]]
+        if isinstance(body, Exception):
+            raise body
+        return _Resp(body)
+
+
+def _parse(monkeypatch, films: dict, tmdb=lambda title, year=None: None) -> list:
+    cinemas = [{"id": i, "title": f"Bio {i}", "city": "Ort", "street_address": "Gatan 1"} for i in films]
+    monkeypatch.setattr(bio_se._http, "session", lambda *a: _Session(cinemas, films))
+    monkeypatch.setattr(bio_se._films, "register", lambda film, session=None: film)
+    monkeypatch.setattr(bio_se, "_tmdb", tmdb)
+    return list(bio_se.parse())
+
+
+def test_malformed_cinema_does_not_abort_the_others(monkeypatch):
+    items = _parse(monkeypatch, {1: {"movies": None}, 2: _payload({}, _session())})
+    assert [s.cinema_name for s in items if isinstance(s, Screening)] == ["Bio 2"]
+
+
+def test_http_failures_abort_the_run(monkeypatch):
+    with pytest.raises(requests.HTTPError):
+        _parse(monkeypatch, {1: requests.HTTPError("502"), 2: _payload({}, _session())})
+
+
+def test_broadcasts_match_tmdb_entries_of_their_year(monkeypatch):
+    calls = []
+    payload = {
+        "movies": [
+            {
+                "movie": {"id": 1, "title": "Simson och Delila", "genre": "Opera", "label": "Live på bio"},
+                "sessions": [_session(format="Inte en film", show_date_time="2026-10-18T18:00:00")],
+            },
+            {"movie": {"id": 2, "title": "Film"}, "sessions": [_session()]},
+        ]
+    }
+    _parse(monkeypatch, {1: payload}, tmdb=lambda title, year=None: calls.append((title, year)))
+    assert calls == [("Simson och Delila", 2026), ("Film", None)]

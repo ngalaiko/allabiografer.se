@@ -117,8 +117,8 @@ def _venue(cinema: dict) -> Venue | None:
 
 def _showtimes(
     payload: dict, fallback_url: str = ""
-) -> Iterator[tuple[Film, date, time, str, str, str, str, str, tuple[str, ...], tuple[str, ...]]]:
-    """Yield showtime fields, version source texts and raw attributes.
+) -> Iterator[tuple[Film, date, time, str, str, str, str, str, tuple[str, ...], tuple[str, ...], bool]]:
+    """Yield showtime fields, version source texts, raw attributes and whether the session is a broadcast.
 
     Sessions without a payment link get *fallback_url*, or are skipped without one.
     """
@@ -133,7 +133,7 @@ def _showtimes(
         movie_label = _clean(movie.get("label") or "")
         # Broadcasts carry the non-film format too: Met operas under "Live på bio", some only under Opera.
         broadcast = movie_label == "Live på bio" or "Opera" in film.genres
-        for sess in entry.get("sessions", []):
+        for sess in entry.get("sessions") or []:
             raw = sess.get("show_date_time", "")
             if not raw:
                 continue
@@ -143,7 +143,11 @@ def _showtimes(
             url = _ticket_url(sess.get("payment_link", "")) or fallback_url
             if not url:
                 continue
-            when = datetime.fromisoformat(raw)
+            try:
+                when = datetime.fromisoformat(raw)
+            except ValueError:
+                log.warning("bio.se: %s: bad session time %r", film.title, raw)
+                continue
             # Free-form labels: "English subtitles", "Svenskt tal", "+ Q & A".
             custom = tuple(
                 label
@@ -166,6 +170,7 @@ def _showtimes(
                 ),
                 (format_raw, *_version.title_suffixes(title_raw), *custom),
                 tuple(dict.fromkeys(a for a in (format_raw, *custom, movie_label, info) if a)),
+                broadcast,
             )
 
 
@@ -189,14 +194,21 @@ def parse() -> Iterator[Screening | Venue | Film]:
 
         resp = session.post(f"{_API}/cinemas/films", json={"cinemaId": cinema["id"]}, timeout=15)
         resp.raise_for_status()
+        payload = resp.json()
+
+        # Malformed data skips the cinema; HTTP failures above abort the run.
+        try:
+            rows = list(_showtimes(payload, _cinema_url(cinema)))
+        except (KeyError, TypeError, ValueError, AttributeError) as exc:
+            log.warning("bio.se: %s: malformed films payload: %s", venue.name, exc)
+            continue
 
         count = 0
-        for film, d, t, url, screen, fmt, language, subtitles, source_texts, raw_attributes in _showtimes(
-            resp.json(), _cinema_url(cinema)
-        ):
+        for film, d, t, url, screen, fmt, language, subtitles, source_texts, raw_attributes, broadcast in rows:
             films[film.key] = _merge(films[film.key], film) if film.key in films else film
             yield Screening(
-                tmdb_id=_tmdb(film.title),
+                # Broadcasts match only same-year TMDB entries, not older films of the same work.
+                tmdb_id=_tmdb(film.title, year=d.year) if broadcast else _tmdb(film.title),
                 title=film.title,
                 film_key=film.key,
                 date=d,

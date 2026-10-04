@@ -2,6 +2,7 @@
 
 import logging
 import re
+import time
 from collections.abc import Iterator
 from datetime import datetime
 from typing import Any
@@ -29,9 +30,19 @@ _POSTER_UA = (
 )
 
 
+# Retries of transient failures; waits double from _BACKOFF seconds.
+_RETRIES = 4
+_BACKOFF = 1.0
+_TRANSIENT_STATUSES = frozenset({429, 500, 502, 503, 504})
+_sleep = time.sleep
+
 # Programme labels appended to film titles: "Goodfellas - Klassiker", "Fjord - med samtal på Victoria",
-# "Paraplyerna i Cherbourg- Everdahl & Karlssons Filmklubb".
-_TITLE_SUFFIX = re.compile(r"\s*-\s+(klassiker|med samtal\b.*|[^-]*filmklubb)$", re.IGNORECASE)
+# "Paraplyerna i Cherbourg- Everdahl & Karlssons Filmklubb", "The Conjuring - Maraton".
+_TITLE_SUFFIX = re.compile(r"\s*-\s+(klassiker|maraton|med samtal\b.*|[^-]*filmklubb)$", re.IGNORECASE)
+# Catalogue junk trailing titles: "Seventeen World Tour NEW_".
+_TITLE_JUNK = re.compile(r"\s*\bNEW_+$")
+# Status notes in cinema names: "Filmstaden Söder (Tillfälligt stängd)".
+_CINEMA_STATUS = re.compile(r"\s*\([^)]*\)$")
 
 # Labels that override the version's subtitle language.
 _SUBTITLE_ATTRIBUTES = {"English subtitles": "Engelska"}
@@ -48,7 +59,7 @@ _CATEGORY_GENRES = {"Barn och Familj": "Familj"}
 
 def _title(raw: str) -> tuple[str, str]:
     """(film title, programme suffix) from an API title."""
-    title = " ".join(raw.split())
+    title = _TITLE_JUNK.sub("", " ".join(raw.split()))
     m = _TITLE_SUFFIX.search(title)
     return (title[: m.start()].strip(), m.group(1)) if m else (title, "")
 
@@ -59,15 +70,27 @@ def _version_programmes(title: str) -> tuple[str, ...]:
 
 
 def _unique(*labels: str) -> tuple[str, ...]:
-    """Non-empty labels in order, the first spelling of each regardless of case."""
+    """Non-empty labels in order, whitespace collapsed, the first spelling of each regardless of case."""
     first: dict[str, str] = {}
-    for label in labels:
+    for label in (" ".join(raw.split()) for raw in labels):
         if label:
             first.setdefault(label.casefold(), label)
     return tuple(first.values())
 
 
 def _get(session: cffi_requests.Session, url: str, **kw: Any) -> Any:
+    """JSON from *url*, retrying request errors and 429/5xx with exponential backoff."""
+    for attempt in range(_RETRIES):
+        try:
+            resp = session.get(url, impersonate="chrome", timeout=30, **kw)
+        except cffi_requests.RequestsError as exc:
+            log.warning("filmstaden: %s failed, retrying: %s", url, exc)
+        else:
+            if resp.status_code not in _TRANSIENT_STATUSES:
+                resp.raise_for_status()
+                return resp.json()
+            log.warning("filmstaden: %s returned %d, retrying", url, resp.status_code)
+        _sleep(_BACKOFF * 2**attempt)
     resp = session.get(url, impersonate="chrome", timeout=30, **kw)
     resp.raise_for_status()
     return resp.json()
@@ -78,7 +101,7 @@ def _screening(
 ) -> Screening:
     """Map one API show onto a Screening."""
     dt = datetime.fromisoformat(show["time"])
-    attrs = show.get("attributes", [])
+    attrs = show.get("attributes") or []
     version = show.get("movieVersion") or {}
     version_attrs = version.get("attributes") or []
     attr_names = tuple(
@@ -108,7 +131,7 @@ def _screening(
         time=dt.time(),
         cinema_name=cinema_name,
         city=city,
-        screen=show.get("screen", {}).get("title", ""),
+        screen=(show.get("screen") or {}).get("title") or "",
         **_version.screening_facts(
             format=", ".join(attr_names),
             language=audio_text,
@@ -214,10 +237,10 @@ def parse() -> Iterator[Screening | Venue | Film]:
 
     for cinema in cinemas:
         ncg_id = cinema["ncgId"]
-        title = cinema["title"]
-        addr = cinema.get("address", {})
-        city = addr.get("city", {}).get("name", "Unknown")
-        street = addr.get("streetAddress", "")
+        title = _CINEMA_STATUS.sub("", cinema["title"].strip())
+        addr = cinema.get("address") or {}
+        city = (addr.get("city") or {}).get("name") or "Unknown"
+        street = addr.get("streetAddress") or ""
 
         yield Venue(name=title, city=city, address=street)
 
