@@ -8,9 +8,9 @@ from datetime import date, time
 import requests
 from bs4 import BeautifulSoup
 
-from parse import _http
+from parse import _http, _version
 from parse._util import infer_year
-from parse.parsers import _films
+from parse.parsers import _films, _tickster
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue, film_key
 
@@ -22,6 +22,8 @@ _CINEMA = "Bräcke Bio"
 _CITY = "Bräcke"
 _ADDRESS = "Hantverksgatan 27"
 _SOURCE = "fhbracke_se"
+# The site links a Tickster search; the organiser page lists one event per showing.
+_TICKSTER = "https://www.tickster.com/se/sv/events/by/g3vj0dntt6711k6/bracke-folkets-hus"
 
 _SESSION = _http.session("Mozilla/5.0")
 
@@ -54,6 +56,16 @@ _AGE = re.compile(r"Åldersgräns:\s*(.+)", re.IGNORECASE)
 
 def _absolute(href: str) -> str:
     return href if href.startswith("http") else _BASE + href
+
+
+def _poster(img) -> str:
+    """Widest ``srcset`` candidate, else ``src``."""
+    candidates = []
+    for entry in (img.get("srcset") or "").split(","):
+        parts = entry.split()
+        if len(parts) == 2 and parts[1].endswith("w") and parts[1][:-1].isdigit():
+            candidates.append((int(parts[1][:-1]), parts[0]))
+    return max(candidates)[1] if candidates else img.get("src", "")
 
 
 def _listings(html: str) -> Iterator[dict]:
@@ -93,7 +105,7 @@ def _listings(html: str) -> Iterator[dict]:
 
         poster = next(
             (
-                src
+                _poster(img)
                 for img in container.find_all("img")
                 if (src := img.get("src", "")) and "/uploads/" in src and not _NOT_A_POSTER.search(src)
             ),
@@ -140,8 +152,11 @@ def _fetch(url: str) -> str:
 def parse() -> Iterator[Screening | Venue | Film]:
     yield Venue(name=_CINEMA, city=_CITY, address=_ADDRESS)
 
+    shows = list(_listings(_fetch(_URL)))
+    programme = _tickster.Programme.fetch(_TICKSTER, _SESSION)
+
     seen: set[str] = set()
-    for show in _listings(_fetch(_URL)):
+    for show in shows:
         title = show["title"]
         if title not in seen:
             seen.add(title)
@@ -154,13 +169,16 @@ def parse() -> Iterator[Screening | Venue | Film]:
                 _films.make(_SOURCE, title, url=show["url"], poster_url=show["poster_url"], **details)
             )
 
+        event = programme.find(title, show["date"], show["time"])
+        _, language, subtitles = _tickster.version(event.title) if event else ("", "", "")
         yield Screening(
             tmdb_id=_tmdb(title),
             film_key=film_key(_SOURCE, title),
             title=title,
             date=show["date"],
             time=show["time"],
-            ticket_url=show["url"],
+            ticket_url=event.url if event else show["url"],
             cinema_name=_CINEMA,
             city=_CITY,
+            **_version.screening_facts(language=language, subtitles=subtitles),
         )

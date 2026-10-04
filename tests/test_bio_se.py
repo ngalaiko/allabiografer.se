@@ -4,8 +4,11 @@ import json
 from datetime import date, time
 from pathlib import Path
 
-from parse.parsers.bio_se import _showtimes, _ticket_url, _venue
+from parse import _version
+from parse.parsers import _films as _films_mod
+from parse.parsers.bio_se import _cinema_url, _merge, _showtimes, _ticket_url, _venue
 from store import Venue
+from store.version import AudioKind, Language
 
 _FIXTURES = Path(__file__).parent / "fixtures" / "bio_se"
 _CINEMAS = {c["title"]: c for c in json.loads((_FIXTURES / "cinemas.json").read_text())["cinemas"]}
@@ -47,7 +50,7 @@ def test_showtimes_read_session_fields():
             "https://www.eurostar.se/Boka/f284624",
             "Screen 1",
             "",
-            "",
+            "Engelska",
             "Svensk text",
         ),
         (
@@ -57,7 +60,7 @@ def test_showtimes_read_session_fields():
             "https://www.eurostar.se/Boka/f285137",
             "Screen 3",
             "",
-            "",
+            "Engelska",
             "Svensk text",
         ),
         (
@@ -82,7 +85,7 @@ def test_showtimes_normalise_languages():
             "https://biljetter.bioaspen.se/#/book/57503",
             "Aspen",
             "",
-            "",
+            "Eng.",
             "Svensk text",
         )
     ]
@@ -156,7 +159,104 @@ def test_version_tags_move_from_title_to_session_fields():
         ]
     }
     assert [row[4:] for row in (tuple(r) for r in _showtimes(payload))] == [
-        ("Salong 1", "Dolby Atmos", "Engelskt tal", "Svensk text", "Bortglömda ön eng. tal ATMOS", "2D Digital"),
-        ("Salong 2", "IMAX", "Engelskt tal", "Svensk text", "Avengers: Endgame Encore", "IMAX"),
+        (
+            "Salong 1",
+            "Dolby Atmos",
+            "Engelskt tal",
+            "Svensk text",
+            ("2D Digital", " eng. tal", " ATMOS"),
+            ("2D Digital",),
+        ),
+        ("Salong 2", "IMAX", "Engelska", "Svensk text", ("IMAX",), ("IMAX",)),
     ]
     assert [f.title for f, *_ in _showtimes(payload)] == ["Bortglömda ön", "Avengers: Endgame Encore"]
+
+
+def _session(**fields) -> dict:
+    return {
+        "show_date_time": "2026-10-01T18:00:00",
+        "payment_link": "https://example.se/1",
+        "screen_name": "Salong 1",
+        "format": "",
+        "language": "",
+        "text": "",
+        "session_attributes_names": {"reserved": None, "custom": None},
+    } | fields
+
+
+def _payload(movie: dict, *sessions: dict) -> dict:
+    return {"movies": [{"movie": {"id": 1, "title": "Film"} | movie, "sessions": list(sessions)}]}
+
+
+def _facts(row: tuple) -> dict:
+    _, _, _, _, _, fmt, language, subtitles, source_texts, raw_attributes = row
+    return _version.screening_facts(
+        format=fmt, language=language, subtitles=subtitles, source_texts=source_texts, raw_attributes=raw_attributes
+    )
+
+
+def test_dubbed_sessions_keep_their_audio_role():
+    payload = _payload({"language": "Svenska (dubbad)"}, _session(language="Svenska (dubbad)", text="Svenska"))
+    [row] = _showtimes(payload)
+    facts = _facts(row)
+    assert facts["version"].audio.kind is AudioKind.DUBBED
+    assert facts["version"].audio.languages == frozenset({Language.SWEDISH})
+    assert row[0].original_languages == frozenset()
+
+
+def test_session_language_matching_the_movie_still_sets_audio():
+    [row, *_] = _showtimes(_films("falkoping-cosmorama"))
+    assert _facts(row)["version"].audio.languages == frozenset({Language.ENGLISH})
+
+
+def test_swedish_title_tag_marks_a_dubbed_version_not_the_original_language():
+    [row] = list(_showtimes(_films("falkoping-cosmorama")))[2:]
+    assert row[0].title == "Minioner & Monster"
+    assert row[0].original_languages == frozenset()
+
+
+def test_sessions_without_payment_link_fall_back_to_the_cinema_page():
+    payload = _payload({}, _session(payment_link=""))
+    [row] = _showtimes(payload, fallback_url="https://bio.se/biografer/stockholm-bio-aspen")
+    assert row[3] == "https://bio.se/biografer/stockholm-bio-aspen"
+    assert list(_showtimes(payload)) == []
+
+
+def test_cinema_url_uses_the_slug():
+    assert _cinema_url(_CINEMAS["Falköping Cosmorama"]).startswith("https://bio.se/biografer/")
+    assert _cinema_url({"slug": ""}) == ""
+
+
+def test_custom_labels_feed_versions_and_raw_attributes():
+    payload = _payload(
+        {"language": "Ukrainska"},
+        _session(
+            language="Ukrainska",
+            format="2D Digital",
+            session_attributes_names={"reserved": ["onlineköp"], "custom": ["English subtitles", "+ Q & A"]},
+        ),
+        _session(language="Franska", text="Svenska", session_attributes_names={"custom": ["Eng text"]}),
+    )
+    subtitled, labelled = _showtimes(payload)
+    facts = _facts(subtitled)
+    assert facts["version"].subtitles.languages == frozenset({Language.ENGLISH})
+    assert facts["raw_attributes"] == ("2D Digital", "English subtitles", "+ Q & A")
+    # The session's text field wins over custom labels.
+    assert _facts(labelled)["version"].subtitles.languages == frozenset({Language.SWEDISH})
+
+
+def test_merge_fills_fields_missing_from_the_first_entry():
+    first = _films_mod.make("bio_se", "Film", url="https://bio.se/movie/1")
+    later = _films_mod.make(
+        "bio_se",
+        "Film",
+        overview="Synopsis",
+        age_rating="11",
+        runtime=90,
+        original_languages=frozenset({Language.ENGLISH}),
+        url="https://bio.se/movie/2",
+    )
+    merged = _merge(first, later)
+    assert (merged.overview, merged.age_rating, merged.runtime) == ("Synopsis", "Från 11 år", 90)
+    assert merged.original_languages == frozenset({Language.ENGLISH})
+    assert merged.url == "https://bio.se/movie/1"

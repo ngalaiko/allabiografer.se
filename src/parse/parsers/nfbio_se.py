@@ -1,5 +1,6 @@
 """nfbio.se — Nordisk Film Bio (Uppsala + Malmö), Drupal cinema listing pages."""
 
+import json
 import logging
 import re
 from collections.abc import Iterator
@@ -13,6 +14,7 @@ from parse import _http, _version
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue
+from store.version import Language
 
 log = logging.getLogger(__name__)
 
@@ -23,13 +25,13 @@ _CINEMAS = [
         "city": "Uppsala",
         "name": "Nordisk Film Bio Uppsala",
         "url": "/biograf/uppsala?city=uppsala",
-        "address": "Vaksalagatan 3",
+        "address": "Marknadsgatan 1",
     },
     {
         "city": "Malmö",
         "name": "Nordisk Film Bio Mobilia",
         "url": "/biograf/malmo?city=malmo",
-        "address": "Per Albin Hanssons väg 40",
+        "address": "Per Albin Hanssons väg 38C",
     },
 ]
 
@@ -42,6 +44,8 @@ _LANGUAGE_CODE = re.compile(r"^[A-Z]{2}$")
 # "Speltid: 1 timme 46 min"
 _HOURS = re.compile(r"(\d+)\s*timm")
 _MINUTES = re.compile(r"(\d+)\s*min")
+# Unreleased films carry a one-minute placeholder runtime; nothing sold as a screening is this short.
+_MIN_RUNTIME = 5
 
 
 def _parse_version(text: str) -> tuple[str, str, str]:
@@ -71,12 +75,13 @@ def _parse_version(text: str) -> tuple[str, str, str]:
 
 
 def _parse_duration(text: str) -> int | None:
-    """Runtime in minutes from "Speltid: 1 timme 46 min"."""
+    """Runtime in minutes from "Speltid: 1 timme 46 min"; None for placeholders."""
     hours = _HOURS.search(text)
     minutes = _MINUTES.search(text)
     if not hours and not minutes:
         return None
-    return int(hours.group(1) if hours else 0) * 60 + int(minutes.group(1) if minutes else 0)
+    runtime = int(hours.group(1) if hours else 0) * 60 + int(minutes.group(1) if minutes else 0)
+    return runtime if runtime >= _MIN_RUNTIME else None
 
 
 def _parse_time(text: str) -> time | None:
@@ -94,6 +99,18 @@ def _absolute(href: str) -> str:
     return href if href.startswith("http") else _BASE + href
 
 
+def _versions(article) -> list[str]:
+    return [" ".join(el.get_text(" ", strip=True).split()) for el in article.select(".version")]
+
+
+def _screened_originals(versions: list[str]) -> frozenset[Language]:
+    """Non-Swedish audio languages screened: Swedish cinemas dub only into Swedish."""
+    found: set[Language] = set()
+    for version in versions:
+        found |= _version.languages(_parse_version(version)[1])
+    return frozenset(found - {Language.SWEDISH})
+
+
 def _listing_film(article, title: str) -> Film:
     """Film metadata an article on a cinema listing page carries."""
     duration_el = article.select_one(".duration")
@@ -107,14 +124,45 @@ def _listing_film(article, title: str) -> Film:
         runtime=_parse_duration(duration_el.get_text(" ", strip=True)) if duration_el else None,
         age_rating=age_rating,
         poster_url=_absolute(poster_el.get("src", "")) if poster_el else "",
+        original_languages=_screened_originals(_versions(article)),
         # Film pages render their content only for the ?city= the listing links carry.
         url=_absolute(link_el.get("href", "")) if link_el else "",
     )
 
 
+def _poster(soup: BeautifulSoup) -> str:
+    """Full-size poster from the page's JSON-LD Movie."""
+    for script in soup.select('script[type="application/ld+json"]'):
+        try:
+            data = json.loads(script.string or "")
+        except ValueError:
+            continue
+        for item in data.get("@graph", [data]) if isinstance(data, dict) else []:
+            image = item.get("image") if isinstance(item, dict) else None
+            url = image.get("url") if isinstance(image, dict) else image
+            if isinstance(url, str) and url:
+                return _absolute(url)
+    return ""
+
+
+def _original_languages(film: Film, node, title_original: str) -> frozenset[Language]:
+    """The page's language, which names the Swedish dub of imported family films.
+
+    Swedish counts only for a film shown in no other language under its original title.
+    """
+    stated = frozenset().union(
+        *(_version.languages(i.get_text(strip=True)) for i in node.select(".field--name-field-language .field__item"))
+    )
+    retitled = bool(title_original) and title_original.casefold() != film.title.casefold()
+    if Language.SWEDISH in stated and (film.original_languages or retitled):
+        stated -= {Language.SWEDISH}
+    return film.original_languages | stated
+
+
 def _enrich(film: Film, html: str) -> Film:
-    """Fill in what only the film's own page carries: synopsis, genres, dates."""
-    node = BeautifulSoup(html, "html.parser").select_one("article.node--type-movie")
+    """Fill in what only the film's own page carries: synopsis, genres, dates, language."""
+    soup = BeautifulSoup(html, "html.parser")
+    node = soup.select_one("article.node--type-movie")
     if node is None:
         return film
 
@@ -122,14 +170,16 @@ def _enrich(film: Film, html: str) -> Film:
     premiere = node.select_one(".field--name-field-premiere-date time[datetime]")
     original = node.select_one(".field--name-field-original-title .field__item")
     poster = node.select_one(".field--name-field-image img[src]")
+    title_original = original.get_text(strip=True) if original else ""
     return replace(
         film,
         overview=body.get_text(" ", strip=True) if body else "",
         genres=[i.get_text(strip=True) for i in node.select(".field--name-field-genre .field__item")],
         release_date=(premiere.get("datetime", "") or "")[:10],
-        title_original=original.get_text(strip=True) if original else "",
-        # The film page renders the poster at 336px; the listing only at 230px.
-        poster_url=_absolute(poster.get("src", "")) if poster else film.poster_url,
+        title_original=title_original,
+        original_languages=_original_languages(film, node, title_original),
+        # JSON-LD links the original; the page renders it at 336px, the listing at 230px.
+        poster_url=_poster(soup) or (_absolute(poster.get("src", "")) if poster else film.poster_url),
     )
 
 
@@ -171,6 +221,8 @@ def _parse_listing(html: str, cinema_name: str, city: str) -> Iterator[Screening
                 room_el = btn.select_one(".room")
                 version_el = btn.select_one(".version")
                 version = " ".join(version_el.get_text(" ", strip=True).split()) if version_el else ""
+                # Programme labels (Biopasset, Knattebio, Förhandsvisning…) stay as raw parts.
+                parts = tuple(p for p in (p.strip() for p in version.split(",")) if p)
                 _fmt, language, subtitles = _parse_version(version)
 
                 yield Screening(
@@ -187,7 +239,7 @@ def _parse_listing(html: str, cinema_name: str, city: str) -> Iterator[Screening
                         language=language,
                         subtitles=subtitles,
                         source_texts=(version,),
-                        raw_attributes=(version,) if version else (),
+                        raw_attributes=parts,
                     ),
                     film_key=film.key,
                 )

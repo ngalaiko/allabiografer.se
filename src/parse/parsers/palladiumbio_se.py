@@ -5,6 +5,7 @@ import re
 from collections.abc import Iterator
 from dataclasses import replace
 from datetime import date, time
+from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
@@ -22,6 +23,17 @@ _CINEMA = "Filmhuset Palladium"
 _CITY = "Arvika"
 _ADDRESS = "Hamngatan 11"
 
+# Programme labels prefixed to titles: "SMYGPREMIÄR! Bortglömda ön", "SMYGPREMIÄRHeart of the Beast".
+_PREFIX = re.compile(
+    r"^(?P<tag>smygpremiär|förhandsvisning|premiär|bio\s?passet|bio\s?kontrast|knattebio|barnvagnsbio|klassiker)"
+    r"(?P<sep>\s*[!:]|\s*[-–]\s)?\s*(?=\S)",
+    re.IGNORECASE,
+)
+# "(Tal: Svenska (dubbat))" — one level of nesting.
+_TAG = re.compile(r"\((?:[^()]|\([^()]*\))*\)")
+# Hero background on event pages: landscape.
+_HERO = re.compile(r"url\(['\"]?([^'\")]+/eventImages/[^'\")]+)")
+
 _MONTHS = {
     "januari": 1,
     "februari": 2,
@@ -36,6 +48,30 @@ _MONTHS = {
     "november": 11,
     "december": 12,
 }
+
+
+def _split_prefix(raw: str) -> tuple[str, str]:
+    """(programme label, rest).
+
+    A label without punctuation counts only in capitals, followed by a space or a
+    capitalised word: "SMYGPREMIÄRHeart of the Beast", not "PREMIÄRDANSEN".
+    """
+    raw = raw.strip()
+    m = _PREFIX.match(raw)
+    if not m:
+        return "", raw
+    rest = raw[m.end() :]
+    if not m.group("sep"):
+        glued = m.group(0) == m.group("tag")
+        if not m.group("tag").isupper() or (glued and not (rest[:1].isupper() and rest[1:2].islower())):
+            return "", raw
+    return raw[: m.end()].strip(), rest
+
+
+def _attributes(raw: str) -> tuple[str, ...]:
+    """Raw programme label and version tags around the title."""
+    prefix, rest = _split_prefix(raw)
+    return ((prefix,) if prefix else ()) + tuple(_TAG.findall(rest))
 
 
 def _parse_title(raw: str) -> tuple[str, str, str]:
@@ -61,8 +97,8 @@ def _parse_title(raw: str) -> tuple[str, str, str]:
     if m:
         subtitles = m.group(1).strip()
 
-    # Strip everything from first parenthesis for the title
-    title = re.sub(r"\s*\(.*", "", raw).strip()
+    # Strip the programme label and everything from first parenthesis for the title
+    title = re.sub(r"\s*\(.*", "", _split_prefix(raw)[1]).strip()
 
     return title, _version.language(language), _version.subtitles(subtitles)
 
@@ -79,8 +115,41 @@ def _overview(page: str) -> str:
     return " ".join(" ".join(p.get_text(" ") for p in soup.select("main .lead > p")).split())
 
 
-def _showtimes(html: str) -> Iterator[tuple[Film, date, time, str, str, str, str]]:
-    """Yield (film, date, time, ticket_url, screen, language, subtitles) per program row."""
+def _norm(title: str) -> str:
+    return "".join(c for c in title.casefold() if c.isalnum())
+
+
+def _posters(html: str) -> dict[str, str]:
+    """Portrait posters from the "Aktuellt" carousel, keyed by normalised card title.
+
+    Cards carry no link; "DIGGER:BIO PASSET" also keys by the part before the colon.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    cards = []
+    for card in soup.select(".multiCarousel .card"):
+        title_el = card.select_one(".card-title")
+        img = card.select_one("img[src]")
+        if title_el and img:
+            cards.append((title_el.get_text(strip=True), urljoin(_URL, img.get("src", ""))))
+    posters = {_norm(title): src for title, src in cards}
+    for title, src in cards:
+        posters.setdefault(_norm(title.split(":")[0]), src)
+    posters.pop("", None)
+    return posters
+
+
+def _poster(posters: dict[str, str], title: str) -> str:
+    return posters.get(_norm(title), "")
+
+
+def _hero(page: str) -> str:
+    """Landscape event image from a film page's hero background."""
+    m = _HERO.search(page)
+    return urljoin(_URL, m.group(1)) if m else ""
+
+
+def _showtimes(html: str) -> Iterator[tuple[Film, date, time, str, str, str, str, tuple[str, ...]]]:
+    """Yield (film, date, time, ticket_url, screen, language, subtitles, raw_attributes) per program row."""
     soup = BeautifulSoup(html, "html.parser")
 
     current_date: date | None = None
@@ -130,7 +199,7 @@ def _showtimes(html: str) -> Iterator[tuple[Film, date, time, str, str, str, str
         # Every showing is its own event; its page carries the film's synopsis.
         film = _films.make(_SOURCE, film_title, url=title_el.get("href", ""))
 
-        yield film, current_date, t, ticket_url, screen, language, subtitles
+        yield film, current_date, t, ticket_url, screen, language, subtitles, _attributes(raw_title)
 
 
 def parse() -> Iterator[Screening | Venue | Film]:
@@ -140,16 +209,21 @@ def parse() -> Iterator[Screening | Venue | Film]:
     resp = session.get(_URL, timeout=15)
     resp.raise_for_status()
 
+    posters = _posters(resp.text)
     count = 0
     seen: set[str] = set()
-    for film, d, t, ticket_url, screen, language, subtitles in _showtimes(resp.text):
+    for film, d, t, ticket_url, screen, language, subtitles, attributes in _showtimes(resp.text):
         if film.key not in seen:
             seen.add(film.key)
+            film = replace(film, poster_url=_poster(posters, film.title))
             if film.url:
                 detail = session.get(film.url, timeout=15)
                 if detail.ok:
-                    film = replace(film, overview=_overview(detail.text))
-            yield film
+                    # Prefer the carousel's portrait poster to the event page's landscape hero.
+                    film = replace(
+                        film, overview=_overview(detail.text), poster_url=film.poster_url or _hero(detail.text)
+                    )
+            yield _films.register(film, session=session)
         yield Screening(
             tmdb_id=_tmdb(film.title),
             title=film.title,
@@ -160,7 +234,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
             cinema_name=_CINEMA,
             city=_CITY,
             screen=screen,
-            **_version.screening_facts(language=language, subtitles=subtitles),
+            **_version.screening_facts(language=language, subtitles=subtitles, raw_attributes=attributes),
         )
         count += 1
 

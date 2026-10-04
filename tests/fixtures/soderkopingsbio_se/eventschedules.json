@@ -1,0 +1,82 @@
+[
+ {
+  "id": 255144,
+  "eventName": "Avengers: Endgame Encore (Sv.Txt) (Eng.Tal)",
+  "startDate": "2026-10-04T14:00:00",
+  "venueName": "Sal 1",
+  "bookingUrl": null,
+  "movie": {
+   "title": "Avengers: Endgame Encore (Sv.Txt) (Eng.Tal)",
+   "originalName": "Avengers: Endgame Encore",
+   "slug": "avengers-endgame-encore-(svtxt)-(engtal)_3",
+   "poster": "https://cdn.incode.se/content/DC7B5F71-BA10-4688-B1AF-01200608415F.jpg",
+   "genre": null,
+   "duration": 183,
+   "rating": "11 år",
+   "description": "Efter de förödande händelserna i Avengers: Infinity War samlas de kvarvarande Avengers för ett sista avgörande försök att besegra Thanos och återställa balansen",
+   "originalLanguage": null,
+   "releaseDate": "2026-09-25T00:00:00",
+   "director": "Anthony Russo & Joe Russo"
+  }
+ },
+ {
+  "id": 255157,
+  "eventName": "Resan till Piemonte (Sv.Txt) (Sv.Tal)",
+  "startDate": "2026-10-07T13:00:00",
+  "venueName": "Sal 1",
+  "bookingUrl": null,
+  "movie": {
+   "title": "Resan till Piemonte (Sv.Txt) (Sv.Tal)",
+   "originalName": "Resan till Piemonte",
+   "slug": "resan-till-piemonte-(svtxt)-(svtal)_1",
+   "poster": "https://cdn.incode.se/content/59F097F5-CD4D-49B8-98EA-650E6CF01CA1.jpg",
+   "genre": null,
+   "duration": 111,
+   "rating": "7 år",
+   "description": "Fyra vänner åker tillsammans till Italien där Eva (Helena Bergström) ärvt en olivgård. Tanken är sälja gården, men väl där väcks frågan; vad har dom egentligen ",
+   "originalLanguage": null,
+   "releaseDate": "2026-09-25T00:00:00",
+   "director": "Alexandra-Therese Keining"
+  }
+ },
+ {
+  "id": 255156,
+  "eventName": "Tony (Sv.Txt) (Eng.Tal)",
+  "startDate": "2026-10-07T15:30:00",
+  "venueName": "Sal 1",
+  "bookingUrl": null,
+  "movie": {
+   "title": "Tony (Sv.Txt) (Eng.Tal)",
+   "originalName": "Tony",
+   "slug": "tony-(svtxt)-(engtal)_0",
+   "poster": "https://cdn.incode.se/content/61BB6B68-BF8C-4771-A803-A58F5B6DDE62.jpg",
+   "genre": null,
+   "duration": 106,
+   "rating": "11 år",
+   "description": "En 19-årig Anthony Bourdain reser till Provincetown och snubblar in i den kaotiska köksvärlden på en lokal restaurang, vilket blir starten på en sommar som komm",
+   "originalLanguage": null,
+   "releaseDate": "2026-09-18T00:00:00",
+   "director": null
+  }
+ },
+ {
+  "id": 255155,
+  "eventName": "Resan till Piemonte (Sv.Txt) (Sv.Tal)",
+  "startDate": "2026-10-07T18:30:00",
+  "venueName": "Sal 1",
+  "bookingUrl": null,
+  "movie": {
+   "title": "Resan till Piemonte (Sv.Txt) (Sv.Tal)",
+   "originalName": "Resan till Piemonte",
+   "slug": "resan-till-piemonte-(svtxt)-(svtal)_1",
+   "poster": "https://cdn.incode.se/content/59F097F5-CD4D-49B8-98EA-650E6CF01CA1.jpg",
+   "genre": null,
+   "duration": 111,
+   "rating": "7 år",
+   "description": "Fyra vänner åker tillsammans till Italien där Eva (Helena Bergström) ärvt en olivgård. Tanken är sälja gården, men väl där väcks frågan; vad har dom egentligen ",
+   "originalLanguage": null,
+   "releaseDate": "2026-09-25T00:00:00",
+   "director": "Alexandra-Therese Keining"
+  }
+ }
+]

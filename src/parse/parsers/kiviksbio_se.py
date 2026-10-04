@@ -7,7 +7,7 @@ from datetime import date, time
 
 from bs4 import BeautifulSoup, Tag
 
-from parse import _http
+from parse import _http, _version
 from parse._util import infer_year
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
@@ -21,6 +21,16 @@ _ADDRESS = "Ordensgatan 5"
 
 # The listing's only non-genre category.
 _NOT_A_GENRE = {"film"}
+
+# Title prefixes: "Extra-visning (2) ", "Höstlovsfilm! ", "PREMIÄR! ".
+_TITLE_PREFIX = re.compile(r"^(?:(?P<extra>extra-?visning)(?:\s*\(\d+\))?|(?P<word>[^\W\d_][\w-]*)!)\s+", re.IGNORECASE)
+# Credits, prices and side events that follow the synopsis.
+_TRAILER = re.compile(
+    r"\b(?:Regi|Dirigent|Land|Pris)\s*:|\bTextas\s+på\b|\bFöreställningen har\b|\bOBS!",
+    re.IGNORECASE,
+)
+# "Textas på svenska!", "Svensk text".
+_SUBTITLES = re.compile(r"\btextas\s+på\s+([^\W\d_]+)|\b([^\W\d_]+)\s+text\b", re.IGNORECASE)
 
 _MONTHS = {
     "jan": 1,
@@ -49,6 +59,15 @@ def _runtime(start: time, end_text: str) -> int | None:
     return minutes
 
 
+def _split_title(title: str) -> tuple[str, tuple[str, ...]]:
+    """Title without its programme prefixes, and the prefixes."""
+    labels: list[str] = []
+    while m := _TITLE_PREFIX.match(title):
+        labels.append(m.group("extra") or m.group("word"))
+        title = title[m.end() :]
+    return title, tuple(labels)
+
+
 def _film(ev: Tag, title: str, url: str, runtime: int | None) -> Film:
     """Film metadata from an event item.
 
@@ -70,15 +89,31 @@ def _film(ev: Tag, title: str, url: str, runtime: int | None) -> Film:
     )
 
 
-def _overview(page: str) -> str:
-    """Synopsis from an event page."""
-    soup = BeautifulSoup(page, "html.parser")
-    content = soup.select_one(".em-event-content")
+def _content(page: str) -> str:
+    """Event page body text."""
+    content = BeautifulSoup(page, "html.parser").select_one(".em-event-content")
     return " ".join(content.get_text(" ").split()) if content else ""
 
 
-def _showtimes(page: str) -> Iterator[tuple[Film, date, time, str]]:
-    """Yield (film, date, time, ticket_url) per event item."""
+def _overview(page: str) -> str:
+    """Synopsis from an event page, up to the credits."""
+    text = _content(page)
+    m = _TRAILER.search(text)
+    return text[: m.start()].strip() if m else text
+
+
+def _subtitles(page: str) -> dict[str, object]:
+    """Screening version fields from an event page's subtitle note."""
+    for m in _SUBTITLES.finditer(_content(page)):
+        label = _version.subtitles(m.group(1) or m.group(2))
+        facts = _version.screening_facts(subtitles=label)
+        if facts["version"].subtitles.languages:
+            return facts
+    return _version.screening_facts()
+
+
+def _showtimes(page: str) -> Iterator[tuple[Film, date, time, str, tuple[str, ...]]]:
+    """Yield (film, date, time, ticket_url, title prefixes) per event item."""
     soup = BeautifulSoup(page, "html.parser")
 
     for ev in soup.select(".em-item"):
@@ -88,7 +123,7 @@ def _showtimes(page: str) -> Iterator[tuple[Film, date, time, str]]:
             continue
 
         # Titles carry indentation runs that HTML rendering collapses.
-        film_title = " ".join(title_el.get_text().split())
+        film_title, labels = _split_title(" ".join(title_el.get_text().split()))
         ticket_url = title_el.get("href", "")
 
         # Parse "onsdag 1 apr kl 15:00 - 16:45"
@@ -105,7 +140,7 @@ def _showtimes(page: str) -> Iterator[tuple[Film, date, time, str]]:
         d = date(infer_year(month), month, day)
         t = time(int(m.group(3)), int(m.group(4)))
 
-        yield _film(ev, film_title, ticket_url, _runtime(t, m.group(5) or "")), d, t, ticket_url
+        yield _film(ev, film_title, ticket_url, _runtime(t, m.group(5) or "")), d, t, ticket_url, labels
 
 
 def parse() -> Iterator[Screening | Venue | Film]:
@@ -114,11 +149,11 @@ def parse() -> Iterator[Screening | Venue | Film]:
     resp = session.get(_URL, timeout=15)
     resp.raise_for_status()
 
-    seen: set[str] = set()
-    for film, d, t, ticket_url in _showtimes(resp.text):
-        if film.key not in seen:
-            seen.add(film.key)
+    facts: dict[str, dict[str, object]] = {}
+    for film, d, t, ticket_url, labels in _showtimes(resp.text):
+        if film.key not in facts:
             detail = session.get(film.url, timeout=15)
+            facts[film.key] = _subtitles(detail.text) if detail.ok else _version.screening_facts()
             if detail.ok:
                 film = replace(film, overview=_overview(detail.text))
             yield _films.register(film, session=session)
@@ -132,4 +167,5 @@ def parse() -> Iterator[Screening | Venue | Film]:
             ticket_url=ticket_url,
             cinema_name=_CINEMA,
             city=_CITY,
+            **(facts[film.key] | {"raw_attributes": labels}),
         )

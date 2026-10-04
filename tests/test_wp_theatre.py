@@ -11,7 +11,7 @@ from store.version import Language
 pytestmark = pytest.mark.usefixtures("parser_clock")
 
 _FIXTURES = Path(__file__).parent / "fixtures" / "wp_theatre"
-_SITE = {"city": "Göteborg", "name": "Capitol"}
+_SITE = {"city": "Göteborg", "name": "Capitol", "screen": "CAPITOL {}"}
 
 
 @pytest.fixture(autouse=True)
@@ -21,8 +21,8 @@ def tmdb_calls(monkeypatch):
     return calls
 
 
-def _items(name: str):
-    return list(wp_theatre._parse_production((_FIXTURES / name).read_text(), _SITE))
+def _items(name: str, html: str | None = None):
+    return list(wp_theatre._parse_production(html or (_FIXTURES / name).read_text(), _SITE))
 
 
 def _parse(name: str):
@@ -114,3 +114,62 @@ def test_version_tags_move_from_title_to_screening(tmdb_calls):
     assert screening.title == "Tony"
     assert screening.version.audio.languages == frozenset({Language.SWEDISH})
     assert next(i for i in items if isinstance(i, Film)).key == "wp_theatre:tony"
+
+
+def test_body_states_audio_and_subtitles():
+    s = _parse("production-kokuho.html")[0]
+    assert s.version.audio.languages == frozenset({Language.JAPANESE})
+    assert s.version.subtitles.languages == frozenset({Language.SWEDISH})
+    film = _film("production-kokuho.html")
+    assert film.original_languages == frozenset({Language.JAPANESE})
+    assert film.runtime == 175
+    assert "Japanskt tal" not in film.overview
+
+
+def test_occasional_subtitles_are_not_the_default():
+    s = _parse("production-la-grazia.html")[0]
+    assert s.version.audio.languages == frozenset({Language.ITALIAN})
+    assert s.version.subtitles.languages == frozenset({Language.SWEDISH})
+    assert _film("production-la-grazia.html").original_languages == frozenset({Language.ITALIAN})
+
+
+def test_dialogue_languages_are_original_languages():
+    spoken = frozenset({Language.NORWEGIAN, Language.ROMANIAN, Language.ENGLISH, Language.SWEDISH})
+    assert _film("production-fjord.html").original_languages == spoken
+    s = _parse("production-fjord.html")[0]
+    assert s.version.audio.languages == spoken
+    assert s.version.subtitles.languages == frozenset({Language.SWEDISH})
+
+
+def test_event_remark_overrides_subtitles():
+    s = next(s for s in _parse("production-fjord.html") if s.date.isoformat() == "2026-10-12")
+    assert s.version.subtitles.languages == frozenset({Language.ENGLISH})
+    assert s.raw_attributes == ("ENGLISH SUBTITLES - ENGELSK TEXT",)
+
+
+@pytest.mark.parametrize(
+    ("remark", "expected"),
+    [
+        ("HUNDBIO", ("HUNDBIO",)),
+        ("SISTA VISNING", ("SISTA VISNING",)),
+        ("PREMIÄR Biljetter ännu ej släppta", ("PREMIÄR",)),
+        ("PREMIÄR Fler visningar tillkommer", ("PREMIÄR",)),
+        ("BILJETTER ÄNNU EJ SLÄPPTA", ()),
+        ("REPRIS i samband med premiären av del 2", ("REPRIS i samband med premiären av del 2",)),
+    ],
+)
+def test_event_remarks_are_raw_attributes(remark, expected):
+    html = (_FIXTURES / "production-fjord.html").read_text().replace("ENGLISH SUBTITLES - ENGELSK TEXT", remark)
+    s = next(i for i in _items("", html) if not isinstance(i, Film) and i.date.isoformat() == "2026-10-12")
+    assert s.raw_attributes == expected
+    assert s.version.subtitles.languages == frozenset({Language.SWEDISH})
+
+
+def test_screen_comes_from_ticket_salong():
+    s = _parse("production-cinemateket.html")[0]
+    assert s.screen == "CAPITOL 3"
+    assert s.raw_attributes == ("Cinemateket",)
+    tony = _parse("production-tony.html")[0]
+    assert tony.screen == "CAPITOL 1"
+    # The venue names the screen itself; only the remark remains.
+    assert tony.raw_attributes == ("STORA BIODAGEN - Halva priset",)

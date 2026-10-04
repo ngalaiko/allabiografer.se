@@ -24,3 +24,8 @@ def lookup(title: str, *, runtime: int | None = None) -> int | None:
     if tmdb_id is None:
         log.debug("no TMDB match for %r", title)
     return tmdb_id
+
+
+def by_id(tmdb_id: int) -> int | None:
+    """Return *tmdb_id* once its metadata is stored, or None when the fetch fails."""
+    return tmdb.by_id(tmdb_id, path=db_path)

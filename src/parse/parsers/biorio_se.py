@@ -1,211 +1,128 @@
-"""biorio.se — Next.js calendar page, rendered client-side via Playwright."""
+"""biorio.se — the site's public showtimes and movie JSON API."""
 
 import logging
 import re
 from collections.abc import Iterator
 from datetime import date, time
-from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
+from urllib.parse import urlencode
 
 import requests
-from bs4 import BeautifulSoup
 
 from parse import _http, _version
-from parse._util import infer_year
 from parse.parsers import _films
-from parse.parsers._browser import page as browser_page
+from parse.parsers._tmdb_cache import by_id as _tmdb_by_id
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue
 
 log = logging.getLogger(__name__)
 
 _SOURCE = "biorio_se"
-_URL = "https://www.biorio.se/sv/kalender"
+_SITE = "https://www.biorio.se"
+_API = "https://api.biorio.se/api/public/site"
+# The default page holds 50 showtimes; the whole programme is a few hundred at most.
+_SHOWTIMES_URL = f"{_API}/showtimes?limit=1000"
 _CINEMA = "Bio Rio"
 _CITY = "Stockholm"
 _ADDRESS = "Hornstulls strand 3"
 
-# The site serves posters through Next.js' image proxy; its width is ours to pick.
+# Posters go through the site's Next.js image proxy, which serves JPEG for AVIF originals.
 _POSTER_WIDTH = "640"
 
-_MONTHS = {
-    "januari": 1,
-    "februari": 2,
-    "mars": 3,
-    "april": 4,
-    "maj": 5,
-    "juni": 6,
-    "juli": 7,
-    "augusti": 8,
-    "september": 9,
-    "oktober": 10,
-    "november": 11,
-    "december": 12,
-}
+# Placeholders the API writes for an unstated language.
+_UNSTATED = {"", "-", "n/a", "tba", "tbc", "ej angivet"}
 
 
-def _parse_date(text: str) -> date | None:
-    """Parse 'Idag 31 mars', 'Imorgon 1 april', 'Fredag 3 april', etc."""
-    m = re.search(r"(\d{1,2})\s+(\w+)", text)
-    if not m:
-        return None
-    day = int(m.group(1))
-    month = _MONTHS.get(m.group(2).lower())
-    if not month:
-        return None
-    return date(infer_year(month), month, day)
-
-
-def _showtimes(html: str) -> Iterator[tuple[str, date, time, str, str]]:
-    """Yield (title, date, time, ticket_url, screen) from the rendered calendar.
-
-    Each day group holds a date header and a list of showtime items.  The
-    booking link wraps only the poster; time, title and screen live beside it
-    in the item's info block.
-    """
-    soup = BeautifulSoup(html, "html.parser")
-
-    for group in soup.select(".kalender-day-group"):
-        header = group.select_one(".kalender-date-header")
-        d = _parse_date(header.get_text(strip=True)) if header else None
-        if not d:
-            continue
-
-        for item in group.select(".kalender-showtime-item"):
-            link = item.select_one('a[href*="/boka/"]')
-            title_el = item.select_one(".kalender-showtime-title")
-            time_el = item.select_one(".kalender-showtime-time")
-            if not link or not title_el or not time_el:
-                continue
-
-            m = re.match(r"(\d{1,2}):(\d{2})", time_el.get_text(strip=True))
-            if not m:
-                continue
-
-            title = title_el.get_text(strip=True)
-            if not title:
-                continue
-
-            meta = item.select_one(".kalender-showtime-meta")
-            screen_m = re.search(r"Salong\s*\d+", meta.get_text(" ", strip=True)) if meta else None
-
-            yield (
-                title,
-                d,
-                time(int(m.group(1)), int(m.group(2))),
-                urljoin(_URL, link.get("href", "")),
-                screen_m.group(0) if screen_m else "",
-            )
-
-
-def _film_urls(html: str) -> dict[str, str]:
-    """Map each calendar title to its film page; the title itself links there."""
-    soup = BeautifulSoup(html, "html.parser")
-    urls: dict[str, str] = {}
-    for link in soup.select(".kalender-showtime-title[href]"):
-        title = link.get_text(strip=True)
-        if title:
-            urls.setdefault(title, urljoin(_URL, link["href"]))
-    return urls
-
-
-def _film_details(html: str) -> dict:
-    """Poster, synopsis, runtime, genres, year and languages from a film page."""
-    soup = BeautifulSoup(html, "html.parser")
-
-    credits = {}
-    for item in soup.select(".movie-credit-item"):
-        label = item.select_one(".movie-credit-label")
-        value = item.select_one(".movie-credit-value")
-        if label and value:
-            credits[label.get_text(strip=True).casefold()] = value.get_text(" ", strip=True)
-
-    genres = [g.strip() for g in credits.get("genre", "").split(",") if g.strip()]
-
-    synopsis = soup.select_one(".movie-synopsis-text")
-    poster = soup.select_one("img.movie-poster-img")
-
-    return {
-        "poster_url": _poster_url(poster.get("src", "")) if poster else "",
-        "overview": synopsis.get_text(" ", strip=True) if synopsis else "",
-        "runtime": _runtime(credits.get("längd", "")),
-        "genres": genres,
-        "release_date": _year(soup),
-        "original_languages": _version.languages(credits.get("språk", "")),
-        "subtitle_label": _version.subtitles(credits.get("undertext", "")),
-    }
+def _label(text: str | None) -> str:
+    text = (text or "").strip()
+    return "" if text.casefold() in _UNSTATED else text
 
 
 def _poster_url(src: str) -> str:
-    """Absolute poster URL, widened from the thumbnail the page asks for."""
     if not src:
         return ""
-    parts = urlparse(urljoin(_URL, src))
-    if not parts.path.startswith("/_next/image"):
-        return parts.geturl()
-    query = dict(parse_qsl(parts.query))
-    query["w"] = _POSTER_WIDTH
-    return urlunparse(parts._replace(query=urlencode(query)))
+    return f"{_SITE}/_next/image?" + urlencode({"url": src, "w": _POSTER_WIDTH, "q": "85"})
 
 
-def _runtime(text: str) -> int | None:
-    """Minutes from '1h 38min' or '98 min'."""
-    m = re.search(r"(?:(\d+)\s*h)?\s*(\d+)\s*min", text)
-    if not m:
-        return None
-    return int(m.group(1) or 0) * 60 + int(m.group(2))
+def _film(movie: dict) -> Film:
+    language = _label(movie.get("language"))
+    # A dubbed track names the screening language, not the original.
+    dubbed = re.search(r"dubb", language, re.IGNORECASE)
+    return _films.make(
+        _SOURCE,
+        movie["title"],
+        url=f"{_SITE}/sv/filmer/{movie['slug']}",
+        poster_url=_poster_url(movie.get("posterPath") or ""),
+        overview=(movie.get("synopsis") or "").strip(),
+        runtime=movie.get("duration") or None,
+        genres=list(movie.get("genres") or []),
+        release_date=movie.get("releaseDate") or str(movie.get("releaseYear") or ""),
+        original_languages=frozenset() if dubbed else _version.languages(language),
+    )
 
 
-def _year(soup: BeautifulSoup) -> str:
-    """The 'ÅR' cell of the meta grid — the site gives a year, never a full date."""
-    grid = soup.select_one(".movie-meta-grid")
-    if not grid:
-        return ""
-    labels = [el.get_text(strip=True).casefold() for el in grid.select(".movie-meta-label")]
-    values = [el.get_text(strip=True) for el in grid.select(".movie-meta-value")]
-    if "år" not in labels:
-        return ""
-    value = values[labels.index("år")] if labels.index("år") < len(values) else ""
-    return value if re.fullmatch(r"\d{4}", value) else ""
+def _screening(show: dict, *, tmdb_id: int | None, film_key: str) -> Screening:
+    h, m = show["time"].split(":")
+    fmt = " ".join(label for flag, label in (("is3D", "3D"), ("isImax", "IMAX")) if show.get(flag))
+    return Screening(
+        tmdb_id=tmdb_id,
+        title=show["movie"]["title"].strip(),
+        date=date.fromisoformat(show["date"]),
+        time=time(int(h), int(m)),
+        ticket_url=f"{_SITE}/sv/boka/{show['id']}",
+        cinema_name=_CINEMA,
+        city=_CITY,
+        screen=(show.get("screen") or {}).get("name", ""),
+        **_version.screening_facts(
+            format=fmt,
+            language=_label(show.get("audio")),
+            subtitles=_label(show.get("subtitles")),
+            raw_attributes=tuple(show.get("tags") or ()),
+        ),
+        film_key=film_key,
+    )
+
+
+def _tmdb_id(movie: dict) -> int | None:
+    """The site's own TMDB id where it resolves, else a title lookup."""
+    raw = str(movie.get("tmdbId") or "")
+    if raw.isdigit() and (tmdb_id := _tmdb_by_id(int(raw))) is not None:
+        return tmdb_id
+    return _tmdb(movie["title"].strip())
 
 
 def parse() -> Iterator[Screening | Venue | Film]:
     yield Venue(name=_CINEMA, city=_CITY, address=_ADDRESS)
-
-    with browser_page() as page:
-        page.goto(_URL, wait_until="networkidle", timeout=30000)
-        html = page.content()
-
     session = _http.session()
 
-    films: dict[str, Film] = {}
-    subtitles: dict[str, str] = {}
-    for title, url in _film_urls(html).items():
-        details = _details(session, url)
-        subtitles[title] = details.pop("subtitle_label", "")
-        films[title] = _films.register(_films.make(_SOURCE, title, url=url, **details), session=session)
-        yield films[title]
+    # Members-only shows are not sold to the public.
+    shows = [s for s in _get_json(session, _SHOWTIMES_URL)["showtimes"] if not s.get("membersOnly")]
 
-    for title, d, t, ticket_url, screen in _showtimes(html):
-        film = films.get(title)
-        yield Screening(
-            tmdb_id=_tmdb(title),
-            title=title,
-            date=d,
-            time=t,
-            ticket_url=ticket_url,
-            cinema_name=_CINEMA,
-            city=_CITY,
-            screen=screen,
-            **_version.screening_facts(subtitles=subtitles.get(title, "")),
-            film_key=film.key if film else "",
-        )
+    films: dict[int, tuple[Film, int | None]] = {}
+    for show in shows:
+        movie_id = show["movieId"]
+        if movie_id not in films:
+            movie = show["movie"] | _details(session, show["movie"]["slug"])
+            film = _films.register(_film(movie), session=session)
+            films[movie_id] = (film, _tmdb_id(movie))
+            yield film
+
+    for show in shows:
+        film, tmdb_id = films[show["movieId"]]
+        yield _screening(show, tmdb_id=tmdb_id, film_key=film.key)
+
+    log.info("biorio.se: %d screenings, %d films", len(shows), len(films))
 
 
-def _details(session: requests.Session, url: str) -> dict:
+def _get_json(session: requests.Session, url: str) -> dict:
+    resp = session.get(url, timeout=30)
+    resp.raise_for_status()
+    return resp.json()
+
+
+def _details(session: requests.Session, slug: str) -> dict:
+    """Release date and TMDB id, which only the movie endpoint carries."""
     try:
-        resp = session.get(url, timeout=30)
-        resp.raise_for_status()
+        return _get_json(session, f"{_API}/movies/{slug}").get("movie") or {}
     except requests.RequestException as exc:
-        log.warning("biorio.se: film page %s failed: %s", url, exc)
+        log.warning("biorio.se: movie %s failed: %s", slug, exc)
         return {}
-    return _film_details(resp.text)

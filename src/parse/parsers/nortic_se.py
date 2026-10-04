@@ -1,8 +1,10 @@
 """nortic.se — public JSON API, Bio category events only."""
 
+import dataclasses
 import html
 import logging
 import re
+from collections import Counter
 from collections.abc import Iterator
 from datetime import date, time
 
@@ -17,6 +19,33 @@ _SOURCE = "nortic_se"
 _API = "https://www.nortic.se/api/json/shows"
 # Venues file cinema screenings under either label.
 _CATEGORIES = {"Bio", "Film"}
+# Opera holds stage productions and cinema broadcasts alike; broadcasts say so.
+_BROADCAST = re.compile(r"metropolitan|\bmet\b|på bio\b|\bbio\b|livesänd|direktsänd", re.IGNORECASE)
+
+# Event wrappers around film titles: "Bio: Kevlarsjäl", "Bio Kontrast - Super Mario Galaxy", "Frukostbio Top Hat".
+_PREFIX = re.compile(
+    r"^(?:(?P<label>bio kontrast|doc lounge|opera på bio|live på bio|bio)\s*[:\-–]\s*|(?P<word>frukostbio)\s+)",
+    re.IGNORECASE,
+)
+# "Rebuilding - Bio Kontrast", "(För Funkisfamiljer)", "Fjord with English subtitles", "Macbeth - Live från…".
+_SUFFIXES = (
+    re.compile(r"\s+[-–]\s+(?P<label>bio kontrast|bioversionen|live från .+|film\b.*)$", re.IGNORECASE),
+    re.compile(r"\s*\((?P<label>för [^)]+)\)$", re.IGNORECASE),
+    re.compile(r"\s+(?P<label>with english subtitles)$", re.IGNORECASE),
+)
+
+# Labels opening a fact in descriptions: "Speltid: 96 minuter Språk: Engelska Text: Svenska".
+_LABELS = (
+    r"speltid|längd|runtime|genre|åldersgräns|age rating|originaltitel|originalspråk|land|språk|language|"
+    r"subtitles|tal|text|regi|manus|directors?|övrigt|biljetter|arrangör|bio"
+)
+_FIELD_END = rf"(?=\s+(?:{_LABELS})(?:\s*(?:&|och)\s*\w+)?\s*:|\.\s|\.?$)"
+_DUBBED = re.compile(r"\b(?:tal|språk|originalspråk)\s*:[^.:]*dubb", re.IGNORECASE)
+
+# Arena names that are a hall of a cinema named elsewhere.
+_ARENAS = {"Götasalen": ("Bio Göta Lejon", "Götasalen")}
+# "Sjöängen, Stora salongen": cinema, hall.
+_HALL = re.compile(r"(?P<name>.+?),\s*(?P<hall>[^,]*(?:salong\w*|sal|salen))", re.IGNORECASE)
 
 
 def parse() -> Iterator[Screening | Venue | Film]:
@@ -33,10 +62,47 @@ def _text(raw: str | None) -> str:
     return " ".join(html.unescape(re.sub(r"<[^>]+>", " ", raw or "")).split())
 
 
-def _runtime(event: dict) -> int | None:
-    """Longest non-zero show length, in minutes."""
-    lengths = [int(s.get("playTimeInMinutes") or 0) for s in event.get("shows") or []]
-    return max(lengths) or None
+def _field(text: str, labels: str) -> str:
+    """Value after the first of *labels* in a description, up to the next label or sentence end."""
+    m = re.search(rf"\b(?:{labels})\s*:\s*(.*?){_FIELD_END}", text, re.IGNORECASE)
+    return m.group(1).strip() if m else ""
+
+
+def _runtime(text: str) -> int | None:
+    """Minutes stated as "Speltid: 96 minuter", "Längd: 122 min" or "Speltid: 2h 30m".
+
+    The API's playTimeInMinutes is the booked slot, rounded and padded, so it is not used.
+    """
+    value = _field(text, "speltid|längd|runtime")
+    hours = re.search(r"(\d+)\s*(?:h\b|tim)", value)
+    minutes = re.search(r"(\d+)\s*m(?:in|\b)", value)
+    if not hours and not minutes:
+        minutes = re.match(r"(\d+)", value)
+    total = (int(hours.group(1)) * 60 if hours else 0) + (int(minutes.group(1)) if minutes else 0)
+    return total or None
+
+
+def _genres(text: str) -> list[str]:
+    value = _field(text, "genre")
+    return [g[:1].upper() + g[1:] for g in (p.strip() for p in re.split(r"[/,]|\s+och\s+", value)) if g]
+
+
+def _title(raw: str) -> tuple[str, tuple[str, ...]]:
+    """(film title, removed event labels) from an event title."""
+    title = raw.strip()
+    labels: list[str] = []
+    if m := _PREFIX.match(title):
+        labels.append(m.group("label") or m.group("word"))
+        title = title[m.end() :]
+    stripped = True
+    while stripped:
+        stripped = False
+        for pattern in _SUFFIXES:
+            if m := pattern.search(title):
+                labels.append(m.group("label"))
+                title = title[: m.start()]
+                stripped = True
+    return title.strip(), tuple(labels)
 
 
 def _film(event: dict, title: str) -> Film:
@@ -44,55 +110,115 @@ def _film(event: dict, title: str) -> Film:
 
     The API exposes no poster: its images are 16:9 event banners.
     """
-    spoken, _ = _version.from_text(_text(event.get("description")))
+    text = _text(event.get("description"))
+    spoken, _ = _version.from_text(text)
+    original = _field(text, "originaltitel")
     return _films.make(
         _SOURCE,
         title,
-        overview=_text(event.get("description")) or _text(event.get("shortDescription")),
-        runtime=_runtime(event),
+        title_original="" if original == title else original,
+        overview=text or _text(event.get("shortDescription")),
+        runtime=_runtime(text),
+        genres=_genres(text),
+        age_rating=_field(text, "åldersgräns|age rating"),
         url=event.get("link") or "",
-        original_languages=_version.languages(spoken),
+        # Dubbed speech names the screening's audio, not the film's.
+        original_languages=frozenset() if _DUBBED.search(text) else _version.languages(spoken),
     )
 
 
 def _merge(old: Film, new: Film) -> Film:
     """Fill the fields *old* lacks from *new* — the same film under two organizers."""
-    return Film(
-        key=old.key,
-        source=old.source,
-        title=old.title,
-        overview=old.overview or new.overview,
-        runtime=old.runtime or new.runtime,
-        url=old.url or new.url,
-        original_languages=old.original_languages | new.original_languages,
-    )
+    filled = {
+        f.name: getattr(new, f.name)
+        for f in dataclasses.fields(old)
+        if not getattr(old, f.name) and getattr(new, f.name)
+    }
+    return dataclasses.replace(old, **filled) if filled else old
+
+
+def _city(show: dict) -> str:
+    raw = show.get("arenaCity") or ""
+    # API sometimes returns city in ALL-CAPS (e.g. "ELLÖS")
+    return raw.title() if raw == raw.upper() else raw
+
+
+def _arena(show: dict) -> tuple[str, str]:
+    """(cinema, hall) for a show's arena name."""
+    name = (show.get("arenaName") or "").strip()
+    if name in _ARENAS:
+        return _ARENAS[name]
+    if m := _HALL.fullmatch(name):
+        return m.group("name").strip(), m.group("hall").strip()
+    return name, ""
+
+
+def _cinema_names(events: list[dict]) -> dict[tuple[object, str, str], str]:
+    """Canonical cinema per (organizer, city, arena name).
+
+    Organizers spell one cinema several ways ("Folkets Hus Ulricehamn", "Folketshus");
+    the name on most shows wins, the longest on a tie.
+    """
+    counts: dict[tuple[object, str], Counter[str]] = {}
+    for event in events:
+        for show in event.get("shows") or []:
+            name, _ = _arena(show)
+            if name:
+                counts.setdefault((event.get("organizerId"), _city(show)), Counter())[name] += 1
+    names: dict[tuple[object, str, str], str] = {}
+    for (organizer, city), counter in counts.items():
+        best = max(counter, key=lambda n: (counter[n], len(n)))
+        for name in counter:
+            names[(organizer, city, name)] = best if organizer is not None else name
+    return names
+
+
+def _is_screening(event: dict, broadcasters: set[object]) -> bool:
+    if not event.get("title"):
+        return False
+    if event.get("category") in _CATEGORIES:
+        return True
+    return event.get("category") == "Opera" and event.get("organizerId") in broadcasters
+
+
+def _broadcasts(event: dict) -> bool:
+    arenas = " ".join(s.get("arenaName") or "" for s in event.get("shows") or [])
+    return bool(_BROADCAST.search(f"{event.get('title', '')} {_text(event.get('description'))} {arenas}"))
 
 
 def _parse_payload(data: dict) -> Iterator[Screening | Venue | Film]:
-    bio_events = [e for e in data["events"] if e.get("category") in _CATEGORIES and e.get("title")]
+    # An organizer showing one broadcast opera shows its other operas the same way.
+    broadcasters = {e.get("organizerId") for e in data["events"] if e.get("category") == "Opera" and _broadcasts(e)}
+    broadcasters.discard(None)
+    bio_events = [e for e in data["events"] if _is_screening(e, broadcasters)]
     log.info("nortic.se: %d bio events", len(bio_events))
 
-    versioned = [(e, _version.split_title(e["title"])) for e in bio_events]
+    versioned = []
+    for event in bio_events:
+        title, labels = _title(event["title"])
+        versioned.append((event, labels, _version.split_title(title)))
     films: dict[str, Film] = {}
-    for event, (title, *_) in versioned:
+    for event, _, (title, *_) in versioned:
         film = _film(event, title)
         films[film.key] = _merge(films[film.key], film) if film.key in films else film
     yield from films.values()
 
+    names = _cinema_names(bio_events)
     seen_venues: set[tuple[str, str]] = set()
 
-    for event, (film_title, fmt, _language, subtitles) in versioned:
+    for event, labels, (film_title, fmt, _language, subtitles) in versioned:
+        text = _text(event.get("description"))
         # Description language describes the film; title suffixes describe this screening.
-        _, stated_subtitles = _version.from_text(_text(event.get("description")))
+        spoken, stated_subtitles = _version.from_text(text)
+        dubbed = bool(_DUBBED.search(text))
         tmdb_id = _tmdb(film_title)
         key = film_key(_SOURCE, film_title)
 
         count = 0
         for show in event.get("shows") or []:
-            cinema_name = show.get("arenaName") or ""
-            raw_city = show.get("arenaCity") or ""
-            # API sometimes returns city in ALL-CAPS (e.g. "ELLÖS")
-            city = raw_city.title() if raw_city == raw_city.upper() else raw_city
+            arena, screen = _arena(show)
+            city = _city(show)
+            cinema_name = names.get((event.get("organizerId"), city, arena), arena)
             address = show.get("arenaAddress") or ""
             ticket_url = show.get("link") or ""
             raw_dt = show.get("startDate") or ""
@@ -121,11 +247,15 @@ def _parse_payload(data: dict) -> Iterator[Screening | Venue | Film]:
                 time=dt_time,
                 cinema_name=cinema_name,
                 city=city,
+                screen=screen,
                 ticket_url=ticket_url,
                 **_version.screening_facts(
                     format=fmt,
+                    language=spoken if dubbed else "",
                     subtitles=subtitles or stated_subtitles,
-                    source_texts=_version.title_suffixes(event.get("title", "")),
+                    audio_role_text="dubbat" if dubbed else "",
+                    source_texts=(*_version.title_suffixes(event.get("title", "")), *labels),
+                    raw_attributes=labels,
                 ),
                 film_key=key,
             )

@@ -1,35 +1,31 @@
-"""soderkopingsbio.se — BioSverige program list, rendered client-side via Playwright."""
+"""soderkopingsbio.se — BioSverige schedule API; tickets per showing on Tickster."""
 
 import logging
 import re
 from collections.abc import Iterator
 from datetime import date, datetime, time
-from urllib.parse import urljoin
-
-import requests
-from bs4 import BeautifulSoup
+from zoneinfo import ZoneInfo
 
 from parse import _http, _version
-from parse.parsers import _films
-from parse.parsers._browser import page as browser_page
+from parse.parsers import _films, _tickster
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue
 
 log = logging.getLogger(__name__)
 
 _SOURCE = "soderkopingsbio_se"
-_URL = "https://soderkopingsbio.se/program"
-_MOVIE_API = "https://soderkopingsbio.se/api/movies/slug/"
+_SCHEDULE = "https://soderkopingsbio.se/api/eventschedules"
 _MOVIE_PAGE = "https://soderkopingsbio.se/filmer/"
+_TICKSTER = "https://www.tickster.com/se/sv/events/by/f1rd9l09v0b7xdv/soderkopings-bio"
+# The Tickster "PROGRAM" event the site links every showing to.
+_TICKETS = "https://secure.tickster.com/d8fnyrrcl72fv8p"
 _CINEMA = "Söderköpings Bio"
 _CITY = "Söderköping"
-_ADDRESS = "Ringvägen 45"
+_ADDRESS = "Ringvägen 45 A"
+_TZ = ZoneInfo("Europe/Stockholm")
 
 # The CDN fits the image inside the box it is given; posters are portrait.
 _POSTER_BOX = "?resize=600x900"
-
-
-_LANGUAGES = {"sv": "Svenska", "eng": "Engelska"}
 
 # "Tony (Sv.Txt) (Eng.Tal)", "Superhunden Charlie (Sv.Txt) (Sv. Tal)"
 _TAG = re.compile(r"\(\s*(\w+)\s*\.\s*(Txt|Tal)\s*\)", re.IGNORECASE)
@@ -44,56 +40,38 @@ def _parse_title(raw: str) -> tuple[str, str, str]:
     language = ""
     subtitles = ""
     for code, kind in _TAG.findall(raw):
-        name = _LANGUAGES.get(code.lower(), "")
-        if not name:
+        if not _version.languages(code):
             continue
         if kind.lower() == "tal":
-            language = name
+            language = _version.language(code)
         else:
-            subtitles = name
+            subtitles = _version.subtitles(code)
 
-    return _TAG.sub("", raw).strip(), _version.language(language), _version.subtitles(subtitles)
+    return _TAG.sub("", raw).strip(), language, subtitles
 
 
-def _showtimes(html: str) -> Iterator[tuple[str, date, time, str, str, str, str]]:
-    """Yield (title, date, time, ticket_url, screen, language, subtitles)."""
-    soup = BeautifulSoup(html, "html.parser")
-
-    for row in soup.select(".program-list__row"):
-        stamp = row.select_one("time[datetime]")
-        title_el = row.select_one("h3.program__title")
-        ticket = row.select_one(".program__actions a.btn-primary")
-        if not stamp or not title_el or not ticket:
-            continue
-
+def _showtimes(items: list[dict]) -> Iterator[tuple[str, date, time, str, str, str, dict, str]]:
+    """Yield (title, date, time, screen, language, subtitles, movie, booking_url) per schedule row."""
+    for item in items:
         try:
-            dt = datetime.fromisoformat(stamp["datetime"])
+            dt = datetime.fromisoformat(item.get("startDate") or "")
         except ValueError:
             continue
 
-        title, language, subtitles = _parse_title(title_el.get_text(strip=True))
+        title, language, subtitles = _parse_title(item.get("eventName") or "")
         if not title:
             continue
 
-        meta = [li.get_text(strip=True) for li in row.select("ul.program__meta li")]
-        screen = next((m for m in meta if m.startswith("Sal")), "")
-
-        yield title, dt.date(), dt.time(), urljoin(_URL, ticket.get("href", "")), screen, language, subtitles
-
-
-def _film_slugs(html: str) -> dict[str, str]:
-    """Map each title to the movie slug its "Läs mer" link ends in."""
-    soup = BeautifulSoup(html, "html.parser")
-    slugs: dict[str, str] = {}
-    for row in soup.select(".program-list__row"):
-        link = row.select_one("h3.program__title a[href]")
-        if not link:
-            continue
-        title, _, _ = _parse_title(link.get_text(strip=True))
-        slug = link["href"].rsplit("/", 1)[-1]
-        if title and slug:
-            slugs.setdefault(title, slug)
-    return slugs
+        yield (
+            title,
+            dt.date(),
+            dt.time(),
+            item.get("venueName") or "",
+            language,
+            subtitles,
+            item.get("movie") or {},
+            item.get("bookingUrl") or "",
+        )
 
 
 def _film_details(data: dict) -> dict:
@@ -117,40 +95,36 @@ def _film_details(data: dict) -> dict:
 def parse() -> Iterator[Screening | Venue | Film]:
     yield Venue(name=_CINEMA, city=_CITY, address=_ADDRESS)
 
-    with browser_page() as page:
-        page.goto(_URL, wait_until="networkidle", timeout=30000)
-        html = page.content()
-
     session = _http.session()
+    # Without the range parameters the API returns only today's showings.
+    params = {"StartDate": datetime.now(_TZ).date().isoformat(), "Limit": 500, "Months": 12, "Days": 365}
+    resp = session.get(_SCHEDULE, params=params, timeout=30)
+    resp.raise_for_status()
+    showtimes = list(_showtimes(resp.json()))
+
+    programme = _tickster.Programme.fetch(_TICKSTER, session)
 
     films: dict[str, Film] = {}
-    for title, slug in _film_slugs(html).items():
-        details = _details(session, _MOVIE_API + slug)
-        film = _films.make(_SOURCE, title, url=_MOVIE_PAGE + slug, **details)
-        films[title] = _films.register(film, session=session)
-        yield films[title]
-
-    for title, d, t, ticket_url, screen, language, subtitles in _showtimes(html):
+    for title, d, t, screen, language, subtitles, movie, booking_url in showtimes:
         film = films.get(title)
+        if film is None:
+            slug = movie.get("slug") or ""
+            film = _films.make(
+                _SOURCE, title, url=_MOVIE_PAGE + slug if slug else "", **(_film_details(movie) if movie else {})
+            )
+            film = films[title] = _films.register(film, session=session)
+            yield film
+
+        event = programme.find(title, d, t)
         yield Screening(
             tmdb_id=_tmdb(title),
             title=title,
             date=d,
             time=t,
-            ticket_url=ticket_url,
+            ticket_url=booking_url or (event.url if event else _TICKETS),
             cinema_name=_CINEMA,
             city=_CITY,
             screen=screen,
             **_version.screening_facts(language=language, subtitles=subtitles),
-            film_key=film.key if film else "",
+            film_key=film.key,
         )
-
-
-def _details(session: requests.Session, url: str) -> dict:
-    try:
-        resp = session.get(url, timeout=30)
-        resp.raise_for_status()
-        return _film_details(resp.json())
-    except (requests.RequestException, ValueError) as exc:
-        log.warning("soderkopingsbio.se: movie %s failed: %s", url, exc)
-        return {}

@@ -1,0 +1,75 @@
+{
+  "movie": {
+    "ncgId": "NCG207087",
+    "title": "Goodfellas - Klassiker",
+    "slug": "goodfellas-klassiker",
+    "releaseDate": "2027-02-09T00:00:00",
+    "releaseDateInfo": "",
+    "preReleaseDate": "0001-01-01T00:00:00",
+    "preReleaseDateInfo": "",
+    "reReleaseDate": "0001-01-01T00:00:00",
+    "reReleaseDateInfo": "",
+    "rating": {
+      "displayName": "15 år",
+      "alias": "15",
+      "age": 15,
+      "ageAccompanied": 12
+    },
+    "bannerText": null,
+    "distributor": null,
+    "posterUrl": "https://catalog.cinema-api.com/cf/images/ncg-images/43b4506972394d30a86f1e4ac78b6d98.jpg?w=1440&version=ACC9C5EE946C854DE1087BFC7AF56F51",
+    "length": 146,
+    "specialMovie": false,
+    "videoStreams": [],
+    "genres": [
+      {
+        "name": "Crime"
+      },
+      {
+        "name": "Drama"
+      }
+    ],
+    "categories": [],
+    "primaryGenre": {
+      "name": "Crime"
+    },
+    "filmwebId": null,
+    "relatedMovies": []
+  },
+  "detail": {
+    "ncgId": "NCG207087",
+    "title": "Goodfellas - Klassiker",
+    "originalTitle": "Goodfellas",
+    "slug": "goodfellas-klassiker",
+    "originalLanguage": "en",
+    "originalLanguages": [
+      {
+        "nativeName": "English",
+        "englishName": "English",
+        "displayName": "Engelska",
+        "alias": "en",
+        "description": null
+      }
+    ],
+    "productionYear": 1990,
+    "shortDescription": "Henry Hill drömmer om ett liv inom maffian och stiger genom leden tillsammans med sina vänner Jimmy Conway och Tommy DeVito.",
+    "longDescription": "<p>Henry Hill drömmer om ett liv inom maffian och stiger genom leden tillsammans med sina vänner Jimmy Conway och Tommy DeVito. Men när makt, pengar och våld tar över sätts både vänskap och lojalitet på prov.</p>\r\n",
+    "releaseDate": "2027-02-09T00:00:00",
+    "reReleaseDate": null,
+    "length": 146,
+    "rating": {
+      "displayName": "15 år",
+      "alias": "15",
+      "age": 15,
+      "ageAccompanied": 12
+    },
+    "genres": [
+      {
+        "name": "Crime"
+      },
+      {
+        "name": "Drama"
+      }
+    ]
+  }
+}

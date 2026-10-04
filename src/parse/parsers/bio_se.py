@@ -1,5 +1,6 @@
 """bio.se — JSON API, all cinemas in one pass."""
 
+import dataclasses
 import html
 import logging
 import re
@@ -10,6 +11,7 @@ from parse import _http, _version
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue
+from store.version import Language
 
 log = logging.getLogger(__name__)
 
@@ -25,6 +27,12 @@ def _ticket_url(payment_link: str) -> str:
     if payment_link.startswith(("http://", "https://")):
         return payment_link
     return f"{_SITE}{payment_link}"
+
+
+def _cinema_url(cinema: dict) -> str:
+    """Cinema page on bio.se; sessions without a payment link book from there."""
+    slug = _clean(cinema.get("slug", ""))
+    return f"{_SITE}/biografer/{slug}" if slug else ""
 
 
 def _clean(text: str) -> str:
@@ -43,9 +51,12 @@ def _runtime(raw: str) -> int | None:
     return int(digits) or None if digits.isdigit() else None
 
 
-def _film(movie: dict, title: str) -> Film:
+def _film(movie: dict, title: str, title_language: str) -> Film:
     """Film metadata from an API movie record, under its title without version tags."""
     genres = [g for g in (_clean(part) for part in (movie.get("genre") or "").split(",")) if g]
+    language = _clean(movie.get("language", ""))
+    # The language field names the listed version: "Svenska (dubbad)", or Swedish behind a "sv. tal" title tag.
+    dubbed = "dubb" in language.casefold() or _version.languages(title_language) == {Language.SWEDISH}
     return _films.make(
         _SOURCE,
         title,
@@ -55,8 +66,18 @@ def _film(movie: dict, title: str) -> Film:
         age_rating=_clean(movie.get("rating", "")),
         poster_url=_clean(movie.get("poster_url", "")),
         url=f"{_SITE}/movie/{movie['id']}" if movie.get("id") else "",
-        original_languages=_version.languages(_clean(movie.get("language", ""))),
+        original_languages=frozenset() if dubbed else _version.languages(language),
     )
+
+
+def _merge(film: Film, other: Film) -> Film:
+    """*film* with its empty fields filled from *other*, a later entry under the same key."""
+    filled = {
+        f.name: getattr(other, f.name)
+        for f in dataclasses.fields(film)
+        if not getattr(film, f.name) and getattr(other, f.name)
+    }
+    return dataclasses.replace(film, **filled) if filled else film
 
 
 def _venue(cinema: dict) -> Venue | None:
@@ -69,51 +90,52 @@ def _venue(cinema: dict) -> Venue | None:
     return Venue(name=name, city=city or name.split()[0], address=address)
 
 
-def _screening_audio(film: Film, raw: str, title_language: str) -> str:
-    if title_language:
-        return title_language
-    raw = _clean(raw)
-    if not raw:
-        return ""
-    if film.original_languages and _version.languages(raw) == film.original_languages:
-        return ""
-    return _version.language(raw)
+def _showtimes(
+    payload: dict, fallback_url: str = ""
+) -> Iterator[tuple[Film, date, time, str, str, str, str, str, tuple[str, ...], tuple[str, ...]]]:
+    """Yield showtime fields, version source texts and raw attributes.
 
-
-def _showtimes(payload: dict) -> Iterator[tuple[Film, date, time, str, str, str, str, str, str, str]]:
-    """Yield showtime fields and raw title/format source labels."""
+    Sessions without a payment link get *fallback_url*, or are skipped without one.
+    """
     for entry in payload["movies"]:
         movie = entry.get("movie", {})
         # Versions ride in titles: "Bortglömda ön eng. tal ATMOS".
         title_raw = _clean(movie.get("title", ""))
         title, fmt, language, subtitles = _version.split_title(title_raw)
-        film = _film(movie, title)
+        film = _film(movie, title, language)
         if not film.title:
             continue
         for sess in entry.get("sessions", []):
             raw = sess.get("show_date_time", "")
             if not raw:
                 continue
-            url = _ticket_url(sess.get("payment_link", ""))
+            url = _ticket_url(sess.get("payment_link", "")) or fallback_url
             if not url:
                 continue
             when = datetime.fromisoformat(raw)
+            format_raw = _clean(sess.get("format", ""))
+            # Free-form labels: "English subtitles", "Svenskt tal", "+ Q & A".
+            custom = tuple(
+                label
+                for label in (_clean(c) for c in (sess.get("session_attributes_names") or {}).get("custom") or [])
+                if label
+            )
             yield (
                 film,
                 when.date(),
                 when.time(),
                 url,
                 _clean(sess.get("screen_name", "")),
-                _version.formats(sess.get("format", ""), fmt),
-                _screening_audio(film, sess.get("language", ""), language),
+                _version.formats(format_raw, fmt),
+                language or _clean(sess.get("language", "")),
                 _version.subtitles(sess.get("text", "")) or subtitles,
-                title_raw,
-                _clean(sess.get("format", "")),
+                (format_raw, *_version.title_suffixes(title_raw), *custom),
+                tuple(label for label in (format_raw, *custom) if label),
             )
 
 
 def parse() -> Iterator[Screening | Venue | Film]:
-    seen: set[str] = set()
+    films: dict[str, Film] = {}
     session = _http.session()
     session.headers["Accept"] = "application/json"
 
@@ -134,10 +156,10 @@ def parse() -> Iterator[Screening | Venue | Film]:
         resp.raise_for_status()
 
         count = 0
-        for film, d, t, url, screen, fmt, language, subtitles, title_raw, format_raw in _showtimes(resp.json()):
-            if film.key not in seen:
-                seen.add(film.key)
-                yield _films.register(film)
+        for film, d, t, url, screen, fmt, language, subtitles, source_texts, raw_attributes in _showtimes(
+            resp.json(), _cinema_url(cinema)
+        ):
+            films[film.key] = _merge(films[film.key], film) if film.key in films else film
             yield Screening(
                 tmdb_id=_tmdb(film.title),
                 title=film.title,
@@ -150,7 +172,8 @@ def parse() -> Iterator[Screening | Venue | Film]:
                     format=fmt,
                     language=language,
                     subtitles=subtitles,
-                    source_texts=(format_raw, *_version.title_suffixes(title_raw)),
+                    source_texts=source_texts,
+                    raw_attributes=raw_attributes,
                 ),
                 screen=screen,
                 ticket_url=url,
@@ -159,3 +182,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
 
         if count:
             log.info("  %s (%s): %d screenings", venue.name, venue.city, count)
+
+    # Entries of one film differ in completeness across cinemas.
+    for film in films.values():
+        yield _films.register(film)

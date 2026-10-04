@@ -3,7 +3,7 @@
 import pytest
 
 from parse import _version
-from store.version import AudioKind, Dimension, ProjectionMedium
+from store.version import AudioKind, Dimension, Language, ProjectionMedium
 
 
 @pytest.mark.parametrize(
@@ -267,3 +267,8 @@ def test_subtitle_role_does_not_set_audio_role():
 
     assert version.audio.kind is AudioKind.UNKNOWN
     assert version.audio.languages == frozenset({_version.Language.SWEDISH})
+
+
+@pytest.mark.parametrize(("raw", "expected"), [("DK", {Language.DANISH}), ("dk", {Language.DANISH})])
+def test_languages_read_country_style_codes(raw, expected):
+    assert _version.languages(raw) == expected

@@ -1,4 +1,4 @@
-"""hallundafolketshus.se — CaféBio events with DD/MM HH:MM format."""
+"""hallundafolketshus.se — CaféBio, film and opera events; tickets per showing on Tickster."""
 
 import logging
 import re
@@ -8,9 +8,9 @@ from datetime import date, time
 import requests
 from bs4 import BeautifulSoup
 
-from parse import _http
+from parse import _http, _version
 from parse._util import infer_year
-from parse.parsers import _films
+from parse.parsers import _films, _tickster
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue, film_key
 
@@ -27,46 +27,53 @@ _SESSION = _http.session("Mozilla/5.0")
 # Site chrome that shares the uploads directory with film posters.
 _NOT_A_POSTER = re.compile(r"logo|favicon|icon", re.IGNORECASE)
 
-_HOURS = re.compile(r"(\d+)\s*tim\w*(?:\s*(\d+)\s*min\w*)?", re.IGNORECASE)
+# Event categories that are screenings: "CaféBio", "Film", "Opera - Live på Bio".
+_SCREENING = re.compile(r"bio|^film$", re.IGNORECASE)
+_WHEN = re.compile(r"^(\d{2})/(\d{2})\s+(\d{2}):(\d{2})")
+
+_HOURS = re.compile(r"(\d+)\s*tim\w*(?:\s*(?:och\s*)?(\d+)\s*min\w*)?", re.IGNORECASE)
 _MINUTES = re.compile(r"^(\d+)\s*min\w*$", re.IGNORECASE)
 _AGE = re.compile(r"^(barntillåten|(?:från|fr\.?)\s*\d+\s*år|\d+\s*år)$", re.IGNORECASE)
 
+# Labelled fact paragraphs: "Längd: 1 tim 22 min", "Speltid Cirka 3 timmar och 29 minuter", "Språk Italienska".
+_LABELLED = re.compile(r"^(Speltid|Längd|Genre|Språk)\s*:?\s*(.+)$", re.IGNORECASE)
+_SUBTITLED = re.compile(r"^(\w+)\s+undertext", re.IGNORECASE)
+
+
+def _text(el) -> str:
+    return " ".join(el.get_text(" ", strip=True).split()) if el else ""
+
+
+def _title(raw: str) -> str:
+    """Film and opera titles are set in capitals: "MACBETH" becomes "Macbeth"."""
+    title = " ".join(raw.split())
+    return title.capitalize() if title.isupper() else title
+
 
 def _events(html: str) -> Iterator[tuple[str, date, time, str]]:
-    """Yield (title, date, time, ticket_url) for every CaféBio event in *html*."""
+    """Yield (title, date, time, event_url) for every screening event in *html*."""
     soup = BeautifulSoup(html, "html.parser")
-    seen: set[tuple[str, str]] = set()
+    seen: set[tuple[str, date]] = set()
 
-    for el in soup.select("[class*=event]"):
-        text = el.get_text(" ", strip=True)
-        if "CaféBio" not in text:
+    for item in soup.select(".em-event.em-item"):
+        if not _SCREENING.search(_text(item.select_one(".em-item-cat"))):
+            continue
+        link = item.select_one(".em-item-title a[href]")
+        m = _WHEN.match(_text(item.select_one(".em-date-time")))
+        if not link or not m:
             continue
 
-        # Containers wrapping several events aggregate their text and links.
-        hrefs = {a.get("href", "") for a in el.find_all("a", href=re.compile(r"/events/"))}
-        if len(hrefs) != 1:
+        title = _title(_text(link))
+        day, month = int(m.group(1)), int(m.group(2))
+        when = date(infer_year(month), month, day)
+        href = link["href"]
+        if not title or (title, when) in seen:
             continue
-
-        m = re.search(r"CaféBio\s+(.+?)\s+(\d{2})/(\d{2})\s+(\d{2}):(\d{2})", text)
-        if not m:
-            continue
-
-        title = m.group(1).strip()
-        day, month = int(m.group(2)), int(m.group(3))
-        hour, minute = int(m.group(4)), int(m.group(5))
-
-        href = next(iter(hrefs))
-        if not href:
-            continue
+        seen.add((title, when))
         if not href.startswith("http"):
             href = _URL.rstrip("/") + href
 
-        key = (title, f"{day:02d}/{month:02d}")
-        if key in seen:
-            continue
-        seen.add(key)
-
-        yield title, date(infer_year(month), month, day), time(hour, minute), href
+        yield title, when, time(int(m.group(3)), int(m.group(4))), href
 
 
 def _runtime(line: str) -> int | None:
@@ -114,7 +121,46 @@ def _details(html: str) -> dict:
         details["overview"] = next((t for t in rest if len(t) > 120), "")
         break
 
+    # Film and opera pages label each fact instead.
+    for label, value in _labelled(article):
+        if label in ("speltid", "längd") and not details["runtime"]:
+            details["runtime"] = _runtime(value)
+        elif label == "genre" and not details["genres"]:
+            details["genres"] = [g.strip() for g in re.split(r"[,/]", value) if g.strip()]
+    if not details["overview"]:
+        # Unclosed tags can leave a paragraph wrapping the rest of the page.
+        details["overview"] = next((t for p in paragraphs if not p.find("p") and len(t := _text(p)) > 120), "")
+
     return details
+
+
+def _labelled(article) -> Iterator[tuple[str, str]]:
+    for p in article.find_all("p"):
+        if m := _LABELLED.match(_text(p)):
+            yield m.group(1).lower(), m.group(2)
+
+
+def _stated_version(html: str) -> tuple[str, str]:
+    """(language, subtitles) from "Språk Italienska" and "Svenska undertexter!"."""
+    soup = BeautifulSoup(html, "html.parser")
+    article = soup.find("article") or soup
+    language = next((_version.language(v) for label, v in _labelled(article) if label == "språk"), "")
+    subtitles = next(
+        (_version.subtitles(m.group(1)) for p in article.find_all("p") if (m := _SUBTITLED.match(_text(p)))), ""
+    )
+    return language, subtitles
+
+
+def _ticket(html: str) -> str:
+    """The "Köp Biljett" Tickster link on an event page."""
+    soup = BeautifulSoup(html, "html.parser")
+    link = soup.select_one("a[href*='tickster.com']")
+    return link["href"] if link else ""
+
+
+def _screen(venue: str) -> str:
+    """ "Hallunda Folkets Hus - Brage" names the Brage salon."""
+    return venue.removeprefix(_CINEMA).strip(" -")
 
 
 def _fetch(url: str) -> str:
@@ -128,14 +174,23 @@ def parse() -> Iterator[Screening | Venue | Film]:
 
     seen: set[str] = set()
     for title, day, start, href in _events(_fetch(_URL)):
+        page = ""
+        try:
+            page = _fetch(href)
+        except requests.RequestException as exc:
+            log.warning("hallundafolketshus: %s failed: %s", href, exc)
+
         if title not in seen:
             seen.add(title)
-            details = {}
-            try:
-                details = _details(_fetch(href))
-            except requests.RequestException as exc:
-                log.warning("hallundafolketshus: %s details failed: %s", href, exc)
+            details = _details(page) if page else {}
             yield _films.register(_films.make(_SOURCE, title, url=href, **details))
+
+        ticket = _ticket(page) if page else ""
+        event = _tickster.fetch_event(ticket, _SESSION) if ticket else None
+        language, subtitles = _stated_version(page) if page else ("", "")
+        if event:
+            _, spoken, subs = _tickster.version(event.title)
+            language, subtitles = spoken or language, subs or subtitles
 
         yield Screening(
             tmdb_id=_tmdb(title),
@@ -143,7 +198,9 @@ def parse() -> Iterator[Screening | Venue | Film]:
             title=title,
             date=day,
             time=start,
-            ticket_url=href,
+            ticket_url=event.url if event else ticket or href,
             cinema_name=_CINEMA,
             city=_CITY,
+            screen=_screen(event.venue) if event else "",
+            **_version.screening_facts(language=language, subtitles=subtitles),
         )

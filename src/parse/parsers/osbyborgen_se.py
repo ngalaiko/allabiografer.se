@@ -6,7 +6,7 @@ import re
 from collections.abc import Iterator
 from datetime import date, time
 
-from parse import _http
+from parse import _http, _version
 from parse._util import infer_year
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
@@ -17,6 +17,13 @@ _URL = "https://osbyborgen.se/"
 _CINEMA = "Bio Borgen"
 _CITY = "Osby"
 _ADDRESS = "Västra Storgatan"
+
+# Tickster event types: 1 "Filmer", 2 "Evenemang" (live shows).
+_LIVE_EVENT = 2
+# "dagbio<br>på spanska" — spoken language.
+_LABEL_LANGUAGE = re.compile(r"\bpå\s+([^\W\d_]+)", re.IGNORECASE)
+# "Ny tid kl 14.00" — a schedule change, already reflected in the session time.
+_SCHEDULE_NOTE = re.compile(r"^ny tid\b", re.IGNORECASE)
 
 _MONTHS = {
     "jan": 1,
@@ -48,11 +55,11 @@ def _parse_time(text: str) -> time | None:
 
 
 def _sessions(page: str) -> list[dict]:
-    """Session records from the vueData_sessions blob."""
+    """Film session records from the vueData_sessions blob; live events are left out."""
     m = re.search(r'vueData_sessions\s*=\s*(\{.*?"sessions":\[.*?\]\})', page, re.DOTALL)
     if not m:
         raise ValueError("osbyborgen.se: no schedule found")
-    return json.loads(m.group(1)).get("sessions", [])
+    return [s for s in json.loads(m.group(1)).get("sessions", []) if s.get("f_event_type_id") != _LIVE_EVENT]
 
 
 def _detail(page: str) -> dict:
@@ -67,16 +74,26 @@ def _text(raw: object) -> str:
 
 
 def _runtime(raw: object) -> int | None:
-    """Minutes from a "1 tim 21" or "2:10" length."""
-    text = str(raw or "").strip()
+    """Minutes from a "1 tim 21", "2 h inkl p", "105 min" or "2:10" length."""
+    text = str(raw or "").strip().lower()
     nums = [int(n) for n in re.findall(r"\d+", text)]
     if not nums:
         return None
-    if len(nums) > 1 or "tim" in text or ":" in text:
+    if len(nums) > 1 or re.search(r"\d\s*(?:tim|h\b)", text) or ":" in text:
         minutes = nums[0] * 60 + (nums[1] if len(nums) > 1 else 0)
     else:
         minutes = nums[0]
     return minutes or None
+
+
+def _label_facts(raw: object) -> dict[str, object]:
+    """Screening version fields from a session label: "på svenska", "dagbio<br>på spanska"."""
+    label = _text(raw)
+    m = _LABEL_LANGUAGE.search(label)
+    return _version.screening_facts(
+        language=_version.language(m.group(1)) if m else "",
+        raw_attributes=(label,) if label and not _SCHEDULE_NOTE.match(label) else (),
+    )
 
 
 def _film_url(film_id: int | str) -> str:
@@ -130,4 +147,5 @@ def parse() -> Iterator[Screening | Venue | Film]:
             ticket_url=ticket_url,
             cinema_name=_CINEMA,
             city=_CITY,
+            **_label_facts(sess.get("f_label")),
         )

@@ -1,163 +1,502 @@
 {
-  "props": {
-    "pageProps": {
-      "programList": {
-        "features": [
-          {
-            "id": 9886,
-            "info": {
-              "title": "Biosalongen abonnerad",
-              "duration": 0,
-              "audioLanguage": "",
-              "textLanguage": "",
-              "synopsis": "",
-              "genres": [],
-              "ageLimit": "",
-              "image": null
-            },
-            "url": "https://www.bioroy.se/program/biosalongen-abonnerad",
-            "premiereDate": null
-          },
-          {
-            "id": 16746,
-            "info": {
-              "title": "Tony",
-              "duration": 106,
-              "audioLanguage": "ENG",
-              "textLanguage": "SV",
-              "synopsis": "<p><strong>Matt Johnsons hyllade spelfilm om en ung Anthony Bourdain.</strong></p>\n<p>En 19-årig Anthony Bourdain reser till Provincetown.</p>",
-              "genres": [
-                {
-                  "id": 1149,
-                  "name": "Drama",
-                  "alias": "drama"
-                },
-                {
-                  "id": 1144,
-                  "name": "Komedi",
-                  "alias": "komedi"
-                }
-              ],
-              "ageLimit": "Från 11 år",
-              "image": {
-                "imageUrl": "http://localhost:8080/media/4ahljaau/tony-still.jpg",
-                "crops": [
-                  {
-                    "alias": "card",
-                    "url": "http://localhost:8080/media/4ahljaau/tony-still.jpg?format=jpg&quality=100&ranchor=center&width=960&height=540&rmode=crop",
-                    "width": 960,
-                    "height": 540
-                  },
-                  {
-                    "alias": "poster",
-                    "url": "http://localhost:8080/media/4ahljaau/tony-still.jpg?format=jpg&quality=100&ranchor=center&width=300&height=450&rmode=crop",
-                    "width": 300,
-                    "height": 450
-                  }
-                ]
-              }
-            },
-            "url": "https://www.bioroy.se/program/tony",
-            "premiereDate": "2026-09-18T00:00:00.000Z"
-          },
-          {
-            "id": 18990,
-            "info": {
-              "title": "Nosferatu",
-              "duration": 95,
-              "audioLanguage": "STUM",
-              "textLanguage": "SV",
-              "synopsis": "<p>Stumfilmsklassiker med liveackompanjemang.</p>",
-              "genres": [
-                {
-                  "id": 1159,
-                  "name": "Skräck",
-                  "alias": "skrack"
-                }
-              ],
-              "ageLimit": "Från 15 år",
-              "image": null
-            },
-            "url": "https://www.bioroy.se/program/nosferatu",
-            "premiereDate": null
-          }
-        ],
-        "schedule": [
-          {
-            "featureId": 9886,
-            "dates": [
-              {
-                "startDate": "2026-09-29T18:00:00.000",
-                "ticksterLink": "https://www.bioroy.se/program/biosalongen-abonnerad",
-                "saloonLabel": "",
-                "soldOut": false
-              },
-              {
-                "startDate": "2026-11-03T17:30:00.000",
-                "ticksterLink": "https://www.bioroy.se/program/biosalongen-abonnerad",
-                "saloonLabel": "",
-                "soldOut": false
-              },
-              {
-                "startDate": "2026-11-09T18:00:00.000",
-                "ticksterLink": "https://www.bioroy.se/program/biosalongen-abonnerad",
-                "saloonLabel": "",
-                "soldOut": false
-              }
-            ]
-          },
-          {
-            "featureId": 16746,
-            "dates": [
-              {
-                "startDate": "2026-09-20T10:30:00.000",
-                "ticksterLink": "https://secure.tickster.com/bn89nz9nh854fdt",
-                "saloonLabel": "",
-                "soldOut": true
-              }
-            ]
-          },
-          {
-            "featureId": 16746,
-            "dates": [
-              {
-                "startDate": "2026-09-22T18:00:00.000",
-                "ticksterLink": "https://secure.tickster.com/dxhamllat43cm82",
-                "saloonLabel": "",
-                "soldOut": false
-              },
-              {
-                "startDate": "2026-09-24T20:30:00.000",
-                "ticksterLink": "https://secure.tickster.com/57xj0e2m9vfvr0g",
-                "saloonLabel": "",
-                "soldOut": false
-              }
-            ]
-          },
-          {
-            "featureId": 18990,
-            "dates": [
-              {
-                "startDate": "2026-10-31T13:00:00.000",
-                "ticksterLink": "https://secure.tickster.com/xh48rjbgl8uz6rd",
-                "saloonLabel": "",
-                "soldOut": false
-              }
-            ]
-          },
-          {
-            "featureId": 16746,
-            "dates": [
-              {
-                "startDate": "2026-09-28T20:00:00.000",
-                "ticksterLink": "https://secure.tickster.com/gg6aun6mwc0cngm",
-                "saloonLabel": "",
-                "soldOut": false
-              }
-            ]
-          }
+ "props": {
+  "pageProps": {
+   "programList": {
+    "features": [
+     {
+      "id": 9886,
+      "info": {
+       "title": "Biosalongen abonnerad",
+       "duration": 0,
+       "audioLanguage": "",
+       "textLanguage": "",
+       "synopsis": "",
+       "genres": [],
+       "ageLimit": "",
+       "image": null
+      },
+      "url": "https://www.bioroy.se/program/biosalongen-abonnerad",
+      "premiereDate": null
+     },
+     {
+      "id": 16746,
+      "info": {
+       "title": "Tony",
+       "duration": 106,
+       "audioLanguage": "ENG",
+       "textLanguage": "SV",
+       "synopsis": "<p><strong>Matt Johnsons hyllade spelfilm om en ung Anthony Bourdain.</strong></p>\n<p>En 19-årig Anthony Bourdain reser till Provincetown.</p>",
+       "genres": [
+        {
+         "id": 1149,
+         "name": "Drama",
+         "alias": "drama"
+        },
+        {
+         "id": 1144,
+         "name": "Komedi",
+         "alias": "komedi"
+        }
+       ],
+       "ageLimit": "Från 11 år",
+       "image": {
+        "imageUrl": "http://localhost:8080/media/4ahljaau/tony-still.jpg",
+        "crops": [
+         {
+          "alias": "card",
+          "url": "http://localhost:8080/media/4ahljaau/tony-still.jpg?format=jpg&quality=100&ranchor=center&width=960&height=540&rmode=crop",
+          "width": 960,
+          "height": 540
+         },
+         {
+          "alias": "poster",
+          "url": "http://localhost:8080/media/4ahljaau/tony-still.jpg?format=jpg&quality=100&ranchor=center&width=300&height=450&rmode=crop",
+          "width": 300,
+          "height": 450
+         }
         ]
+       }
+      },
+      "url": "https://www.bioroy.se/program/tony",
+      "premiereDate": "2026-09-18T00:00:00.000Z"
+     },
+     {
+      "id": 18990,
+      "info": {
+       "title": "Nosferatu",
+       "duration": 95,
+       "audioLanguage": "STUM",
+       "textLanguage": "SV",
+       "synopsis": "<p>Stumfilmsklassiker med liveackompanjemang.</p>",
+       "genres": [
+        {
+         "id": 1159,
+         "name": "Skräck",
+         "alias": "skrack"
+        }
+       ],
+       "ageLimit": "Från 15 år",
+       "image": null
+      },
+      "url": "https://www.bioroy.se/program/nosferatu",
+      "premiereDate": null
+     },
+     {
+      "id": 14714,
+      "url": "https://www.bioroy.se/program/digger",
+      "isUpcoming": false,
+      "premiereDate": "2026-10-02T00:00:00.000Z",
+      "ticketsOnSale": "2026-09-22T00:00:00.000Z",
+      "ticketsOutNow": true,
+      "info": {
+       "title": "Digger",
+       "synopsis": "<p>Världens mäktigaste man försöker frenetiskt att övertyga mänskligheten att han är dess räddare innan den katastrof han skapat förintar allt.</p>",
+       "genres": [
+        {
+         "id": 1149,
+         "name": "Drama",
+         "alias": "drama"
+        },
+        {
+         "id": 1144,
+         "name": "Komedi",
+         "alias": "komedi"
+        }
+       ],
+       "ageLimit": "Från 11 år",
+       "duration": 129,
+       "audioLanguage": "ENG",
+       "textLanguage": "SV",
+       "image": {
+        "width": null,
+        "height": null,
+        "alt": "",
+        "title": null,
+        "imageUrl": "http://localhost:8080/media/oxzh2anr/digger-hero.jpg",
+        "focalPoint": null,
+        "crops": [
+         {
+          "alias": "card",
+          "name": "card",
+          "url": "http://localhost:8080/media/oxzh2anr/digger-hero.jpg?format=jpg&quality=100&ranchor=center&width=960&height=540&rmode=crop",
+          "width": 960,
+          "height": 540,
+          "coordinates": null
+         },
+         {
+          "alias": "poster",
+          "name": "poster",
+          "url": "http://localhost:8080/media/oxzh2anr/digger-hero.jpg?format=jpg&quality=100&ranchor=center&width=300&height=450&rmode=crop",
+          "width": 300,
+          "height": 450,
+          "coordinates": null
+         }
+        ]
+       },
+       "type": "FeatureTypeMovie"
       }
-    }
+     },
+     {
+      "id": 18988,
+      "url": "https://www.bioroy.se/program/var-jord",
+      "isUpcoming": false,
+      "premiereDate": null,
+      "ticketsOnSale": null,
+      "ticketsOutNow": false,
+      "info": {
+       "title": "Vår jord",
+       "synopsis": "<p><strong>Hasselbladstiftelsen bjuder in till en filmvisning av dokumentärfilmen <em>Vår jord</em>. </strong></p>\n<p>Under markytan pågår ett myllrande liv som är avgörande för hur växter mår, hur mycket vi kan skörda och kanske även hur våra grönsaker smakar. I den svenska dokumentärfilmen Vår jord från 2026 riktas blicken mot jordens mikroliv och det komplexa samspelet mellan mikroorganismer, växter, odling och människor.</p>\n<p>Filmen följer lantbrukare och grönsaksodlare som arbetar med naturens egna processer och utforskar frågor om markhälsa, biologisk mångfald och framtidens livsmedelsproduktion. Hur kan odlingsmetoder bidra till att stärka jordens egna processer och skapa bättre förutsättningar för ett levande mikroliv? Och hur kan vi både ta hjälp av och samtidigt stärka livet i jorden?</p>\n<p>Efter filmvisningen följer ett samtal om filmens teman. Medverkar gör filmens regissör och producent My Lindberg tillsammans med Louise Wolthers, forskningsansvarig på Hasselbladstiftelsen.</p>\n<p><strong>Filmvisningen är gratis.</strong></p>",
+       "genres": [
+        {
+         "id": 1160,
+         "name": "Dokumentär",
+         "alias": "dokumentar"
+        }
+       ],
+       "ageLimit": "Barntillåten",
+       "duration": 59,
+       "audioLanguage": "SV",
+       "textLanguage": "",
+       "image": {
+        "width": null,
+        "height": null,
+        "alt": "",
+        "title": null,
+        "imageUrl": "http://localhost:8080/media/kt1eaylb/va-rjordperhb.jpg",
+        "focalPoint": null,
+        "crops": [
+         {
+          "alias": "card",
+          "name": "card",
+          "url": "http://localhost:8080/media/kt1eaylb/va-rjordperhb.jpg?format=jpg&quality=100&ranchor=center&width=960&height=540&rmode=crop",
+          "width": 960,
+          "height": 540,
+          "coordinates": null
+         },
+         {
+          "alias": "poster",
+          "name": "poster",
+          "url": "http://localhost:8080/media/kt1eaylb/va-rjordperhb.jpg?format=jpg&quality=100&ranchor=center&width=300&height=450&rmode=crop",
+          "width": 300,
+          "height": 450,
+          "coordinates": null
+         }
+        ]
+       },
+       "type": "FeatureTypeMovie"
+      }
+     },
+     {
+      "id": 16361,
+      "url": "https://www.bioroy.se/program/arkipelag",
+      "isUpcoming": false,
+      "premiereDate": "2026-10-09T00:00:00.000Z",
+      "ticketsOnSale": null,
+      "ticketsOutNow": true,
+      "info": {
+       "title": "Arkipelag",
+       "synopsis": "<p><strong>Alex Schulmans regidebut <em>Arkipelag </em>förhandsvisas på Roy den 26 september. Tack till Scanbox.</strong></p>\n<p>Laddat drama möter mörk humor när Alex Schulman regidebuterar med&nbsp;<em>Arkipelag</em>, där Gustaf Skarsgård, Fares Fares och Linus Wahlgren spelar tre pappor som följer med sina döttrar på en skolresa till helvetet. Strandsatta med en stökig högstadieklass på en idyllisk skärgårdsö påminns de om egna tonårstrauman. Precis som ungdomarna tvingas de snart också inse hur svårt det är att dra gränsen mellan lek och farlig maktkamp, och att skilja offer från förövare.</p>",
+       "genres": [
+        {
+         "id": 1149,
+         "name": "Drama",
+         "alias": "drama"
+        }
+       ],
+       "ageLimit": "Från 15 år",
+       "duration": 107,
+       "audioLanguage": "SV",
+       "textLanguage": "SV",
+       "image": {
+        "width": null,
+        "height": null,
+        "alt": "",
+        "title": null,
+        "imageUrl": "http://localhost:8080/media/hmcewsli/arkipelag_hero.jpg",
+        "focalPoint": null,
+        "crops": [
+         {
+          "alias": "card",
+          "name": "card",
+          "url": "http://localhost:8080/media/hmcewsli/arkipelag_hero.jpg?format=jpg&quality=100&ranchor=center&width=960&height=540&rmode=crop",
+          "width": 960,
+          "height": 540,
+          "coordinates": null
+         },
+         {
+          "alias": "poster",
+          "name": "poster",
+          "url": "http://localhost:8080/media/hmcewsli/arkipelag_hero.jpg?format=jpg&quality=100&ranchor=center&width=300&height=450&rmode=crop",
+          "width": 300,
+          "height": 450,
+          "coordinates": null
+         }
+        ]
+       },
+       "type": "FeatureTypeMovie"
+      }
+     },
+     {
+      "id": 4467,
+      "url": "https://www.bioroy.se/program/party-along-the-rocky-horror-picture-show",
+      "isUpcoming": false,
+      "premiereDate": null,
+      "ticketsOnSale": null,
+      "ticketsOutNow": false,
+      "info": {
+       "title": "Sing Along: The Rocky Horror Picture Show",
+       "synopsis": "<p><strong>Sjung med i den kultförklarade <em>The Rocky Horror Picture Show</em>!&nbsp;</strong></p>\n<p>The Rocky Horror Picture Show med interaktion, sång och dans från publiken är sedan några år tillbaka ett stående inslag i Bio Roys eventbioprogram. Vi fixar rekvisita-påsar och stämning, du filar på stämbanden och klär upp dig!</p>\n<p>Det nyförlovade paret Brad och Janet är på väg till sin gemensamma vän och f.d lärare Dr. Scott när deras bil får en punktering på en ödslig landsväg. De söker hjälp från ett närbeläget slott, där de välkomnas av Riff Raff, Magenta och Columbia till ett märkligt konvent. För just den här kvällen kommer nämligen den dekadenta Dr. Frank-N-Furter att väcka liv i sin sexiga skapelse Rocky. Brad och Janet erbjuds att stanna över natten – men kommer de att kunna motstå dekadensen och hålla sitt oskuldslöfte till varandra…?&nbsp;</p>\n<p>Participation-kit ingår i biljetten och delas ut på plats.</p>",
+       "genres": [
+        {
+         "id": 1162,
+         "name": "Musikal",
+         "alias": "musikal"
+        },
+        {
+         "id": 1144,
+         "name": "Komedi",
+         "alias": "komedi"
+        },
+        {
+         "id": 1159,
+         "name": "Skräck",
+         "alias": "skrack"
+        },
+        {
+         "id": 13646,
+         "name": "Halloween",
+         "alias": "halloween"
+        }
+       ],
+       "ageLimit": "Från 15 år",
+       "duration": 100,
+       "audioLanguage": "EN",
+       "textLanguage": "",
+       "image": {
+        "width": null,
+        "height": null,
+        "alt": "",
+        "title": null,
+        "imageUrl": "http://localhost:8080/media/rrnglh5n/rocky-horror-still.jpg",
+        "focalPoint": null,
+        "crops": [
+         {
+          "alias": "card",
+          "name": "card",
+          "url": "http://localhost:8080/media/rrnglh5n/rocky-horror-still.jpg?format=jpg&quality=100&ranchor=center&width=960&height=540&rmode=crop",
+          "width": 960,
+          "height": 540,
+          "coordinates": null
+         },
+         {
+          "alias": "poster",
+          "name": "poster",
+          "url": "http://localhost:8080/media/rrnglh5n/rocky-horror-still.jpg?format=jpg&quality=100&ranchor=center&width=300&height=450&rmode=crop",
+          "width": 300,
+          "height": 450,
+          "coordinates": null
+         }
+        ]
+       },
+       "type": "FeatureTypeMovie"
+      }
+     }
+    ],
+    "schedule": [
+     {
+      "featureId": 9886,
+      "dates": [
+       {
+        "startDate": "2026-09-29T18:00:00.000",
+        "ticksterLink": "https://www.bioroy.se/program/biosalongen-abonnerad",
+        "saloonLabel": "",
+        "soldOut": false
+       },
+       {
+        "startDate": "2026-11-03T17:30:00.000",
+        "ticksterLink": "https://www.bioroy.se/program/biosalongen-abonnerad",
+        "saloonLabel": "",
+        "soldOut": false
+       },
+       {
+        "startDate": "2026-11-09T18:00:00.000",
+        "ticksterLink": "https://www.bioroy.se/program/biosalongen-abonnerad",
+        "saloonLabel": "",
+        "soldOut": false
+       }
+      ]
+     },
+     {
+      "featureId": 16746,
+      "dates": [
+       {
+        "startDate": "2026-09-20T10:30:00.000",
+        "ticksterLink": "https://secure.tickster.com/bn89nz9nh854fdt",
+        "saloonLabel": "",
+        "soldOut": true
+       }
+      ],
+      "themes": []
+     },
+     {
+      "featureId": 16746,
+      "dates": [
+       {
+        "startDate": "2026-09-22T18:00:00.000",
+        "ticksterLink": "https://secure.tickster.com/dxhamllat43cm82",
+        "saloonLabel": "",
+        "soldOut": false
+       },
+       {
+        "startDate": "2026-09-24T20:30:00.000",
+        "ticksterLink": "https://secure.tickster.com/57xj0e2m9vfvr0g",
+        "saloonLabel": "",
+        "soldOut": false
+       }
+      ],
+      "themes": []
+     },
+     {
+      "featureId": 18990,
+      "dates": [
+       {
+        "startDate": "2026-10-31T13:00:00.000",
+        "ticksterLink": "https://secure.tickster.com/xh48rjbgl8uz6rd",
+        "saloonLabel": "",
+        "soldOut": false
+       }
+      ],
+      "themes": [
+       {
+        "id": 1671,
+        "label": "Stumfilm med livemusik",
+        "icon": "camera"
+       },
+       {
+        "id": 1667,
+        "label": "Klassiker",
+        "icon": "camera"
+       }
+      ]
+     },
+     {
+      "featureId": 16746,
+      "dates": [
+       {
+        "startDate": "2026-09-28T20:00:00.000",
+        "ticksterLink": "https://secure.tickster.com/gg6aun6mwc0cngm",
+        "saloonLabel": "",
+        "soldOut": false
+       }
+      ],
+      "themes": []
+     },
+     {
+      "featureId": 4467,
+      "themes": [
+       {
+        "id": 1668,
+        "label": "Sing & Party Along ",
+        "icon": "singalong"
+       },
+       {
+        "id": 1667,
+        "label": "Klassiker",
+        "icon": "camera"
+       }
+      ],
+      "dates": [
+       {
+        "startDate": "2026-10-27T18:00:00.000",
+        "startDateDay": "2026-10-27",
+        "ticksterLink": "https://secure.tickster.com/edc1dtdgl431d8a",
+        "soldOut": false,
+        "showFoodIcon": false,
+        "showDrinksIcon": false,
+        "saloonLabel": ""
+       }
+      ]
+     },
+     {
+      "featureId": 16361,
+      "themes": [
+       {
+        "id": 1670,
+        "label": "Frukostbio",
+        "icon": "breakfast"
+       }
+      ],
+      "dates": [
+       {
+        "startDate": "2026-10-18T10:30:00.000",
+        "startDateDay": "2026-10-18",
+        "ticksterLink": "https://secure.tickster.com/gkklne3prp2mf99",
+        "soldOut": false,
+        "showFoodIcon": false,
+        "showDrinksIcon": false,
+        "saloonLabel": ""
+       }
+      ]
+     },
+     {
+      "featureId": 14714,
+      "themes": [],
+      "dates": [
+       {
+        "startDate": "2026-10-04T19:45:00.000",
+        "startDateDay": "2026-10-04",
+        "ticksterLink": "https://secure.tickster.com/mx0xllw20y3njbk",
+        "soldOut": false,
+        "showFoodIcon": false,
+        "showDrinksIcon": false,
+        "saloonLabel": ""
+       }
+      ]
+     },
+     {
+      "featureId": 14714,
+      "themes": [
+       {
+        "id": 1670,
+        "label": "Frukostbio",
+        "icon": "breakfast"
+       }
+      ],
+      "dates": [
+       {
+        "startDate": "2026-10-11T10:30:00.000",
+        "startDateDay": "2026-10-11",
+        "ticksterLink": "https://secure.tickster.com/1klk0mz06c57kby",
+        "soldOut": false,
+        "showFoodIcon": false,
+        "showDrinksIcon": false,
+        "saloonLabel": ""
+       }
+      ]
+     },
+     {
+      "featureId": 18988,
+      "themes": [
+       {
+        "id": 3947,
+        "label": "Samarbete",
+        "icon": "family"
+       }
+      ],
+      "dates": [
+       {
+        "startDate": "2026-10-28T18:00:00.000",
+        "startDateDay": "2026-10-28",
+        "ticksterLink": "https://secure.tickster.com/j8azk65btv82650",
+        "soldOut": false,
+        "showFoodIcon": false,
+        "showDrinksIcon": false,
+        "saloonLabel": ""
+       }
+      ]
+     }
+    ]
+   }
   }
+ }
 }

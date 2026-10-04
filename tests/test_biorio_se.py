@@ -1,89 +1,123 @@
-"""biorio.se calendar showtime extraction."""
+"""biorio.se public showtimes API extraction."""
 
-from contextlib import contextmanager
+import json
 from datetime import date, time
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 
 from parse.parsers import biorio_se
-from parse.parsers.biorio_se import _film_details, _film_urls, _showtimes
 from store import Film, Screening, film_key
-from store.version import Language
+from store.version import AudioKind, Dimension, Language, PresentationSystem
 
-pytestmark = pytest.mark.usefixtures("parser_clock")
-
-_HTML = (Path(__file__).parent / "fixtures" / "biorio_se" / "kalender.html").read_text()
-
-
-def test_showtimes_read_time_and_screen_from_the_info_block():
-    assert list(_showtimes(_HTML)) == [
-        (
-            "Practical Magic: Family Legacy",
-            date(2026, 9, 20),
-            time(15, 20),
-            "https://www.biorio.se/sv/boka/2706",
-            "Salong 1",
-        ),
-        ("In the Mood for Love", date(2026, 9, 20), time(18, 0), "https://www.biorio.se/sv/boka/2533", "Salong 1"),
-        ("Pressure", date(2026, 9, 20), time(20, 10), "https://www.biorio.se/sv/boka/2670", "Salong 1"),
-        ("Tony", date(2026, 9, 21), time(15, 45), "https://www.biorio.se/sv/boka/2689", "Salong 1"),
-        ("Medan vi faller", date(2026, 9, 21), time(18, 0), "https://www.biorio.se/sv/boka/2612", "Salong 1"),
-        (
-            "Oasis: Don't Look Back in Anger",
-            date(2026, 9, 21),
-            time(20, 10),
-            "https://www.biorio.se/sv/boka/2748",
-            "Salong 1",
-        ),
-    ]
+_FIXTURES = Path(__file__).parent / "fixtures" / "biorio_se"
+_SHOWTIMES = json.loads((_FIXTURES / "showtimes.json").read_text())
+_MOVIES = json.loads((_FIXTURES / "movies.json").read_text())
 
 
-_FILM_HTML = (Path(__file__).parent / "fixtures" / "biorio_se" / "film.html").read_text()
-
-_POSTER = (
-    "https://www.biorio.se/_next/image"
-    "?url=https%3A%2F%2Frio.ams3.digitaloceanspaces.com%2Fmovies%2Fmovies%2F4992"
-    "%2Fposters%2F1742812872762-if4u2o.jpg&w=640&q=85"
-)
+def _get_json(session, url):
+    if url.startswith(biorio_se._SHOWTIMES_URL):
+        return _SHOWTIMES
+    return _MOVIES[url.rsplit("/", 1)[1]]
 
 
-def test_the_calendar_title_links_to_the_film_page():
-    assert _film_urls(_HTML)["In the Mood for Love"] == "https://www.biorio.se/sv/filmer/in-the-mood-for-love"
-    assert len(_film_urls(_HTML)) == 6
-
-
-def test_film_details_read_poster_synopsis_runtime_genres_and_year():
-    details = _film_details(_FILM_HTML)
-
-    assert details["poster_url"] == _POSTER
-    assert details["overview"].startswith("Två par flyttar samtidigt in i samma fastighet")
-    assert details["runtime"] == 98
-    assert details["genres"] == ["Drama", "Romantik"]
-    # The page states a year, never a full release date.
-    assert details["release_date"] == "2000"
-    assert details["original_languages"] == frozenset({Language.CHINESE})
-    assert details["subtitle_label"] == "Svensk text"
-
-
-def test_parse_yields_one_film_per_title_and_keys_every_screening(monkeypatch):
-    monkeypatch.setattr(biorio_se, "browser_page", lambda: _page(_HTML))
-    monkeypatch.setattr(biorio_se, "_details", lambda session, url: _film_details(_FILM_HTML))
+@pytest.fixture
+def items(monkeypatch):
+    monkeypatch.setattr(biorio_se, "_get_json", _get_json)
     monkeypatch.setattr(biorio_se._films, "register", lambda film, session=None: film)
     monkeypatch.setattr(biorio_se, "_tmdb", lambda title: None)
-
-    items = list(biorio_se.parse())
-    films = [i for i in items if isinstance(i, Film)]
-    screenings = [i for i in items if isinstance(i, Screening)]
-
-    assert [f.key for f in films] == [film_key("biorio_se", f.title) for f in films]
-    assert len(films) == 6
-    assert {s.film_key for s in screenings} == {f.key for f in films}
-    assert all(not s.version.audio.languages for s in screenings)
-    assert {s.version.subtitles.languages for s in screenings} == {frozenset({Language.SWEDISH})}
+    monkeypatch.setattr(biorio_se, "_tmdb_by_id", lambda tmdb_id: None)
+    return list(biorio_se.parse())
 
 
-@contextmanager
-def _page(html: str):
-    yield SimpleNamespace(goto=lambda *a, **kw: None, content=lambda: html)
+@pytest.fixture
+def screenings(items):
+    return {s.ticket_url.rsplit("/", 1)[1]: s for s in items if isinstance(s, Screening)}
+
+
+@pytest.fixture
+def films(items):
+    return {f.title: f for f in items if isinstance(f, Film)}
+
+
+def test_members_only_shows_are_skipped(screenings):
+    assert "2794" not in screenings
+    assert len(screenings) == 5
+
+
+def test_screening_fields(screenings):
+    s = screenings["2814"]
+    assert s.title == "Superhunden Charlie"
+    assert (s.date, s.time) == (date(2026, 10, 4), time(13, 15))
+    assert s.ticket_url == "https://www.biorio.se/sv/boka/2814"
+    assert s.screen == "Salong 1"
+    assert (s.cinema_name, s.city) == ("Bio Rio", "Stockholm")
+    assert s.film_key == film_key("biorio_se", "Superhunden Charlie")
+
+
+def test_shows_beyond_the_calendar_page_are_kept(screenings):
+    assert screenings["2729"].date == date(2026, 12, 15)
+
+
+def test_audio_and_subtitles_from_the_showtime(screenings):
+    dubbed = screenings["2814"].version
+    assert dubbed.audio.kind is AudioKind.DUBBED
+    assert dubbed.audio.languages == frozenset({Language.SWEDISH})
+    assert dubbed.subtitles.languages == frozenset({Language.SWEDISH})
+
+    unsubtitled = screenings["2582"].version
+    assert unsubtitled.audio.languages == frozenset({Language.ENGLISH})
+    assert unsubtitled.subtitles.languages == frozenset()
+
+    # "Ej angivet" means not stated, not unsubtitled.
+    assert screenings["2836"].version.subtitles.languages is None
+
+
+def test_tags_become_raw_attributes(screenings):
+    assert screenings["2814"].raw_attributes == ("Family Time",)
+    assert screenings["2647"].raw_attributes == ("Förhandsvisning", "Rendez-Vous")
+    assert screenings["2582"].raw_attributes == ()
+
+
+def test_3d_and_imax_flags_set_the_presentation():
+    show = dict(_SHOWTIMES["showtimes"][0], is3D=True, isImax=True)
+    s = biorio_se._screening(show, tmdb_id=None, film_key="")
+    assert s.presentation.dimension is Dimension.THREE_D
+    assert s.presentation.experiences == frozenset({PresentationSystem.IMAX})
+
+
+def test_film_metadata(films):
+    film = films["Quadrophenia"]
+    assert film.url == "https://www.biorio.se/sv/filmer/quadrophenia"
+    assert film.poster_url == (
+        "https://www.biorio.se/_next/image"
+        "?url=https%3A%2F%2Frio.ams3.digitaloceanspaces.com%2Fbiorio%2Fmovies%2Fmovies%2F5923"
+        "%2Fposters%2F1780057673672-yirxwl.avif&w=640&q=85"
+    )
+    assert film.overview.startswith("Året är 1965.")
+    assert film.runtime == 120
+    assert film.genres == ["Drama", "Musik"]
+    assert film.release_date == "1979-09-14"
+    assert film.original_languages == frozenset({Language.ENGLISH})
+
+
+def test_a_dubbed_language_is_not_the_original(films):
+    assert films["Superhunden Charlie"].original_languages == frozenset()
+
+
+def test_one_film_per_publicly_shown_movie(films, screenings):
+    assert len(films) == 5
+    assert "Medan vi faller" not in films
+    assert {s.film_key for s in screenings.values()} == {f.key for f in films.values()}
+
+
+def test_a_resolvable_tmdb_id_skips_the_title_lookup(monkeypatch):
+    monkeypatch.setattr(biorio_se, "_get_json", _get_json)
+    monkeypatch.setattr(biorio_se._films, "register", lambda film, session=None: film)
+    monkeypatch.setattr(biorio_se, "_tmdb", lambda title: -1)
+    monkeypatch.setattr(biorio_se, "_tmdb_by_id", lambda tmdb_id: tmdb_id if tmdb_id == 1170608 else None)
+
+    screenings = [i for i in biorio_se.parse() if isinstance(i, Screening)]
+
+    assert {s.title: s.tmdb_id for s in screenings}["Dune: Part Three"] == 1170608
+    assert {s.title: s.tmdb_id for s in screenings}["Quadrophenia"] == -1

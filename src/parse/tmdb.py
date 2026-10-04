@@ -194,7 +194,31 @@ def _lookup(
         log.info("ambiguous or inexact TMDB match for %r; keeping source title", title)
         return None
     tmdb_id: int = next(iter(candidates.values()))["id"]
+    if not _fetch(tmdb_id, path, session):
+        return None
 
+    # ------ update index ------
+    tmdb_index_set(cache_key, tmdb_id, path=path)
+
+    return tmdb_id
+
+
+def by_id(tmdb_id: int, *, path: Path = DB_FILE, session: requests.Session | None = None) -> int | None:
+    """Store metadata + poster for a TMDB id a site states. Returns the id, or None when the fetch fails."""
+    if read_movie(tmdb_id, path=path) is not None:
+        return tmdb_id
+    own_session = session is None
+    if own_session:
+        session = _http.session()
+    try:
+        return tmdb_id if _fetch(tmdb_id, path, session) else None
+    finally:
+        if own_session:
+            session.close()
+
+
+def _fetch(tmdb_id: int, path: Path, session: requests.Session) -> bool:
+    """Fetch details for *tmdb_id*, store the movie and its poster.  False when the fetch fails."""
     # ------ fetch full details ------
     try:
         details = _get(
@@ -205,7 +229,7 @@ def _lookup(
         )
     except requests.RequestException:
         log.warning("TMDB details fetch failed for id=%d", tmdb_id)
-        return None
+        return False
 
     # Extract Swedish age rating and release date from release_dates
     age_rating = ""
@@ -242,8 +266,5 @@ def _lookup(
     if movie.poster_path and not has_poster(tmdb_id, path=path):
         _download_poster(session, movie.poster_path, tmdb_id, path)
 
-    # ------ update index ------
-    tmdb_index_set(cache_key, tmdb_id, path=path)
-
     log.info("TMDB %d: %s", tmdb_id, movie.title_sv or movie.title_original)
-    return tmdb_id
+    return True

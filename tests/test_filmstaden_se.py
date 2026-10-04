@@ -141,3 +141,52 @@ def test_titles_are_trimmed():
     show = _SHOWS[0] | {"movie": _SHOWS[0]["movie"] | {"title": "Bortglömda ön "}}
     assert _map(show).title == "Bortglömda ön"
     assert _film(show["movie"]).title == "Bortglömda ön"
+
+
+_CLASSIC = json.loads((_FIXTURES / "classic.json").read_text())
+
+
+def test_original_languages_come_from_detail():
+    assert _film(_CLASSIC["movie"], _CLASSIC["detail"]).original_languages == frozenset({Language.ENGLISH})
+    detail = _CLASSIC["detail"] | {"originalLanguages": [], "originalLanguage": "sv-SE"}
+    assert _film(_CLASSIC["movie"], detail).original_languages == frozenset({Language.SWEDISH})
+
+
+def test_overview_prefers_long_description_as_text():
+    film = _film(_CLASSIC["movie"], _CLASSIC["detail"])
+    assert film.overview.startswith("Henry Hill drömmer")
+    assert film.overview.endswith("sätts både vänskap och lojalitet på prov.")
+    assert "<p>" not in film.overview
+
+
+def test_programme_suffix_is_stripped_from_titles():
+    film = _film(_CLASSIC["movie"], _CLASSIC["detail"])
+    assert film.title == "Goodfellas"
+    assert film.key == "filmstaden_se:goodfellas"
+    assert film.title_original == ""
+    show = _SHOWS[0] | {"movie": _SHOWS[0]["movie"] | {"title": "Fjord - med samtal på Victoria"}}
+    screening = _map(show)
+    assert screening.title == "Fjord"
+    assert "med samtal på Victoria" in screening.raw_attributes
+    assert _film(show["movie"]).key == "filmstaden_se:fjord"
+
+
+def test_rereleases_carry_the_production_year():
+    assert _film(_CLASSIC["movie"], _CLASSIC["detail"]).release_date == "1990"
+    recent = _CLASSIC["detail"] | {"productionYear": 2026}
+    assert _film(_CLASSIC["movie"], recent).release_date == "2027-02-09"
+
+
+def test_english_subtitles_attribute_sets_subtitles():
+    show = _SHOWS[0] | {"attributes": [{"alias": "English subtitles", "displayName": "English subtitles"}]}
+    assert _map(show).version.subtitles.languages == frozenset({Language.ENGLISH})
+    show["movieVersion"] = _SHOWS[0]["movieVersion"] | {"subtitlesLanguageInfo": None}
+    assert _map(show).version.subtitles.languages == frozenset({Language.ENGLISH})
+
+
+def test_programme_suffixes_leave_original_titles_and_club_screenings():
+    movie = _CLASSIC["movie"] | {"title": "Palestina 36 - med samtal på Victoria"}
+    detail = _CLASSIC["detail"] | {"originalTitle": "Palestina 36 - med samtal på Victoria"}
+    assert (_film(movie, detail).title, _film(movie, detail).title_original) == ("Palestina 36", "")
+    movie = _CLASSIC["movie"] | {"title": "Paraplyerna i Cherbourg- Everdahl & Karlssons Filmklubb"}
+    assert _film(movie).title == "Paraplyerna i Cherbourg"

@@ -75,8 +75,63 @@ def test_film_page_fills_in_the_rest(films):
     assert film.release_date == "2026-09-12"
     assert film.title_original == "Tony"
     assert film.age_rating == "Från 11 år"
-    # The film page's poster is larger than the listing's.
-    assert "styles/movie_poster/" in film.poster_url
+    # The film page's JSON-LD carries the full-size original.
+    assert film.poster_url == (
+        "https://www.nfbio.se/sites/nfbio.se/files/media-images/2026-09/gmnt-43914a96c1-22042-vst-6aa010842cd9d.jpeg"
+    )
+
+
+def test_film_page_language_is_original_language(films):
+    film = nfbio_se._enrich(next(f for f in films if f.title == "Tony"), _FILM.read_text())
+    assert film.original_languages == frozenset({Language.ENGLISH})
+
+
+def test_swedish_language_of_a_retitled_film_is_not_original():
+    film = nfbio_se._films.make("nfbio_se", "Bortglömda ön")
+    html = (
+        _FILM.read_text()
+        .replace('<div class="field__item">EN</div>', '<div class="field__item">SV</div>')
+        .replace('<div class="field__item">Tony</div>', '<div class="field__item">Forgotten Island</div>')
+    )
+    assert nfbio_se._enrich(film, html).original_languages == frozenset()
+
+
+def test_swedish_language_of_a_film_shown_in_another_language_is_not_original():
+    film = nfbio_se._films.make("nfbio_se", "Tony", original_languages=frozenset({Language.ENGLISH}))
+    html = _FILM.read_text().replace('<div class="field__item">EN</div>', '<div class="field__item">SV</div>')
+    assert nfbio_se._enrich(film, html).original_languages == frozenset({Language.ENGLISH})
+
+
+def test_swedish_language_of_a_swedish_film_is_original():
+    film = nfbio_se._films.make("nfbio_se", "Tony")
+    html = _FILM.read_text().replace('<div class="field__item">EN</div>', '<div class="field__item">SV</div>')
+    assert nfbio_se._enrich(film, html).original_languages == frozenset({Language.SWEDISH})
+
+
+def test_non_swedish_screening_audio_is_original_language(films):
+    assert next(f for f in films if f.title == "Tony").original_languages == frozenset({Language.ENGLISH})
+
+
+def test_placeholder_runtime_is_unknown(monkeypatch):
+    calls = []
+    monkeypatch.setattr(nfbio_se, "_tmdb", lambda title, runtime=None: calls.append((title, runtime)))
+    html = _LISTING.read_text().replace("Speltid: 1 timme 46 min", "Speltid: 1 min")
+    items = list(nfbio_se._parse_listing(html, "Nordisk Film Bio Uppsala", "Uppsala"))
+    assert next(i for i in items if isinstance(i, Film) and i.title == "Tony").runtime is None
+    assert ("Tony", None) in calls
+
+
+def test_programme_labels_are_raw_attributes(screenings):
+    s = next(s for s in screenings if s.date.isoformat() == "2026-09-20")
+    assert "Biodagen" in s.raw_attributes
+    assert s.raw_attributes == ("2D", "(Eng. tal)", "(Sv.text)", "Biodagen")
+
+
+def test_cinema_addresses():
+    assert {c["city"]: c["address"] for c in nfbio_se._CINEMAS} == {
+        "Uppsala": "Marknadsgatan 1",
+        "Malmö": "Per Albin Hanssons väg 38C",
+    }
 
 
 def test_version_splits_into_format_language_subtitles(screenings):
@@ -100,6 +155,8 @@ def test_programme_labels_are_not_formats(screenings):
         ("Speltid: 2 timmar", 120),
         ("Speltid: 34 min", 34),
         ("Speltid:", None),
+        # Unreleased films carry a one-minute placeholder.
+        ("Speltid: 1 min", None),
     ],
 )
 def test_parse_duration(text, expected):

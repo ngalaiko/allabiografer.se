@@ -11,15 +11,18 @@ it.
 """
 
 import argparse
+import dataclasses
 import importlib
 import logging
 import pkgutil
+from collections.abc import Iterable
 from pathlib import Path
 
 import store
 from parse import parsers
 from parse.parsers import _films, _tmdb_cache
 from store import Film, Screening, Venue
+from store.version import AudioKind, AudioVersion
 
 log = logging.getLogger(__name__)
 
@@ -27,6 +30,20 @@ log = logging.getLogger(__name__)
 def _available() -> list[str]:
     pkg_dir = str(Path(parsers.__file__).parent)
     return sorted(info.name for info in pkgutil.iter_modules([pkg_dir]) if not info.name.startswith("_"))
+
+
+def mark_dubbed(screenings: Iterable[Screening], films: Iterable[Film]) -> list[Screening]:
+    """Mark audio of unknown kind dubbed when none of its languages is an original language of the film."""
+    originals = {f.key: f.original_languages for f in films}
+    result = []
+    for s in screenings:
+        audio = s.version.audio
+        original = originals.get(s.film_key)
+        if audio.kind is AudioKind.UNKNOWN and audio.languages and original and not audio.languages & original:
+            version = dataclasses.replace(s.version, audio=AudioVersion(AudioKind.DUBBED, audio.languages))
+            s = dataclasses.replace(s, version=version)
+        result.append(s)
+    return result
 
 
 def main() -> None:
@@ -55,6 +72,7 @@ def main() -> None:
         else:
             screenings.append(item)
 
+    screenings = mark_dubbed(screenings, films)
     n = store.write_screenings(screenings, path=args.output, source=args.parser, venues=venues)
     nv = store.write_venues(venues, path=args.output)
     nf = store.write_films(films, path=args.output)

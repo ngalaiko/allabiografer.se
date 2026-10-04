@@ -65,6 +65,7 @@ _ALIASES = {
     "pl": "Polska",
     "pt": "Portugisiska",
     "zh": "Kinesiska",
+    "dk": "Danska",
 }
 # Words around language names that carry no language.
 _FILLER = {
@@ -112,6 +113,7 @@ _LANGUAGE_ALIASES = {
     "pl": Language.POLISH,
     "pt": Language.PORTUGUESE,
     "zh": Language.CHINESE,
+    "dk": Language.DANISH,
     "swedish": Language.SWEDISH,
     "english": Language.ENGLISH,
     "french": Language.FRENCH,

@@ -5,7 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from parse.parsers.kiviksbio_se import _overview, _showtimes
+from parse.parsers.kiviksbio_se import _overview, _showtimes, _subtitles
+from store.version import Language
 
 pytestmark = pytest.mark.usefixtures("parser_clock")
 
@@ -14,7 +15,7 @@ _HTML = (_FIXTURES / "evenemang.html").read_text()
 
 
 def test_showtimes_collapse_whitespace_runs_inside_titles():
-    assert [(f.title, d, t, url) for f, d, t, url in _showtimes(_HTML)] == [
+    assert [(f.title, d, t, url) for f, d, t, url, _ in _showtimes(_HTML)] == [
         (
             "Autofiktion",
             date(2026, 9, 20),
@@ -28,7 +29,7 @@ def test_showtimes_collapse_whitespace_runs_inside_titles():
             "https://www.kiviksbio.se/program/direkt-fran-metropolitanoperan-i-new-york-cosi-fan-tutte/",
         ),
         (
-            "Höstlovsfilm! Nelly Rapp - Porten till underjorden",
+            "Nelly Rapp - Porten till underjorden",
             date(2026, 10, 28),
             time(15, 0),
             "https://www.kiviksbio.se/program/hostlovsfilm-nelly-rapp-porten-till-underjorden/",
@@ -67,4 +68,36 @@ def test_screenings_share_their_film_key():
 def test_overview_reads_the_event_page_synopsis():
     overview = _overview((_FIXTURES / "autofiktion.html").read_text())
     assert overview.startswith("Oscarsbelönade Pedro Almodóvar är tillbaka")
-    assert overview.endswith("Land: Spanien")
+    assert overview.endswith("gränsen mellan verklighet och fiktion.")
+
+
+def test_overview_stops_at_the_credits():
+    overview = _overview((_FIXTURES / "smugglaren.html").read_text())
+    assert overview.endswith("präglat av gamla sår.")
+
+
+def test_overview_drops_opera_credits_prices_and_side_events():
+    overview = _overview((_FIXTURES / "macbeth.html").read_text())
+    assert overview.endswith("som Banquo.")
+    for junk in ("Regi", "Pris", "Operacirkel", "Textas"):
+        assert junk not in overview
+
+
+def test_subtitles_read_the_event_page():
+    assert _subtitles((_FIXTURES / "macbeth.html").read_text())["version"].subtitles.languages == {Language.SWEDISH}
+    assert _subtitles((_FIXTURES / "smugglaren.html").read_text())["version"].subtitles.languages is None
+
+
+def test_showtimes_move_title_prefixes_to_labels():
+    html = _HTML + (_FIXTURES / "prefixes.html").read_text()
+    assert [(f.title, labels) for f, _, _, _, labels in _showtimes(html)][2:] == [
+        ("Nelly Rapp - Porten till underjorden", ("Höstlovsfilm",)),
+        ("Resan till Piemonte", ("Extra-visning",)),
+        ("De Gaulle- frihetens röst", ("PREMIÄR",)),
+    ]
+    assert next(labels for *_, labels in _showtimes(html)) == ()
+
+
+def test_overview_matches_credit_labels_in_any_case():
+    page = '<section class="em-event-content"><p>En opera.</p><p>RegI: Darko Tresnjak</p></section>'
+    assert _overview(page) == "En opera."

@@ -7,7 +7,7 @@ import pytest
 
 from parse.parsers import nortic_se
 from store import Film, Screening, Venue
-from store.version import Dimension, Language
+from store.version import AudioKind, Dimension, Language
 
 _FIXTURE = Path(__file__).parent / "fixtures" / "nortic_se" / "shows.json"
 
@@ -41,7 +41,7 @@ def test_non_film_categories_are_skipped(items):
 def test_screening_fields(items):
     s = next(s for s in items if isinstance(s, Screening) and s.title == "Biodlaren")
     assert s.city == "Askersund"
-    assert s.cinema_name == "Sjöängen, Stora salongen"
+    assert (s.cinema_name, s.screen) == ("Sjöängen", "Stora salongen")
     assert s.date.isoformat() == "2026-09-29"
     assert s.time.strftime("%H:%M") == "16:30"
     assert s.ticket_url == "https://tickets.nortic.se/ticket/show/357605"
@@ -67,8 +67,8 @@ def test_short_description_is_the_overview_fallback(items):
 def test_one_film_per_title_merged_across_organizers(items):
     films = [f for f in items if isinstance(f, Film) and f.title == "Biodlaren"]
     assert len(films) == 1
-    # Runtime comes from the second organizer's event; the first has none.
-    assert films[0].runtime == 110
+    # The overview comes from the first organizer's event; the second has none.
+    assert films[0].overview == "Ett utforskande av kärleken, naturen och livets cykler."
 
 
 def test_every_screening_carries_its_film_key(items):
@@ -105,3 +105,92 @@ def test_languages_stated_in_the_description():
     assert s.version.subtitles.languages == frozenset({Language.SWEDISH})
     film = next(f for f in items if isinstance(f, Film) and f.title == "Tony")
     assert film.original_languages == frozenset({Language.ENGLISH})
+
+
+@pytest.fixture
+def live() -> list[Screening | Venue | Film]:
+    return list(nortic_se._parse_payload(json.loads((_FIXTURE.parent / "live.json").read_text())))
+
+
+def _films(items) -> dict[str, Film]:
+    return {f.title: f for f in items if isinstance(f, Film)}
+
+
+def _screenings(items, title: str) -> list[Screening]:
+    return [s for s in items if isinstance(s, Screening) and s.title == title]
+
+
+def test_event_wrappers_are_stripped_from_titles(live):
+    titles = set(_films(live))
+    assert {
+        "Kevlarsjäl",
+        "Rebuilding",
+        "Super Mario Galaxy",
+        "Top Hat - The Musical",
+        "Fjord",
+        "Mördarens son",
+        "Sven Klangs Kvintett",
+        "Vi Lever Än",
+    } <= titles
+    [rebuilding, *_] = _screenings(live, "Rebuilding")
+    assert "Bio Kontrast" in rebuilding.raw_attributes
+    [mario] = _screenings(live, "Super Mario Galaxy")
+    assert {"Bio Kontrast", "För Funkisfamiljer"} <= set(mario.raw_attributes)
+
+
+def test_english_subtitles_title_suffix_sets_subtitles(live):
+    fjords = _screenings(live, "Fjord")
+    tellus = next(s for s in fjords if s.cinema_name == "Biocafé Tellus")
+    assert tellus.version.subtitles.languages == frozenset({Language.ENGLISH})
+    assert tellus.film_key == "nortic_se:fjord"
+    assert "with English subtitles" in tellus.raw_attributes
+
+
+def test_runtime_comes_from_the_description_not_the_slot_length(live):
+    films = _films(live)
+    assert films["Fjord"].runtime == 146
+    assert films["Rebuilding"].runtime == 96
+    assert films["Soundtrack to a Coup d\u00b4Etat"].runtime == 150
+    assert films["Mördarens son"].runtime == 82
+    # playTimeInMinutes is the booked slot: 100 for every Askersund family film.
+    assert films["Monsterfabriken"].runtime is None
+
+
+def test_labelled_metadata_in_the_description(live):
+    films = _films(live)
+    assert films["Kevlarsjäl"].age_rating == "Från 15 år"
+    assert films["Arkipelag"].age_rating == "Från 15 år"
+    assert films["Monsterfabriken"].age_rating == "Barntillåten"
+    assert films["Mördarens son"].age_rating == "Från 11 år"
+    assert films["Fjord"].genres == ["Drama"]
+    assert films["Super Mario Galaxy"].title_original == "The Super Mario Galaxy Movie"
+
+
+def test_dubbed_speech_sets_screening_audio_not_original_language(live):
+    assert _films(live)["Super Mario Galaxy"].original_languages == frozenset()
+    [mario] = _screenings(live, "Super Mario Galaxy")
+    assert mario.version.audio.kind is AudioKind.DUBBED
+    assert mario.version.audio.languages == frozenset({Language.SWEDISH})
+    assert _films(live)["Rebuilding"].original_languages == frozenset({Language.ENGLISH})
+
+
+def test_halls_split_into_screens(live):
+    [monster] = _screenings(live, "Monsterfabriken")
+    assert (monster.cinema_name, monster.screen) == ("Sjöängen", "Stora salongen")
+    [kevlar] = _screenings(live, "Kevlarsjäl")
+    assert (kevlar.cinema_name, kevlar.screen) == ("Bio Göta Lejon", "Götasalen")
+
+
+def test_one_cinema_name_per_organizer_and_city(live):
+    names = {(v.city, v.name) for v in live if isinstance(v, Venue)}
+    assert {n for c, n in names if c == "Ulricehamn"} == {"Folkets Hus Ulricehamn"}
+    assert {n for c, n in names if c == "Midsommarkransen"} == {"Biocafé Tellus"}
+    assert len({n for c, n in names if c == "Ellös"}) == 1
+    screened = {(s.city, s.cinema_name) for s in live if isinstance(s, Screening)}
+    assert screened <= names
+
+
+def test_opera_broadcasts_are_included_and_stage_operas_skipped(live):
+    titles = set(_films(live))
+    assert {"Macbeth", "Così fan tutte", "Manon"} <= titles
+    assert "Violetta tar bussen" not in titles

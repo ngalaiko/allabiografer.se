@@ -48,12 +48,19 @@ _SWEDISH_CITIES = {
 
 _CITY_NAMES = {name.casefold(): name for name in _SWEDISH_CITIES.values()}
 
+# Longer event info is prose, not a programme label.
+_MAX_INFO = 40
+_DASH = re.compile(r"\s+[–—-]\s+")
+
 # "Norra Parkgatan 2", "Karlsgatan 7", "Stora Varvsgatan 6A" — a street, not a venue.
 _STREET = re.compile(r"^.*(?:gatan|gatu|vägen|väg|torget|plan|gränd)\s+\d+\w*$", re.IGNORECASE)
 
 
-def _events(html: str) -> Iterator[tuple[str, date, time, str, str, str, str]]:
-    """Yield (title, date, time, ticket_url, cinema_name, city, address)."""
+Event = tuple[str, date, time, str, str, str, str, tuple[str, ...]]
+
+
+def _events(html: str) -> Iterator[Event]:
+    """Yield (title, date, time, ticket_url, cinema_name, city, address, raw_attributes)."""
     soup = BeautifulSoup(html, "html.parser")
     script = soup.find("script", id="__NEXT_DATA__")
     if not script or not script.string:
@@ -64,21 +71,21 @@ def _events(html: str) -> Iterator[tuple[str, date, time, str, str, str, str]]:
     log.info("doclounge.se: %d events found", len(events))
 
     parsed = [row for row in (_row(event) for event in events) if row]
-    venue_cities = {cinema.casefold(): city for _, _, _, _, cinema, city, _ in parsed if city}
+    venue_cities = {cinema.casefold(): city for _, _, _, _, cinema, city, _, _ in parsed if city}
     # The site spells a venue inconsistently across events ("Skeppet Gbg", "Skeppet GBG");
     # the first spelling seen wins, so newest events set the name.
     canonical: dict[tuple[str, str], str] = {}
 
-    for title, d, t, ticket_url, cinema, city, address in parsed:
+    for title, d, t, ticket_url, cinema, city, address, raw in parsed:
         city = city or venue_cities.get(cinema.casefold(), "") or _city_from_address(address)
         if not city:
             continue
         cinema = cinema or f"Doc Lounge {city}"
         cinema = canonical.setdefault((city, cinema.casefold()), cinema)
-        yield title, d, t, ticket_url, cinema, city, address
+        yield title, d, t, ticket_url, cinema, city, address, raw
 
 
-def _row(event: dict) -> tuple[str, date, time, str, str, str, str] | None:
+def _row(event: dict) -> Event | None:
     content = event.get("gqlEventContent") or {}
 
     date_str = content.get("date", "")
@@ -112,7 +119,25 @@ def _row(event: dict) -> tuple[str, date, time, str, str, str, str] | None:
         return None  # tagged only with foreign cities
 
     cinema, address = _split_address(content.get("address", ""))
-    return title, d, t, ticket_url, cinema, city, address
+    return title, d, t, ticket_url, cinema, city, address, _raw_attributes(title, event, content)
+
+
+def _raw_attributes(title: str, event: dict, content: dict) -> tuple[str, ...]:
+    """Programme labels: an event title's suffix ("HEX – Halloweenspecial") and a short info line."""
+    raw: list[str] = []
+    event_title = event.get("title") or ""
+    if event_title.casefold().startswith(title.casefold()):
+        m = re.match(r"\s*[–—-]\s*(.+)", event_title[len(title) :])
+        if m and m.group(1).strip().casefold() not in _CITY_NAMES:
+            raw.append(m.group(1).strip())
+    info = BeautifulSoup(content.get("info") or "", "html.parser").get_text(" ", strip=True)
+    # "The Beauty of Errors - Filmvisning + Regissörsbesök" repeats the film title.
+    head, *tail = _DASH.split(info, maxsplit=1)
+    if tail and title.casefold().startswith(head.casefold()):
+        info = tail[0].strip()
+    if info and len(info) <= _MAX_INFO and info not in raw:
+        raw.append(info)
+    return tuple(raw)
 
 
 def _split_address(raw: str) -> tuple[str, str]:
@@ -148,6 +173,23 @@ def _film_slugs(html: str) -> dict[str, str]:
         if title and uri.startswith("/"):
             slugs.setdefault(title, uri.strip("/"))
     return slugs
+
+
+def _listed_details(html: str) -> dict[str, dict]:
+    """Poster and genres per event title from the events page, for films without a published page."""
+    soup = BeautifulSoup(html, "html.parser")
+    script = soup.find("script", id="__NEXT_DATA__")
+    if not script or not script.string:
+        return {}
+
+    details: dict[str, dict] = {}
+    for event in json.loads(script.string)["props"]["pageProps"]["events"]["nodes"]:
+        movie = (event.get("gqlEventContent") or {}).get("movie") or {}
+        hero = (movie.get("GQLMovieHeroContent") or {}).get("hero") or {}
+        poster = _poster_url((hero.get("thumbnail") or {}).get("mediaItemUrl") or "")
+        if movie.get("title"):
+            details.setdefault(movie["title"], {"poster_url": poster, "genres": list(_GENRES)})
+    return details
 
 
 def _film_details(html: str) -> dict:
@@ -209,6 +251,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
 
     events = list(_events(html))
     slugs = _film_slugs(html)
+    listed = _listed_details(html)
 
     films: dict[str, Film] = {}
     subtitles: dict[str, str] = {}
@@ -217,13 +260,14 @@ def parse() -> Iterator[Screening | Venue | Film]:
         url = _FILM_URL + slug if slug else ""
         details = _details(session, url) if url else {}
         subtitles[title] = details.pop("subtitle_label", "")
+        details = listed.get(title, {}) | {k: v for k, v in details.items() if v}
         film = _films.make(_SOURCE, title, url=url, **details)
         films[title] = _films.register(film, session=session)
         yield films[title]
 
     yielded_venues: set[tuple[str, str]] = set()
 
-    for title, d, t, ticket_url, cinema_name, city, address in events:
+    for title, d, t, ticket_url, cinema_name, city, address, raw in events:
         if (city, cinema_name) not in yielded_venues:
             yielded_venues.add((city, cinema_name))
             yield Venue(name=cinema_name, city=city, address=address)
@@ -236,7 +280,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
             ticket_url=ticket_url,
             cinema_name=cinema_name,
             city=city,
-            **_version.screening_facts(subtitles=subtitles.get(title, "")),
+            **_version.screening_facts(subtitles=subtitles.get(title, ""), raw_attributes=raw),
             film_key=films[title].key,
         )
 

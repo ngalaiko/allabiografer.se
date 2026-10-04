@@ -1,0 +1,286 @@
+{
+ "superhunden-charlie": {
+  "movie": {
+   "id": 6003,
+   "title": "Superhunden Charlie",
+   "slug": "superhunden-charlie",
+   "synopsis": "När den älskade familjehunden Charlie blir bortförd av utomjordingar förändras hans liv för alltid. Han återvänder till jorden med extraordinära krafter och blir snabbt en hyllad superhjälte. Men när ",
+   "logline": "När den älskade familjehunden Charlie blir bortförd av utomjordingar förändras hans liv för alltid.",
+   "tagline": null,
+   "director": "Shea Wageman",
+   "cast": [
+    "Owen Wilson",
+    "Ruairi MacDonald",
+    "Dawson Littman",
+    "Vincent Tong",
+    "Tabitha St. Germain"
+   ],
+   "genres": [
+    "Action",
+    "Komedi",
+    "Animation",
+    "Familj",
+    "Äventyr"
+   ],
+   "duration": 95,
+   "releaseDate": "2026-09-11",
+   "releaseYear": 2025,
+   "language": "Svenska (dubbat)",
+   "subtitles": "Svenska",
+   "country": "Canada",
+   "posterPath": "https://rio.ams3.digitaloceanspaces.com/movies/posters/1788253027545-566217219-affisch-Superhunden-Charlie-SE-1440x2057.avif",
+   "stillPath": "https://rio.ams3.digitaloceanspaces.com/biorio/movies/movies/6003/stills/1788253034983-3h5pq5.avif",
+   "backdropPath": "https://rio.ams3.digitaloceanspaces.com/biorio/movies/movies/6003/stills/1788253034983-3h5pq5.avif",
+   "ogImageUrl": "https://rio.ams3.digitaloceanspaces.com/movies/posters/1788253027545-566217219-affisch-Superhunden-Charlie-SE-1440x2057.jpg",
+   "logoUrl": "https://rio.ams3.digitaloceanspaces.com/biorio/movies/movies/6003/logos/1788253036481-04def.avif",
+   "trailerUrl": "https://www.youtube.com/watch?v=mLHMmt7y1yk",
+   "posterAccentColor": "255, 12, 0",
+   "tmdbId": "1276521",
+   "categories": [],
+   "tags": [],
+   "isActive": true,
+   "isFeatured": false,
+   "showingFrom": "2026-09-13",
+   "showingTo": "2026-09-27",
+   "premiereFrom": "2026-09-11",
+   "premiereTo": "2026-09-13",
+   "createdAt": "2026-09-01T08:52:56.092Z",
+   "updatedAt": "2026-09-01T08:57:17.493Z"
+  }
+ },
+ "quadrophenia": {
+  "movie": {
+   "id": 5923,
+   "title": "Quadrophenia",
+   "slug": "quadrophenia",
+   "synopsis": "Året är 1965. Jimmy är med i ett Londongäng av mods, som ligger i bitter fejd med knuttar och rockare. Under ett stort gängslagsmål i Brighton får Jimmy kontakt med sin drömflicka, Stephanie, och de ä",
+   "logline": "Brittiskt ungdomsdrama med massor av musik av bl.a. The Who.",
+   "tagline": null,
+   "director": "Franc Roddam",
+   "cast": [
+    "Leslie Ash",
+    "Phil Daniels",
+    "Phil Davis",
+    "Mark Wingett",
+    "Sting"
+   ],
+   "genres": [
+    "Drama",
+    "Musik"
+   ],
+   "duration": 120,
+   "releaseDate": "1979-09-14",
+   "releaseYear": 1979,
+   "language": "Engelska",
+   "subtitles": "Otextad",
+   "country": "United Kingdom",
+   "posterPath": "https://rio.ams3.digitaloceanspaces.com/biorio/movies/movies/5923/posters/1780057673672-yirxwl.avif",
+   "stillPath": "https://rio.ams3.digitaloceanspaces.com/biorio/movies/movies/5923/stills/1780057678963-gfnn2j.avif",
+   "backdropPath": "https://rio.ams3.digitaloceanspaces.com/biorio/movies/movies/5923/stills/1780057678963-gfnn2j.avif",
+   "ogImageUrl": "https://rio.ams3.digitaloceanspaces.com/biorio/movies/movies/5923/posters/1780057673672-yirxwl.jpg",
+   "logoUrl": "https://rio.ams3.digitaloceanspaces.com/biorio/movies/movies/5923/logos/1780057680286-onn6er.avif",
+   "trailerUrl": "https://www.youtube.com/watch?v=7bIYnHj-OKA",
+   "posterAccentColor": "134, 180, 216",
+   "tmdbId": "10373",
+   "categories": [],
+   "tags": [
+    "reRUN"
+   ],
+   "isActive": true,
+   "isFeatured": false,
+   "showingFrom": "2026-08-08",
+   "showingTo": "2026-10-04",
+   "premiereFrom": "2025-10-23",
+   "premiereTo": "2025-10-23",
+   "createdAt": "2026-05-29T12:27:51.890Z",
+   "updatedAt": "2026-08-11T07:38:49.612Z"
+  }
+ },
+ "medan-vi-faller": {
+  "movie": {
+   "id": 5486,
+   "title": "Medan vi faller",
+   "slug": "medan-vi-faller",
+   "synopsis": "Vännerna Hubert, Saïd och Vinz står inför sitt viktigaste dygn. Deras vän svävar mellan liv och död efter att ha blivit misshandlad under ett polisförhör och i natt måste en polis dö. ",
+   "logline": "30 år efter världspremiären i Cannes 27 maj 1995 (där den vann Bästa regi) är Medan vi faller fortfarande lika angelägen. ",
+   "tagline": null,
+   "director": "Mathieu Kassovitz",
+   "cast": [
+    "Vincent Cassel",
+    "Saïd Taghmaoui",
+    "Hubert Koundé",
+    "Solo",
+    "Abdel Ahmed Ghili"
+   ],
+   "genres": [
+    "Drama"
+   ],
+   "duration": 98,
+   "releaseDate": "1995-05-31",
+   "releaseYear": 1995,
+   "language": "Franska",
+   "subtitles": "Svenska",
+   "country": "France",
+   "posterPath": "https://rio.ams3.digitaloceanspaces.com/movies/movies/5486/posters/1746621024162-nyc6hq.jpg",
+   "stillPath": "https://rio.ams3.digitaloceanspaces.com/movies/movies/5486/stills/1746621024249-bmahlp.jpg",
+   "backdropPath": "https://rio.ams3.digitaloceanspaces.com/movies/movies/5486/stills/1746621024249-bmahlp.jpg",
+   "ogImageUrl": "https://rio.ams3.digitaloceanspaces.com/movies/movies/5486/posters/1746621024162-nyc6hq.jpg",
+   "logoUrl": "https://rio.ams3.digitaloceanspaces.com/movies/movies/5486/logos/1746621024311-3yxxik.png",
+   "trailerUrl": "https://www.youtube.com/watch?v=FKwcXt3JIaU",
+   "posterAccentColor": null,
+   "tmdbId": "406",
+   "categories": [],
+   "tags": [
+    "reRUN"
+   ],
+   "isActive": true,
+   "isFeatured": false,
+   "showingFrom": "2025-05-07",
+   "showingTo": "2026-11-02",
+   "premiereFrom": "2025-02-01",
+   "premiereTo": "2025-02-01",
+   "createdAt": "2025-05-07T12:30:23.942Z",
+   "updatedAt": "2026-09-21T09:53:07.856Z"
+  }
+ },
+ "sanger-fran-andra-vaningen": {
+  "movie": {
+   "id": 5941,
+   "title": "Sånger från andra våningen",
+   "slug": "sanger-fran-andra-vaningen",
+   "synopsis": "En kväll, någonstans i den norra hemisfären, inträffar en serie konstiga och ologiska händelser: en tjänsteman avskedas på ett förnedrande sätt, en vilsen invandrare attackeras våldsamt på en trafiker",
+   "logline": "Roy Anderssons otroliga film. ",
+   "tagline": null,
+   "director": "Roy Andersson",
+   "cast": [
+    "Bengt C.W. Carlsson",
+    "Stefan Larsson",
+    "Lars Nordh",
+    "Torbjörn Fahlström",
+    "Sten Andersson"
+   ],
+   "genres": [
+    "Drama",
+    "Komedi"
+   ],
+   "duration": 99,
+   "releaseDate": "2000-10-06",
+   "releaseYear": 2000,
+   "language": "Svenska",
+   "subtitles": "Ej angivet",
+   "country": "Sweden,Denmark,Norway",
+   "posterPath": "https://rio.ams3.digitaloceanspaces.com/biorio/movies/movies/5941/posters/1782307192739-1nepgt.avif",
+   "stillPath": "https://rio.ams3.digitaloceanspaces.com/biorio/movies/movies/5941/stills/1782307198818-8ljoni.avif",
+   "backdropPath": "https://rio.ams3.digitaloceanspaces.com/biorio/movies/movies/5941/stills/1782307198818-8ljoni.avif",
+   "ogImageUrl": "https://rio.ams3.digitaloceanspaces.com/biorio/movies/movies/5941/posters/1782307192739-1nepgt.jpg",
+   "logoUrl": "https://rio.ams3.digitaloceanspaces.com/biorio/movies/movies/5941/logos/1782307199823-25qxxl.avif",
+   "trailerUrl": "https://www.youtube.com/watch?v=X05M_G5mR_M",
+   "posterAccentColor": "178, 197, 230",
+   "tmdbId": "34070",
+   "categories": [],
+   "tags": [
+    "reRUN"
+   ],
+   "isActive": true,
+   "isFeatured": false,
+   "showingFrom": "2026-08-30",
+   "showingTo": "2026-11-22",
+   "premiereFrom": "2000-01-24",
+   "premiereTo": "2000-07-01",
+   "createdAt": "2026-06-24T13:19:49.836Z",
+   "updatedAt": "2026-09-30T15:28:54.562Z"
+  }
+ },
+ "farskt-vatten-till-blommorna": {
+  "movie": {
+   "id": 5982,
+   "title": "Färskt vatten till blommorna",
+   "slug": "farskt-vatten-till-blommorna",
+   "synopsis": "Violette är kyrkogårdsvaktmästare i en liten stad i Bourgogne. Hennes fridfulla tillvaro skakas om när en poliskommissaries ankomst avslöjar länge begravda hemligheter. Violette tvingas att konfronter",
+   "logline": "Jean-Pierre Jeunet (Amélie från Montmartre) har regisserat filmen efter den bästsäljande boken med samma namn av Valérie Perrin.",
+   "tagline": null,
+   "director": "Jean-Pierre Jeunet",
+   "cast": [
+    "Leïla Bekhti",
+    "Matthias Schoenaerts",
+    "Anouk Grinberg",
+    "Alban Lenoir",
+    "Melvil Poupaud"
+   ],
+   "genres": [
+    "Drama"
+   ],
+   "duration": 120,
+   "releaseDate": "2026-12-25",
+   "releaseYear": 2026,
+   "language": "Franska",
+   "subtitles": "Svenska",
+   "country": "France,Italy,Belgium",
+   "posterPath": "https://ams3.digitaloceanspaces.com/rio/movies/posters/1787210205336-773241951-Untitled-20-augusti-2026-kl.-09.13.13.avif",
+   "stillPath": "https://rio.ams3.digitaloceanspaces.com/biorio/movies/movies/5982/stills/1787208996190-bwzczq.avif",
+   "backdropPath": "https://rio.ams3.digitaloceanspaces.com/biorio/movies/movies/5982/stills/1787208996190-bwzczq.avif",
+   "ogImageUrl": null,
+   "logoUrl": null,
+   "trailerUrl": "",
+   "posterAccentColor": null,
+   "tmdbId": "1421967",
+   "categories": [],
+   "tags": [],
+   "isActive": true,
+   "isFeatured": false,
+   "showingFrom": "2026-12-15",
+   "showingTo": "2027-02-01",
+   "premiereFrom": "2026-12-25",
+   "premiereTo": "2026-12-27",
+   "createdAt": "2026-08-20T06:56:31.098Z",
+   "updatedAt": "2026-08-20T07:16:46.410Z"
+  }
+ },
+ "dune-part-three": {
+  "movie": {
+   "id": 5847,
+   "title": "Dune: Part Three",
+   "slug": "dune-part-three",
+   "synopsis": "Den tredje och sista delen i Denis Villeneuves episka filmtrilogi och är baserad på Frank Herberts novell Dune: Messiah. Filmen har världspremiär 16 december 2026. ",
+   "logline": null,
+   "tagline": null,
+   "director": "Denis Villeneuve",
+   "cast": [
+    "Timothée Chalamet",
+    "Robert Pattinson",
+    "Jason Momoa",
+    "Javier Bardem",
+    "Zendaya",
+    "Anya Taylor-Joy"
+   ],
+   "genres": [
+    "Science Fiction",
+    "Äventyr"
+   ],
+   "duration": 145,
+   "releaseDate": "2026-12-16",
+   "releaseYear": 2026,
+   "language": "Engelska",
+   "subtitles": "Svenska",
+   "country": "United States of America",
+   "posterPath": "https://rio.ams3.digitaloceanspaces.com/movies/posters/1788865475615-881525241-Dune3.avif",
+   "stillPath": "https://rio.ams3.digitaloceanspaces.com/movies/stills/1782388941470-493497774-bU206dN0ucfOFRK17OXabkdHKFC.avif",
+   "backdropPath": "https://rio.ams3.digitaloceanspaces.com/movies/stills/1782388941470-493497774-bU206dN0ucfOFRK17OXabkdHKFC.avif",
+   "ogImageUrl": "https://rio.ams3.digitaloceanspaces.com/movies/posters/1788865475615-881525241-Dune3.jpg",
+   "logoUrl": "https://rio.ams3.digitaloceanspaces.com/movies/logos/1782388941479-917617706-6G6GVMeSG9vZWAMHW5c3hdZi5Z4.avif",
+   "trailerUrl": "https://www.youtube.com/watch?v=3_9vCamtuPY",
+   "posterAccentColor": "245, 226, 173",
+   "tmdbId": "1170608",
+   "categories": [],
+   "tags": [],
+   "isActive": true,
+   "isFeatured": false,
+   "showingFrom": "2026-12-15",
+   "showingTo": "2027-01-22",
+   "premiereFrom": "2026-12-16",
+   "premiereTo": "2026-12-18",
+   "createdAt": "2026-03-21T18:39:46.605Z",
+   "updatedAt": "2026-09-08T11:04:36.572Z"
+  }
+ }
+}
