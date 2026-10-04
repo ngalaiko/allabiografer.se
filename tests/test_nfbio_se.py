@@ -1,5 +1,6 @@
 """nfbio.se listing page parsing."""
 
+from datetime import date, time
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -244,3 +245,32 @@ def test_original_languages_span_both_cinemas(monkeypatch):
     films = [i for i in nfbio_se.parse() if isinstance(i, Film)]
     assert [f.title for f in films].count("Tony") == 1
     assert next(f for f in films if f.title == "Tony").original_languages == frozenset({Language.ENGLISH})
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("13.00", (0, time(13, 0))),
+        ("9:30", (0, time(9, 30))),
+        ("24.00", (1, time(0, 0))),
+        ("25.15", (1, time(1, 15))),
+        ("12.75", None),
+        ("", None),
+    ],
+)
+def test_parse_time(text, expected):
+    assert nfbio_se._parse_time(text) == expected
+
+
+def test_time_past_midnight_belongs_to_the_next_day():
+    html = _LISTING.read_text().replace("13.00", "24.00", 1)
+    items = list(nfbio_se._parse_listing(html, "Nordisk Film Bio Uppsala", "Uppsala"))
+    s = next(
+        i for i in items if not isinstance(i, Film) and i.ticket_url.endswith("ac12edf8-7633-4e98-805a-46094aceb00d")
+    )
+    assert (s.date, s.time) == (date(2026, 9, 22), time(0, 0))
+
+
+def test_empty_listing_warns(caplog):
+    assert list(nfbio_se._parse_listing("<html></html>", "Nordisk Film Bio Uppsala", "Uppsala")) == []
+    assert "no films" in caplog.text

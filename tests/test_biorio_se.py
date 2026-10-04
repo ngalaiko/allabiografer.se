@@ -179,3 +179,38 @@ def test_a_poster_without_a_jpeg_rendition_takes_the_original():
     assert biorio_se._film(movie).poster_url == (
         "https://www.biorio.se/_next/image?url=https%3A%2F%2Frio.example%2Fp.avif&w=640&q=85"
     )
+
+
+def test_seconds_in_the_time_are_accepted():
+    show = dict(_SHOWTIMES["showtimes"][0], time="13:15:00")
+    assert biorio_se._screening(show, tmdb_id=None, film_key="").time == time(13, 15)
+
+
+@pytest.mark.parametrize(
+    "broken",
+    [
+        {"time": None},
+        {"time": "kväll"},
+        {"movie": None},
+        {"movie": {"title": "X"}},
+        {"date": "2026-13-01"},
+    ],
+)
+def test_a_malformed_show_is_skipped(monkeypatch, caplog, broken):
+    showtimes = json.loads(json.dumps(_SHOWTIMES))
+    show = next(s for s in showtimes["showtimes"] if s["id"] == 2582)
+    show.update(broken)
+    monkeypatch.setattr(
+        biorio_se,
+        "_get_json",
+        lambda s, url: showtimes if url.startswith(biorio_se._SHOWTIMES_URL) else _get_json(s, url),
+    )
+    monkeypatch.setattr(biorio_se._films, "register", lambda film, session=None: film)
+    monkeypatch.setattr(biorio_se, "_tmdb", lambda title: None)
+    monkeypatch.setattr(biorio_se, "_tmdb_by_id", lambda tmdb_id: None)
+
+    ids = {s.ticket_url.rsplit("/", 1)[1] for s in biorio_se.parse() if isinstance(s, Screening)}
+
+    assert "2582" not in ids
+    assert len(ids) == 4
+    assert "2582" in caplog.text

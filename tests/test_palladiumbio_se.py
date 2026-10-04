@@ -204,3 +204,23 @@ def test_non_swedish_audio_is_original_language(monkeypatch):
     assert films["Heart of the Beast"].original_languages == frozenset({Language.ENGLISH})
     # Swedish audio alone may be a dub.
     assert films["Bortglömda ön"].original_languages == frozenset()
+
+
+def test_rows_under_an_invalid_date_are_skipped(caplog):
+    html = _HTML.replace("Söndag 20 september", "Torsdag 31 september")
+    assert list(_showtimes(html)) == []
+    assert "31 september" in caplog.text
+
+
+_BUY = (
+    '<a class="btn btn-primary btn-sm" href="https://secure.tickster.com/dj1t13vvferte1v"'
+    ' rel="noopener" target="_blank">\n      <i class="fa-solid fa-ticket pe-1">\n      </i>'
+    "\n      Biljetter\n     </a>"
+)
+
+
+def test_row_without_a_buy_button_links_its_event_page():
+    assert _BUY in _HTML
+    rows = {f.title: rest for f, *rest in _showtimes(_HTML.replace(_BUY, ""))}
+    assert len(rows) == 4
+    assert rows["Superhunden Charlie"][2] == "https://palladiumbio.se/film.html?event=dj1t13vvferte1v"

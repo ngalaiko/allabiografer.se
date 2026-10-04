@@ -36,6 +36,9 @@ _MULTI_FILM = re.compile(r"\s\+\s|maraton|marathon|double feature", re.IGNORECAS
 # Showtime statuses the box office will not sell.
 _CANCELLED = re.compile(r"cancel", re.IGNORECASE)
 
+# "13:15", "13:15:00".
+_TIME = re.compile(r"(\d{1,2}):(\d{2})(?::\d{2})?")
+
 # Placeholders the API writes for an unstated language.
 _UNSTATED = {"", "-", "n/a", "tba", "tbc", "ej angivet"}
 
@@ -75,14 +78,45 @@ def _release_date(movie: dict) -> str:
     return full if year and full[:4] == year else year
 
 
+def _show_time(text: object) -> time | None:
+    """Time from "13:15" or "13:15:00"."""
+    m = _TIME.fullmatch(text.strip()) if isinstance(text, str) else None
+    try:
+        return time(int(m.group(1)), int(m.group(2))) if m else None
+    except ValueError:
+        return None
+
+
+def _show_date(text: object) -> date | None:
+    try:
+        return date.fromisoformat(text) if isinstance(text, str) else None
+    except ValueError:
+        return None
+
+
+def _valid(show: dict) -> bool:
+    """Whether a showtime carries what a screening needs; warns when it does not."""
+    movie = show.get("movie")
+    if (
+        isinstance(movie, dict)
+        and movie.get("title")
+        and movie.get("slug")
+        and show.get("movieId") is not None
+        and _show_time(show.get("time"))
+        and _show_date(show.get("date"))
+    ):
+        return True
+    log.warning("biorio.se: skipping malformed showtime %s", show.get("id"))
+    return False
+
+
 def _screening(show: dict, *, tmdb_id: int | None, film_key: str) -> Screening:
-    h, m = show["time"].split(":")
     fmt = " ".join(label for flag, label in (("is3D", "3D"), ("isImax", "IMAX")) if show.get(flag))
     return Screening(
         tmdb_id=tmdb_id,
         title=show["movie"]["title"].strip(),
-        date=date.fromisoformat(show["date"]),
-        time=time(int(h), int(m)),
+        date=_show_date(show["date"]),
+        time=_show_time(show["time"]),
         ticket_url=f"{_SITE}/sv/boka/{show['id']}",
         cinema_name=_CINEMA,
         city=_CITY,
@@ -115,7 +149,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
     shows = [
         s
         for s in _get_json(session, _SHOWTIMES_URL)["showtimes"]
-        if not s.get("membersOnly") and not _CANCELLED.search(s.get("status") or "")
+        if not s.get("membersOnly") and not _CANCELLED.search(s.get("status") or "") and _valid(s)
     ]
 
     films: dict[int, tuple[Film, int | None]] = {}

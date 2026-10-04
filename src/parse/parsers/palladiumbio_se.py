@@ -172,6 +172,18 @@ def _hero(page: str) -> str:
     return urljoin(_URL, m.group(1)) if m else ""
 
 
+def _parse_date(text: str) -> date | None:
+    """Date from a header like "Onsdag 1 april"."""
+    m = re.match(r"\w+\s+(\d{1,2})\s+(\w+)", text)
+    month = _MONTHS.get(m.group(2).lower()) if m else None
+    if not month:
+        return None
+    try:
+        return date(infer_year(month), month, int(m.group(1)))
+    except ValueError:
+        return None
+
+
 def _showtimes(html: str) -> Iterator[tuple[Film, date, time, str, str, str, str, tuple[str, ...]]]:
     """Yield (film, date, time, ticket_url, screen, language, subtitles, raw_attributes) per program row."""
     soup = BeautifulSoup(html, "html.parser")
@@ -183,13 +195,9 @@ def _showtimes(html: str) -> Iterator[tuple[Film, date, time, str, str, str, str
         th = tr.select_one("th.date")
         if th:
             text = th.get_text(strip=True)
-            # "Onsdag 1 april"
-            m = re.match(r"\w+\s+(\d{1,2})\s+(\w+)", text)
-            if m:
-                day = int(m.group(1))
-                month = _MONTHS.get(m.group(2).lower())
-                if month:
-                    current_date = date(infer_year(month), month, day)
+            current_date = _parse_date(text)
+            if current_date is None:
+                log.warning("palladiumbio.se: skipping rows under date %r", text)
             continue
 
         if current_date is None:
@@ -200,7 +208,7 @@ def _showtimes(html: str) -> Iterator[tuple[Film, date, time, str, str, str, str
         venue_el = tr.select_one("td.venue")
         buy_el = tr.select_one("td.buy a.btn-primary")
 
-        if not time_el or not title_el or not buy_el:
+        if not time_el or not title_el:
             continue
 
         raw_time = time_el.get_text(strip=True)
@@ -214,9 +222,8 @@ def _showtimes(html: str) -> Iterator[tuple[Film, date, time, str, str, str, str
         if not film_title:
             continue
 
-        ticket_url = buy_el.get("href", "")
-        if not ticket_url:
-            continue
+        # Sold-out and not-yet-on-sale rows lack the buy button; their event page stands in.
+        ticket_url = (buy_el and buy_el.get("href", "")) or urljoin(_URL, title_el.get("href", ""))
 
         screen = _parse_screen(venue_el.get_text(strip=True)) if venue_el else ""
 

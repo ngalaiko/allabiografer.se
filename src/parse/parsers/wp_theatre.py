@@ -43,8 +43,8 @@ _SITES = [
         "name": "Capitol",
         "url": "https://www.capitolgbg.se/",
         "address": "Skanstorget 1",
-        # Event venues name either the screen ("CAPITOL 1") or a series ("Cinemateket"); tickets name the salong.
-        "screen": "CAPITOL {}",
+        # Ticket salongnr of each auditorium; other numbers book a series ("Cinemateket"), which the event venue names.
+        "screens": {"1": "CAPITOL 1", "2": "CAPITOL 2"},
     },
 ]
 
@@ -65,6 +65,10 @@ _SPOKEN = re.compile(
 )
 _SUBTITLED = re.compile(r"^[^\W\d_]+\s+text\b", re.IGNORECASE)
 _DUBBED = re.compile(r"\bdubba[dt]\b", re.IGNORECASE)
+# "tisdag 31 mars 16:00", "1 april, 2026 16:00".
+_DATETIME = re.compile(
+    r"(?P<day>\d{1,2})\s+(?P<month>[^\W\d_]+),?\s+(?:(?P<year>\d{4})\s+)?(?P<hour>\d{1,2}):(?P<minute>\d{2})"
+)
 # Ticket links name the date: "…&datum=2026-10-04".
 _TICKET_DATE = re.compile(r"datum=(\d{4}-\d{2}-\d{2})")
 # Ticket links name the auditorium: "…tomovie@salongnr=3&tid=18:30&datum=…".
@@ -74,19 +78,18 @@ _SALES_NOTICE = re.compile(r"\s*(?:biljetter\s+ännu\s+ej\s+släppta|fler\s+visn
 
 
 def _parse_datetime(text: str) -> tuple[date, time] | None:
-    """Parse 'tisdag 31 mars 16:00' or '1 april, 2026 16:00'."""
-    # "weekday DD month HH:MM"
-    m = re.search(r"(\d{1,2})\s+(\w+)\s+(\d{1,2}):(\d{2})", text.strip())
+    """Parse 'tisdag 31 mars 16:00', '1 april, 2026 16:00' or '12 september 2026 14:00'."""
+    m = _DATETIME.search(text.strip())
     if not m:
         return None
-    day = int(m.group(1))
-    month = _MONTHS.get(m.group(2).lower())
+    month = _MONTHS.get(m.group("month").lower())
     if not month:
         return None
-    # Year might be present
-    ym = re.search(r"(\d{4})", text)
-    year = int(ym.group(1)) if ym else infer_year(month)
-    return date(year, month, day), time(int(m.group(3)), int(m.group(4)))
+    year = int(m.group("year")) if m.group("year") else infer_year(month)
+    try:
+        return date(year, month, int(m.group("day"))), time(int(m.group("hour")), int(m.group("minute")))
+    except ValueError:
+        return None
 
 
 def _lookup_title(title: str) -> str:
@@ -206,7 +209,9 @@ def _parse_production(html: str, site: dict) -> Iterator[Screening | Film]:
     yield film
     tmdb_id = _tmdb(_lookup_title(film_title), runtime=runtime)
 
-    for ev in psoup.select(".wp_theatre_event"):
+    # Sidebar widgets list other productions' events.
+    listing = psoup.select_one(".wpt_context_production_events") or psoup
+    for ev in listing.select(".wp_theatre_event"):
         dt_el = ev.select_one(".wp_theatre_event_datetime")
         venue_el = ev.select_one(".wp_theatre_event_venue")
         ticket_el = ev.select_one(".wp_theatre_event_tickets_url")
@@ -229,7 +234,7 @@ def _parse_production(html: str, site: dict) -> Iterator[Screening | Film]:
 
         venue = venue_el.get_text(strip=True) if venue_el else ""
         salong = _SALONG.search(ticket_url)
-        screen = site["screen"].format(salong.group(1)) if salong and site.get("screen") else venue
+        screen = site.get("screens", {}).get(salong.group(1), venue) if salong else venue
         remark, remark_subtitles = _remark(ev)
         attributes = (
             *suffixes,

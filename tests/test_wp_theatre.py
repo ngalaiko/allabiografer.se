@@ -1,5 +1,6 @@
 """WordPress Theater production page parsing."""
 
+from datetime import date, time
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -13,7 +14,7 @@ from store.version import AudioKind, Language
 pytestmark = pytest.mark.usefixtures("parser_clock")
 
 _FIXTURES = Path(__file__).parent / "fixtures" / "wp_theatre"
-_SITE = {"city": "Göteborg", "name": "Capitol", "screen": "CAPITOL {}"}
+_SITE = wp_theatre._SITES[0]
 
 
 @pytest.fixture(autouse=True)
@@ -168,13 +169,39 @@ def test_event_remarks_are_raw_attributes(remark, expected):
 
 
 def test_screen_comes_from_ticket_salong():
+    # salongnr=3 is the booking system's Cinemateket series, not a third auditorium.
     s = _parse("production-cinemateket.html")[0]
-    assert s.screen == "CAPITOL 3"
-    assert s.raw_attributes == ("Cinemateket",)
+    assert s.screen == "Cinemateket"
+    assert s.raw_attributes == ()
     tony = _parse("production-tony.html")[0]
     assert tony.screen == "CAPITOL 1"
     # The venue names the screen itself; only the remark remains.
     assert tony.raw_attributes == ("STORA BIODAGEN - Halva priset",)
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("tisdag 6 oktober 16:00", (date(2026, 10, 6), time(16, 0))),
+        ("1 april, 2026 16:00", (date(2026, 4, 1), time(16, 0))),
+        ("12 september 2026 14:00", (date(2026, 9, 12), time(14, 0))),
+        ("12 smarch 2026 14:00", None),
+    ],
+)
+def test_parse_datetime(text, expected):
+    assert wp_theatre._parse_datetime(text) == expected
+
+
+def test_events_outside_the_production_listing_are_ignored():
+    sidebar = """<div class="widget"><div class="wpt_listing wpt_events"><div class="wp_theatre_event">
+<div class="wp_theatre_event_datetime">fredag 2 oktober 20:00</div>
+<div class="wp_theatre_event_venue">CAPITOL 2</div>
+<a class="wp_theatre_event_tickets_url" href="https://capitolgbg.internetbokningen.com/chap/api/tomovie@salongnr=2&amp;tid=20:00&amp;datum=2026-10-02">Biljetter</a>
+</div></div></div></body>"""
+    html = (_FIXTURES / "production-tony.html").read_text().replace("</body>", sidebar)
+    screenings = [i for i in _items("", html) if not isinstance(i, Film)]
+    assert len(screenings) == 4
+    assert all(s.screen == "CAPITOL 1" for s in screenings)
 
 
 _KOKUHO = (_FIXTURES / "production-kokuho.html").read_text()

@@ -5,7 +5,7 @@ import logging
 import re
 from collections.abc import Iterator
 from dataclasses import replace
-from datetime import date, time
+from datetime import date, time, timedelta
 
 import requests
 from bs4 import BeautifulSoup
@@ -88,9 +88,15 @@ def _parse_duration(text: str) -> int | None:
     return runtime if runtime >= _MIN_RUNTIME else None
 
 
-def _parse_time(text: str) -> time | None:
+def _parse_time(text: str) -> tuple[int, time] | None:
+    """(days after the listed date, time) from "13.00"; "24.00" is midnight after it."""
     m = re.match(r"(\d{1,2})[.:](\d{2})", text.strip())
-    return time(int(m.group(1)), int(m.group(2))) if m else None
+    if not m:
+        return None
+    hour, minute = int(m.group(1)), int(m.group(2))
+    if minute > 59:
+        return None
+    return divmod(hour, 24)[0], time(hour % 24, minute)
 
 
 def _absolute(href: str) -> str:
@@ -204,7 +210,10 @@ def _parse_listing(html: str, cinema_name: str, city: str) -> Iterator[Screening
     """Yield every showtime rendered on a cinema listing page, and its film."""
     soup = BeautifulSoup(html, "html.parser")
 
-    for article in soup.select("article.node--type-movie"):
+    articles = soup.select("article.node--type-movie")
+    if not articles:
+        log.warning("%s: no films on listing page", cinema_name)
+    for article in articles:
         title_el = article.select_one(".node-title .field--name-title") or article.select_one(".node-title")
         film_title = title_el.get_text(strip=True) if title_el else ""
         if not film_title:
@@ -230,9 +239,12 @@ def _parse_listing(html: str, cinema_name: str, city: str) -> Iterator[Screening
                     continue
 
                 time_el = btn.select_one(".time")
-                t = _parse_time(time_el.get_text(strip=True)) if time_el else None
-                if not t:
+                raw_time = time_el.get_text(strip=True) if time_el else ""
+                parsed = _parse_time(raw_time)
+                if not parsed:
+                    log.warning("bad time %r for %r", raw_time, film_title)
                     continue
+                days, t = parsed
                 seen.add(href)
 
                 room_el = btn.select_one(".room")
@@ -245,7 +257,7 @@ def _parse_listing(html: str, cinema_name: str, city: str) -> Iterator[Screening
                 yield Screening(
                     tmdb_id=tmdb_id,
                     title=film_title,
-                    date=d,
+                    date=d + timedelta(days=days),
                     time=t,
                     ticket_url=href if href.startswith("http") else _BASE + href,
                     cinema_name=cinema_name,
