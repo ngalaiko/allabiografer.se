@@ -6,7 +6,7 @@ import logging
 import re
 from collections import Counter
 from collections.abc import Iterator
-from datetime import date, time
+from datetime import datetime
 
 from parse import _http, _version
 from parse.parsers import _films
@@ -21,6 +21,8 @@ _API = "https://www.nortic.se/api/json/shows"
 _CATEGORIES = {"Bio", "Film"}
 # Opera holds stage productions and cinema broadcasts alike; broadcasts say so.
 _BROADCAST = re.compile(r"metropolitan|\bmet\b|på bio\b|\bbio\b|livesänd|direktsänd", re.IGNORECASE)
+# Event titles naming a live broadcast: "Live på bio: Simson och Delila", "Macbeth - Live från Met".
+_LIVE = re.compile(r"metropolitan|\bmet\b|live på bio|opera på bio|live från|livesänd|direktsänd", re.IGNORECASE)
 
 # Event wrappers around film titles: "Bio: Kevlarsjäl", "Bio Kontrast - Super Mario Galaxy", "Frukostbio Top Hat".
 _PREFIX = re.compile(
@@ -234,7 +236,8 @@ def _parse_payload(data: dict) -> Iterator[Screening | Venue | Film]:
         spoken, stated_subtitles = _version.from_text(text)
         dubbed = bool(_DUBBED.search(text))
         stated = dubbed or bool(_SPEECH.search(text))
-        tmdb_id = _tmdb(film_title)
+        # Broadcasts share titles with older films; only a same-year release matches.
+        live = event.get("category") == "Opera" or bool(_LIVE.search(event.get("title", "")))
         key = film_key(_SOURCE, film_title)
 
         count = 0
@@ -249,25 +252,22 @@ def _parse_payload(data: dict) -> Iterator[Screening | Venue | Film]:
             if not cinema_name or not raw_dt or not ticket_url:
                 continue
 
+            try:
+                start = datetime.fromisoformat(raw_dt)
+            except (ValueError, TypeError):
+                log.warning("bad startDate %r for %r", raw_dt, film_title)
+                continue
+
             venue_key = (cinema_name, city)
             if venue_key not in seen_venues:
                 seen_venues.add(venue_key)
                 yield Venue(name=cinema_name, city=city, address=address)
 
-            try:
-                date_str, time_str = raw_dt.split(" ", 1)
-                h, m = time_str.split(":")
-                dt_date = date.fromisoformat(date_str)
-                dt_time = time(int(h), int(m))
-            except (ValueError, AttributeError):
-                log.warning("bad startDate %r for %r", raw_dt, film_title)
-                continue
-
             yield Screening(
-                tmdb_id=tmdb_id,
+                tmdb_id=_tmdb(film_title, year=start.year) if live else _tmdb(film_title),
                 title=film_title,
-                date=dt_date,
-                time=dt_time,
+                date=start.date(),
+                time=start.time().replace(second=0),
                 cinema_name=cinema_name,
                 city=city,
                 screen=screen,

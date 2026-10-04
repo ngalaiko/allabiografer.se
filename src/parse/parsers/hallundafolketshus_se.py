@@ -32,6 +32,8 @@ _NOT_A_POSTER = re.compile(r"logo|favicon|icon", re.IGNORECASE)
 
 # Event categories that are screenings: "CaféBio", "Film", "Opera - Live på Bio".
 _SCREENING = re.compile(r"bio|^film$", re.IGNORECASE)
+# Categories of live broadcasts: "Opera - Live på Bio".
+_BROADCAST = re.compile(r"opera|live på bio", re.IGNORECASE)
 _WHEN = re.compile(r"^(\d{2})/(\d{2})\s+(\d{2}):(\d{2})")
 # Programme names set before the title: "Drive-in-Bio LUST FOR LIFE".
 _PROGRAMME = re.compile(r"^(Drive-in-Bio)\s+", re.IGNORECASE)
@@ -80,8 +82,8 @@ def _title(raw: str, ticket: str = "") -> str:
     return title.capitalize()
 
 
-def _events(html: str) -> Iterator[tuple[str, date, time, str, tuple[str, ...]]]:
-    """Yield (title, date, time, event_url, programme labels) for every screening event in *html*.
+def _events(html: str) -> Iterator[tuple[str, date, time, str, tuple[str, ...], bool]]:
+    """Yield (title, date, time, event_url, programme labels, broadcast) for every screening event in *html*.
 
     Titles keep the site's casing; :func:`_title` recases them.
     """
@@ -89,7 +91,8 @@ def _events(html: str) -> Iterator[tuple[str, date, time, str, tuple[str, ...]]]
     seen: set[tuple[str, date, time]] = set()
 
     for item in soup.select(".em-event.em-item"):
-        if not _SCREENING.search(_text(item.select_one(".em-item-cat"))):
+        category = _text(item.select_one(".em-item-cat"))
+        if not _SCREENING.search(category):
             continue
         link = item.select_one(".em-item-title a[href]")
         m = _WHEN.match(_text(item.select_one(".em-date-time")))
@@ -101,7 +104,11 @@ def _events(html: str) -> Iterator[tuple[str, date, time, str, tuple[str, ...]]]
         if prefix := _PROGRAMME.match(title):
             title, labels = title[prefix.end() :], (prefix.group(1),)
         day, month = int(m.group(1)), int(m.group(2))
-        when = date(infer_year(month), month, day)
+        try:
+            when = date(infer_year(month), month, day)
+        except ValueError:
+            log.warning("hallundafolketshus: bad date %s/%s for %r", m.group(1), m.group(2), title)
+            continue
         start = time(int(m.group(3)), int(m.group(4)))
         href = link["href"]
         if not title or (title, when, start) in seen:
@@ -110,7 +117,7 @@ def _events(html: str) -> Iterator[tuple[str, date, time, str, tuple[str, ...]]]
         if not href.startswith("http"):
             href = _BASE + href
 
-        yield title, when, start, href, labels
+        yield title, when, start, href, labels, bool(_BROADCAST.search(category))
 
 
 def _runtime(line: str) -> int | None:
@@ -237,7 +244,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
     yield Venue(name=_CINEMA, city=_CITY, address=_ADDRESS)
 
     seen: set[str] = set()
-    for raw, day, start, href, labels in _events(_fetch(_URL)):
+    for raw, day, start, href, labels, broadcast in _events(_fetch(_URL)):
         page = ""
         try:
             page = _fetch(href)
@@ -258,7 +265,8 @@ def parse() -> Iterator[Screening | Venue | Film]:
             language, subtitles = spoken or language, subs or subtitles
 
         yield Screening(
-            tmdb_id=_tmdb(title),
+            # Broadcasts share titles with older films; only a same-year release matches.
+            tmdb_id=_tmdb(title, year=day.year) if broadcast else _tmdb(title),
             film_key=film_key(_SOURCE, title),
             title=title,
             date=day,

@@ -50,6 +50,13 @@ _SWEDISH_CITIES = {
 
 _CITY_NAMES = {name.casefold(): name for name in _SWEDISH_CITIES.values()}
 
+# Regular venues, whose events often carry neither a city term nor a city in the address.
+_VENUE_CITIES = {
+    "skeppet gbg": "Göteborg",
+    "moriska paviljongen": "Malmö",
+    "cafe ray": "Helsingborg",
+}
+
 # Longer event info is prose, not a programme label.
 _MAX_INFO = 40
 _DASH = re.compile(r"\s+[–—-]\s+")
@@ -93,9 +100,12 @@ def _events(html: str) -> Iterator[Event]:
     venue_cities = {cinema.casefold(): city for _, _, _, _, cinema, city, _, _ in parsed if city}
     located: list[Event] = []
     for title, d, t, ticket_url, cinema, city, address, raw in parsed:
-        city = city or venue_cities.get(cinema.casefold(), "") or _city_from_address(address)
-        if city:
-            located.append((title, d, t, ticket_url, cinema, city, address, raw))
+        key = cinema.casefold()
+        city = city or _VENUE_CITIES.get(key) or venue_cities.get(key) or _city_from_address(address)
+        if not city:
+            log.warning("doclounge.se: no city for %r at %r, %s", title, cinema or address, d)
+            continue
+        located.append((title, d, t, ticket_url, cinema, city, address, raw))
     # A street-only address takes the name of a venue seen at the same street.
     named: dict[tuple[str, str], str] = {}
     for _, _, _, _, cinema, city, address, _ in located:
@@ -144,8 +154,9 @@ def _row(event: dict) -> Event | None:
     if not ticket_url:
         return None
 
+    # Events without a film are talks, parties and other non-screenings.
     movie = content.get("movie") or {}
-    title = _title(movie.get("title") or event.get("title") or "")
+    title = _title(movie.get("title") or "")
     if not title:
         return None
 

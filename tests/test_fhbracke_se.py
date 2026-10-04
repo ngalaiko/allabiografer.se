@@ -85,7 +85,7 @@ class _Session:
 def _screenings(monkeypatch, pages: dict[str, str]) -> list[Screening]:
     monkeypatch.setattr(fhbracke_se, "_SESSION", _Session(pages))
     monkeypatch.setattr(fhbracke_se._films, "register", lambda film, session=None: film)
-    monkeypatch.setattr(fhbracke_se, "_tmdb", lambda title: None)
+    monkeypatch.setattr(fhbracke_se, "_tmdb", lambda title, **_: None)
     return [i for i in fhbracke_se.parse() if isinstance(i, Screening)]
 
 
@@ -164,7 +164,7 @@ _OPERA_PAGES = {
 def _items(monkeypatch, pages: dict[str, str]) -> list:
     monkeypatch.setattr(fhbracke_se, "_SESSION", _Session(pages))
     monkeypatch.setattr(fhbracke_se._films, "register", lambda film, session=None: film)
-    monkeypatch.setattr(fhbracke_se, "_tmdb", lambda title: None)
+    monkeypatch.setattr(fhbracke_se, "_tmdb", lambda title, **_: None)
     return list(fhbracke_se.parse())
 
 
@@ -208,3 +208,26 @@ def test_event_pages_that_are_not_broadcasts_are_skipped(monkeypatch):
 
     assert "Otello" not in titles
     assert "Simson och Delila" in titles
+
+
+@_OCTOBER
+def test_broadcast_lookups_are_restricted_to_the_screening_year(monkeypatch):
+    calls: dict[str, int | None] = {}
+    monkeypatch.setattr(fhbracke_se, "_SESSION", _Session(_OPERA_PAGES))
+    monkeypatch.setattr(fhbracke_se._films, "register", lambda film, session=None: film)
+    monkeypatch.setattr(fhbracke_se, "_tmdb", lambda title, year=None: calls.setdefault(title, year) and None)
+    list(fhbracke_se.parse())
+
+    assert calls["Simson och Delila"] == 2026
+    assert calls["Otello"] == 2027
+    assert calls["Digger"] is None
+
+
+@_OCTOBER
+def test_an_impossible_date_skips_only_that_showing(caplog):
+    html = _slide("Skottdag", "söndag 29 februari 19:00", "/film/skottdag/") + _slide(
+        "Digger", "söndag 4 oktober 15:00", "/film/digger/"
+    )
+
+    assert [s["title"] for s in _listings(html)] == ["Digger"]
+    assert "29 februari" in caplog.text

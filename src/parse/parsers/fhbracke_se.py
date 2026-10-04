@@ -113,6 +113,11 @@ def _listings(html: str) -> Iterator[dict]:
         if key in seen:
             continue
         seen.add(key)
+        try:
+            when = date(infer_year(month), month, day)
+        except ValueError:
+            log.warning("fhbracke: bad date %s %s for %r", m.group(2), m.group(3), title)
+            continue
 
         poster = next(
             (
@@ -125,7 +130,7 @@ def _listings(html: str) -> Iterator[dict]:
 
         yield {
             "title": title,
-            "date": date(infer_year(month), month, day),
+            "date": when,
             "time": time(hour, minute),
             "url": _absolute(href),
             "poster_url": poster,
@@ -241,7 +246,8 @@ def _broadcasts(events: list[_tickster.Event]) -> Iterator[Screening | Film]:
             seen.add(title)
             yield _films.register(_films.make(_SOURCE, title, url=page_url, poster_url=poster, overview=overview))
         yield Screening(
-            tmdb_id=_tmdb(title),
+            # Broadcasts share titles with older films; only a same-year release matches.
+            tmdb_id=_tmdb(title, year=event.date.year),
             film_key=film_key(_SOURCE, title),
             title=title,
             date=event.date,

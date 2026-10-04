@@ -146,6 +146,9 @@ def test_placeholders_are_not_languages(raw):
         ("Språk: Norska och textad på svenska", ("Norskt tal", "Svensk text")),
         ("Språk: Arabiska och spanska med svensk text", ("Arabiskt, spanskt tal", "Svensk text")),
         ("Vid gala fick han vaska sitt tal och se sig besegrad.", ("", "")),
+        ("Runtime: 82 minutes Language: Swedish Subtitles: English Age rating: 11+", ("Svenskt tal", "Engelsk text")),
+        ("Language: Norwegian, Danish Subtitles: Finnish", ("Norskt, danskt tal", "Finsk text")),
+        ("Subtitles: Swedish", ("", "Svensk text")),
     ],
 )
 def test_from_text(text, expected):

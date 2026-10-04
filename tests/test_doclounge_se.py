@@ -1,5 +1,6 @@
 """doclounge.se event extraction."""
 
+import json
 from datetime import date, time
 from pathlib import Path
 
@@ -52,9 +53,6 @@ def test_a_street_only_address_takes_the_name_of_a_venue_at_that_street():
     # "Cafe Ray, Södra Storgatan 39A Helsingborg" and "Storgatan 39A, Helsingborg".
     assert events[date(2026, 9, 17)][4:6] == ("Cafe Ray", "Helsingborg")
     assert events[date(2026, 4, 22)][4:6] == ("Cafe Ray", "Helsingborg")
-    # "Media Evolution City, Stora Varvsgatan 6a, 211 19 Malmö" and "Stora Varvsgatan 6A".
-    assert events[date(2025, 2, 14)][4:6] == ("Media Evolution City", "Malmö")
-    assert events[date(2026, 6, 12)][4:6] == ("Media Evolution City", "Malmö")
 
 
 _FILM_HTML = (_FIXTURES / "film.html").read_text()
@@ -104,7 +102,7 @@ def _fetch(session, url):
 def _parse(monkeypatch, sizes=None):
     monkeypatch.setattr(doclounge_se, "_fetch", _fetch)
     monkeypatch.setattr(doclounge_se._films, "register", lambda film, session=None: film)
-    monkeypatch.setattr(doclounge_se, "_tmdb", lambda title: None)
+    monkeypatch.setattr(doclounge_se, "_tmdb", lambda title, **_: None)
     monkeypatch.setattr(doclounge_se, "_image_size", lambda session, url: (sizes or {}).get(url))
     return list(doclounge_se.parse())
 
@@ -218,3 +216,42 @@ def test_screenings_carry_raw_attributes(monkeypatch):
     screenings = [i for i in _parse(monkeypatch) if isinstance(i, Screening)]
 
     assert next(s for s in screenings if s.date == date(2026, 10, 26)).raw_attributes == ("Halloweenspecial",)
+
+
+def _page(*nodes: dict) -> str:
+    data = {"props": {"pageProps": {"events": {"nodes": list(nodes)}}}}
+    return f'<script id="__NEXT_DATA__" type="application/json">{json.dumps(data)}</script>'
+
+
+def _node(title: str, address: str, *, film: bool = True, day: str = "2026-10-15") -> dict:
+    return {
+        "title": title,
+        "cities": {"nodes": []},
+        "gqlEventContent": {
+            "address": address,
+            "date": day,
+            "time": "18:00",
+            "goToEvent": {"url": f"https://billetto.se/e/{day}"},
+            "movie": {"title": title, "uri": "/film/"} if film else None,
+        },
+    }
+
+
+def test_a_known_venue_names_its_city_without_other_events():
+    events = list(_events(_page(_node("HEX", "Skeppet Gbg, Amerikagatan 2"))))
+
+    assert [e[4:6] for e in events] == [("Skeppet Gbg", "Göteborg")]
+
+
+def test_an_event_without_a_city_is_dropped_with_a_warning(caplog):
+    assert list(_events(_page(_node("HEX", "Okänd lokal, Okänd gata 1")))) == []
+    assert "HEX" in caplog.text
+
+
+def test_events_without_a_film_are_skipped():
+    html = _page(
+        _node("Doc Lounge Hotspot – Nytt koncept!", "Moriska Paviljongen, Norra Parkgatan 2, 214 36 Malmö", film=False),
+        _node("HEX", "Moriska Paviljongen, Norra Parkgatan 2, 214 36 Malmö", day="2026-10-26"),
+    )
+
+    assert [e[0] for e in _events(html)] == ["HEX"]

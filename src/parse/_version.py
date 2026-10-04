@@ -122,6 +122,38 @@ _LANGUAGE_ALIASES = {
     "spanish": Language.SPANISH,
     "japanese": Language.JAPANESE,
     "arabic": Language.ARABIC,
+    "portuguese": Language.PORTUGUESE,
+    "korean": Language.KOREAN,
+    "chinese": Language.CHINESE,
+    "cantonese": Language.CANTONESE,
+    "finnish": Language.FINNISH,
+    "norwegian": Language.NORWEGIAN,
+    "danish": Language.DANISH,
+    "icelandic": Language.ICELANDIC,
+    "dutch": Language.DUTCH,
+    "polish": Language.POLISH,
+    "russian": Language.RUSSIAN,
+    "ukrainian": Language.UKRAINIAN,
+    "czech": Language.CZECH,
+    "hungarian": Language.HUNGARIAN,
+    "romanian": Language.ROMANIAN,
+    "greek": Language.GREEK,
+    "turkish": Language.TURKISH,
+    "persian": Language.PERSIAN,
+    "farsi": Language.PERSIAN,
+    "kurdish": Language.KURDISH,
+    "hebrew": Language.HEBREW,
+    "thai": Language.THAI,
+    "vietnamese": Language.VIETNAMESE,
+    "georgian": Language.GEORGIAN,
+    "catalan": Language.CATALAN,
+    "serbian": Language.SERBIAN,
+    "croatian": Language.CROATIAN,
+    "bosnian": Language.BOSNIAN,
+    "estonian": Language.ESTONIAN,
+    "latvian": Language.LATVIAN,
+    "lithuanian": Language.LITHUANIAN,
+    "somali": Language.SOMALI,
 }
 
 
@@ -422,11 +454,13 @@ def split_title(title: str) -> tuple[str, str, str, str]:
     return title.strip(), formats(*fmts), spoken, subs
 
 
-# Labels that open a stated version: "Originalspråk:", "Språk:", "Tal:", "Undertexter:".
-_TEXT_LABEL = re.compile(r"(?:original)?språk\s*:|\btal\s*:|undertext(?:er)?\s*:", re.IGNORECASE)
-# Words that switch from spoken to subtitle languages: "med svensk text", "textad på svenska".
-_TEXT_SUBTITLE_WORDS = {"text", "textad", "textat", "undertext", "undertexter", "med"}
-_TEXT_SKIP = {"språk", "originalspråk", "tal", "och", "på", "dubbat", "dubbad"}
+# Labels that open a stated version: "Originalspråk:", "Språk:", "Tal:", "Undertexter:", "Language:", "Subtitles:".
+_TEXT_LABEL = re.compile(
+    r"(?:original)?språk\s*:|\btal\s*:|undertext(?:er)?\s*:|\blanguage\s*:|\bsubtitles?\s*:", re.IGNORECASE
+)
+# Words that switch from spoken to subtitle languages: "med svensk text", "textad på svenska", "Subtitles:".
+_TEXT_SUBTITLE_WORDS = {"text", "textad", "textat", "undertext", "undertexter", "med", "subtitle", "subtitles"}
+_TEXT_SKIP = {"språk", "originalspråk", "tal", "och", "på", "dubbat", "dubbad", "language", "and"}
 
 
 def from_text(text: str) -> tuple[str, str]:

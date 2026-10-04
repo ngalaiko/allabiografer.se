@@ -14,7 +14,7 @@ _FIXTURE = Path(__file__).parent / "fixtures" / "nortic_se" / "shows.json"
 
 @pytest.fixture(autouse=True)
 def _no_tmdb(monkeypatch):
-    monkeypatch.setattr(nortic_se, "_tmdb", lambda title: None)
+    monkeypatch.setattr(nortic_se, "_tmdb", lambda title, **_: None)
 
 
 @pytest.fixture
@@ -213,7 +213,15 @@ def test_genres_under_the_bio_label(live):
     assert _films(nortic_se._parse_payload(payload))["Monsterfabriken"].genres == []
 
 
-def _event(title: str, *, category: str = "Bio", organizer: int = 1, show_id: int = 1, description: str = "") -> dict:
+def _event(
+    title: str,
+    *,
+    category: str = "Bio",
+    organizer: int = 1,
+    show_id: int = 1,
+    description: str = "",
+    start: str = "2026-12-05 18:00",
+) -> dict:
     return {
         "id": show_id,
         "title": title,
@@ -223,7 +231,7 @@ def _event(title: str, *, category: str = "Bio", organizer: int = 1, show_id: in
         "link": f"https://tickets.nortic.se/ticket/event/{show_id}",
         "shows": [
             {
-                "startDate": "2026-12-05 18:00",
+                "startDate": start,
                 "link": f"https://tickets.nortic.se/ticket/show/{show_id}",
                 "arenaName": "Bio Laxen",
                 "arenaCity": "Mörrum",
@@ -261,3 +269,38 @@ def test_season_passes_and_festival_packages_are_skipped():
         ]
     }
     assert set(_films(nortic_se._parse_payload(payload))) == {"Höstsonaten"}
+
+
+def test_broadcast_lookups_are_restricted_to_the_screening_year(monkeypatch):
+    calls: dict[str, int | None] = {}
+    monkeypatch.setattr(nortic_se, "_tmdb", lambda title, year=None, **_: calls.setdefault(title, year) and None)
+    payload = {
+        "events": [
+            _event("Live på bio: Simson och Delila", category="Opera", organizer=2, show_id=1),
+            _event("Opera på bio - Tosca", show_id=2),
+            _event("Höstsonaten", show_id=3),
+        ]
+    }
+    list(nortic_se._parse_payload(payload))
+    assert calls == {"Simson och Delila": 2026, "Tosca": 2026, "Höstsonaten": None}
+
+
+def test_english_description_labels_state_the_version():
+    event = _event(
+        "Doc Lounge - Mördarens son",
+        description="<p>Runtime: 82 minutes Language: Swedish Subtitles: English Age rating: 11+</p>",
+    )
+    s = next(i for i in nortic_se._parse_payload({"events": [event]}) if isinstance(i, Screening))
+    assert s.version.audio.languages == {Language.SWEDISH}
+    assert s.version.subtitles.languages == {Language.ENGLISH}
+
+
+def test_start_dates_with_seconds_are_read():
+    items = list(nortic_se._parse_payload({"events": [_event("Höstsonaten", start="2026-12-05 18:00:00")]}))
+    s = next(i for i in items if isinstance(i, Screening))
+    assert (s.date.isoformat(), s.time.strftime("%H:%M")) == ("2026-12-05", "18:00")
+
+
+def test_unreadable_start_dates_yield_no_venue():
+    items = list(nortic_se._parse_payload({"events": [_event("Höstsonaten", start="snart")]}))
+    assert not any(isinstance(i, (Venue, Screening)) for i in items)

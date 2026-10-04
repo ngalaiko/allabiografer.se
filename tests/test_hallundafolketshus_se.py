@@ -36,6 +36,7 @@ def test_events_link_to_their_own_event_page():
             time(13, 0),
             "https://www.hallundafolketshus.se/events/autofiktion",
             (),
+            False,
         ),
         (
             "Resan till Piemonte",
@@ -43,6 +44,7 @@ def test_events_link_to_their_own_event_page():
             time(13, 0),
             "https://www.hallundafolketshus.se/events/resan-till-piemonte",
             (),
+            False,
         ),
         (
             "FÖRSTA BLATTEN PÅ MÅNEN",
@@ -50,6 +52,7 @@ def test_events_link_to_their_own_event_page():
             time(19, 0),
             "https://www.hallundafolketshus.se/events/forsta-blatten-pa-manen",
             (),
+            False,
         ),
         (
             "MACBETH",
@@ -57,6 +60,7 @@ def test_events_link_to_their_own_event_page():
             time(19, 0),
             "https://www.hallundafolketshus.se/events/macbeth-2",
             (),
+            True,
         ),
     ]
 
@@ -122,7 +126,7 @@ class _Session:
 def _parse(monkeypatch, pages: dict[str, str]) -> list:
     monkeypatch.setattr(hallundafolketshus_se, "_SESSION", _Session(pages))
     monkeypatch.setattr(hallundafolketshus_se._films, "register", lambda film, session=None: film)
-    monkeypatch.setattr(hallundafolketshus_se, "_tmdb", lambda title: None)
+    monkeypatch.setattr(hallundafolketshus_se, "_tmdb", lambda title, **_: None)
     return list(hallundafolketshus_se.parse())
 
 
@@ -195,6 +199,7 @@ def test_event_listing_reads_every_upcoming_screening():
         time(19, 0),
         "https://www.hallundafolketshus.se/events/lust-for-life",
         ("Drive-in-Bio",),
+        False,
     )
     assert events[12][1] == date(2027, 4, 24)
 
@@ -289,3 +294,26 @@ def test_synopsis_drops_every_form_of_broadcast_date_sentence():
         "Puccinis spännande drama återvänder i en ny uppsättning av Richard Jones, den första på 30 år."
         "\n\nEn av dagens ledande tenorer tar sig an titelrollen i operans största tragedi."
     )
+
+
+def test_broadcast_lookups_are_restricted_to_the_screening_year(monkeypatch):
+    calls: dict[str, int | None] = {}
+    monkeypatch.setattr(hallundafolketshus_se, "_SESSION", _Session(_PAGES))
+    monkeypatch.setattr(hallundafolketshus_se._films, "register", lambda film, session=None: film)
+    monkeypatch.setattr(hallundafolketshus_se, "_tmdb", lambda title, year=None: calls.setdefault(title, year) and None)
+    list(hallundafolketshus_se.parse())
+
+    assert calls["Macbeth"] == 2026
+    assert calls["Autofiktion"] is None
+
+
+def test_an_impossible_date_skips_only_that_event(caplog):
+    item = (
+        '<div class="em-event em-item"><div class="em-item-cat">CaféBio</div>'
+        '<h3 class="em-item-title"><a href="/events/{slug}">{slug}</a></h3>'
+        '<div class="em-date-time">{day} 13:00 - 15:09</div></div>'
+    )
+    html = item.format(slug="skottdag", day="29/02") + item.format(slug="digger", day="14/10")
+
+    assert [title for title, *_ in _events(html)] == ["digger"]
+    assert "29/02" in caplog.text
