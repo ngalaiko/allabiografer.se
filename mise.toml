@@ -39,6 +39,9 @@ run = "uv run --group parse parse kiviksbio_se"
 [tasks."parse:biorio_se"]
 run = "uv run --group parse parse biorio_se"
 
+[tasks."parse:biosverige_se"]
+run = "uv run --group parse parse biosverige_se"
+
 [tasks."parse:soderkopingsbio_se"]
 run = "uv run --group parse parse soderkopingsbio_se"
 
