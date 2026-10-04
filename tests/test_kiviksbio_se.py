@@ -2,10 +2,14 @@
 
 from datetime import date, time
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+import requests
 
+from parse.parsers import kiviksbio_se
 from parse.parsers.kiviksbio_se import _overview, _runtime, _showtimes, _subtitles
+from store import Screening
 from store.version import Language
 
 pytestmark = pytest.mark.usefixtures("parser_clock")
@@ -131,3 +135,73 @@ def test_overview_drops_spaces_before_punctuation():
         "<p>Operans största tragedi<strong> – Otello .<br/></strong>Verdis Otello.</p></section>"
     )
     assert _overview(page) == "Operans största tragedi – Otello. Verdis Otello."
+
+
+class _Session:
+    def __init__(self, pages: dict[str, str]):
+        self.pages = pages
+
+    def get(self, url, timeout=None):
+        if url not in self.pages:
+            raise requests.ConnectionError(url)
+        return SimpleNamespace(text=self.pages[url], ok=True, raise_for_status=lambda: None)
+
+
+def _parse(monkeypatch, pages: dict[str, str], tmdb=lambda title, runtime=None, year=None: None) -> list:
+    monkeypatch.setattr(kiviksbio_se._http, "session", lambda *a: _Session(pages))
+    monkeypatch.setattr(kiviksbio_se._films, "register", lambda film, session=None: film)
+    monkeypatch.setattr(kiviksbio_se, "_tmdb", tmdb)
+    return list(kiviksbio_se.parse())
+
+
+def _lookups(monkeypatch, tmdb_ids: dict | None = None) -> list[tuple]:
+    calls = []
+
+    def tmdb(title, runtime=None, year=None):
+        calls.append((title, runtime, year))
+        return (tmdb_ids or {}).get((title, runtime, year))
+
+    _parse(monkeypatch, {kiviksbio_se._URL: _HTML}, tmdb)
+    return calls
+
+
+def test_broadcast_lookups_are_restricted_to_the_screening_year(monkeypatch):
+    assert {(t, y) for t, _, y in _lookups(monkeypatch)} == {
+        ("Autofiktion", None),
+        ("Così fan Tutte", 2026),
+        ("Nelly Rapp - Porten till underjorden", None),
+    }
+
+
+def test_lookup_passes_the_runtime_then_falls_back_to_the_title(monkeypatch):
+    calls = _lookups(monkeypatch)
+    assert ("Autofiktion", 115, None) in calls
+    assert ("Autofiktion", None, None) in calls
+
+
+def test_lookup_by_runtime_wins(monkeypatch):
+    calls = _lookups(monkeypatch, {("Autofiktion", 115, None): 1})
+    assert ("Autofiktion", None, None) not in calls
+
+
+def test_a_failed_detail_page_keeps_the_screenings(monkeypatch, caplog):
+    items = _parse(monkeypatch, {kiviksbio_se._URL: _HTML})
+    assert len([i for i in items if isinstance(i, Screening)]) == 3
+    assert "autofiktion" in caplog.text
+
+
+def _item(date_text: str) -> str:
+    return (
+        '<div class="em-item"><h3 class="em-item-title"><a href="https://www.kiviksbio.se/program/x/">X</a></h3>'
+        f'<div class="em-event-date">{date_text}</div></div>'
+    )
+
+
+def test_showtimes_read_months_in_any_case_and_length():
+    html = _item("lördag 3 Okt kl 19:00") + _item("lördag 3 oktober kl 19:00") + _item("onsdag 2 DECEMBER kl 18:00")
+    assert [d for _, d, *_ in _showtimes(html)] == [date(2026, 10, 3), date(2026, 10, 3), date(2026, 12, 2)]
+
+
+def test_showtimes_warn_on_an_unparseable_date(caplog):
+    assert list(_showtimes(_item("lördag 3 foo kl 19:00"))) == []
+    assert "lördag 3 foo kl 19:00" in caplog.text

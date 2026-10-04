@@ -1,8 +1,11 @@
 """osbyborgen.se session blob and film page extraction."""
 
+from datetime import date
 from pathlib import Path
 
-from parse.parsers.osbyborgen_se import _detail, _film, _label_facts, _runtime, _sessions
+import pytest
+
+from parse.parsers.osbyborgen_se import _detail, _film, _label_facts, _parse_date, _runtime, _sessions
 from store.version import Language
 
 _FIXTURES = Path(__file__).parent / "fixtures" / "osbyborgen_se"
@@ -120,3 +123,28 @@ def test_film_page_label_supplies_the_language_a_schedule_note_lacks():
     assert facts["version"].audio.languages == {Language.SWEDISH}
     assert facts["raw_attributes"] == ()
     assert _label_facts("dagbio<br>på spanska", "på svenska")["version"].audio.languages == {Language.SPANISH}
+
+
+def test_sessions_read_titles_containing_the_blob_terminator():
+    page = (
+        'var vueData_sessions = {"foo":"bar","sessions":[{"f_title":"A ]} B","f_event_type_id":1},'
+        '{"f_title":"C","f_event_type_id":1}]};\nvar vueData_other = {"x":[1]};'
+    )
+    assert [s["f_title"] for s in _sessions(page)] == ["A ]} B", "C"]
+
+
+@pytest.mark.usefixtures("parser_clock")
+def test_parse_date_reads_long_month_names_in_any_case():
+    assert _parse_date("lördag 3 sept") == date(2026, 9, 3)
+    assert _parse_date("Söndag 4 Oktober") == date(2026, 10, 4)
+    assert _parse_date("fredag 1 JAN") == date(2027, 1, 1)
+
+
+def test_parse_date_warns_on_an_unparseable_date(caplog):
+    assert _parse_date("lördag 3 foo") is None
+    assert "lördag 3 foo" in caplog.text
+
+
+def test_detail_survives_invalid_json(caplog):
+    assert _detail('var vueData_film = {"film": {"f_title": oops}, "isProdApiMode": true}') == {}
+    assert "osbyborgen.se" in caplog.text

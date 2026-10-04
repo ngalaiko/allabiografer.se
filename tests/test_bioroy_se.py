@@ -16,7 +16,7 @@ _DIGGER_POSTER = "https://www.bioroy.se/media/0qydhymd/digger_aff1.jpg?width=500
 
 @pytest.fixture(autouse=True)
 def _no_tmdb(monkeypatch):
-    monkeypatch.setattr(bioroy_se, "_tmdb", lambda title, runtime=None: None)
+    monkeypatch.setattr(bioroy_se, "_tmdb", lambda title, runtime=None, year=None: None)
 
 
 @pytest.fixture
@@ -95,7 +95,7 @@ def test_one_film_per_title_and_every_screening_keyed(films, screenings):
     assert [f.title for f in films] == [
         "Tony",
         "Nosferatu",
-        "Sing Along: The Rocky Horror Picture Show",
+        "The Rocky Horror Picture Show",
         "Arkipelag",
         "Digger",
         "Vår jord",
@@ -107,7 +107,7 @@ def test_one_film_per_title_and_every_screening_keyed(films, screenings):
 def test_themes_become_raw_attributes(screenings):
     by_title = {s.title: s for s in screenings}
     assert by_title["Nosferatu"].raw_attributes == ("Stumfilm med livemusik", "Klassiker")
-    assert by_title["Sing Along: The Rocky Horror Picture Show"].raw_attributes == ("Sing & Party Along", "Klassiker")
+    assert by_title["The Rocky Horror Picture Show"].raw_attributes == ("Sing Along", "Sing & Party Along", "Klassiker")
     assert by_title["Tony"].raw_attributes == ()
 
 
@@ -172,7 +172,7 @@ def test_a_page_image_of_unknown_size_is_cropped_to_2_3():
 
 def test_a_zero_duration_is_no_runtime(monkeypatch):
     runtimes = []
-    monkeypatch.setattr(bioroy_se, "_tmdb", lambda title, runtime=None: runtimes.append(runtime))
+    monkeypatch.setattr(bioroy_se, "_tmdb", lambda title, runtime=None, year=None: runtimes.append(runtime))
     data = json.loads(_FIXTURE.read_text())
     pl = data["props"]["pageProps"]["programList"]
     next(f for f in pl["features"] if f["id"] == 16746)["info"]["duration"] = 0
@@ -181,3 +181,55 @@ def test_a_zero_duration_is_no_runtime(monkeypatch):
 
     assert next(f for f in films if f.title == "Tony").runtime is None
     assert 0 not in runtimes
+
+
+def _program_list() -> dict:
+    return json.loads(_FIXTURE.read_text())["props"]["pageProps"]["programList"]
+
+
+def _lookups(monkeypatch, pl: dict) -> list[tuple]:
+    calls = []
+    monkeypatch.setattr(bioroy_se, "_tmdb", lambda title, runtime=None, year=None: calls.append((title, runtime, year)))
+    list(bioroy_se._parse_program_list(pl))
+    return calls
+
+
+def test_series_prefixes_are_moved_to_labels(monkeypatch):
+    calls = _lookups(monkeypatch, _program_list())
+    assert ("The Rocky Horror Picture Show", 100, None) in calls
+    assert not any(title.startswith("Sing Along") for title, *_ in calls)
+
+
+@pytest.mark.parametrize(
+    ("title", "label", "year"),
+    [
+        ("Party Along: Mamma Mia! Here We Go Again", "Party Along", None),
+        ("Met: La Bohème", "Met", 2026),
+        ("National Theatre: Hamlet", "National Theatre", 2026),
+        ("Balett: Nötknäpparen", "Balett", 2026),
+    ],
+)
+def test_live_broadcasts_are_looked_up_in_the_screening_year(monkeypatch, title, label, year):
+    pl = _program_list()
+    next(f for f in pl["features"] if f["id"] == 16361)["info"]["title"] = title
+    bare = title.split(": ", 1)[1]
+
+    calls = _lookups(monkeypatch, pl)
+    screening = next(i for i in bioroy_se._parse_program_list(pl) if not isinstance(i, Film) and i.title == bare)
+
+    assert {(t, y) for t, _, y in calls if t == bare} == {(bare, year)}
+    assert screening.raw_attributes[0] == label
+
+
+def test_invalid_film_page_json_is_no_poster(caplog):
+    assert bioroy_se._page_poster('<script type="application/json">{"props": </script>') == ""
+    assert "bioroy.se" in caplog.text
+
+
+def test_utc_start_times_are_converted_to_local_time():
+    pl = _program_list()
+    next(e for e in pl["schedule"] if e["featureId"] == 18990)["dates"][0]["startDate"] = "2026-10-31T12:00:00.000Z"
+
+    screening = next(i for i in bioroy_se._parse_program_list(pl) if not isinstance(i, Film) and i.title == "Nosferatu")
+
+    assert (screening.date.isoformat(), screening.time.strftime("%H:%M")) == ("2026-10-31", "13:00")

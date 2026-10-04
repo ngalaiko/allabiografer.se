@@ -2,6 +2,7 @@
 
 import html
 import json
+import logging
 import re
 from collections.abc import Iterator
 from datetime import date, time
@@ -11,6 +12,8 @@ from parse._util import infer_year
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue
+
+log = logging.getLogger(__name__)
 
 _SOURCE = "osbyborgen_se"
 _URL = "https://osbyborgen.se/"
@@ -29,28 +32,34 @@ _CONTACT = re.compile(r"pressansvarig|distributionsansvarig|pressbilder|\S+@\S+\
 # The site's catch-all category.
 _NOT_A_GENRE = {"film"}
 
-_MONTHS = {
-    "jan": 1,
-    "feb": 2,
-    "mar": 3,
-    "apr": 4,
-    "maj": 5,
-    "jun": 6,
-    "jul": 7,
-    "aug": 8,
-    "sep": 9,
-    "okt": 10,
-    "nov": 11,
-    "dec": 12,
-}
+_MONTHS = (
+    "januari",
+    "februari",
+    "mars",
+    "april",
+    "maj",
+    "juni",
+    "juli",
+    "augusti",
+    "september",
+    "oktober",
+    "november",
+    "december",
+)
+
+
+def _month(name: str) -> int | None:
+    """Month number from a Swedish month name or an abbreviation of at least three letters."""
+    return next((i for i, full in enumerate(_MONTHS, 1) if len(name) >= 3 and full.startswith(name)), None)
 
 
 def _parse_date(text: str) -> date | None:
     m = re.match(r"\w+\s+(\d{1,2})\s+(\w+)", text.strip().lower())
-    if not m:
+    mon = _month(m.group(2)) if m else None
+    if not mon:
+        log.warning("osbyborgen.se: unparseable date %r", text)
         return None
-    day, mon = int(m.group(1)), _MONTHS.get(m.group(2))
-    return date(infer_year(mon), mon, day) if mon else None
+    return date(infer_year(mon), mon, int(m.group(1)))
 
 
 def _parse_time(text: str) -> time | None:
@@ -60,16 +69,23 @@ def _parse_time(text: str) -> time | None:
 
 def _sessions(page: str) -> list[dict]:
     """Film session records from the vueData_sessions blob; live events are left out."""
-    m = re.search(r'vueData_sessions\s*=\s*(\{.*?"sessions":\[.*?\]\})', page, re.DOTALL)
+    m = re.search(r"vueData_sessions\s*=\s*(?=\{)", page)
     if not m:
         raise ValueError("osbyborgen.se: no schedule found")
-    return [s for s in json.loads(m.group(1)).get("sessions", []) if s.get("f_event_type_id") != _LIVE_EVENT]
+    blob, _ = json.JSONDecoder().raw_decode(page, m.end())
+    return [s for s in blob.get("sessions", []) if s.get("f_event_type_id") != _LIVE_EVENT]
 
 
 def _detail(page: str) -> dict:
     """Film record from a film page's vueData_film blob."""
     m = re.search(r'vueData_film\s*=\s*(\{.*?"isProdApiMode":\s*\w+\})', page, re.DOTALL)
-    return json.loads(m.group(1)).get("film", {}) if m else {}
+    if not m:
+        return {}
+    try:
+        return json.loads(m.group(1)).get("film", {})
+    except ValueError as exc:
+        log.warning("osbyborgen.se: film page JSON invalid: %s", exc)
+        return {}
 
 
 def _text(raw: object) -> str:

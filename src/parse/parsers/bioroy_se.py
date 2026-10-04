@@ -7,6 +7,7 @@ import re
 from collections.abc import Iterator
 from datetime import datetime
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+from zoneinfo import ZoneInfo
 
 import requests
 
@@ -21,6 +22,7 @@ log = logging.getLogger(__name__)
 _SOURCE = "bioroy_se"
 _URL = "https://www.bioroy.se/"
 _HOST = "www.bioroy.se"
+_TZ = ZoneInfo("Europe/Stockholm")
 _CINEMA = "Bio Roy"
 _CITY = "Göteborg"
 _ADDRESS = "Kungsportsavenyen 45"
@@ -34,6 +36,10 @@ _MIN_PORTRAIT = 1.25
 _PRIVATE_HIRE = "Biosalongen abonnerad"
 # Audio codes for a track without speech.
 _SILENT = {"STUM"}
+# Series title prefixes: "Sing Along: Grease", "Met: Tosca".
+_SERIES_PREFIX = re.compile(
+    r"^(?P<label>sing\s+along|party\s+along|(?P<live>met|national\s+theatre|balett))\s*:\s*", re.IGNORECASE
+)
 
 
 def parse() -> Iterator[Screening | Venue | Film]:
@@ -84,7 +90,11 @@ def _page_poster(page: str) -> str:
     m = re.search(r'<script[^>]*type="application/json"[^>]*>(.*?)</script>', page, re.DOTALL)
     if not m:
         return ""
-    node = json.loads(m.group(1))
+    try:
+        node = json.loads(m.group(1))
+    except ValueError as exc:
+        log.warning("bioroy.se: film page JSON invalid: %s", exc)
+        return ""
     for key in (
         "props",
         "pageProps",
@@ -143,11 +153,25 @@ def _original_languages(info: dict) -> frozenset:
     return languages
 
 
+def _split_title(title: str) -> tuple[str, str, bool]:
+    """Title without its series prefix, the prefix, and whether it marks a live broadcast."""
+    m = _SERIES_PREFIX.match(title)
+    if not m:
+        return title, "", False
+    return title[m.end() :], " ".join(m.group("label").split()), bool(m.group("live"))
+
+
+def _start(raw: str) -> datetime:
+    """Local start time; an offset such as "Z" is converted to Stockholm time."""
+    dt = datetime.fromisoformat(raw)
+    return dt.astimezone(_TZ).replace(tzinfo=None) if dt.tzinfo else dt
+
+
 def _film(feature: dict, poster_url: str = "") -> Film:
     info = feature.get("info") or {}
     return _films.make(
         _SOURCE,
-        info["title"],
+        _split_title(info["title"].strip())[0],
         overview=_text(info.get("synopsis")),
         runtime=info.get("duration") or None,
         genres=[g["name"] for g in info.get("genres") or [] if g.get("name")],
@@ -164,6 +188,7 @@ def _parse_program_list(pl: dict, *, posters: dict[int, str] | None = None) -> I
 
     films: dict[str, Film] = {}
     screenings: list[Screening] = []
+    tmdb_ids: dict[tuple[str, int | None, int | None], int | None] = {}
     for entry in pl.get("schedule", []):
         feature = features.get(entry.get("featureId")) or {}
         info = feature.get("info") or {}
@@ -172,9 +197,10 @@ def _parse_program_list(pl: dict, *, posters: dict[int, str] | None = None) -> I
             continue
         if film_title == _PRIVATE_HIRE:
             continue
-        tmdb_id = _tmdb(film_title, runtime=info.get("duration") or None)
+        film_title, series, live = _split_title(film_title)
         film = _film(feature, (posters or {}).get(feature["id"], ""))
         themes = tuple(t["label"].strip() for t in entry.get("themes") or [] if (t.get("label") or "").strip())
+        labels = ((series,) if series else ()) + themes
         silent = any("stumfilm" in theme.casefold() for theme in themes)
 
         for show in entry.get("dates", []):
@@ -183,11 +209,16 @@ def _parse_program_list(pl: dict, *, posters: dict[int, str] | None = None) -> I
             if not raw or not ticket_url:
                 continue
 
-            dt = datetime.fromisoformat(raw.rstrip("Z"))
+            dt = _start(raw)
+            # Live broadcasts share titles with older films of the same work.
+            year = dt.year if live else None
+            key = (film_title, film.runtime, year)
+            if key not in tmdb_ids:
+                tmdb_ids[key] = _tmdb(film_title, runtime=film.runtime, year=year)
 
             screenings.append(
                 Screening(
-                    tmdb_id=tmdb_id,
+                    tmdb_id=tmdb_ids[key],
                     title=film_title,
                     date=dt.date(),
                     time=dt.time(),
@@ -199,7 +230,7 @@ def _parse_program_list(pl: dict, *, posters: dict[int, str] | None = None) -> I
                         language=info.get("audioLanguage") or "",
                         subtitles=info.get("textLanguage") or "",
                         audio_role_text="stumfilm" if silent else "",
-                        raw_attributes=themes,
+                        raw_attributes=labels,
                     ),
                     film_key=film.key,
                 )

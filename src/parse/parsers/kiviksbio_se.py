@@ -1,10 +1,12 @@
 """kiviksbio.se — WordPress Events Manager plugin."""
 
+import logging
 import re
 from collections.abc import Iterator
 from dataclasses import replace
 from datetime import date, time
 
+import requests
 from bs4 import BeautifulSoup, Tag
 
 from parse import _http, _version
@@ -12,6 +14,8 @@ from parse._util import infer_year
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue
+
+log = logging.getLogger(__name__)
 
 _SOURCE = "kiviksbio_se"
 _URL = "https://www.kiviksbio.se/evenemang/"
@@ -22,10 +26,12 @@ _ADDRESS = "Ordensgatan 5"
 # The listing's only non-genre category.
 _NOT_A_GENRE = {"film"}
 
+# Live broadcast prefixes: opera, ballet, concerts.
+_BROADCAST = re.compile(r"direkt\s+från\s+[^:]+|met\s+live|live\s+på\s+bio", re.IGNORECASE)
 # Title prefixes: "Extra-visning (2) ", "Höstlovsfilm! ", "PREMIÄR! ", "Direkt från Metropolitanoperan: ".
 _TITLE_PREFIX = re.compile(
     r"^(?:(?P<extra>extra-?visning)(?:\s*\(\d+\))?|(?P<word>[^\W\d_][\w-]*)!"
-    r"|(?P<broadcast>direkt\s+från\s+[^:]+|met\s+live|live\s+på\s+bio)\s*:)\s+",
+    rf"|(?P<broadcast>{_BROADCAST.pattern})\s*:)\s+",
     re.IGNORECASE,
 )
 # End time the listing gives events without a known length.
@@ -44,20 +50,26 @@ _TRAILER = re.compile(
 # "Textas på svenska!", "Svensk text".
 _SUBTITLES = re.compile(r"\btextas\s+på\s+([^\W\d_]+)|\b([^\W\d_]+)\s+text\b", re.IGNORECASE)
 
-_MONTHS = {
-    "jan": 1,
-    "feb": 2,
-    "mar": 3,
-    "apr": 4,
-    "maj": 5,
-    "jun": 6,
-    "jul": 7,
-    "aug": 8,
-    "sep": 9,
-    "okt": 10,
-    "nov": 11,
-    "dec": 12,
-}
+_MONTHS = (
+    "januari",
+    "februari",
+    "mars",
+    "april",
+    "maj",
+    "juni",
+    "juli",
+    "augusti",
+    "september",
+    "oktober",
+    "november",
+    "december",
+)
+
+
+def _month(name: str) -> int | None:
+    """Month number from a Swedish month name or an abbreviation of at least three letters."""
+    name = name.lower()
+    return next((i for i, full in enumerate(_MONTHS, 1) if len(name) >= 3 and full.startswith(name)), None)
 
 
 def _runtime(start: time, end_text: str) -> int | None:
@@ -149,18 +161,29 @@ def _showtimes(page: str) -> Iterator[tuple[Film, date, time, str, tuple[str, ..
         # Parse "onsdag 1 apr kl 15:00 - 16:45"
         date_text = date_el.get_text(strip=True)
         m = re.match(r"\w+\s+(\d{1,2})\s+(\w+)\s+kl\s+(\d{1,2}):(\d{2})(?:\s*-\s*(\d{1,2}:\d{2}))?", date_text)
-        if not m or not film_title or not ticket_url:
+        if not film_title or not ticket_url:
+            continue
+        month = _month(m.group(2)) if m else None
+        if not month:
+            log.warning("kiviksbio.se: unparseable date %r for %s", date_text, film_title)
             continue
 
         day = int(m.group(1))
-        month = _MONTHS.get(m.group(2))
-        if not month:
-            continue
 
         d = date(infer_year(month), month, day)
         t = time(int(m.group(3)), int(m.group(4)))
 
         yield _film(ev, film_title, ticket_url, _runtime(t, m.group(5) or "")), d, t, ticket_url, labels
+
+
+def _tmdb_id(film: Film, d: date, labels: tuple[str, ...]) -> int | None:
+    """TMDB match by title and runtime, else by title alone.
+
+    Live broadcasts match only releases of their screening year; their titles
+    name older films of the same work.
+    """
+    year = d.year if any(_BROADCAST.fullmatch(label) for label in labels) else None
+    return (film.runtime and _tmdb(film.title, runtime=film.runtime, year=year)) or _tmdb(film.title, year=year)
 
 
 def parse() -> Iterator[Screening | Venue | Film]:
@@ -172,14 +195,19 @@ def parse() -> Iterator[Screening | Venue | Film]:
     facts: dict[str, dict[str, object]] = {}
     for film, d, t, ticket_url, labels in _showtimes(resp.text):
         if film.key not in facts:
-            detail = session.get(film.url, timeout=15)
-            facts[film.key] = _subtitles(detail.text) if detail.ok else _version.screening_facts()
-            if detail.ok:
+            try:
+                detail = session.get(film.url, timeout=15)
+            except requests.RequestException as exc:
+                log.warning("kiviksbio.se: event page %s failed: %s", film.url, exc)
+                detail = None
+            ok = detail is not None and detail.ok
+            facts[film.key] = _subtitles(detail.text) if ok else _version.screening_facts()
+            if ok:
                 film = replace(film, overview=_overview(detail.text))
             yield _films.register(film, session=session)
 
         yield Screening(
-            tmdb_id=_tmdb(film.title),
+            tmdb_id=_tmdb_id(film, d, labels),
             title=film.title,
             film_key=film.key,
             date=d,
