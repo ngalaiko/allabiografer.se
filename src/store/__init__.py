@@ -250,10 +250,12 @@ def write_screenings(
     path: Path = DB_FILE,
     source: str = "",
     venues: list[Venue] = (),
+    replaces_sources: tuple[str, ...] = (),
 ) -> int:
     """Replace a source snapshot after a complete parse.  Returns rows added.
 
     Unowned legacy rows migrate only for venues covered by this snapshot.
+    Named replaced sources are removed in the same transaction.
     Other sources remain intact. Calls without a source merge records.
     """
     covered = {(_normalize_city(v.city), v.name) for v in venues}
@@ -282,7 +284,7 @@ def write_screenings(
         # One immediate transaction so parallel parsers serialise.
         conn.execute("BEGIN IMMEDIATE")
         if source:
-            conn.execute("DELETE FROM screenings WHERE source = ?", (source,))
+            conn.executemany("DELETE FROM screenings WHERE source = ?", [(s,) for s in (source, *replaces_sources)])
             # Keep separate source ownership even when public listings overlap.
             conn.executemany(
                 "DELETE FROM screenings WHERE source = '' AND city = ? AND cinema = ?",

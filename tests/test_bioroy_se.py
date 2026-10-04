@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from parse.parsers import bioroy_se
+from parse.parsers import folkets_hus_och_parker as bioroy_se
 from store import Film
 from store.version import AudioKind, Language
 

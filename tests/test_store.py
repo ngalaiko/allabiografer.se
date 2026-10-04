@@ -645,3 +645,20 @@ def test_movies_table_gains_original_language_column(tmp_path):
     conn.close()
 
     assert read_movie(1, path=db).original_language == ""
+
+
+def test_replaced_sources_move_to_combined_parser(db):
+    write_screenings([screening(ticket_url="https://roy/old")], path=db, source="bioroy_se")
+    write_screenings([screening(ticket_url="https://other/1")], path=db, source="other")
+
+    write_screenings(
+        [screening(ticket_url="https://roy/new")],
+        path=db,
+        source="folkets_hus_och_parker",
+        replaces_sources=("bioroy_se",),
+    )
+
+    assert {(s.source, s.ticket_url) for s in read_screenings(path=db)} == {
+        ("folkets_hus_och_parker", "https://roy/new"),
+        ("other", "https://other/1"),
+    }

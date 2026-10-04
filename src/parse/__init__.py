@@ -110,7 +110,13 @@ def main() -> None:
         return
 
     screenings = mark_dubbed(screenings, films, tmdb_languages(screenings, path=args.output))
-    n = store.write_screenings(screenings, path=args.output, source=args.parser, venues=venues)
+    n = store.write_screenings(
+        screenings,
+        path=args.output,
+        source=args.parser,
+        venues=venues,
+        replaces_sources=getattr(mod, "REPLACES_SOURCES", ()),
+    )
     nv = store.write_venues(venues, path=args.output)
     nf = store.write_films(films, path=args.output)
     cities = len({s.city for s in screenings})

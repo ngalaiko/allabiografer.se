@@ -12,6 +12,15 @@ Parse screenings from all supported cinemas:
 mise run parse
 ```
 
+Parse Folkets Hus och Parker (Bio Roy in Göteborg, Spegeln in Malmö, Röda Kvarn
+in Helsingborg):
+
+```
+mise run parse:folkets_hus_och_parker
+```
+
+This replaces `bioroy_se`; its stored screenings are replaced on a successful run.
+
 Build the static site:
 
 ```

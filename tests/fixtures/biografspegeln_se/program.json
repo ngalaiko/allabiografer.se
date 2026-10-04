@@ -1,0 +1,1011 @@
+{
+  "features": [
+    {
+      "id": 1354,
+      "url": "https://biografspegeln.se/program/sing-along-hair",
+      "isUpcoming": false,
+      "premiereDate": null,
+      "ticketsOnSale": null,
+      "ticketsOutNow": false,
+      "info": {
+        "title": "Sing Along: Hair",
+        "synopsis": "<p><strong>Sjung med i <em>Hair</em>!</strong></p>\n<p>I vår största salong Alcazar upplever vi några av våra favoritmusikaler ihop. Som vanligt peppas visningen igång av våra Sing Along-värdar. Allt du behöver är en biljett. Kanske ett par färgglada solglasögon, dina bästa 60-talshippekläder och en rejäl näve flower power!</p>\n<p><strong>HAIR</strong><br>Hair är en rörande musikal som utspelar sig i 60-talets USA. Claude lämnar sin farm i Oklahoma och åker till New York för att ta värvning i armén. När han kommer till staden stiftar han bekantskap med ett gäng hippies ledda av den långhårige hippien George Berger. Gänget introducerar Claude till en värld av cannabis, LSD och en strid för att stoppa Vietnamkriget. Under allt detta blir Claude kär i Sheila, en flicka från en rik familj. Men deras lycka blir kortvarig när kriget plötsligt kallar på Claude.</p>",
+        "genres": [
+          {
+            "id": 1162,
+            "name": "Musikal",
+            "alias": "musikal"
+          }
+        ],
+        "ageLimit": "Från 7 år",
+        "duration": 121,
+        "audioLanguage": "ENG",
+        "textLanguage": "ENG",
+        "image": {
+          "width": null,
+          "height": null,
+          "alt": "",
+          "title": null,
+          "imageUrl": "http://localhost:8080/media/jndfyljr/hair-still.jpg",
+          "focalPoint": null,
+          "crops": [
+            {
+              "alias": "card",
+              "name": "card",
+              "url": "http://localhost:8080/media/jndfyljr/hair-still.jpg?format=jpg&quality=100&ranchor=center&width=960&height=540&rmode=crop",
+              "width": 960,
+              "height": 540,
+              "coordinates": null
+            },
+            {
+              "alias": "heroDesktop",
+              "name": "heroDesktop",
+              "url": "http://localhost:8080/media/jndfyljr/hair-still.jpg?format=jpg&quality=100&ranchor=center&width=2720&height=1860&rmode=crop",
+              "width": 2720,
+              "height": 1860,
+              "coordinates": null
+            },
+            {
+              "alias": "heroMobile",
+              "name": "heroMobile",
+              "url": "http://localhost:8080/media/jndfyljr/hair-still.jpg?format=jpg&quality=100&ranchor=center&width=1496&height=2150&rmode=crop",
+              "width": 1496,
+              "height": 2150,
+              "coordinates": null
+            },
+            {
+              "alias": "poster",
+              "name": "poster",
+              "url": "http://localhost:8080/media/jndfyljr/hair-still.jpg?format=jpg&quality=100&ranchor=center&width=300&height=450&rmode=crop",
+              "width": 300,
+              "height": 450,
+              "coordinates": null
+            },
+            {
+              "alias": "ticketDesktop",
+              "name": "ticketDesktop",
+              "url": "http://localhost:8080/media/jndfyljr/hair-still.jpg?format=jpg&quality=100&ranchor=center&width=400&height=225&rmode=crop",
+              "width": 400,
+              "height": 225,
+              "coordinates": null
+            },
+            {
+              "alias": "ticketMobile",
+              "name": "ticketMobile",
+              "url": "http://localhost:8080/media/jndfyljr/hair-still.jpg?format=jpg&quality=100&ranchor=center&width=160&height=170&rmode=crop",
+              "width": 160,
+              "height": 170,
+              "coordinates": null
+            },
+            {
+              "alias": "shareimage",
+              "name": "shareimage",
+              "url": "http://localhost:8080/media/jndfyljr/hair-still.jpg?format=jpg&quality=100&ranchor=center&width=1200&height=630&rmode=crop",
+              "width": 1200,
+              "height": 630,
+              "coordinates": null
+            }
+          ]
+        },
+        "type": "FeatureTypeMovie"
+      }
+    },
+    {
+      "id": 2873,
+      "url": "https://biografspegeln.se/program/sing-along-grease",
+      "isUpcoming": false,
+      "premiereDate": null,
+      "ticketsOnSale": null,
+      "ticketsOutNow": false,
+      "info": {
+        "title": "Sing Along: Grease",
+        "synopsis": "<p><strong>Biljettsläpp onsdag den 23 september kl 08.00.</strong></p>\n<p><strong>Sjung med i<span>&nbsp;<em>Grease</em>!</span></strong></p>\n<p>I vår största salong Alcazar upplever vi några av våra favoritmusikaler ihop. Som vanligt peppas visningen igång av våra Sing Along-värdar. Allt du behöver är en biljett. Kanske en skinnjacka och möjligen en klick brylkräm. Ett par rejäla dansskor? Låt inte oss begränsa dig!</p>\n<p><strong>GREASE<br></strong>När Grease självsäkert klev in i 70-talet som en ny typ av sockerkick från drömfabriken var den större, roligare och kvickare än det mesta. Kritikerna tyckte olika och mycket om den sprittiga high school-musikalen men den var en omedelbar succé på biograferna: publiken rusade till visningarna och har egentligen aldrig riktigt slutat att göra det.</p>\n<p><em>Hopelessly Devoted to You</em>&nbsp;nominerades till en Oscar för bästa låt och&nbsp;<em>You're the One That I Want</em>&nbsp;har för evigt borrat sig in medvetandet hos alla människor födda innan millennieskiftet.&nbsp;<em>Grease</em>&nbsp;är numera en självklar höjdpunkt i vårt Sing Along-program och nu är det dags igen.&nbsp;</p>\n<p><em>Filmen visas med engelsk karaoke-text under låtarna, i övrigt otextad.</em></p>",
+        "genres": [
+          {
+            "id": 1162,
+            "name": "Musikal",
+            "alias": "musikal"
+          }
+        ],
+        "ageLimit": "Från 7 år",
+        "duration": 110,
+        "audioLanguage": "ENG",
+        "textLanguage": "EJ",
+        "image": {
+          "width": null,
+          "height": null,
+          "alt": "",
+          "title": null,
+          "imageUrl": "http://localhost:8080/media/ts0hjglp/grease.jpg",
+          "focalPoint": null,
+          "crops": [
+            {
+              "alias": "card",
+              "name": "card",
+              "url": "http://localhost:8080/media/ts0hjglp/grease.jpg?format=jpg&quality=100&ranchor=center&width=960&height=540&rmode=crop",
+              "width": 960,
+              "height": 540,
+              "coordinates": null
+            },
+            {
+              "alias": "heroDesktop",
+              "name": "heroDesktop",
+              "url": "http://localhost:8080/media/ts0hjglp/grease.jpg?format=jpg&quality=100&ranchor=center&width=2720&height=1860&rmode=crop",
+              "width": 2720,
+              "height": 1860,
+              "coordinates": null
+            },
+            {
+              "alias": "heroMobile",
+              "name": "heroMobile",
+              "url": "http://localhost:8080/media/ts0hjglp/grease.jpg?format=jpg&quality=100&cc=0.1158793761544393,0,0.4927252750083514,1.407998128912e-16&width=1496&height=2150&rmode=crop",
+              "width": 1496,
+              "height": 2150,
+              "coordinates": {
+                "x1": 0.1158793761544393,
+                "y1": 0,
+                "x2": 0.4927252750083514,
+                "y2": 1.407998128912e-16
+              }
+            },
+            {
+              "alias": "poster",
+              "name": "poster",
+              "url": "http://localhost:8080/media/ts0hjglp/grease.jpg?format=jpg&quality=100&cc=0.10192024701012407,0,0.5230797529898759,0&width=300&height=450&rmode=crop",
+              "width": 300,
+              "height": 450,
+              "coordinates": {
+                "x1": 0.10192024701012407,
+                "y1": 0,
+                "x2": 0.5230797529898759,
+                "y2": 0
+              }
+            },
+            {
+              "alias": "ticketDesktop",
+              "name": "ticketDesktop",
+              "url": "http://localhost:8080/media/ts0hjglp/grease.jpg?format=jpg&quality=100&ranchor=center&width=400&height=225&rmode=crop",
+              "width": 400,
+              "height": 225,
+              "coordinates": null
+            },
+            {
+              "alias": "ticketMobile",
+              "name": "ticketMobile",
+              "url": "http://localhost:8080/media/ts0hjglp/grease.jpg?format=jpg&quality=100&cc=0,0,0.47058823529411764,0&width=160&height=170&rmode=crop",
+              "width": 160,
+              "height": 170,
+              "coordinates": {
+                "x1": 0,
+                "y1": 0,
+                "x2": 0.47058823529411764,
+                "y2": 0
+              }
+            },
+            {
+              "alias": "shareimage",
+              "name": "shareimage",
+              "url": "http://localhost:8080/media/ts0hjglp/grease.jpg?format=jpg&quality=100&ranchor=center&width=1200&height=630&rmode=crop",
+              "width": 1200,
+              "height": 630,
+              "coordinates": null
+            }
+          ]
+        },
+        "type": "FeatureTypeMovie"
+      }
+    },
+    {
+      "id": 4291,
+      "url": "https://biografspegeln.se/program/spegelns-filmquiz",
+      "isUpcoming": false,
+      "premiereDate": null,
+      "ticketsOnSale": null,
+      "ticketsOutNow": false,
+      "info": {
+        "title": "Spegelns filmquiz",
+        "synopsis": "<p><strong>Spegelns populära filmquiz med Kristoffer Jonzon! Här grillas du med frågor om allt från blockbusters till independentfilm. AW &amp; quiz i ljuvlig kombo – varannan torsdag klockan 18.&nbsp;</strong></p>\n<p>Njut av en middag och quizza i vår bistro. Bordsbokningen öppnar på måndagar klockan 10.00, samma vecka som quizet äger rum. Vill du lägga till fler i din bokning? Fråga om ni får plats via <a href=\"mailto:info@biografspegeln.se\">info@biografspegeln.se</a>.</p>\n<p>Vill du testa din drop-in-lycka har vi ett antal bord som inte går att boka i förväg.</p>\n<p>Fri entré och max fem personer per lag. Vi utlovar i vanlig ordning pris till både bästa lag och fyndigaste lagnamn!</p>\n<p>MÅ BÄSTE FILMNÖRD VINNA!</p>",
+        "genres": [
+          {
+            "id": 4289,
+            "name": "Foajé",
+            "alias": "foaje"
+          }
+        ],
+        "ageLimit": "Barntillåten",
+        "duration": 60,
+        "audioLanguage": "SV",
+        "textLanguage": "SV",
+        "image": {
+          "width": null,
+          "height": null,
+          "alt": "",
+          "title": null,
+          "imageUrl": "http://localhost:8080/media/cx4pwwfm/camera_6.jpg",
+          "focalPoint": null,
+          "crops": [
+            {
+              "alias": "card",
+              "name": "card",
+              "url": "http://localhost:8080/media/cx4pwwfm/camera_6.jpg?format=jpg&quality=100&ranchor=center&width=960&height=540&rmode=crop",
+              "width": 960,
+              "height": 540,
+              "coordinates": null
+            },
+            {
+              "alias": "heroDesktop",
+              "name": "heroDesktop",
+              "url": "http://localhost:8080/media/cx4pwwfm/camera_6.jpg?format=jpg&quality=100&ranchor=center&width=2720&height=1860&rmode=crop",
+              "width": 2720,
+              "height": 1860,
+              "coordinates": null
+            },
+            {
+              "alias": "heroMobile",
+              "name": "heroMobile",
+              "url": "http://localhost:8080/media/cx4pwwfm/camera_6.jpg?format=jpg&quality=100&ranchor=center&width=1496&height=2150&rmode=crop",
+              "width": 1496,
+              "height": 2150,
+              "coordinates": null
+            },
+            {
+              "alias": "poster",
+              "name": "poster",
+              "url": "http://localhost:8080/media/cx4pwwfm/camera_6.jpg?format=jpg&quality=100&ranchor=center&width=300&height=450&rmode=crop",
+              "width": 300,
+              "height": 450,
+              "coordinates": null
+            },
+            {
+              "alias": "ticketDesktop",
+              "name": "ticketDesktop",
+              "url": "http://localhost:8080/media/cx4pwwfm/camera_6.jpg?format=jpg&quality=100&ranchor=center&width=400&height=225&rmode=crop",
+              "width": 400,
+              "height": 225,
+              "coordinates": null
+            },
+            {
+              "alias": "ticketMobile",
+              "name": "ticketMobile",
+              "url": "http://localhost:8080/media/cx4pwwfm/camera_6.jpg?format=jpg&quality=100&ranchor=center&width=160&height=170&rmode=crop",
+              "width": 160,
+              "height": 170,
+              "coordinates": null
+            },
+            {
+              "alias": "shareimage",
+              "name": "shareimage",
+              "url": "http://localhost:8080/media/cx4pwwfm/camera_6.jpg?format=jpg&quality=100&ranchor=center&width=1200&height=630&rmode=crop",
+              "width": 1200,
+              "height": 630,
+              "coordinates": null
+            }
+          ]
+        },
+        "type": "FeatureTypeShow"
+      }
+    },
+    {
+      "id": 14703,
+      "url": "https://biografspegeln.se/program/digger",
+      "isUpcoming": false,
+      "premiereDate": "2026-10-02T00:00:00.000Z",
+      "ticketsOnSale": "2026-09-22T00:00:00.000Z",
+      "ticketsOutNow": true,
+      "info": {
+        "title": "Digger",
+        "synopsis": "<p>Världens mäktigaste man försöker frenetiskt att övertyga mänskligheten att han är dess räddare innan den katastrof han skapat förintar allt.</p>",
+        "genres": [
+          {
+            "id": 1149,
+            "name": "Drama",
+            "alias": "drama"
+          },
+          {
+            "id": 1144,
+            "name": "Komedi",
+            "alias": "komedi"
+          }
+        ],
+        "ageLimit": "Från 11 år",
+        "duration": 129,
+        "audioLanguage": "ENG",
+        "textLanguage": "SV",
+        "image": {
+          "width": null,
+          "height": null,
+          "alt": "",
+          "title": null,
+          "imageUrl": "http://localhost:8080/media/oxzh2anr/digger-hero.jpg",
+          "focalPoint": null,
+          "crops": [
+            {
+              "alias": "card",
+              "name": "card",
+              "url": "http://localhost:8080/media/oxzh2anr/digger-hero.jpg?format=jpg&quality=100&ranchor=center&width=960&height=540&rmode=crop",
+              "width": 960,
+              "height": 540,
+              "coordinates": null
+            },
+            {
+              "alias": "heroDesktop",
+              "name": "heroDesktop",
+              "url": "http://localhost:8080/media/oxzh2anr/digger-hero.jpg?format=jpg&quality=100&cc=0.17741935483870963,0,0,0&width=2720&height=1860&rmode=crop",
+              "width": 2720,
+              "height": 1860,
+              "coordinates": {
+                "x1": 0.17741935483870963,
+                "y1": 0,
+                "x2": 0,
+                "y2": 0
+              }
+            },
+            {
+              "alias": "heroMobile",
+              "name": "heroMobile",
+              "url": "http://localhost:8080/media/oxzh2anr/digger-hero.jpg?format=jpg&quality=100&ranchor=center&width=1496&height=2150&rmode=crop",
+              "width": 1496,
+              "height": 2150,
+              "coordinates": null
+            },
+            {
+              "alias": "poster",
+              "name": "poster",
+              "url": "http://localhost:8080/media/oxzh2anr/digger-hero.jpg?format=jpg&quality=100&ranchor=center&width=300&height=450&rmode=crop",
+              "width": 300,
+              "height": 450,
+              "coordinates": null
+            },
+            {
+              "alias": "ticketDesktop",
+              "name": "ticketDesktop",
+              "url": "http://localhost:8080/media/oxzh2anr/digger-hero.jpg?format=jpg&quality=100&ranchor=center&width=400&height=225&rmode=crop",
+              "width": 400,
+              "height": 225,
+              "coordinates": null
+            },
+            {
+              "alias": "ticketMobile",
+              "name": "ticketMobile",
+              "url": "http://localhost:8080/media/oxzh2anr/digger-hero.jpg?format=jpg&quality=100&ranchor=center&width=160&height=170&rmode=crop",
+              "width": 160,
+              "height": 170,
+              "coordinates": null
+            },
+            {
+              "alias": "shareimage",
+              "name": "shareimage",
+              "url": "http://localhost:8080/media/oxzh2anr/digger-hero.jpg?format=jpg&quality=100&ranchor=center&width=1200&height=630&rmode=crop",
+              "width": 1200,
+              "height": 630,
+              "coordinates": null
+            }
+          ]
+        },
+        "type": "FeatureTypeMovie"
+      }
+    },
+    {
+      "id": 16380,
+      "url": "https://biografspegeln.se/program/arkipelag",
+      "isUpcoming": false,
+      "premiereDate": "2026-10-09T00:00:00.000Z",
+      "ticketsOnSale": null,
+      "ticketsOutNow": true,
+      "info": {
+        "title": "Arkipelag",
+        "synopsis": "<p>Laddat drama möter mörk humor när Alex Schulman regidebuterar med <em>Arkipelag</em>, där Gustaf Skarsgård, Fares Fares och Linus Wahlgren spelar tre pappor som följer med sina döttrar på en skolresa till helvetet. Strandsatta med en stökig högstadieklass på en idyllisk skärgårdsö påminns de om egna tonårstrauman. Precis som ungdomarna tvingas de snart också inse hur svårt det är att dra gränsen mellan lek och farlig maktkamp, och att skilja offer från förövare.</p>",
+        "genres": [
+          {
+            "id": 1149,
+            "name": "Drama",
+            "alias": "drama"
+          }
+        ],
+        "ageLimit": "Från 15 år",
+        "duration": 107,
+        "audioLanguage": "SV",
+        "textLanguage": "SV",
+        "image": {
+          "width": null,
+          "height": null,
+          "alt": "",
+          "title": null,
+          "imageUrl": "http://localhost:8080/media/hmcewsli/arkipelag_hero.jpg",
+          "focalPoint": {
+            "left": 0.47009502515371715,
+            "top": 0.21479273140261215
+          },
+          "crops": [
+            {
+              "alias": "card",
+              "name": "card",
+              "url": "http://localhost:8080/media/hmcewsli/arkipelag_hero.jpg?format=jpg&quality=100&rxy=0.4700,0.2147&width=960&height=540&rmode=crop",
+              "width": 960,
+              "height": 540,
+              "coordinates": null
+            },
+            {
+              "alias": "heroDesktop",
+              "name": "heroDesktop",
+              "url": "http://localhost:8080/media/hmcewsli/arkipelag_hero.jpg?format=jpg&quality=100&cc=0.19081084347292968,0,0,0.01627984892787519&width=2720&height=1860&rmode=crop",
+              "width": 2720,
+              "height": 1860,
+              "coordinates": {
+                "x1": 0.19081084347292968,
+                "y1": 0,
+                "x2": 0,
+                "y2": 0.01627984892787519
+              }
+            },
+            {
+              "alias": "heroMobile",
+              "name": "heroMobile",
+              "url": "http://localhost:8080/media/hmcewsli/arkipelag_hero.jpg?format=jpg&quality=100&cc=0.2865739094175701,0,0.3220307417452205,0&width=1496&height=2150&rmode=crop",
+              "width": 1496,
+              "height": 2150,
+              "coordinates": {
+                "x1": 0.2865739094175701,
+                "y1": 0,
+                "x2": 0.3220307417452205,
+                "y2": 0
+              }
+            },
+            {
+              "alias": "poster",
+              "name": "poster",
+              "url": "http://localhost:8080/media/hmcewsli/arkipelag_hero.jpg?format=jpg&quality=100&cc=0.29976970220169036,0,0.32523029779830964,0&width=300&height=450&rmode=crop",
+              "width": 300,
+              "height": 450,
+              "coordinates": {
+                "x1": 0.29976970220169036,
+                "y1": 0,
+                "x2": 0.32523029779830964,
+                "y2": 0
+              }
+            },
+            {
+              "alias": "ticketDesktop",
+              "name": "ticketDesktop",
+              "url": "http://localhost:8080/media/hmcewsli/arkipelag_hero.jpg?format=jpg&quality=100&rxy=0.4700,0.2147&width=400&height=225&rmode=crop",
+              "width": 400,
+              "height": 225,
+              "coordinates": null
+            },
+            {
+              "alias": "ticketMobile",
+              "name": "ticketMobile",
+              "url": "http://localhost:8080/media/hmcewsli/arkipelag_hero.jpg?format=jpg&quality=100&cc=0.21545722777705642,0,0.25513100751706125,0&width=160&height=170&rmode=crop",
+              "width": 160,
+              "height": 170,
+              "coordinates": {
+                "x1": 0.21545722777705642,
+                "y1": 0,
+                "x2": 0.25513100751706125,
+                "y2": 0
+              }
+            },
+            {
+              "alias": "shareimage",
+              "name": "shareimage",
+              "url": "http://localhost:8080/media/hmcewsli/arkipelag_hero.jpg?format=jpg&quality=100&rxy=0.4700,0.2147&width=1200&height=630&rmode=crop",
+              "width": 1200,
+              "height": 630,
+              "coordinates": null
+            }
+          ]
+        },
+        "type": "FeatureTypeMovie"
+      }
+    },
+    {
+      "id": 18574,
+      "url": "https://biografspegeln.se/program/cine-pickpocket",
+      "isUpcoming": false,
+      "premiereDate": null,
+      "ticketsOnSale": null,
+      "ticketsOutNow": false,
+      "info": {
+        "title": "Cine: Pickpocket",
+        "synopsis": "<p><strong>Eftersom Cinematekets vanliga salong, Alcazar, renoveras under hösten startar säsongen i salong Bar Deco. Säljer visningarna slut i förväg adderas en parallell visning i salong Camera. I november är Alcazar tillbaka som Cinematekets hem.</strong></p>\n<p>I Jia Zhangkes debutfilm används amatörskådespelare och cinéma vérité-foto för att skildra Kinas gryende kommersialisering ur perspektivet av på en kedjerökande ficktjuvsslacker. Han driver runt på stan, sjunger karaoke med en prostituerad och får inte komma på sin forne kumpans bröllop.</p>\n<p>Inspelad på 16 mm i regissörens hemstad Fenyang med minimal budget och utan tillstånd från myndigheterna. Titeln anspelar på Robert Bressons <em>Ficktjuven </em>(1959), en uttalad favorit hos Jia som själv har lyft fram den franska minimalistens berättande som en inspirationskälla.</p>\n<p><strong>Format</strong>: DCP</p>",
+        "genres": [
+          {
+            "id": 1149,
+            "name": "Drama",
+            "alias": "drama"
+          }
+        ],
+        "ageLimit": "Från 15 år",
+        "duration": 100,
+        "audioLanguage": "MAN",
+        "textLanguage": "ENG",
+        "image": {
+          "width": null,
+          "height": null,
+          "alt": "",
+          "title": null,
+          "imageUrl": "http://localhost:8080/media/xk2nlbzo/pickpocket-4_st_dad.jpg",
+          "focalPoint": null,
+          "crops": [
+            {
+              "alias": "card",
+              "name": "card",
+              "url": "http://localhost:8080/media/xk2nlbzo/pickpocket-4_st_dad.jpg?format=jpg&quality=100&ranchor=center&width=960&height=540&rmode=crop",
+              "width": 960,
+              "height": 540,
+              "coordinates": null
+            },
+            {
+              "alias": "heroDesktop",
+              "name": "heroDesktop",
+              "url": "http://localhost:8080/media/xk2nlbzo/pickpocket-4_st_dad.jpg?format=jpg&quality=100&ranchor=center&width=2720&height=1860&rmode=crop",
+              "width": 2720,
+              "height": 1860,
+              "coordinates": null
+            },
+            {
+              "alias": "heroMobile",
+              "name": "heroMobile",
+              "url": "http://localhost:8080/media/xk2nlbzo/pickpocket-4_st_dad.jpg?format=jpg&quality=100&ranchor=center&width=1496&height=2150&rmode=crop",
+              "width": 1496,
+              "height": 2150,
+              "coordinates": null
+            },
+            {
+              "alias": "poster",
+              "name": "poster",
+              "url": "http://localhost:8080/media/xk2nlbzo/pickpocket-4_st_dad.jpg?format=jpg&quality=100&ranchor=center&width=300&height=450&rmode=crop",
+              "width": 300,
+              "height": 450,
+              "coordinates": null
+            },
+            {
+              "alias": "ticketDesktop",
+              "name": "ticketDesktop",
+              "url": "http://localhost:8080/media/xk2nlbzo/pickpocket-4_st_dad.jpg?format=jpg&quality=100&ranchor=center&width=400&height=225&rmode=crop",
+              "width": 400,
+              "height": 225,
+              "coordinates": null
+            },
+            {
+              "alias": "ticketMobile",
+              "name": "ticketMobile",
+              "url": "http://localhost:8080/media/xk2nlbzo/pickpocket-4_st_dad.jpg?format=jpg&quality=100&ranchor=center&width=160&height=170&rmode=crop",
+              "width": 160,
+              "height": 170,
+              "coordinates": null
+            },
+            {
+              "alias": "shareimage",
+              "name": "shareimage",
+              "url": "http://localhost:8080/media/xk2nlbzo/pickpocket-4_st_dad.jpg?format=jpg&quality=100&ranchor=center&width=1200&height=630&rmode=crop",
+              "width": 1200,
+              "height": 630,
+              "coordinates": null
+            }
+          ]
+        },
+        "type": "FeatureTypeMovie"
+      }
+    }
+  ],
+  "schedule": [
+    {
+      "featureId": 1354,
+      "themes": [
+        {
+          "id": 1333,
+          "label": "Sing & Party Along",
+          "icon": "singalong",
+          "description": "<p>Allsång, dans och glas fyllda med bubblor. Vi visar era favoritmusikaler och -musikfilmer som alltid peppas igång av våra älskade Sing Along-värdar. </p>"
+        },
+        {
+          "id": 1335,
+          "label": "Klassiker",
+          "icon": "play",
+          "description": "<p>Vi firar välkända och okända dagar med filmserier och filmpärlor. Och ibland, utan större anledning, vill vi bara visa en tidlös klassiker.</p>"
+        }
+      ],
+      "dates": [
+        {
+          "startDate": "2027-01-29T20:45:00.000",
+          "startDateDay": "2027-01-29",
+          "ticksterLink": "https://secure.tickster.com/ccpj820pxu4jxdk",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Alcazar"
+        }
+      ]
+    },
+    {
+      "featureId": 2873,
+      "themes": [
+        {
+          "id": 1333,
+          "label": "Sing & Party Along",
+          "icon": "singalong",
+          "description": "<p>Allsång, dans och glas fyllda med bubblor. Vi visar era favoritmusikaler och -musikfilmer som alltid peppas igång av våra älskade Sing Along-värdar. </p>"
+        },
+        {
+          "id": 1335,
+          "label": "Klassiker",
+          "icon": "play",
+          "description": "<p>Vi firar välkända och okända dagar med filmserier och filmpärlor. Och ibland, utan större anledning, vill vi bara visa en tidlös klassiker.</p>"
+        }
+      ],
+      "dates": [
+        {
+          "startDate": "2026-11-27T20:45:00.000",
+          "startDateDay": "2026-11-27",
+          "ticksterLink": "https://secure.tickster.com/8c8ry1ucfanwmgr",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Alcazar"
+        },
+        {
+          "startDate": "2027-01-08T20:45:00.000",
+          "startDateDay": "2027-01-08",
+          "ticksterLink": "https://secure.tickster.com/8mggt8zn1b9n17r",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Alcazar"
+        },
+        {
+          "startDate": "2027-03-19T20:45:00.000",
+          "startDateDay": "2027-03-19",
+          "ticksterLink": "https://secure.tickster.com/rk3beaad1ukkedu",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Alcazar"
+        }
+      ]
+    },
+    {
+      "featureId": 4291,
+      "themes": [
+        {
+          "id": 4283,
+          "label": "Quiz",
+          "icon": "calendar",
+          "description": "<p>AW &amp; quiz i ljuvlig kombo! För matgäster öppnar bordsbokningen på måndagar klockan 10.00, samma vecka som quizet äger rum. <a href=\"https://app.waiteraid.com/reservation/?hash=b312cefa74b7fa21464f1b42ae30fdb5&amp;version=new&amp;mealid=40348\" data-anchor=\"?hash=b312cefa74b7fa21464f1b42ae30fdb5&amp;version=new&amp;mealid=40348\"><strong>Boka bord</strong></a></p>"
+        }
+      ],
+      "dates": [
+        {
+          "startDate": "2026-10-15T18:00:00.000",
+          "startDateDay": "2026-10-15",
+          "ticksterLink": "https://app.bokabord.se/reservation/?hash=b312cefa74b7fa21464f1b42ae30fdb5",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Ovalen"
+        },
+        {
+          "startDate": "2026-10-29T18:00:00.000",
+          "startDateDay": "2026-10-29",
+          "ticksterLink": "https://app.bokabord.se/reservation/?hash=b312cefa74b7fa21464f1b42ae30fdb5",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Ovalen"
+        },
+        {
+          "startDate": "2026-11-12T18:00:00.000",
+          "startDateDay": "2026-11-12",
+          "ticksterLink": "https://app.bokabord.se/reservation/?hash=b312cefa74b7fa21464f1b42ae30fdb5",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Ovalen"
+        },
+        {
+          "startDate": "2026-11-26T18:00:00.000",
+          "startDateDay": "2026-11-26",
+          "ticksterLink": "https://app.bokabord.se/reservation/?hash=b312cefa74b7fa21464f1b42ae30fdb5",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Ovalen"
+        },
+        {
+          "startDate": "2026-12-10T18:00:00.000",
+          "startDateDay": "2026-12-10",
+          "ticksterLink": "https://app.bokabord.se/reservation/?hash=b312cefa74b7fa21464f1b42ae30fdb5",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Ovalen"
+        }
+      ]
+    },
+    {
+      "featureId": 18574,
+      "themes": [
+        {
+          "id": 1334,
+          "label": "Cinemateket",
+          "icon": "ticket",
+          "description": "<p>Visas i samarbete med Cinemateket, Svenska Filminstitutets filmklubb för att öka intresset för filmhistorien och för filmen som konstform.</p>"
+        }
+      ],
+      "dates": [
+        {
+          "startDate": "2026-10-06T18:00:00.000",
+          "startDateDay": "2026-10-06",
+          "ticksterLink": "https://secure.tickster.com/d6a7hkhar9brwmj",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        }
+      ]
+    },
+    {
+      "featureId": 16380,
+      "themes": [
+        {
+          "id": 1332,
+          "label": "Frukostbio",
+          "icon": "breakfast",
+          "description": "<p>Starta veckans skönaste dag med en frukost i biosalongen. Utvalda söndagar visar vi en film vi tycker extra mycket om och serverar frukosten lagom till filmstart.&nbsp;</p>"
+        }
+      ],
+      "dates": [
+        {
+          "startDate": "2026-10-18T10:30:00.000",
+          "startDateDay": "2026-10-18",
+          "ticksterLink": "https://secure.tickster.com/m7u5j38lezd1wyw",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        },
+        {
+          "startDate": "2026-10-18T11:00:00.000",
+          "startDateDay": "2026-10-18",
+          "ticksterLink": "https://secure.tickster.com/8vwcy6ujj2r9kvd",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Camera"
+        }
+      ]
+    },
+    {
+      "featureId": 16380,
+      "themes": [
+        {
+          "id": 1331,
+          "label": "Premiärfredag",
+          "icon": "drink",
+          "description": "<p><span class=\"NormalTextRun SCXW98567380 BCX8\">Fredagar<span>&nbsp;= premiär</span>lyx!<span>&nbsp;</span>Nytt blomsterbud, röda mattan<span>&nbsp;</span>och<span>&nbsp;</span>kanske det<span>&nbsp;bästa av allt – champagne till priset av&nbsp;</span>cava.</span></p>"
+        }
+      ],
+      "dates": [
+        {
+          "startDate": "2026-10-09T18:00:00.000",
+          "startDateDay": "2026-10-09",
+          "ticksterLink": "https://secure.tickster.com/23k0w9cw9dt8krr",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        },
+        {
+          "startDate": "2026-10-09T20:30:00.000",
+          "startDateDay": "2026-10-09",
+          "ticksterLink": "https://secure.tickster.com/v79bpb79uttjtzf",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        }
+      ]
+    },
+    {
+      "featureId": 16380,
+      "themes": [],
+      "dates": [
+        {
+          "startDate": "2026-10-10T16:00:00.000",
+          "startDateDay": "2026-10-10",
+          "ticksterLink": "https://secure.tickster.com/e7r83u1wu8ezey6",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Camera"
+        },
+        {
+          "startDate": "2026-10-10T18:00:00.000",
+          "startDateDay": "2026-10-10",
+          "ticksterLink": "https://secure.tickster.com/bwjhjwbm3aeltjy",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        },
+        {
+          "startDate": "2026-10-10T20:30:00.000",
+          "startDateDay": "2026-10-10",
+          "ticksterLink": "https://secure.tickster.com/ecwzbdj22ymgh0l",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        },
+        {
+          "startDate": "2026-10-11T15:30:00.000",
+          "startDateDay": "2026-10-11",
+          "ticksterLink": "https://secure.tickster.com/5ne0jefga71p6v0",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        },
+        {
+          "startDate": "2026-10-11T18:00:00.000",
+          "startDateDay": "2026-10-11",
+          "ticksterLink": "https://secure.tickster.com/ljdg7gedl8986w8",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        },
+        {
+          "startDate": "2026-10-12T14:30:00.000",
+          "startDateDay": "2026-10-12",
+          "ticksterLink": "https://secure.tickster.com/tlwwz0n6fwxvbej",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        },
+        {
+          "startDate": "2026-10-12T18:00:00.000",
+          "startDateDay": "2026-10-12",
+          "ticksterLink": "https://secure.tickster.com/w9bvy62yj7c55tm",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        },
+        {
+          "startDate": "2026-10-13T20:30:00.000",
+          "startDateDay": "2026-10-13",
+          "ticksterLink": "https://secure.tickster.com/v5m3j9wy03x1n4m",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Camera"
+        },
+        {
+          "startDate": "2026-10-14T17:00:00.000",
+          "startDateDay": "2026-10-14",
+          "ticksterLink": "https://secure.tickster.com/8war6mfy4ydv5wa",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Camera"
+        },
+        {
+          "startDate": "2026-10-15T18:00:00.000",
+          "startDateDay": "2026-10-15",
+          "ticksterLink": "https://secure.tickster.com/yt2f4xm9r0jelut",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        },
+        {
+          "startDate": "2026-10-15T20:15:00.000",
+          "startDateDay": "2026-10-15",
+          "ticksterLink": "https://secure.tickster.com/kk4xarpykf5almt",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Camera"
+        },
+        {
+          "startDate": "2026-10-16T20:15:00.000",
+          "startDateDay": "2026-10-16",
+          "ticksterLink": "https://secure.tickster.com/hzc5r78tl8mcbw8",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        },
+        {
+          "startDate": "2026-10-17T15:45:00.000",
+          "startDateDay": "2026-10-17",
+          "ticksterLink": "https://secure.tickster.com/dt1pgwcay4vv80a",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Camera"
+        },
+        {
+          "startDate": "2026-10-17T18:15:00.000",
+          "startDateDay": "2026-10-17",
+          "ticksterLink": "https://secure.tickster.com/2aaz9jf93rkrwcu",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Camera"
+        },
+        {
+          "startDate": "2026-10-18T15:45:00.000",
+          "startDateDay": "2026-10-18",
+          "ticksterLink": "https://secure.tickster.com/bpvte8w1xe2vfk5",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        },
+        {
+          "startDate": "2026-10-24T18:00:00.000",
+          "startDateDay": "2026-10-24",
+          "ticksterLink": "https://secure.tickster.com/p9dccnl8vbaw1j5",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Camera"
+        },
+        {
+          "startDate": "2026-10-24T18:30:00.000",
+          "startDateDay": "2026-10-24",
+          "ticksterLink": "https://secure.tickster.com/rr58jzuagczteka",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        },
+        {
+          "startDate": "2026-11-06T17:30:00.000",
+          "startDateDay": "2026-11-06",
+          "ticksterLink": "https://secure.tickster.com/p3blheflk994twc",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        }
+      ]
+    },
+    {
+      "featureId": 14703,
+      "themes": [],
+      "dates": [
+        {
+          "startDate": "2026-10-11T20:30:00.000",
+          "startDateDay": "2026-10-11",
+          "ticksterLink": "https://secure.tickster.com/ppwvjkuya45e259",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        },
+        {
+          "startDate": "2026-10-15T20:45:00.000",
+          "startDateDay": "2026-10-15",
+          "ticksterLink": "https://secure.tickster.com/3f6lyk6j5e321em",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Bar Deco"
+        },
+        {
+          "startDate": "2026-10-18T19:45:00.000",
+          "startDateDay": "2026-10-18",
+          "ticksterLink": "https://secure.tickster.com/uwtt5feych89l9r",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Camera"
+        }
+      ]
+    }
+  ]
+}

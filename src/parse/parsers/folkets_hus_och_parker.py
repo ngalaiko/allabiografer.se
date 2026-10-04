@@ -1,10 +1,11 @@
-"""bioroy.se — Next.js with __NEXT_DATA__ JSON containing full schedule."""
+"""Folkets Hus och Parker — Bio Roy, Spegeln and Röda Kvarn."""
 
 import html
 import json
 import logging
 import re
 from collections.abc import Iterator
+from dataclasses import dataclass
 from datetime import datetime
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from zoneinfo import ZoneInfo
@@ -19,13 +20,27 @@ from store.version import Language
 
 log = logging.getLogger(__name__)
 
-_SOURCE = "bioroy_se"
-_URL = "https://www.bioroy.se/"
-_HOST = "www.bioroy.se"
+
+@dataclass(frozen=True)
+class Site:
+    source: str
+    host: str
+    cinema: str
+    city: str
+    address: str
+    excluded_titles: frozenset[str] = frozenset()
+
+
+_BIO_ROY = Site("bioroy_se", "www.bioroy.se", "Bio Roy", "Göteborg", "Kungsportsavenyen 45")
+_SITES = (
+    _BIO_ROY,
+    Site(
+        "biografspegeln_se", "biografspegeln.se", "Spegeln", "Malmö", "Stortorget 29", frozenset({"Spegelns filmquiz"})
+    ),
+    Site("biorodakvarn_se", "www.biorodakvarn.se", "Röda Kvarn", "Helsingborg", "Karlsgatan 7"),
+)
+REPLACES_SOURCES = ("bioroy_se",)
 _TZ = ZoneInfo("Europe/Stockholm")
-_CINEMA = "Bio Roy"
-_CITY = "Göteborg"
-_ADDRESS = "Kungsportsavenyen 45"
 # The CMS emits media URLs for its own origin; the crop parameters are ours to set.
 _POSTER_SIZE = {"width": "500", "height": "750"}
 # Film pages carry the poster itself; the programme only a 2:3 crop of a still.
@@ -38,50 +53,57 @@ _PRIVATE_HIRE = "Biosalongen abonnerad"
 _SILENT = {"STUM"}
 # Series title prefixes: "Sing Along: Grease", "Met: Tosca".
 _SERIES_PREFIX = re.compile(
-    r"^(?P<label>sing\s+along|party\s+along|(?P<live>met|national\s+theatre|balett))\s*:\s*", re.IGNORECASE
+    r"^(?P<label>sing\s+along|party\s+along|cine|(?P<live>met|national\s+theatre|balett))\s*:\s*", re.IGNORECASE
 )
 
 
 def parse() -> Iterator[Screening | Venue | Film]:
-    yield Venue(name=_CINEMA, city=_CITY, address=_ADDRESS)
+    for site in _SITES:
+        yield from _parse_site(site)
+
+
+def _parse_site(site: Site) -> Iterator[Screening | Venue | Film]:
+    yield Venue(name=site.cinema, city=site.city, address=site.address)
     session = _http.session()
 
-    resp = session.get(_URL, timeout=30)
+    resp = session.get(f"https://{site.host}/", timeout=30)
     resp.raise_for_status()
 
     m = re.search(r'<script[^>]*type="application/json"[^>]*>(.*?)</script>', resp.text, re.DOTALL)
     if not m:
-        raise ValueError("bioroy.se: no JSON data found")
+        raise ValueError(f"{site.host}: no JSON data found")
 
     pl = json.loads(m.group(1))["props"]["pageProps"]["programList"]
-    posters = {feature_id: _poster(session, url) for feature_id, url in _scheduled_pages(pl).items()}
-    for item in _parse_program_list(pl, posters={k: v for k, v in posters.items() if v}):
+    posters = {
+        feature_id: _poster(session, url, site=site) for feature_id, url in _scheduled_pages(pl, site=site).items()
+    }
+    for item in _parse_program_list(pl, posters={k: v for k, v in posters.items() if v}, site=site):
         yield _films.register(item, session=session) if isinstance(item, Film) else item
 
 
-def _scheduled_pages(pl: dict) -> dict[int, str]:
+def _scheduled_pages(pl: dict, *, site: Site = _BIO_ROY) -> dict[int, str]:
     """Film page of every feature with shows."""
     features = {f["id"]: f for f in pl.get("features", [])}
     pages: dict[int, str] = {}
     for entry in pl.get("schedule", []):
         feature = features.get(entry.get("featureId")) or {}
         title = (feature.get("info") or {}).get("title", "").strip()
-        if title and title != _PRIVATE_HIRE and feature.get("url"):
+        if title and title not in {_PRIVATE_HIRE, *site.excluded_titles} and feature.get("url"):
             pages[feature["id"]] = feature["url"]
     return pages
 
 
-def _poster(session: requests.Session, url: str) -> str:
+def _poster(session: requests.Session, url: str, *, site: Site) -> str:
     try:
         resp = session.get(url, timeout=30)
         resp.raise_for_status()
     except requests.RequestException as exc:
-        log.warning("bioroy.se: film page %s failed: %s", url, exc)
+        log.warning("%s: film page %s failed: %s", site.host, url, exc)
         return ""
-    return _page_poster(resp.text)
+    return _page_poster(resp.text, site=site)
 
 
-def _page_poster(page: str) -> str:
+def _page_poster(page: str, *, site: Site = _BIO_ROY) -> str:
     """The poster image picked on a film page, re-requested at poster size.
 
     Editors sometimes pick a landscape hero; that is no poster.  An image of
@@ -93,7 +115,7 @@ def _page_poster(page: str) -> str:
     try:
         node = json.loads(m.group(1))
     except ValueError as exc:
-        log.warning("bioroy.se: film page JSON invalid: %s", exc)
+        log.warning("%s: film page JSON invalid: %s", site.host, exc)
         return ""
     for key in (
         "props",
@@ -118,7 +140,7 @@ def _page_poster(page: str) -> str:
         size = _PAGE_POSTER_SIZE
     else:
         size = _CROPPED_PAGE_POSTER_SIZE
-    return urlunsplit(("https", _HOST, urlsplit(url).path, urlencode(size), ""))
+    return urlunsplit(("https", site.host, urlsplit(url).path, urlencode(size), ""))
 
 
 def _text(raw: str | None) -> str:
@@ -126,7 +148,7 @@ def _text(raw: str | None) -> str:
     return " ".join(html.unescape(re.sub(r"<[^>]+>", " ", raw or "")).split())
 
 
-def _poster_url(image: dict | None) -> str:
+def _poster_url(image: dict | None, *, site: Site = _BIO_ROY) -> str:
     """The site's own 2:3 crop, re-requested at poster size."""
     crops = {c.get("alias"): c for c in (image or {}).get("crops") or []}
     url = (crops.get("poster") or {}).get("url") or ""
@@ -134,7 +156,7 @@ def _poster_url(image: dict | None) -> str:
         return ""
     parts = urlsplit(url)
     query = dict(parse_qsl(parts.query)) | _POSTER_SIZE
-    return urlunsplit(("https", _HOST, parts.path, urlencode(query), ""))
+    return urlunsplit(("https", site.host, parts.path, urlencode(query), ""))
 
 
 def _original_languages(info: dict) -> frozenset:
@@ -167,23 +189,25 @@ def _start(raw: str) -> datetime:
     return dt.astimezone(_TZ).replace(tzinfo=None) if dt.tzinfo else dt
 
 
-def _film(feature: dict, poster_url: str = "") -> Film:
+def _film(feature: dict, poster_url: str = "", *, site: Site = _BIO_ROY) -> Film:
     info = feature.get("info") or {}
     return _films.make(
-        _SOURCE,
+        site.source,
         _split_title(info["title"].strip())[0],
         overview=_text(info.get("synopsis")),
         runtime=info.get("duration") or None,
         genres=[g["name"] for g in info.get("genres") or [] if g.get("name")],
         age_rating=info.get("ageLimit") or "",
         release_date=(feature.get("premiereDate") or "")[:10],
-        poster_url=poster_url or _poster_url(info.get("image")),
+        poster_url=poster_url or _poster_url(info.get("image"), site=site),
         url=feature.get("url") or "",
         original_languages=_original_languages(info),
     )
 
 
-def _parse_program_list(pl: dict, *, posters: dict[int, str] | None = None) -> Iterator[Screening | Film]:
+def _parse_program_list(
+    pl: dict, *, posters: dict[int, str] | None = None, site: Site = _BIO_ROY
+) -> Iterator[Screening | Film]:
     features = {f["id"]: f for f in pl.get("features", [])}
 
     films: dict[str, Film] = {}
@@ -195,10 +219,10 @@ def _parse_program_list(pl: dict, *, posters: dict[int, str] | None = None) -> I
         film_title = info.get("title", "").strip()
         if not film_title:
             continue
-        if film_title == _PRIVATE_HIRE:
+        if film_title in {_PRIVATE_HIRE, *site.excluded_titles}:
             continue
         film_title, series, live = _split_title(film_title)
-        film = _film(feature, (posters or {}).get(feature["id"], ""))
+        film = _film(feature, (posters or {}).get(feature["id"], ""), site=site)
         themes = tuple(t["label"].strip() for t in entry.get("themes") or [] if (t.get("label") or "").strip())
         labels = ((series,) if series else ()) + themes
         silent = any("stumfilm" in theme.casefold() for theme in themes)
@@ -223,8 +247,8 @@ def _parse_program_list(pl: dict, *, posters: dict[int, str] | None = None) -> I
                     date=dt.date(),
                     time=dt.time(),
                     ticket_url=ticket_url,
-                    cinema_name=_CINEMA,
-                    city=_CITY,
+                    cinema_name=site.cinema,
+                    city=site.city,
                     screen=show.get("saloonLabel", ""),
                     **_version.screening_facts(
                         language=info.get("audioLanguage") or "",
@@ -240,4 +264,4 @@ def _parse_program_list(pl: dict, *, posters: dict[int, str] | None = None) -> I
     yield from films.values()
     yield from screenings
 
-    log.info("bioroy.se: %d screenings, %d films", len(screenings), len(films))
+    log.info("%s: %d screenings, %d films", site.host, len(screenings), len(films))

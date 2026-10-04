@@ -1,0 +1,352 @@
+{
+  "features": [
+    {
+      "id": 4681,
+      "url": "https://www.biorodakvarn.se/program/balett-notknapparen",
+      "isUpcoming": false,
+      "premiereDate": null,
+      "ticketsOnSale": null,
+      "ticketsOutNow": false,
+      "info": {
+        "title": "Balett: Nötknäpparen",
+        "synopsis": "<p><strong>John Neumeiers unika version av Nötknäpparen är en coming-of-age-berättelse och samtidigt en hyllning till den legendariske koreografen Marius Petipa.</strong></p>\n<p>Det har blivit en tradition för balettkompanier över hela världen att framföra Peter Tjajkovskijs Nötknäpparen vid juletid. John Neumeiers version undviker dock direkta hänvisningar till julen. I hans balett firar huvudpersonen Marie sin tolfte födelsedag och dras av den mystiske balettmästaren Drosselmeier in i dansens fascinerande värld… Det är faktiskt en balett om baletten själv.</p>\n<p>Balettmästaren Drosselmeier tar Marie till hovteatern, där hon dansar i nya tåskor tillsammans med kadetten Günther – som ger henne en mystisk nötknäppare. John Neumeiers gripande koreografi berättar historien om avskedet till barndomen. Under föreställningens gång upptäcker den barnsliga Marie inte bara teaterns värld, utan blir också kär för första gången.</p>\n<p>Hamburg Ballet glänser med virtuos elegans och praktfull bildrikedom – en balettföreställning som går rakt in i hjärtat.</p>",
+        "genres": [
+          {
+            "id": 1343,
+            "name": "Live på bio",
+            "alias": "live-pa-bio"
+          },
+          {
+            "id": 1172,
+            "name": "Balett",
+            "alias": "balett"
+          }
+        ],
+        "ageLimit": "Ej granskad",
+        "duration": 119,
+        "audioLanguage": "",
+        "textLanguage": "",
+        "image": {
+          "width": null,
+          "height": null,
+          "alt": "",
+          "title": null,
+          "imageUrl": "http://localhost:8080/media/mkvgb1oj/notknapparen_stor.jpg",
+          "focalPoint": null,
+          "crops": [
+            {
+              "alias": "card",
+              "name": "card",
+              "url": "http://localhost:8080/media/mkvgb1oj/notknapparen_stor.jpg?format=jpg&quality=100&ranchor=center&width=960&height=540&rmode=crop",
+              "width": 960,
+              "height": 540,
+              "coordinates": null
+            },
+            {
+              "alias": "heroDesktop",
+              "name": "heroDesktop",
+              "url": "http://localhost:8080/media/mkvgb1oj/notknapparen_stor.jpg?format=jpg&quality=100&ranchor=center&width=2720&height=1860&rmode=crop",
+              "width": 2720,
+              "height": 1860,
+              "coordinates": null
+            },
+            {
+              "alias": "heroMobile",
+              "name": "heroMobile",
+              "url": "http://localhost:8080/media/mkvgb1oj/notknapparen_stor.jpg?format=jpg&quality=100&ranchor=center&width=1496&height=2150&rmode=crop",
+              "width": 1496,
+              "height": 2150,
+              "coordinates": null
+            },
+            {
+              "alias": "poster",
+              "name": "poster",
+              "url": "http://localhost:8080/media/mkvgb1oj/notknapparen_stor.jpg?format=jpg&quality=100&ranchor=center&width=300&height=450&rmode=crop",
+              "width": 300,
+              "height": 450,
+              "coordinates": null
+            },
+            {
+              "alias": "ticketDesktop",
+              "name": "ticketDesktop",
+              "url": "http://localhost:8080/media/mkvgb1oj/notknapparen_stor.jpg?format=jpg&quality=100&ranchor=center&width=400&height=225&rmode=crop",
+              "width": 400,
+              "height": 225,
+              "coordinates": null
+            },
+            {
+              "alias": "ticketMobile",
+              "name": "ticketMobile",
+              "url": "http://localhost:8080/media/mkvgb1oj/notknapparen_stor.jpg?format=jpg&quality=100&ranchor=center&width=160&height=170&rmode=crop",
+              "width": 160,
+              "height": 170,
+              "coordinates": null
+            },
+            {
+              "alias": "shareimage",
+              "name": "shareimage",
+              "url": "http://localhost:8080/media/mkvgb1oj/notknapparen_stor.jpg?format=jpg&quality=100&ranchor=center&width=1200&height=630&rmode=crop",
+              "width": 1200,
+              "height": 630,
+              "coordinates": null
+            }
+          ]
+        },
+        "type": "FeatureTypeMovie"
+      }
+    },
+    {
+      "id": 14254,
+      "url": "https://www.biorodakvarn.se/program/sing-along-sound-of-music",
+      "isUpcoming": false,
+      "premiereDate": null,
+      "ticketsOnSale": "2025-11-25T00:00:00.000Z",
+      "ticketsOutNow": true,
+      "info": {
+        "title": "Sing Along: Sound of Music",
+        "synopsis": "<p><strong>Nu återvänder en av tidernas mest älskade filmer under våren - i sing along-form!</strong></p>\n<p>Sukta efter våren tillsammans med Maria, kaptenen och alla de förtjusande von Trapp-barnen i en av tidernas folkkäraste filmer, underbara Sound of Music. Paus i mitten för att vila stämbanden och köpa en kaffe eller ett glas vin.</p>\n<p><em>Sound of Music</em> är en hjärtevärmande berättelse, baserad på en sann historia, som blivit den mest populära familjefilmen någonsin. Julie Andrews lyser upp rollen som Maria, den livfulla unga kvinnan som lämnar klostret för att bli guvernant åt kapten Trapps sju barn. Han är en enväldig änkeman vars stränga regler inte tillåter något utrymme för musik och skratt. En tidlös klassiker med några av världens mest älskade sånger.</p>",
+        "genres": [
+          {
+            "id": 1162,
+            "name": "Musikal",
+            "alias": "musikal"
+          },
+          {
+            "id": 1149,
+            "name": "Drama",
+            "alias": "drama"
+          }
+        ],
+        "ageLimit": "Barntillåten",
+        "duration": 202,
+        "audioLanguage": "ENG",
+        "textLanguage": "",
+        "image": {
+          "width": null,
+          "height": null,
+          "alt": "",
+          "title": null,
+          "imageUrl": "http://localhost:8080/media/vx1ehqti/soundofmusic3.jpg",
+          "focalPoint": null,
+          "crops": [
+            {
+              "alias": "card",
+              "name": "card",
+              "url": "http://localhost:8080/media/vx1ehqti/soundofmusic3.jpg?format=jpg&quality=100&ranchor=center&width=960&height=540&rmode=crop",
+              "width": 960,
+              "height": 540,
+              "coordinates": null
+            },
+            {
+              "alias": "heroDesktop",
+              "name": "heroDesktop",
+              "url": "http://localhost:8080/media/vx1ehqti/soundofmusic3.jpg?format=jpg&quality=100&ranchor=center&width=2720&height=1860&rmode=crop",
+              "width": 2720,
+              "height": 1860,
+              "coordinates": null
+            },
+            {
+              "alias": "heroMobile",
+              "name": "heroMobile",
+              "url": "http://localhost:8080/media/vx1ehqti/soundofmusic3.jpg?format=jpg&quality=100&ranchor=center&width=1496&height=2150&rmode=crop",
+              "width": 1496,
+              "height": 2150,
+              "coordinates": null
+            },
+            {
+              "alias": "poster",
+              "name": "poster",
+              "url": "http://localhost:8080/media/vx1ehqti/soundofmusic3.jpg?format=jpg&quality=100&ranchor=center&width=300&height=450&rmode=crop",
+              "width": 300,
+              "height": 450,
+              "coordinates": null
+            },
+            {
+              "alias": "ticketDesktop",
+              "name": "ticketDesktop",
+              "url": "http://localhost:8080/media/vx1ehqti/soundofmusic3.jpg?format=jpg&quality=100&ranchor=center&width=400&height=225&rmode=crop",
+              "width": 400,
+              "height": 225,
+              "coordinates": null
+            },
+            {
+              "alias": "ticketMobile",
+              "name": "ticketMobile",
+              "url": "http://localhost:8080/media/vx1ehqti/soundofmusic3.jpg?format=jpg&quality=100&ranchor=center&width=160&height=170&rmode=crop",
+              "width": 160,
+              "height": 170,
+              "coordinates": null
+            },
+            {
+              "alias": "shareimage",
+              "name": "shareimage",
+              "url": "http://localhost:8080/media/vx1ehqti/soundofmusic3.jpg?format=jpg&quality=100&ranchor=center&width=1200&height=630&rmode=crop",
+              "width": 1200,
+              "height": 630,
+              "coordinates": null
+            }
+          ]
+        },
+        "type": "FeatureTypeShow"
+      }
+    },
+    {
+      "id": 15618,
+      "url": "https://www.biorodakvarn.se/program/withnail-and-i",
+      "isUpcoming": false,
+      "premiereDate": null,
+      "ticketsOnSale": null,
+      "ticketsOutNow": false,
+      "info": {
+        "title": "Withnail and I",
+        "synopsis": "<p><strong>Röda Kvarns matserie Smaklig film serverar klassisk film och tematisk mat i en gemensam helhet. I din biobiljett ingår maten.</strong></p>\n<p>Två arbetslösa skådespelare, noll pengar, oändligt mycket sprit och en katastrofal weekend på engelska landsbygden. <em>Withnail and I</em>!</p>\n<p><strong>SERVERING TILL FILMEN</strong>: En robust och rejäl coq au vin serverad med ett av mänsklighetens finaste vin. Vegetarisk variant i form av Champignios au vin. (Allergener: soja, selleri.)</p>\n<p>Två arbetslösa skådespelare i London 1969 tröttnar på huvudstaden och bestämmer sig för att semestra i en släktings sommarstuga. De upptäcker dock snart att de knappast är lämpade för ett liv på landet.</p>\n<p><em>Withnail &amp; I </em>brukar nämnas som en av de finaste filmer som hoppat över den engelska gränsen och ut i världen. Det är också en av de filmer som är absolut bäst med ett glas valfri dryck till. I filmen ses till exempel Withnail på egen hand dricka nio och ett halvt glas vin, en halv cider, en shot tändvätska, dubbla koppar med gin, 16 whiskey-supar och en halv pint ale. <em>Withnail &amp; I</em> känns helt enkelt som en rejäl hemmafest utan tydligt slutmål med din bästa kompis. En handling så god som någon!</p>\n<p>Till det behövs något rustikt, mustigt och långkokt med vinets värme i centrum, ja, en rätt som matchar filmens dimmiga pubkvällar och lantliga eskapader. För att hålla oss alla på banan under Withnails monologer serverar vi helt enkelt en coq au vin.</p>",
+        "genres": [
+          {
+            "id": 1144,
+            "name": "Komedi",
+            "alias": "komedi"
+          }
+        ],
+        "ageLimit": "Från 15 år",
+        "duration": 108,
+        "audioLanguage": "ENG",
+        "textLanguage": "ENG",
+        "image": {
+          "width": null,
+          "height": null,
+          "alt": "",
+          "title": null,
+          "imageUrl": "http://localhost:8080/media/gsoelbjp/bogkcymrdphphozhrbnr9xhvd87.webp",
+          "focalPoint": null,
+          "crops": [
+            {
+              "alias": "card",
+              "name": "card",
+              "url": "http://localhost:8080/media/gsoelbjp/bogkcymrdphphozhrbnr9xhvd87.webp?format=png&quality=100&ranchor=center&width=960&height=540&rmode=crop",
+              "width": 960,
+              "height": 540,
+              "coordinates": null
+            },
+            {
+              "alias": "heroDesktop",
+              "name": "heroDesktop",
+              "url": "http://localhost:8080/media/gsoelbjp/bogkcymrdphphozhrbnr9xhvd87.webp?format=png&quality=100&ranchor=center&width=2720&height=1860&rmode=crop",
+              "width": 2720,
+              "height": 1860,
+              "coordinates": null
+            },
+            {
+              "alias": "heroMobile",
+              "name": "heroMobile",
+              "url": "http://localhost:8080/media/gsoelbjp/bogkcymrdphphozhrbnr9xhvd87.webp?format=png&quality=100&ranchor=center&width=1496&height=2150&rmode=crop",
+              "width": 1496,
+              "height": 2150,
+              "coordinates": null
+            },
+            {
+              "alias": "poster",
+              "name": "poster",
+              "url": "http://localhost:8080/media/gsoelbjp/bogkcymrdphphozhrbnr9xhvd87.webp?format=png&quality=100&ranchor=center&width=300&height=450&rmode=crop",
+              "width": 300,
+              "height": 450,
+              "coordinates": null
+            },
+            {
+              "alias": "ticketDesktop",
+              "name": "ticketDesktop",
+              "url": "http://localhost:8080/media/gsoelbjp/bogkcymrdphphozhrbnr9xhvd87.webp?format=png&quality=100&ranchor=center&width=400&height=225&rmode=crop",
+              "width": 400,
+              "height": 225,
+              "coordinates": null
+            },
+            {
+              "alias": "ticketMobile",
+              "name": "ticketMobile",
+              "url": "http://localhost:8080/media/gsoelbjp/bogkcymrdphphozhrbnr9xhvd87.webp?format=png&quality=100&ranchor=center&width=160&height=170&rmode=crop",
+              "width": 160,
+              "height": 170,
+              "coordinates": null
+            },
+            {
+              "alias": "shareimage",
+              "name": "shareimage",
+              "url": "http://localhost:8080/media/gsoelbjp/bogkcymrdphphozhrbnr9xhvd87.webp?format=png&quality=100&ranchor=center&width=1200&height=630&rmode=crop",
+              "width": 1200,
+              "height": 630,
+              "coordinates": null
+            }
+          ]
+        },
+        "type": "FeatureTypeMovie"
+      }
+    }
+  ],
+  "schedule": [
+    {
+      "featureId": 4681,
+      "themes": [
+        {
+          "id": 13112,
+          "label": "Balett",
+          "icon": "sunfeather",
+          "description": "<p>Fascineras av eleganta steg och anslående rörelser. Vi visar inspelade balettföreställningar från de anrika scenerna i Europa.</p>"
+        }
+      ],
+      "dates": [
+        {
+          "startDate": "2026-12-13T13:30:00.000",
+          "startDateDay": "2026-12-13",
+          "ticksterLink": "https://secure.tickster.com/exmu4z4dugc4gx1",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Stora Kvarn"
+        }
+      ]
+    },
+    {
+      "featureId": 14254,
+      "themes": [
+        {
+          "id": 2997,
+          "label": "Sing & Party Along",
+          "icon": "singalong",
+          "description": "<p>Allsång, dans och glas fyllda med bubblor. Vi visar era favoritmusikaler och -musikfilmer och ni sjunger med!</p>"
+        }
+      ],
+      "dates": [
+        {
+          "startDate": "2026-11-25T19:30:00.000",
+          "startDateDay": "2026-11-25",
+          "ticksterLink": "https://secure.tickster.com/n85w6damd2g0082",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Stora Kvarn"
+        }
+      ]
+    },
+    {
+      "featureId": 15618,
+      "themes": [
+        {
+          "id": 11319,
+          "label": "Smaklig film",
+          "icon": "food",
+          "description": "<p>Där mat och bio möts på bästa sätt. Röda Kvarn låter filmklassiker inspirera smakerna på tallriken, som serveras i biosalongen framför filmen. Måltiden ingår alltid i biobiljetten.&nbsp;</p>"
+        }
+      ],
+      "dates": [
+        {
+          "startDate": "2026-10-10T19:30:00.000",
+          "startDateDay": "2026-10-10",
+          "ticksterLink": "https://secure.tickster.com/ud1l1awg7j8ytml",
+          "soldOut": false,
+          "showFoodIcon": true,
+          "showDrinksIcon": true,
+          "saloonLabel": "Lilla Kvarn"
+        }
+      ]
+    }
+  ]
+}
