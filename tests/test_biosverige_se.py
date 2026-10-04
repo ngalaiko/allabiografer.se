@@ -7,12 +7,16 @@ from types import SimpleNamespace
 
 import requests
 
-from parse.parsers import biosverige_se
-from parse.parsers.biosverige_se import _film_details, _parse_title, _showtimes
-from store import Film, Screening, Venue, film_key
+from parse.parsers import _biosverige_api, biosverige_se
+from parse.parsers._biosverige_api import film_details as _film_details
+from parse.parsers._biosverige_api import parse_title as _parse_title
+from parse.parsers._biosverige_api import showtimes as _showtimes
+from store import Film, Language, Screening, Venue, film_key
 
 _FIXTURES = Path(__file__).parent / "fixtures" / "biosverige_se"
 _SCHEDULE = json.loads((_FIXTURES / "eventschedules.json").read_text())
+_CASABLANCA = (_FIXTURES / "tickster_casablanca.html").read_text()
+_JARPEN = (_FIXTURES / "tickster_jarpen.html").read_text()
 
 
 def test_showtimes_read_schedule_rows_with_screen_and_audio_tags():
@@ -28,6 +32,12 @@ def test_showtimes_skip_rows_without_start_or_title():
     rows = [{"eventName": "Film", "startDate": ""}, {"eventName": "", "startDate": "2026-10-04T15:00:00"}]
 
     assert list(_showtimes(rows)) == []
+
+
+def test_showtimes_skip_deleted_rows():
+    rows = [{**_SCHEDULE[0], "deleted": True}, _SCHEDULE[1]]
+
+    assert [s[0] for s in _showtimes(rows)] == ["Resan till Piemonte"]
 
 
 def test_film_details_read_the_movie_record():
@@ -59,6 +69,10 @@ def test_sites_exclude_cinemas_other_parsers_cover():
     assert not any("soderkoping" in h for h in hosts)
 
 
+def test_sites_include_smedjebacken():
+    assert "https://smedjebacken.biosverige.se" in {site.url for site in biosverige_se._SITES}
+
+
 class _Session:
     def __init__(self, pages: dict[str, object]):
         self.pages = pages
@@ -67,18 +81,22 @@ class _Session:
         if url not in self.pages:
             raise requests.ConnectionError(url)
         body = self.pages[url]
-        return SimpleNamespace(json=lambda: body, raise_for_status=lambda: None)
+        return SimpleNamespace(
+            text=body if isinstance(body, str) else "",
+            json=lambda: body,
+            raise_for_status=lambda: None,
+        )
 
 
-_KARLSBORG, _FILIPSTAD = (
-    next(s for s in biosverige_se._SITES if s.city == city) for city in ("Karlsborg", "Filipstad")
+_KARLSBORG, _FILIPSTAD, _JARPEN_SITE = (
+    next(s for s in biosverige_se._SITES if s.city == city) for city in ("Karlsborg", "Filipstad", "Järpen")
 )
 
 
-def _parse(monkeypatch, pages: dict[str, object]) -> list:
+def _parse(monkeypatch, pages: dict[str, object], tmdb=lambda title, runtime=None: None) -> list:
     monkeypatch.setattr(biosverige_se._http, "session", lambda *a: _Session(pages))
     monkeypatch.setattr(biosverige_se._films, "register", lambda film, session=None: film)
-    monkeypatch.setattr(biosverige_se, "_tmdb", lambda title: None)
+    monkeypatch.setattr(_biosverige_api, "_tmdb", tmdb)
     return list(biosverige_se.parse())
 
 
@@ -109,3 +127,93 @@ def test_parse_shares_films_across_sites_and_survives_a_failing_site(monkeypatch
     assert [f.title for f in films].count("Bortglömda ön") == 1
     assert {s.city for s in screenings} == {"Karlsborg", "Filipstad"}
     assert len(screenings) == 5
+
+
+def test_parse_skips_a_site_answering_with_a_non_list(monkeypatch):
+    items = _parse(
+        monkeypatch,
+        {
+            _KARLSBORG.url + "/api/eventschedules": {"message": "error"},
+            _FILIPSTAD.url + "/api/eventschedules": _SCHEDULE[:1],
+        },
+    )
+
+    assert {s.city for s in items if isinstance(s, Screening)} == {"Filipstad"}
+
+
+def test_parse_takes_version_tickets_and_labels_from_tickster(monkeypatch):
+    items = _parse(
+        monkeypatch,
+        {_KARLSBORG.url + "/api/eventschedules": _SCHEDULE, _KARLSBORG.programme: _CASABLANCA},
+    )
+    island, evening, matinee, tanger = [i for i in items if isinstance(i, Screening)]
+
+    # Schedule says "(Sv.Txt) (Sv. Tal)"; Tickster says "(Sv. tal)": dubbed, no subtitles.
+    assert island.version.audio.languages == {Language.SWEDISH}
+    assert island.version.subtitles.languages == frozenset()
+    assert evening.version.subtitles.languages == {Language.SWEDISH}
+    assert [s.ticket_url for s in (island, evening, matinee, tanger)] == [
+        "https://www.tickster.com/se/sv/events/88wh4hm57ftc188/2026-10-04/bortglomda-on-sv-tal",
+        "https://www.tickster.com/se/sv/events/njzjpg775wk39ul/2026-10-04/resan-till-piemonte-sv-txt",
+        "https://www.tickster.com/se/sv/events/zdyf7uvvxdkvyn4/2026-10-06/resan-till-piemonte-dagbio-sv-txt",
+        "https://www.tickster.com/se/sv/events/tlur9z975xfy6rn/2026-10-13/karlek-over-tanger-dagbio-sv-txt",
+    ]
+    assert [s.raw_attributes for s in (island, evening, matinee, tanger)] == [(), (), ("Dagbio",), ("Dagbio",)]
+
+
+def _row(name: str, start: str) -> dict:
+    return {"eventName": name, "startDate": start, "venueName": "Järpen Bion"}
+
+
+def test_parse_reads_long_form_tickster_tags_and_keeps_schedule_subtitles_when_cut(monkeypatch):
+    schedule = [
+        _row("Bortglömda ön (Sv.Txt) (Sv. Tal)", "2026-10-11T15:00:00"),
+        _row("Spa Weekend (Sv.Txt) (Eng.Tal)", "2026-10-22T19:00:00"),
+        _row("Avengers: Endgame Encore (Sv.Txt) (Eng.Tal)", "2026-10-25T19:00:00"),
+    ]
+    items = _parse(
+        monkeypatch,
+        {_JARPEN_SITE.url + "/api/eventschedules": schedule, _JARPEN_SITE.programme: _JARPEN},
+    )
+    island, spa, avengers = [i for i in items if isinstance(i, Screening)]
+
+    # "Bortglömda ön (Tal: Svenska (dubbat))"
+    assert island.version.audio.languages == {Language.SWEDISH}
+    assert island.version.subtitles.languages == frozenset()
+    # "Spa Weekend STICKBIO"
+    assert spa.raw_attributes == ("STICKBIO",)
+    assert spa.version.subtitles.languages == {Language.SWEDISH}
+    # "Avengers: Endgame Encore (Tal: Engelska) (Text: S", cut by Tickster
+    assert avengers.version.audio.languages == {Language.ENGLISH}
+    assert avengers.version.subtitles.languages == {Language.SWEDISH}
+    assert avengers.ticket_url == (
+        "https://www.tickster.com/se/sv/events/t9ugud6y70vgefy/2026-10-25/avengers-endgame-encore-tal-engelska-text-s"
+    )
+
+
+def test_parse_looks_up_tmdb_with_runtime_then_title_then_original_name(monkeypatch):
+    calls = []
+    known = {("Bortglömda ön", 109): 1, ("Resan till Piemonte", None): 2, ("Calle Malaga", 116): 3}
+
+    def tmdb(title, runtime=None):
+        calls.append((title, runtime))
+        return known.get((title, runtime))
+
+    items = _parse(monkeypatch, {_KARLSBORG.url + "/api/eventschedules": _SCHEDULE}, tmdb=tmdb)
+
+    assert [s.tmdb_id for s in items if isinstance(s, Screening)] == [1, 2, 2, 3]
+    assert ("Kärlek över Tanger", 116) in calls
+
+
+def test_parse_trusts_a_long_tickster_title_that_ends_whole(monkeypatch):
+    site = next(s for s in biosverige_se._SITES if s.city == "Mariannelund")
+    card = (
+        '<div class="c-card"><a href="/se/sv/events/z/2026-10-18/faret-shaun" class="c-card__body">'
+        '<h2 class="c-card__title">Fåret Shaun och monstret på bondgården (Sv. tal)</h2></a>'
+        '<span class="c-card__label">18 okt 2026, Mariannelunds Bio</span></div>'
+    )
+    schedule = [_row("Fåret Shaun och monstret på bondgården (Sv.Txt) (Sv.Tal)", "2026-10-18T15:00:00")]
+    items = _parse(monkeypatch, {site.url + "/api/eventschedules": schedule, site.programme: card})
+    (shaun,) = [i for i in items if isinstance(i, Screening)]
+
+    assert shaun.version.subtitles.languages == frozenset()

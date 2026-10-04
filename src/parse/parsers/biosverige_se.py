@@ -1,29 +1,13 @@
 """BioSverige (Videvox Cinecore) cinema sites — per-site schedule API."""
 
-import logging
-import re
 from collections.abc import Iterator
 from dataclasses import dataclass
-from datetime import date, datetime, time
-from zoneinfo import ZoneInfo
-
-import requests
 
 from parse import _http, _version
-from parse.parsers import _films
-from parse.parsers._tmdb_cache import lookup as _tmdb
+from parse.parsers import _biosverige_api, _films, _tickster
 from store import Film, Screening, Venue
 
-log = logging.getLogger(__name__)
-
 _SOURCE = "biosverige_se"
-_TZ = ZoneInfo("Europe/Stockholm")
-
-# The CDN fits the image inside the box it is given; posters are portrait.
-_POSTER_BOX = "?resize=600x900"
-
-# "Tony (Sv.Txt) (Eng.Tal)", "Bortglömda ön (Sv.Txt) (Sv. Tal)"
-_TAG = re.compile(r"\(\s*(\w+)\s*\.\s*(Txt|Tal)\s*\)", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -34,6 +18,8 @@ class _Site:
     address: str
     # The site's "@booking" setting: where its buy buttons lead.
     tickets: str
+    # Tickster organiser listing with one event per showing.
+    programme: str = ""
 
 
 # Söderköping has its own parser; Vårgårda Rialto and Robertsfors are on bio.se.
@@ -44,12 +30,14 @@ _SITES = (
         "Filipstad",
         "Viktoriagatan 8",
         "https://secure.tickster.com/sv/y4vknkelzhvmpp6/",
+        "https://www.tickster.com/se/sv/events/by/ukh54uat4kwp0b4/bio-monitor",
     ),
     _Site(
         "https://jarpen.biosverige.se",
         "Järpen Bion",
         "Järpen",
         "Strandvägen 22",
+        "https://www.tickster.com/se/sv/events/by/t93wpddl1nc93uz/jarpen-bion",
         "https://www.tickster.com/se/sv/events/by/t93wpddl1nc93uz/jarpen-bion",
     ),
     _Site(
@@ -65,6 +53,7 @@ _SITES = (
         "Karlsborg",
         "Strandvägen 15",
         "https://secure.tickster.com/sv/eaukgpvmklav5gg",
+        "https://www.tickster.com/se/sv/events/by/fer7uddjdxuaa8u/bio-casablanca",
     ),
     _Site(
         "https://mariannelundsbio.se",
@@ -72,80 +61,17 @@ _SITES = (
         "Mariannelund",
         "Östra Storgatan 6",
         "https://secure.tickster.com/sv/fjnrhjm4dltbtfl",
+        "https://www.tickster.com/se/sv/events/by/jdg9ek45zlh6xtu/mariannelunds-bio",
+    ),
+    # No "@booking" setting.
+    _Site(
+        "https://smedjebacken.biosverige.se",
+        "Folkets Hus Smedjebacken",
+        "Smedjebacken",
+        "Vasagatan 11",
+        "https://smedjebacken.biosverige.se",
     ),
 )
-
-
-def _parse_title(raw: str) -> tuple[str, str, str]:
-    """Split a raw title into (title, language, subtitles).
-
-    Audio and subtitle language ride along in trailing ``(Sv.Txt) (Eng.Tal)``
-    tags; unknown language codes are dropped rather than guessed.
-    """
-    language = ""
-    subtitles = ""
-    for code, kind in _TAG.findall(raw):
-        if not _version.languages(code):
-            continue
-        if kind.lower() == "tal":
-            language = _version.language(code)
-        else:
-            subtitles = _version.subtitles(code)
-
-    return _TAG.sub("", raw).strip(), language, subtitles
-
-
-def _showtimes(items: list[dict]) -> Iterator[tuple[str, date, time, str, str, str, dict, str]]:
-    """Yield (title, date, time, screen, language, subtitles, movie, booking_url) per schedule row."""
-    for item in items:
-        try:
-            dt = datetime.fromisoformat(item.get("startDate") or "")
-        except ValueError:
-            continue
-
-        title, language, subtitles = _parse_title(item.get("eventName") or "")
-        if not title:
-            continue
-
-        yield (
-            title,
-            dt.date(),
-            dt.time(),
-            item.get("venueName") or "",
-            language,
-            subtitles,
-            item.get("movie") or {},
-            item.get("bookingUrl") or "",
-        )
-
-
-def _film_details(data: dict) -> dict:
-    """Poster, synopsis, runtime, age rating, original title and premiere date."""
-    poster = data.get("poster") or ""
-    genre = data.get("genre") or ""
-
-    return {
-        "poster_url": f"{poster}{_POSTER_BOX}" if poster else "",
-        "overview": (data.get("description") or "").strip(),
-        "runtime": data.get("duration") or None,
-        "genres": [g.strip() for g in genre.split(",") if g.strip()],
-        "age_rating": data.get("rating") or "",
-        "title_original": data.get("originalName") or "",
-        "release_date": (data.get("releaseDate") or "")[:10],
-    }
-
-
-def _schedule(session: requests.Session, site: _Site) -> list[dict]:
-    """The site's upcoming showings; empty when the API fails."""
-    # Without the range parameters the API returns only today's showings.
-    params = {"StartDate": datetime.now(_TZ).date().isoformat(), "Limit": 500, "Months": 12, "Days": 365}
-    try:
-        resp = session.get(f"{site.url}/api/eventschedules", params=params, timeout=30)
-        resp.raise_for_status()
-        return resp.json()
-    except (requests.RequestException, ValueError) as exc:
-        log.warning("biosverige: %s failed: %s", site.url, exc)
-        return []
 
 
 def parse() -> Iterator[Screening | Venue | Film]:
@@ -155,7 +81,10 @@ def parse() -> Iterator[Screening | Venue | Film]:
     for site in _SITES:
         yield Venue(name=site.name, city=site.city, address=site.address)
 
-        for title, d, t, screen, language, subtitles, movie, booking_url in _showtimes(_schedule(session, site)):
+        rows = list(_biosverige_api.showtimes(_biosverige_api.schedule(session, site.url)))
+        programme = _tickster.Programme.fetch(site.programme, session) if rows and site.programme else None
+
+        for title, d, t, screen, language, subtitles, movie, booking_url in rows:
             film = films.get(title)
             if film is None:
                 slug = movie.get("slug") or ""
@@ -163,20 +92,25 @@ def parse() -> Iterator[Screening | Venue | Film]:
                     _SOURCE,
                     title,
                     url=f"{site.url}/filmer/{slug}" if slug else "",
-                    **(_film_details(movie) if movie else {}),
+                    **(_biosverige_api.film_details(movie) if movie else {}),
                 )
                 film = films[title] = _films.register(film, session=session)
                 yield film
 
+            event, labels = None, ()
+            if programme is not None:
+                event, language, subtitles, labels = _biosverige_api.showing(
+                    programme, title, d, t, language, subtitles
+                )
             yield Screening(
-                tmdb_id=_tmdb(title),
+                tmdb_id=_biosverige_api.tmdb_id(title, movie),
                 title=title,
                 date=d,
                 time=t,
-                ticket_url=booking_url or site.tickets,
+                ticket_url=booking_url or (event.url if event else site.tickets),
                 cinema_name=site.name,
                 city=site.city,
                 screen=screen,
-                **_version.screening_facts(language=language, subtitles=subtitles),
+                **_version.screening_facts(language=language, subtitles=subtitles, raw_attributes=labels),
                 film_key=film.key,
             )

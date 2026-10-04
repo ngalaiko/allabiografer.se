@@ -7,8 +7,10 @@ from types import SimpleNamespace
 
 import requests
 
-from parse.parsers import soderkopingsbio_se
-from parse.parsers.soderkopingsbio_se import _film_details, _showtimes
+from parse.parsers import _biosverige_api, soderkopingsbio_se
+from parse.parsers._biosverige_api import film_details as _film_details
+from parse.parsers._biosverige_api import parse_title as _parse_title
+from parse.parsers._biosverige_api import showtimes as _showtimes
 from store import Film, Language, Screening, film_key
 
 _FIXTURES = Path(__file__).parent / "fixtures" / "soderkopingsbio_se"
@@ -20,6 +22,7 @@ _ORGANISER = (_TICKSTER / "organiser.html").read_text()
 _MATINEE = (_TICKSTER / "event_matinee.html").read_text()
 _EVENING = (_TICKSTER / "event_evening.html").read_text()
 
+_API = soderkopingsbio_se._SITE + "/api/eventschedules"
 _EVENTS = "https://www.tickster.com/se/sv/events/"
 _MATINEE_URL = _EVENTS + "c07puyr3fdybd2e/2026-10-07/resan-till-piemonte-dagbio-sv-txt"
 _EVENING_URL = _EVENTS + "mynrz5ej8n8gpee/2026-10-07/resan-till-piemonte-sv-txt"
@@ -71,15 +74,15 @@ class _Session:
         )
 
 
-def _parse(monkeypatch, pages: dict[str, object]) -> list:
+def _parse(monkeypatch, pages: dict[str, object], tmdb=lambda title, runtime=None: None) -> list:
     monkeypatch.setattr(soderkopingsbio_se._http, "session", lambda *a: _Session(pages))
     monkeypatch.setattr(soderkopingsbio_se._films, "register", lambda film, session=None: film)
-    monkeypatch.setattr(soderkopingsbio_se, "_tmdb", lambda title: None)
+    monkeypatch.setattr(_biosverige_api, "_tmdb", tmdb)
     return list(soderkopingsbio_se.parse())
 
 
 def test_parse_yields_one_film_per_title_and_keys_every_screening(monkeypatch):
-    items = _parse(monkeypatch, {soderkopingsbio_se._SCHEDULE: _SCHEDULE})
+    items = _parse(monkeypatch, {_API: _SCHEDULE})
     films = [i for i in items if isinstance(i, Film)]
     screenings = [i for i in items if isinstance(i, Screening)]
 
@@ -96,7 +99,7 @@ def test_parse_links_each_screening_to_its_tickster_event(monkeypatch):
     items = _parse(
         monkeypatch,
         {
-            soderkopingsbio_se._SCHEDULE: _SCHEDULE,
+            _API: _SCHEDULE,
             soderkopingsbio_se._TICKSTER: _ORGANISER,
             _MATINEE_URL: _MATINEE,
             _EVENING_URL: _EVENING,
@@ -113,28 +116,28 @@ def test_parse_links_each_screening_to_its_tickster_event(monkeypatch):
 
 
 def test_tickster_failure_falls_back_to_the_programme_link(monkeypatch):
-    items = _parse(monkeypatch, {soderkopingsbio_se._SCHEDULE: _SCHEDULE})
+    items = _parse(monkeypatch, {_API: _SCHEDULE})
 
     assert {i.ticket_url for i in items if isinstance(i, Screening)} == {"https://secure.tickster.com/d8fnyrrcl72fv8p"}
 
 
 def test_parse_title_labels_subtitles():
-    assert soderkopingsbio_se._parse_title("Tony (Sv.Txt) (Eng.Tal)") == ("Tony", "Engelskt tal", "Svensk text")
+    assert _parse_title("Tony (Sv.Txt) (Eng.Tal)") == ("Tony", "Engelskt tal", "Svensk text")
 
 
 def test_parse_title_reads_any_known_language_code():
-    assert soderkopingsbio_se._parse_title("Köln 75 (Sv.Txt) (Ty.Tal)") == ("Köln 75", "Tyskt tal", "Svensk text")
+    assert _parse_title("Köln 75 (Sv.Txt) (Ty.Tal)") == ("Köln 75", "Tyskt tal", "Svensk text")
 
 
 def test_parse_title_drops_unknown_language_codes():
-    assert soderkopingsbio_se._parse_title("Film (Xq.Tal)") == ("Film", "", "")
+    assert _parse_title("Film (Xq.Tal)") == ("Film", "", "")
 
 
 def test_parse_keeps_tickster_programme_tags_as_raw_attributes(monkeypatch):
     items = _parse(
         monkeypatch,
         {
-            soderkopingsbio_se._SCHEDULE: _SCHEDULE,
+            _API: _SCHEDULE,
             soderkopingsbio_se._TICKSTER: _ORGANISER,
             _MATINEE_URL: _MATINEE,
             _EVENING_URL: _EVENING,
@@ -161,10 +164,38 @@ def test_tickster_version_overrides_the_schedule_tags(monkeypatch):
     organiser = _card("a/2026-10-18/bortglomda-on-sv-tal", "Bortglömda ön (Sv. tal)", "18 okt 2026") + _card(
         "b/2026-10-18/digger-sv-txt", "Digger (Sv. txt)", "18 okt 2026"
     )
-    items = _parse(monkeypatch, {soderkopingsbio_se._SCHEDULE: schedule, soderkopingsbio_se._TICKSTER: organiser})
+    items = _parse(monkeypatch, {_API: schedule, soderkopingsbio_se._TICKSTER: organiser})
     island, digger = [i for i in items if isinstance(i, Screening)]
 
     assert island.version.audio.languages == {Language.SWEDISH}
     assert island.version.subtitles.languages == frozenset()
     assert digger.version.audio.languages == {Language.ENGLISH}
     assert digger.version.subtitles.languages == {Language.SWEDISH}
+
+
+def test_parse_looks_up_tmdb_with_the_api_runtime_first(monkeypatch):
+    def tmdb(title, runtime=None):
+        return {("Tony", 106): 7, ("Resan till Piemonte", None): 8}.get((title, runtime))
+
+    items = _parse(monkeypatch, {_API: _SCHEDULE}, tmdb=tmdb)
+
+    assert [s.tmdb_id for s in items if isinstance(s, Screening)] == [None, 8, 7, 8]
+
+
+def test_parse_skips_deleted_showings(monkeypatch):
+    schedule = [{**_SCHEDULE[0], "deleted": True}, *_SCHEDULE[1:]]
+    items = _parse(monkeypatch, {_API: schedule})
+
+    assert len([i for i in items if isinstance(i, Screening)]) == 3
+
+
+def test_parse_survives_a_non_list_schedule(monkeypatch):
+    items = _parse(monkeypatch, {_API: {"message": "error"}})
+
+    assert [i.name for i in items] == ["Söderköpings Bio"]
+
+
+def test_parse_survives_an_unreachable_schedule(monkeypatch):
+    items = _parse(monkeypatch, {})
+
+    assert [i.name for i in items] == ["Söderköpings Bio"]
