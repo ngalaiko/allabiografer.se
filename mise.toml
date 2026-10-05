@@ -67,6 +67,9 @@ run = "uv run --group parse parse doclounge_se"
 [tasks."parse:nortic_se"]
 run = "uv run --group parse parse nortic_se"
 
+[tasks."parse:hypnostheatre_com"]
+run = "uv run --group parse parse hypnostheatre_com"
+
 [tasks.build]
 description = "Build the static site"
 run = "uv run --group build build www/allabiografer.se"
