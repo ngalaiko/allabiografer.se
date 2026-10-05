@@ -66,6 +66,32 @@ def test_film_details_exclude_credits_and_trailer():
     assert detailed.overview.endswith("för evigt.")
     assert detailed.poster_url.endswith("bortglomdaposter-717x1024.jpg")
     assert detailed.key == film.key
+    assert detailed.title == "Bortglömda ön"
+
+
+def test_programme_text_is_uppercased_beyond_ascii():
+    rows = list(parser._showtimes(_html("hudiksvall"), "Hudiksvall"))
+    assert "SALONG RÖDA KVARN" in {s.screen for _, s in rows}
+    assert not any("ö" in f.title for f, _ in rows)
+
+
+def test_screenings_take_film_page_title(monkeypatch):
+    def get(url, timeout):
+        if url == parser._URL + "ystad/":
+            return SimpleNamespace(text=_html("ystad"), raise_for_status=lambda: None)
+        if "bortglomda-on" in url:
+            return SimpleNamespace(text=_html("film"), raise_for_status=lambda: None)
+        raise requests.ConnectionError(url)
+
+    monkeypatch.setattr(parser, "_SITES", parser._SITES[:1])
+    monkeypatch.setattr(parser._http, "session", lambda: SimpleNamespace(get=get))
+    monkeypatch.setattr(parser._films, "register", lambda film, **kwargs: film)
+    titles = []
+    monkeypatch.setattr(parser, "_tmdb", lambda title, **kwargs: titles.append(title))
+    screenings = [i for i in parser.parse() if isinstance(i, Screening)]
+    assert "Bortglömda ön" in {s.title for s in screenings}
+    assert "Bortglömda ön" in titles
+    assert "DIGGER" in {s.title for s in screenings}
 
 
 def test_film_details_without_synopsis():

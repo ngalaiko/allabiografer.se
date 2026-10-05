@@ -36,6 +36,11 @@ def _text(node, selector: str) -> str:
     return " ".join(el.get_text(" ", strip=True).split()) if el else ""
 
 
+def _upper(node, selector: str) -> str:
+    """Programme text, which the site uppercases for ASCII letters only."""
+    return _text(node, selector).upper()
+
+
 def _href(node, selector: str) -> str:
     el = node.select_one(selector)
     return urljoin(_URL, el["href"]) if el and el.get("href") else ""
@@ -50,7 +55,7 @@ def _showtimes(html: str, city: str) -> Iterator[tuple[Film, Screening]]:
             log.warning("invalid programme date %r", day["data-date"])
             continue
         for row in day.select(".movie-row"):
-            raw_title = _text(row, ".movie-row__title")
+            raw_title = _upper(row, ".movie-row__title")
             title, fmt, language, subtitles = _version.split_title(raw_title)
             if not title:
                 continue
@@ -84,7 +89,7 @@ def _showtimes(html: str, city: str) -> Iterator[tuple[Film, Screening]]:
                     ticket_url=ticket,
                     cinema_name="Cinemascenen",
                     city=city,
-                    screen=_text(row, ".movie-row__venue").split(",")[0].strip(),
+                    screen=_upper(row, ".movie-row__venue").split(",")[0].strip(),
                     **_version.screening_facts(
                         format=fmt,
                         language=language or ("Svenskt tal" if re.search(r"\bsv\s+tal\b", meta, re.IGNORECASE) else ""),
@@ -97,7 +102,7 @@ def _showtimes(html: str, city: str) -> Iterator[tuple[Film, Screening]]:
 
 
 def _details(html: str, film: Film) -> Film:
-    """Metadata within the film's Elementor section, excluding recommendation cards."""
+    """Title and metadata within the film's Elementor section, excluding recommendation cards."""
     soup = BeautifulSoup(html, "html.parser")
     heading = soup.select_one("h2.elementor-heading-title")
     section = heading.find_parent(class_="e-parent") if heading else None
@@ -111,7 +116,12 @@ def _details(html: str, film: Film) -> Film:
                 overview = " ".join(prev.get_text(" ", strip=True).split())
             break
     poster = section.select_one(".elementor-widget-image img[src]")
-    return replace(film, overview=overview, poster_url=urljoin(_URL, poster["src"]) if poster else "")
+    return replace(
+        film,
+        title=" ".join(heading.get_text(" ", strip=True).split()) or film.title,
+        overview=overview,
+        poster_url=urljoin(_URL, poster["src"]) if poster else "",
+    )
 
 
 def parse() -> Iterator[Screening | Venue | Film]:
@@ -134,6 +144,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
                         log.warning("failed to fetch film %s: %s", film.url, exc)
                 films[film.key] = film
                 yield _films.register(film, session=session)
-            yield replace(screening, tmdb_id=_tmdb(film.title, runtime=films[film.key].runtime))
+            film = films[film.key]
+            yield replace(screening, title=film.title, tmdb_id=_tmdb(film.title, runtime=film.runtime))
             count += 1
         log.info("  %s: %d screenings", city, count)
