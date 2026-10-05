@@ -29,6 +29,8 @@ _FILM_CATEGORIES = {"FILMKLUBB", "MOVIES"}
 _DATE = re.compile(r"(\w{3})\s+(\d{1,2})$")
 # "Chad Stahelski, 2014 · 101' · English"; language optional.
 _CREDITS = re.compile(r"^.+,\s*(\d{4})\s*·\s*(\d+)['\u2019](?:\s*·\s*(.+))?$")
+# Runtimes below this are short films; their titles alone match unrelated features.
+_SHORT = 40
 _MONTHS = ("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")
 
 
@@ -118,9 +120,13 @@ def _showtimes(html: str) -> Iterator[tuple[Film, Screening]]:
 
 
 def _tmdb_id(film: Film) -> int | None:
-    """TMDB match by title, year and runtime, else by title and year."""
+    """TMDB match by title, year and runtime, else, unless short, by title and year."""
     year = int(film.release_date) if film.release_date else None
-    return (film.runtime and _tmdb(film.title, runtime=film.runtime, year=year)) or _tmdb(film.title, year=year)
+    if film.runtime and (tmdb_id := _tmdb(film.title, runtime=film.runtime, year=year)):
+        return tmdb_id
+    if film.runtime and film.runtime < _SHORT:
+        return None
+    return _tmdb(film.title, year=year)
 
 
 def parse() -> Iterator[Screening | Venue | Film]:

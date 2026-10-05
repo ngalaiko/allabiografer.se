@@ -61,3 +61,19 @@ def test_event_without_ticket_tag_links_the_listing():
     assert film.runtime == 17
     assert screening.raw_attributes == ("Death Cafe Malmö",)
     assert screening.version.audio.languages == frozenset()
+
+
+def _lookup_ignoring_runtime(title, runtime=None, year=None):
+    return None if runtime else 1
+
+
+def test_short_film_needs_runtime_match(monkeypatch):
+    monkeypatch.setattr(parser, "_tmdb", _lookup_ignoring_runtime)
+    film = next(f for f, _ in _rows() if f.title == "JOLLY")
+    assert parser._tmdb_id(film) is None
+
+
+def test_feature_falls_back_to_title_and_year(monkeypatch):
+    monkeypatch.setattr(parser, "_tmdb", _lookup_ignoring_runtime)
+    film = next(f for f, _ in _rows() if f.title == "THE ROCKY HORROR PICTURE SHOW")
+    assert parser._tmdb_id(film) == 1
