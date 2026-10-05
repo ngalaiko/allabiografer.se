@@ -21,6 +21,12 @@ mise run parse:folkets_hus_och_parker
 
 This replaces `bioroy_se`; its stored screenings are replaced on a successful run.
 
+Parse Cinemascenen (Ystad, Katrineholm, Strängnäs, Söderhamn, Hudiksvall):
+
+```
+mise run parse:cinemascenen_se
+```
+
 Build the static site:
 
 ```

@@ -31,6 +31,9 @@ run = "uv run --group parse parse nfbio_se"
 description = "Parse Folkets Hus och Parker cinemas"
 run = "uv run --group parse parse folkets_hus_och_parker"
 
+[tasks."parse:cinemascenen_se"]
+run = "uv run --group parse parse cinemascenen_se"
+
 [tasks."parse:wp_theatre"]
 run = "uv run --group parse parse wp_theatre"
 
