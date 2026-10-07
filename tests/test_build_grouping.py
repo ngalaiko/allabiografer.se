@@ -208,6 +208,33 @@ def test_disjoint_speech_languages_remain_separate(monkeypatch):
     assert len(result) == 2
 
 
+def test_overlapping_speech_languages_do_not_label_subtitle_and_xl_variants(monkeypatch):
+    languages = frozenset({Language.ENGLISH, Language.NORWEGIAN, Language.ROMANIAN})
+    screenings = [
+        screening(
+            0,
+            audio=AudioVersion(languages=languages),
+            subtitles=frozenset({Language.SWEDISH}),
+            presentation=Presentation(auditorium=frozenset({AuditoriumAttribute.XL})),
+        ),
+        screening(
+            1,
+            audio=AudioVersion(languages=languages | {Language.SWEDISH}),
+            subtitles=frozenset({Language.ENGLISH}),
+        ),
+        screening(
+            2,
+            audio=AudioVersion(languages=languages | {Language.SWEDISH}),
+            subtitles=frozenset({Language.SWEDISH}),
+        ),
+    ]
+    for items in (screenings, list(reversed(screenings))):
+        result = blocks(monkeypatch, items)
+        assert len(result) == 3
+        assert {block["variant"] for block in result} == {"Svensk text · XL", "Engelsk text", "Svensk text"}
+        assert all("Engelskt, norskt, rumänskt" in block["mi"] for block in result)
+
+
 def test_overlapping_speech_language_cannot_bridge_disjoint_variants(monkeypatch):
     screenings = [
         screening(0, audio=AudioVersion(languages=frozenset({Language.ENGLISH}))),

@@ -25,6 +25,7 @@ import unicodedata
 from collections import defaultdict
 from dataclasses import dataclass, field, replace
 from datetime import date, datetime, time, timedelta
+from itertools import combinations
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -1005,7 +1006,8 @@ def _variants(screenings: list[Screening]) -> dict[Screening, tuple[str, str]]:
         split_axes = set()
         if len({profile[0] for profile in profiles}) > 1:
             split_axes.add(0)
-        if len({profile[1] for profile in profiles}) > 1:
+        speech_languages = {profile[1] for profile in profiles}
+        if any(a is None or b is None or a.isdisjoint(b) for a, b in combinations(speech_languages, 2)):
             split_axes.add(1)
         if len({profile[2] for profile in profiles}) > 1:
             split_axes.add(2)
