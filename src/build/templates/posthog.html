@@ -13,7 +13,7 @@ if (window.location.hostname === 'allabiografer.se' || window.location.hostname 
     autocapture: {dom_event_allowlist: ['click'], element_allowlist: ['a']},
     disable_session_recording: true,
     capture_heatmaps: false,
-    capture_performance: false,
+    capture_performance: {web_vitals: true},
     capture_dead_clicks: false,
     rageclick: false,
     capture_exceptions: false,
