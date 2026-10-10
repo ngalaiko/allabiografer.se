@@ -3,12 +3,12 @@
 import http.client
 import shutil
 import socket
-import ssl
 import subprocess
 import time
 from pathlib import Path
 
 import pytest
+from requests import certs
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ def nginx_server(tmp_path):
     site = (Path(__file__).resolve().parents[1] / "etc/nginx/sites-available/allabiografer.se").read_text()
     site = site.replace("listen 8080;", f"listen 127.0.0.1:{port};")
     site = site.replace("/var/www/allabiografer.se", str(root))
-    site = site.replace("/etc/ssl/certs/ca-certificates.crt", ssl.get_default_verify_paths().cafile)
+    site = site.replace("/etc/ssl/certs/ca-certificates.crt", certs.where())
     config = tmp_path / "nginx.conf"
     config.write_text(
         f"pid {tmp_path}/nginx.pid;\nerror_log {tmp_path}/error.log;\n"
