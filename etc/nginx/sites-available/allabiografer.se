@@ -29,6 +29,28 @@ server {
         add_header Cache-Control "public, max-age=31536000, immutable";
     }
 
+    location ~ ^(?<city_path>/stad/[^/]+)/.+$ {
+        try_files $uri $uri/ @missing_city_page;
+    }
+
+    location @missing_city_page {
+        absolute_redirect off;
+        # A missing programme may return later; the city is not its permanent replacement.
+        if (-f $document_root$city_path/index.html) {
+            return 302 $city_path/;
+        }
+        return 404;
+    }
+
+    location ~ ^/film/[^/]+/?$ {
+        try_files $uri $uri/ @missing_film_page;
+    }
+
+    location @missing_film_page {
+        absolute_redirect off;
+        return 302 /;
+    }
+
     location / {
         try_files $uri $uri/ =404;
     }

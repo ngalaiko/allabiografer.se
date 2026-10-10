@@ -3,6 +3,7 @@
 from datetime import datetime, time, timedelta
 
 import pytest
+from bs4 import BeautifulSoup
 
 import build
 from build import SWEDEN_TZ
@@ -254,6 +255,49 @@ def test_programme_synopsis_has_expand_toggle(db, tmp_path):
     assert 'class="synopsis" id="synopsis-filmen"' in html
     assert 'data-more="filmen" aria-controls="synopsis-filmen"' in html
     assert "/i/synopsis.js?v=" in html
+
+
+@pytest.mark.parametrize("cinema_count", [0, 1, 2])
+def test_city_film_description_uses_local_schedule(db, tmp_path, cinema_count):
+    synopsis = "En berättelse om en familj."
+    write_movie(Movie.from_dict({"tmdb_id": 42, "title_sv": "Filmen", "overview_sv": synopsis}), path=db)
+    today = datetime.now(tz=SWEDEN_TZ).date()
+    write_screenings(
+        [
+            screening(
+                tmdb_id=42,
+                cinema_name=f"Bio {i}",
+                date=today + timedelta(days=1),
+                ticket_url=f"https://example.com/{i}/{j}",
+                time=time(18 + j),
+            )
+            for i in range(cinema_count)
+            for j in range(2)
+        ]
+        + [screening(tmdb_id=42, cinema_name="Senare bio", date=today + timedelta(days=14))],
+        path=db,
+    )
+    out = tmp_path / "out"
+    sd = build._load_data(out)
+    build._build_programme_pages(build._make_env(), sd)
+
+    city_page = BeautifulSoup((out / "stad/stockholm/film/filmen/index.html").read_text(), "html.parser")
+    description = city_page.find("meta", attrs={"name": "description"})["content"]
+    assert "Filmen" in description
+    assert "Stockholm" in description
+    assert synopsis not in description
+    if cinema_count:
+        assert (
+            f"Visas på {cinema_count} {'biograf' if cinema_count == 1 else 'biografer'} de närmaste två veckorna"
+            in description
+        )
+        assert synopsis in city_page.get_text()
+    else:
+        assert "Inga visningar de närmaste två veckorna" in description
+    assert city_page.find("meta", property="og:description")["content"] == description
+
+    nationwide_page = BeautifulSoup((out / "film/filmen/index.html").read_text(), "html.parser")
+    assert nationwide_page.find("meta", attrs={"name": "description"})["content"] == synopsis
 
 
 def _blocks(db, tmp_path, screenings):

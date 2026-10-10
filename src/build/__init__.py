@@ -1356,16 +1356,15 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
         out_path = sd.out_dir / "stad" / city_slug / "film" / film_slug / "index.html"
         canonical = _register(sd, out_path)
         movie = next((sd.movies.get(s.tmdb_id) for s in city_film_screenings if sd.movies.get(s.tmdb_id)), None)
-        if movie and movie.overview_sv:
-            description = movie.overview_sv[:155].rstrip()
-            if len(movie.overview_sv) > 155:
-                description += "…"
-        else:
-            n_cinemas = len({s.cinema_name for s in _schedule_screenings(sd, city_film_screenings)})
+        n_cinemas = len({s.cinema_name for s in _schedule_screenings(sd, city_film_screenings)})
+        if n_cinemas:
             description = (
-                f"Speltider för {film_title} på biografer i {city_name} — "
-                f"visas på {n_cinemas} {'biograf' if n_cinemas == 1 else 'biografer'}."
+                f"Se speltider för {film_title} i {city_name}. "
+                f"Visas på {n_cinemas} {'biograf' if n_cinemas == 1 else 'biografer'} "
+                "de närmaste två veckorna, med länkar till biljetter."
             )
+        else:
+            description = f"Speltider för {film_title} i {city_name}. Inga visningar de närmaste två veckorna."
         jsonld = _film_jsonld(sd, movie, city_film_screenings, canonical) if movie else None
         og_image = _abs(_poster_url(sd, movie.tmdb_id)) if movie else None
         _write_programme(
