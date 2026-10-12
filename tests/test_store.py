@@ -56,7 +56,7 @@ from store.version import (
 
 
 @pytest.fixture
-def db(tmp_path):
+def db(tmp_path, store_clock):
     return tmp_path / "test.db"
 
 
@@ -165,6 +165,20 @@ def test_source_rewrite_replaces_own_rows_only(db):
         ("a", "https://a/2"),
         ("b", "https://b/1"),
     }
+
+
+@pytest.mark.parametrize("old_source", ["a", "replaced", ""])
+def test_source_refresh_preserves_past_days(db, old_source):
+    old = [screening(date=date(2026, 1, day), source=old_source) for day in (1, 2, 3)]
+    other = screening(date=date(2026, 1, 3), source="other")
+    write_screenings([*old, other], path=db)
+    current = screening(date=date(2026, 1, 2), time=time(20, 0), source="a")
+
+    # Today's time changes; tomorrow's screening is cancelled. Repeating the
+    # refresh must neither remove history nor duplicate the current programme.
+    for _ in range(2):
+        write_screenings([current], path=db, source="a", replaces_sources=("replaced",))
+        assert read_screenings(path=db) == [old[0], other, current]
 
 
 def test_legacy_rows_dropped_only_for_covered_venues(db):

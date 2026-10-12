@@ -5,7 +5,21 @@ from types import SimpleNamespace
 
 import pytest
 
+import store
 from parse import _util
+
+
+@pytest.fixture
+def store_clock(monkeypatch):
+    # January 2 in Stockholm, but still January 1 in UTC.
+    instant = datetime.fromisoformat("2026-01-01T23:30:00+00:00")
+
+    class FrozenDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return instant.astimezone(tz)
+
+    monkeypatch.setattr(store, "datetime", FrozenDateTime)
 
 
 @pytest.fixture

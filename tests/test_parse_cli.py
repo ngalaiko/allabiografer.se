@@ -5,6 +5,8 @@ import sys
 import types
 from datetime import date, time
 
+import pytest
+
 import parse
 from parse import mark_dubbed, tmdb_languages
 from store import Film, Movie, Screening, read_screenings, write_movie, write_screenings
@@ -113,6 +115,7 @@ def test_empty_parse_keeps_stored_screenings(monkeypatch, tmp_path):
     assert len(read_screenings(path=db)) == 1
 
 
+@pytest.mark.usefixtures("store_clock")
 def test_parse_replaces_stored_screenings(monkeypatch, tmp_path):
     db = tmp_path / "test.db"
     write_screenings([_screening("s:a", AudioKind.UNKNOWN)], path=db, source="bio_se")

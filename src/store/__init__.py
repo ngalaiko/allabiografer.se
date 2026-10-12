@@ -41,7 +41,9 @@ import json
 import os
 import sqlite3
 from collections.abc import Iterable
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from store.festival import Festival, FestivalScreening
 from store.film import Film, film_key, poster_key_for_film, title_key
@@ -252,12 +254,13 @@ def write_screenings(
     venues: list[Venue] = (),
     replaces_sources: tuple[str, ...] = (),
 ) -> int:
-    """Replace a source snapshot after a complete parse.  Returns rows added.
+    """Replace a source's screenings from today onward. Returns rows added.
 
-    Unowned legacy rows migrate only for venues covered by this snapshot.
-    Named replaced sources are removed in the same transaction.
+    Past days in Europe/Stockholm are preserved, including for replaced sources.
+    Unowned legacy rows migrate only for covered venues, from today onward.
     Other sources remain intact. Calls without a source merge records.
     """
+    today = datetime.now(ZoneInfo("Europe/Stockholm")).date().isoformat()
     covered = {(_normalize_city(v.city), v.name) for v in venues}
     covered.update((_normalize_city(s.city), s.cinema_name) for s in screenings)
     rows = [
@@ -284,11 +287,14 @@ def write_screenings(
         # One immediate transaction so parallel parsers serialise.
         conn.execute("BEGIN IMMEDIATE")
         if source:
-            conn.executemany("DELETE FROM screenings WHERE source = ?", [(s,) for s in (source, *replaces_sources)])
+            conn.executemany(
+                "DELETE FROM screenings WHERE source = ? AND date >= ?",
+                [(s, today) for s in (source, *replaces_sources)],
+            )
             # Keep separate source ownership even when public listings overlap.
             conn.executemany(
-                "DELETE FROM screenings WHERE source = '' AND city = ? AND cinema = ?",
-                sorted(covered),
+                "DELETE FROM screenings WHERE source = '' AND city = ? AND cinema = ? AND date >= ?",
+                [(city, cinema, today) for city, cinema in sorted(covered)],
             )
         added = 0
         for row in rows:

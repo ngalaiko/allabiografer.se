@@ -12,6 +12,10 @@ Parse screenings from all supported cinemas:
 mise run parse
 ```
 
+Successful non-empty parses replace each source's screenings from today onward
+(Europe/Stockholm), removing cancelled or rescheduled listings. Screenings on
+past dates are retained. Failed or empty parses keep the previous programme.
+
 Parse Folkets Hus och Parker (Bio Roy in Göteborg, Spegeln in Malmö, Röda Kvarn
 in Helsingborg):
 
@@ -19,7 +23,8 @@ in Helsingborg):
 mise run parse:folkets_hus_och_parker
 ```
 
-This replaces `bioroy_se`; its stored screenings are replaced on a successful run.
+This replaces `bioroy_se`; its screenings from today onward are replaced on a
+successful run, while past dates are retained.
 
 Parse Cinemascenen (Ystad, Katrineholm, Strängnäs, Söderhamn, Hudiksvall):
 
