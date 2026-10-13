@@ -23,6 +23,8 @@ class Movie:
     original_language: str = ""
     # ISO 639-1 codes; None until fetched.
     spoken_languages: list[str] | None = None
+    # None until credits have been fetched; empty when no director is listed.
+    directors: list[str] | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -39,6 +41,7 @@ class Movie:
             "age_rating": self.age_rating,
             "original_language": self.original_language,
             "spoken_languages": self.spoken_languages,
+            "directors": self.directors,
         }
 
     @classmethod
@@ -57,4 +60,5 @@ class Movie:
             age_rating=d.get("age_rating") or "",
             original_language=d.get("original_language") or "",
             spoken_languages=d.get("spoken_languages"),
+            directors=d.get("directors"),
         )

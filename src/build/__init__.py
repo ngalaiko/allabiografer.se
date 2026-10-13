@@ -25,6 +25,7 @@ import unicodedata
 from collections import defaultdict
 from dataclasses import dataclass, field, replace
 from datetime import date, datetime, time, timedelta
+from html import escape
 from itertools import combinations
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -1115,6 +1116,8 @@ def _prepare_programme_blocks(
                     mi_parts.append(f'<a href="/stad/{city_slug}/genre/{genre_slug}/">{g}</a>')
                 else:
                     mi_parts.append(g)
+            if movie.directors:
+                mi_parts.append(escape(", ".join(movie.directors)))
             year = movie.release_date[:4] if movie.release_date else ""
             if year:
                 mi_parts.append(year)

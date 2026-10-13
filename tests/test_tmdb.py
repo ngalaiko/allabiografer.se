@@ -17,6 +17,7 @@ def test_cached_movie_rating_is_normalised(tmp_path):
                 "age_rating": "15",
                 "original_language": "sv",
                 "spoken_languages": ["sv"],
+                "directors": [],
             }
         ),
         path=db,
@@ -57,12 +58,42 @@ def test_by_id_stores_details_for_a_known_id(tmp_path):
 
 def test_by_id_skips_the_network_for_a_stored_movie(tmp_path):
     db = tmp_path / "test.db"
-    movie = {"tmdb_id": 7, "title_sv": "Filmen", "original_language": "sv", "spoken_languages": ["sv"]}
+    movie = {
+        "tmdb_id": 7,
+        "title_sv": "Filmen",
+        "original_language": "sv",
+        "spoken_languages": ["sv"],
+        "directors": [],
+    }
     write_movie(Movie.from_dict(movie), path=db)
     session = _Session({})
 
     assert tmdb.by_id(7, path=db, session=session) == 7
     assert session.urls == []
+
+
+def test_stored_movie_without_directors_is_refetched(tmp_path):
+    db = tmp_path / "test.db"
+    details = {"tmdb_id": 7, "title_sv": "Filmen", "original_language": "sv", "spoken_languages": []}
+    write_movie(Movie.from_dict(details), path=db)
+    session = _Session(
+        {
+            **details,
+            "credits": {
+                "crew": [
+                    {"job": "Director", "name": "Lana Wachowski"},
+                    {"job": "Producer", "name": "Joel Silver"},
+                    {"job": "Director", "name": "Lilly Wachowski"},
+                ]
+            },
+        }
+    )
+
+    assert tmdb.by_id(7, path=db, session=session) == 7
+    assert read_movie(7, path=db).directors == ["Lana Wachowski", "Lilly Wachowski"]
+    cached_session = _Session({})
+    assert tmdb.by_id(7, path=db, session=cached_session) == 7
+    assert cached_session.urls == []
 
 
 def test_fetch_stores_the_original_language(tmp_path):

@@ -242,6 +242,40 @@ def test_source_with_showings_outranks_unused_source(db, tmp_path):
     assert sd.movies[neg_id].overview_sv == "Handling från egen källa."
 
 
+@pytest.mark.parametrize("directors", [None, [], ["A & B", "<Co-director>"]])
+def test_programme_directors_go_in_the_details_line(db, tmp_path, directors):
+    write_movie(
+        Movie.from_dict(
+            {
+                "tmdb_id": 42,
+                "title_sv": "Filmen",
+                "genres": ["Drama"],
+                "directors": directors,
+                "release_date": "2026-01-01",
+            }
+        ),
+        path=db,
+    )
+    write_screenings(
+        [
+            screening(
+                tmdb_id=42,
+                date=datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1),
+                version=ContentVersion(audio=AudioVersion(AudioKind.ORIGINAL, frozenset({Language.ENGLISH}))),
+            )
+        ],
+        path=db,
+    )
+    sd = build._load_data(tmp_path / "out")
+    out = tmp_path / "out" / "index.html"
+    build._write_programme(build._make_env(), sd, sd.screenings, title="T", breadcrumbs="", out_path=out, canonical="/")
+    meta = BeautifulSoup(out.read_text(), "html.parser").select_one(".film-meta")
+    assert meta.get_text() == (
+        "Drama • A & B, <Co-director> • 2026 • Engelskt tal" if directors else "Drama • 2026 • Engelskt tal"
+    )
+    assert meta.find() is None
+
+
 def test_programme_synopsis_has_expand_toggle(db, tmp_path):
     write_movie(Movie.from_dict({"tmdb_id": 42, "title_sv": "Filmen", "overview_sv": "Handling."}), path=db)
     write_screenings(

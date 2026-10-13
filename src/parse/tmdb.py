@@ -222,8 +222,8 @@ def by_id(tmdb_id: int, *, path: Path = DB_FILE, session: requests.Session | Non
 
 
 def _incomplete(movie: Movie) -> bool:
-    """Whether *movie* was stored before its languages were fetched."""
-    return not movie.original_language or movie.spoken_languages is None
+    """Whether *movie* is missing fetched language or director metadata."""
+    return not movie.original_language or movie.spoken_languages is None or movie.directors is None
 
 
 def _fetch(tmdb_id: int, path: Path, session: requests.Session) -> bool:
@@ -234,7 +234,7 @@ def _fetch(tmdb_id: int, path: Path, session: requests.Session) -> bool:
             session,
             f"{_API}/movie/{tmdb_id}",
             language="sv-SE",
-            append_to_response="release_dates",
+            append_to_response="release_dates,credits",
         )
     except requests.RequestException:
         log.warning("TMDB details fetch failed for id=%d", tmdb_id)
@@ -270,6 +270,11 @@ def _fetch(tmdb_id: int, path: Path, session: requests.Session) -> bool:
         age_rating=age_rating,
         original_language=details.get("original_language") or "",
         spoken_languages=[s["iso_639_1"] for s in details.get("spoken_languages", []) if s.get("iso_639_1")],
+        directors=[
+            person["name"]
+            for person in details.get("credits", {}).get("crew", [])
+            if person.get("job") == "Director" and person.get("name")
+        ],
     )
     write_movie(movie, path=path)
 
