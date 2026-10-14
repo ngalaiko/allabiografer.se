@@ -10,13 +10,14 @@ dependencies = [
 [project.scripts]
 parse = "parse:main"
 build = "build:main"
+newsletter = "newsletter:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/parse", "src/build", "src/store"]
+packages = ["src/parse", "src/build", "src/store", "src/newsletter"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

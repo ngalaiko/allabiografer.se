@@ -1,0 +1,54 @@
+name: Newsletter
+
+on:
+  schedule:
+    - cron: "0 9 * * 4"
+      timezone: Europe/Stockholm
+  workflow_dispatch:
+    inputs:
+      send:
+        description: Send real emails to registered subscribers; otherwise create previews
+        type: boolean
+        default: false
+      date:
+        description: Thursday edition date for previews (YYYY-MM-DD), blank for today
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: newsletter
+  cancel-in-progress: false
+
+jobs:
+  send:
+    if: github.event_name == 'workflow_dispatch' || vars.NEWSLETTER_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: jdx/mise-action@v2
+      - name: Discover subscribed cities and prepare or send
+        env:
+          POSTHOG_PERSONAL_API_KEY: ${{ secrets.POSTHOG_PERSONAL_API_KEY }}
+          POSTHOG_PROJECT_ID: ${{ vars.POSTHOG_PROJECT_ID }}
+          POSTHOG_NEWSLETTER_WORKFLOW: ${{ vars.POSTHOG_NEWSLETTER_WORKFLOW }}
+          EVENT: ${{ github.event_name }}
+          SEND: ${{ inputs.send }}
+          DATE: ${{ inputs.date }}
+        run: |
+          args=(--output newsletter-preview)
+          if [[ -n "$DATE" ]]; then args+=(--date "$DATE"); fi
+          if [[ "$EVENT" == schedule || "$SEND" == true ]]; then
+            args+=(--send)
+          fi
+          uv run newsletter "${args[@]}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: newsletter-preview
+          path: newsletter-preview/
+          if-no-files-found: ignore

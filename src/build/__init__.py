@@ -147,6 +147,15 @@ def _slugify_sv(text: str) -> str:
     return text or "unnamed"
 
 
+def city_programme_url(city: str) -> str:
+    return f"{BASE_URL}/stad/{_slugify_sv(city)}/"
+
+
+def film_anchor(title: str) -> str:
+    """Stable fragment shared by city programmes and newsletter links."""
+    return "film-" + title_key(title).replace(" ", "-")
+
+
 def _format_day(d: date) -> str:
     """e.g. 'Tis. 31 mars' or 'Ons. 1 apr.'"""
     dow = DAY_ABBREVS[d.weekday()]
@@ -1097,6 +1106,11 @@ def _prepare_programme_blocks(
         return (-film_score[tmdb_id], film_earliest[tmdb_id], tmdb_id, bool(label), label.casefold(), identity)
 
     blocks = []
+    anchors_by_movie: dict[int, set[str]] = defaultdict(set)
+    for s in filtered:
+        if s.title:
+            anchors_by_movie[s.tmdb_id].add(film_anchor(s.title))
+    used_anchors: set[str] = set()
     label_counts: dict[int, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     for block_key in movie_cinemas:
         label_counts[block_key[0]][block_key[2]] += 1
@@ -1105,6 +1119,8 @@ def _prepare_programme_blocks(
         movie = sd.movies.get(tmdb_id)
         film_title = movie.title_sv if movie else f"Film {tmdb_id}"
         film_slug = sd.film_slugs.get(film_title, _slugify_sv(film_title))
+        anchors = sorted((anchors_by_movie[tmdb_id] | {film_anchor(film_title)}) - used_anchors)
+        used_anchors.update(anchors)
 
         # Movie info line
         mi_parts: list[str] = []
@@ -1196,6 +1212,7 @@ def _prepare_programme_blocks(
         blocks.append(
             {
                 "poster_url": _poster_url(sd, tmdb_id),
+                "anchors": anchors,
                 "film_id": "-".join(
                     [
                         film_slug,

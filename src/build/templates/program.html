@@ -11,7 +11,7 @@
 {% for block in blocks %}
 <article class="schedule-film" style="--film-rows: {{ block.cinemas|length + 2 }};">
 <div class="film-title">
-<h2>{% if canonical and canonical.endswith(block.film_url) %}{{ block.film_title }}{% else %}<a href="{{ block.film_url }}" title="{{ block.film_title }}">{{ block.film_title }}</a>{% endif %}{% if block.variant %} <span class="film-variant">({{ block.variant }})</span>{% endif %}</h2>
+<h2>{% for anchor in block.anchors %}<span id="{{ anchor }}" style="scroll-margin-top:120px"></span>{% endfor %}{% if canonical and canonical.endswith(block.film_url) %}{{ block.film_title }}{% else %}<a href="{{ block.film_url }}" title="{{ block.film_title }}">{{ block.film_title }}</a>{% endif %}{% if block.variant %} <span class="film-variant">({{ block.variant }})</span>{% endif %}</h2>
 </div>
 <div class="film-overview">
 <div class="film-poster">{% if block.poster_url %}<img src="{{ block.poster_url }}" alt="" width="125" height="177"
