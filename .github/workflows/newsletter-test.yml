@@ -1,0 +1,38 @@
+name: Newsletter test email
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: Send one real test email to this address
+        required: true
+        type: string
+      city:
+        description: City name (for example Göteborg)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: newsletter-test
+  cancel-in-progress: false
+
+jobs:
+  send-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: jdx/mise-action@v2
+      - name: Send one test email through PostHog
+        env:
+          POSTHOG_PERSONAL_API_KEY: ${{ secrets.POSTHOG_PERSONAL_API_KEY }}
+          POSTHOG_PROJECT_ID: ${{ vars.POSTHOG_PROJECT_ID }}
+          POSTHOG_NEWSLETTER_TEST_WORKFLOW: ${{ vars.POSTHOG_NEWSLETTER_TEST_WORKFLOW }}
+          EMAIL: ${{ inputs.email }}
+          CITY: ${{ inputs.city }}
+        run: uv run newsletter --test-email "$EMAIL" --city "$CITY"

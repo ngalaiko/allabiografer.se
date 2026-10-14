@@ -279,7 +279,16 @@ def test_programme_directors_go_in_the_details_line(db, tmp_path, directors):
 def test_programme_synopsis_has_expand_toggle(db, tmp_path):
     write_movie(Movie.from_dict({"tmdb_id": 42, "title_sv": "Filmen", "overview_sv": "Handling."}), path=db)
     write_screenings(
-        [screening(tmdb_id=42, date=datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1))],
+        [
+            screening(tmdb_id=42, title="Cinema's title", date=datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)),
+            screening(
+                tmdb_id=42,
+                title="Cinema's title",
+                date=datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1),
+                ticket_url="https://example.com/imax",
+                presentation=Presentation(experiences=frozenset({PresentationSystem.IMAX})),
+            ),
+        ],
         path=db,
     )
     sd = build._load_data(tmp_path / "out")
@@ -289,6 +298,11 @@ def test_programme_synopsis_has_expand_toggle(db, tmp_path):
     assert 'class="synopsis" id="synopsis-filmen"' in html
     assert 'data-more="filmen" aria-controls="synopsis-filmen"' in html
     assert "/i/synopsis.js?v=" in html
+    soup = BeautifulSoup(html, "html.parser")
+    for anchor in ("film-filmen", "film-cinema-s-title"):
+        matches = soup.select(f"#{anchor}")
+        assert len(matches) == 1
+        assert matches[0].find_parent("article").select_one("h2").get_text() == "Filmen"
 
 
 @pytest.mark.parametrize("cinema_count", [0, 1, 2])
