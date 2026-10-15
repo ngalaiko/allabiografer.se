@@ -97,8 +97,9 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .cinema-location a { text-decoration: underline; }
 .cinema-location a:hover { color: var(--hover); }
 .schedule-cell { grid-column: calc(var(--day-column) + 2); grid-row: var(--cinema-row); position: relative; min-height: var(--cinema-height); background: var(--background); border-top: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
-.schedule-cell > a, .schedule-cell > span { position: absolute; left: var(--time-left); top: var(--time-top); width: 45px; min-height: 20px; padding: 5px; line-height: 10px; white-space: nowrap; text-align: center; font-feature-settings: 'case' 1; font-size: var(--cap-height-10); }
-.schedule-cell > a:hover { text-decoration: none; background: var(--hover-background); }
+.schedule-cell > a, .schedule-cell > span { position: absolute; left: var(--time-left); top: var(--time-top); }
+.schedule-cell > a, .schedule-cell > span, .festival-time, .festival-screening a { width: 45px; min-height: 20px; padding: 5px; line-height: 10px; white-space: nowrap; text-align: center; font-feature-settings: 'case' 1; font-size: var(--cap-height-10); }
+.schedule-cell > a:hover, .festival-time:hover, .festival-screening a:hover { color: var(--hover); text-decoration: none; background: var(--hover-background); }
 .schedule-cell .past { color: var(--past); }
 .no-screenings { padding: 16px 12px; }
 

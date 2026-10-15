@@ -94,7 +94,9 @@ def stockholm_screenings(products: list[dict], start: date, end: date) -> list[F
         film = by_key.get(product["parent_url_key"], product)
         metadata = {**_attributes(film), **{key: value for key, value in attrs.items() if value}}
         runtime = int(metadata["length"]) if metadata.get("length") else None
-        if runtime is not None and runtime <= 0:
+        if runtime == 0:
+            runtime = None
+        if runtime is not None and runtime < 0:
             raise ValueError(f"Invalid runtime: {product['url_key']}")
         identifier = product["uid"]
         screenings[identifier] = {

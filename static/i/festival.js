@@ -23,7 +23,7 @@
         `DTSTAMP:${stamp(now)}`, `DTSTART:${stamp(event.start)}`);
       if (event.end) lines.push(`DTEND:${stamp(event.end)}`);
       lines.push(`SUMMARY:${escape(event.title)}`, `LOCATION:${escape(event.venue)}`,
-        `URL:${event.url}`, `DESCRIPTION:${escape("Sluttiden bygger på filmlängden. Kontrollera samtal och biljett hos festivalen. " + event.url)}`, "END:VEVENT");
+        `URL:${event.url}`, "END:VEVENT");
     }
     lines.push("END:VCALENDAR");
     // RFC 5545 limits physical lines to 75 UTF-8 octets.
@@ -110,12 +110,10 @@
         link.target = "_blank";
         link.rel = "noopener";
         card.append(link, node("div", "", `${event.time}–${event.end ? stockTime(event.end) : "?"} · ${event.venue}`));
-        if (overlap.has(event.id)) card.append(node("strong", "", "Överlappande visning"));
         // The card removes its screening; the title link opens tickets.
         card.tabIndex = 0;
         card.setAttribute("role", "button");
         card.setAttribute("aria-label", `Ta bort ${event.title}, ${event.date} ${event.time}`);
-        card.title = "Ta bort";
         link.addEventListener("click", clicked => clicked.stopPropagation());
         card.addEventListener("click", () => toggle(event.id));
         card.addEventListener("keydown", key => {
@@ -144,15 +142,12 @@
     get("selected").setAttribute("aria-pressed", String(view === "selected"));
     if (get("program")) get("program").hidden = view !== "program";
     get("plan").hidden = view !== "selected";
-    document.querySelector(".festival-hint-text").hidden = view === "selected";
     document.querySelector(".festival-actions").hidden = view !== "selected";
     document.querySelectorAll("[data-select]").forEach(button => {
       const active = selected.has(button.dataset.select);
       button.setAttribute("aria-pressed", String(active));
       button.closest(".festival-screening").classList.toggle("selected", active);
     });
-    const overlap = conflicts(chosen);
-    get("status").textContent = overlap.size ? `${overlap.size} valda visningar överlappar. Restid ingår inte.` : "";
     renderPlan(chosen);
   }
 
@@ -194,10 +189,8 @@
   get("share").addEventListener("click", async () => {
     try {
       if (navigator.share) await navigator.share({ title: `${festival.name} ${festival.year}`, url: location.href });
-      else { await navigator.clipboard.writeText(location.href); get("status").textContent = "Länken är kopierad."; }
-    } catch (error) {
-      if (error.name !== "AbortError") get("status").textContent = "Kopiera adressen i adressfältet för att dela schemat.";
-    }
+      else await navigator.clipboard.writeText(location.href);
+    } catch {}
   });
   get("export").addEventListener("click", () => {
     const chosen = festival.screenings.filter(event => selected.has(event.id));

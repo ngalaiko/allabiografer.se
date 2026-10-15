@@ -37,6 +37,7 @@ def festival():
 
 def test_festival_build_keeps_full_programme_before_and_after_festival(tmp_path, festival):
     db = tmp_path / "db.sqlite"
+    festival["screenings"][0].update(genres="Genre not shown", sections="COMPETITION, ICONS")
     screenings = [FestivalScreening(**s) for s in festival.pop("screenings")]
     write_festival(Festival(**festival, source="stockholm"), screenings, path=db)
     for today in (date(2026, 1, 1), date(2027, 1, 1)):
@@ -47,6 +48,9 @@ def test_festival_build_keeps_full_programme_before_and_after_festival(tmp_path,
         assert "2026-11-22" in html
         assert "https://example.com/tickets" in html
         assert "festival-data" in html
+        assert '<a href="/stad/stockholm/">Stockholm</a>' in html
+        assert "COMPETITION, ICONS" in html.split('id="festival-data"')[0]
+        assert "Genre not shown" not in html.split('id="festival-data"')[0]
         assert "https://allabiografer.se/festival/test-festival/2026/" in sd.sitemap_urls
         assert "/festival/test-festival/2026/" in (sd.out_dir / "festival/index.html").read_text()
 
@@ -143,6 +147,13 @@ def test_stockholm_import_filters_events_and_uses_local_time():
     assert result[0].film_url == "https://www.stockholmfilmfestival.se/film"
     assert result[0].genres == "Drama"
     assert result[0].runtime == 120
+
+    # Surprise screenings use zero when the runtime has not been announced.
+    products[0]["custom_attributes"][2] = attr("length", "0")
+    result = stockholm_screenings(products, date(2026, 11, 11), date(2026, 11, 22))
+    assert len(result) == 1
+    assert result[0].runtime is None
+    assert result[0].end == ""
 
 
 def test_prisma_import_keeps_films_and_packages_in_local_time():
