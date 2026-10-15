@@ -103,22 +103,29 @@ subscribers with a nonempty email. Addresses stay in PostHog. City values must
 match scraped city names exactly; unknown cities fail before any batches start.
 New subscribed cities need no GitHub configuration or separate template workflow.
 
-Use one **draft**, unscheduled PostHog workflow: batch trigger → one native email
-→ exit. The shared draft is `01a13bd8-f3b8-0000-0239-1d8bf8afa24f`.
+Use one **active**, unscheduled PostHog delivery workflow: event trigger → one native
+email → exit. It listens for `newsletter_edition_ready` and its ID is
+`01a1408b-a71f-0000-c69b-722f68f522a8`.
 Its flat, AND-combined audience filters require `newsletter_confirmed` equal to
 the string `yes`, set only after explicit confirmed signup. Do not restrict the
-city in this shared draft: Python adds `newsletter_city = edition city` to each
-clone. PostHog resolves the matching subscribers and enforces opt-outs at delivery.
+city in this shared workflow: Python creates a batch dispatcher with those filters
+plus `newsletter_city = edition city`. The batch captures one event per matching
+person with the edition in `event.properties.newsletter`. The delivery workflow
+renders that event and enforces marketing opt-outs. Recipient addresses stay in PostHog.
+The shared workflow deduplicates recipient/city/edition events for seven days.
 
 Select a verified sender and a **marketing** message category. Leave the recipient
 as `{{ person.properties.email }}`, without CC/BCC. Optional audience filters and
-email sending rate limits are preserved. Select the library template
+email sending rate limits remain on the shared delivery workflow. Select the library template
 `01a138fb-15dd-0000-72dc-6b0dc068ba35` on the email action (`config.template_uuid`).
-Every new edition snapshots the latest library template; existing editions do not change.
-The template reads `variables.newsletter`: `city`, `city_url`, `home_url`, `start`, `end`, and
+Template-library edits do not automatically update the delivery workflow's snapshot:
+update and publish its email action in PostHog after changing the library template.
+The template reads `event.properties.newsletter`: `city`, `city_url`, `home_url`, `start`, `end`, and
 `films` (each with `title`, `url`, `poster`, `year`, `description`, `genres`,
-`genre_links` as `{name, url}` records, `directors`, `runtime`, and `age_rating`). Python passes this object as batch
-variables, never as generated HTML or a JSON string inside the template.
+`genre_links` as `{name, url}` records, `directors`, `runtime`, and `age_rating`). Python supplies
+JSON data to PostHog's capture-event action, never generated HTML. Do not move this data
+into workflow variables: they have a 5KB limit, and batch overrides did not propagate
+to invocations in production. A complete edition is substantially larger.
 The template loops over films with Liquid and uses `{{ unsubscribe_url }}`.
 Signup/confirmation UI is not included in this job; manage confirmed subscribers
 in PostHog until a signup flow is added.
@@ -127,15 +134,15 @@ Set these GitHub repository settings:
 
 | Setting | Kind | Value |
 | --- | --- | --- |
-| `POSTHOG_PERSONAL_API_KEY` | Secret | Project-scoped key with query access plus `hog_flow:read` and `hog_flow:write` |
+| `POSTHOG_PERSONAL_API_KEY` | Secret | Project-scoped key with Query Read, Hog flow Write (includes reads), and Person Read; single-email tests also need Group Read |
 | `POSTHOG_PROJECT_ID` | Variable | EU PostHog project ID |
-| `POSTHOG_NEWSLETTER_WORKFLOW` | Variable | `01a13bd8-f3b8-0000-0239-1d8bf8afa24f` (shared batch workflow) |
+| `POSTHOG_NEWSLETTER_WORKFLOW` | Variable | `01a1408b-a71f-0000-c69b-722f68f522a8` (active shared delivery workflow) |
 | `POSTHOG_NEWSLETTER_TEST_WORKFLOW` | Variable | `01a13a74-a5ed-0000-1426-d10c4299af81` (manual test workflow) |
 | `NEWSLETTER_ENABLED` | Variable | `true` only after reviewing previews and testing the PostHog sender |
 
 Manual workflow runs default to **data preview only** and upload JSON artifacts.
 Render the email in PostHog using a mocked workflow test with that JSON under
-`globals.variables.newsletter`; keep `mock_async_functions=true`. A local preview
+`globals.event.properties.newsletter`; keep `mock_async_functions=true`. A local preview
 uses PostHog credentials to discover cities, but does not send:
 
 ```sh
@@ -156,7 +163,9 @@ Tests use the upcoming Thursday's edition (today if Thursday), and may run any d
 Incomplete history can produce an incorrect “new this week” selection.
 An empty selection fails without sending. Test delivery does not subscribe the recipient.
 Each test clones the manual PostHog workflow as a draft to snapshot the latest library
-template, then invokes only its email step with `email`, `city`, and `newsletter` variables.
+template, then invokes only its email step with the `email` variable and newsletter event data.
+This checks rendering/delivery only; use the normal `Newsletter` job to test audience dispatch
+and the event handoff end to end.
 It never enables a workflow or creates a batch. The email step must use
 `{{ variables.email }}`, no CC/BCC, and the marketing message type. Opt-outs still apply.
 Failures and skipped sends fail the job; an uncertain response is not retried. Inspect

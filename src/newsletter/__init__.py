@@ -17,6 +17,7 @@ from build import BASE_URL, _slugify_sv, city_programme_url, film_anchor
 from store import DB_FILE, title_key
 
 STOCKHOLM = ZoneInfo("Europe/Stockholm")
+NEWSLETTER_EVENT = "newsletter_edition_ready"
 
 
 def newsletter_url(url: str, start: date, content: str) -> str:
@@ -162,9 +163,13 @@ class PostHog:
             len(triggers) != 1
             or len(emails) != 1
             or any(a["type"] not in {"trigger", "function_email", "exit"} for a in actions)
-            or triggers[0]["config"]["type"] != "batch"
+            or triggers[0]["config"]["type"] != "event"
+            or source.get("status") != "active"
         ):
-            raise ValueError("Use a simple batch → email → exit workflow as the shared template")
+            raise ValueError("Use an active event → email → exit workflow for shared delivery")
+        events = triggers[0]["config"].get("filters", {}).get("events", [])
+        if len(events) != 1 or events[0].get("id") != NEWSLETTER_EVENT:
+            raise ValueError(f"Delivery workflow must listen for {NEWSLETTER_EVENT}")
         properties = triggers[0]["config"].get("filters", {}).get("properties", [])
         required = [
             {"key": "newsletter_confirmed", "type": "person", "operator": "exact", "value": ["yes"]},
@@ -175,11 +180,14 @@ class PostHog:
             raise ValueError("Audience requires newsletter_confirmed = yes")
         if any(p.get("key") == "newsletter_city" for p in properties):
             raise ValueError("Shared workflow must not restrict newsletter_city; Python adds each city's filter")
-        triggers[0]["config"]["filters"] = {
-            "properties": [
-                *properties,
-                {"key": "newsletter_city", "type": "person", "operator": "exact", "value": [data["city"]]},
-            ]
+        triggers[0]["config"] = {
+            "type": "batch",
+            "filters": {
+                "properties": [
+                    *properties,
+                    {"key": "newsletter_city", "type": "person", "operator": "exact", "value": [data["city"]]},
+                ]
+            },
         }
         config = emails[0]["config"]
         if config.get("message_category_type") != "marketing":
@@ -189,24 +197,33 @@ class PostHog:
             raise ValueError("Use the default person email recipient without CC/BCC for audience deduplication")
         if not config.get("template_uuid"):
             raise ValueError("Select a PostHog library email template for the newsletter")
-        # With no inline body, PostHog snapshots the latest library template at create time.
-        for field in ("subject", "text", "html", "design", "preheader"):
-            value.pop(field, None)
-        config["inputs"]["email"]["templating"] = "liquid"
+        # Batch overrides are not propagated to runs, and workflow variables have a
+        # 5KB limit. Capture the edition as event data instead; PostHog keeps recipients.
+        literal = json.dumps(data, ensure_ascii=False).replace("\\", "\\\\").replace("'", "\\'")
+        emails[0].update(
+            name="Dispatch newsletter edition",
+            type="function",
+            on_error="abort",
+            config={
+                "template_id": "template-posthog-capture",
+                "inputs": {
+                    "event": {"value": NEWSLETTER_EVENT},
+                    "distinct_id": {"value": "{event.distinct_id}"},
+                    "properties": {"value": {"newsletter": "{jsonParse('" + literal + "')}"}},
+                },
+            },
+        )
         payload = {
             "name": name,
             "description": f"New local films, {data['start']} through {data['end']}",
             "status": "active",
             "actions": actions,
             "edges": source["edges"],
-            "variables": [v for v in source.get("variables", []) if v["key"] != "newsletter"]
-            + [{"key": "newsletter", "label": "Newsletter", "type": "json"}],
+            "variables": [],
             "exit_condition": "exit_only_at_end",
         }
-        if source.get("email_sending_rate_limit"):
-            payload["email_sending_rate_limit"] = source["email_sending_rate_limit"]
         flow = self.request("POST", body=payload)
-        job = self.request("POST", f"{flow['id']}/batch_jobs/", {"variables": {"newsletter": data}})
+        job = self.request("POST", f"{flow['id']}/batch_jobs/", {})
         return str(job["id"])
 
     def send_test(self, workflow_id: str, email: str, data: dict) -> str:
@@ -263,9 +280,9 @@ class PostHog:
                         "event": "newsletter_test",
                         "distinct_id": f"newsletter-test:{uuid4()}",
                         "timestamp": datetime.now(STOCKHOLM).isoformat(),
-                        "properties": {},
+                        "properties": {"newsletter": data},
                     },
-                    "variables": {"email": email, "city": data["city"], "newsletter": data},
+                    "variables": {"email": email},
                 },
             },
         )

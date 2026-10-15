@@ -1,3 +1,4 @@
+import ast
 import copy
 import json
 import sqlite3
@@ -121,13 +122,15 @@ class FakePostHog(PostHog):
         self.test_result = {"status": "success", "errors": [], "logs": []}
         self.fail_send = False
         self.template = {
+            "status": "active",
             "actions": [
                 {
                     "id": "trigger",
                     "type": "trigger",
                     "config": {
-                        "type": "batch",
+                        "type": "event",
                         "filters": {
+                            "events": [{"id": "newsletter_edition_ready"}],
                             "properties": [
                                 {
                                     "key": "newsletter_confirmed",
@@ -135,7 +138,7 @@ class FakePostHog(PostHog):
                                     "operator": "exact",
                                     "value": ["yes"],
                                 },
-                            ]
+                            ],
                         },
                     },
                 },
@@ -192,7 +195,7 @@ def test_posthog_preserves_audience_and_never_repeats_an_edition(ambiguous):
         "city": "Stockholm",
         "start": "2026-10-16",
         "end": "2026-10-22",
-        "films": [{"title": "A & B {{ person.email }}", "genres": ["Drama"], "year": 2026}],
+        "films": [{"title": "Ö O'Brien \\ {{ person.email }}\n", "description": "film " * 10000, "year": 2026}],
     }
     if ambiguous:
         with pytest.raises(TimeoutError):
@@ -207,11 +210,19 @@ def test_posthog_preserves_audience_and_never_repeats_an_edition(ambiguous):
         {"key": "newsletter_confirmed", "type": "person", "operator": "exact", "value": ["yes"]},
         {"key": "newsletter_city", "type": "person", "operator": "exact", "value": ["Stockholm"]},
     ]
-    assert sent[1]["config"]["message_category_id"] == "news"
-    assert sent[1]["config"]["inputs"]["email"]["value"]["from"] == {"integrationId": 7}
-    assert sent[1]["config"]["template_uuid"] == "library-template"
-    assert set(sent[1]["config"]["inputs"]["email"]["value"]) == {"from", "to"}
-    assert api.jobs[0]["variables"] == {"newsletter": data}
+    assert sent[0]["config"]["type"] == "batch"
+    assert sent[1]["type"] == "function"
+    assert sent[1]["config"]["template_id"] == "template-posthog-capture"
+    inputs = sent[1]["config"]["inputs"]
+    assert inputs["event"]["value"] == "newsletter_edition_ready"
+    assert inputs["distinct_id"]["value"] == "{event.distinct_id}"
+    expression = inputs["properties"]["value"]["newsletter"]
+    assert expression.startswith("{jsonParse(")
+    assert expression.endswith(")}")
+    assert json.loads(ast.literal_eval(expression[len("{jsonParse(") : -2])) == data
+    assert api.jobs[0]["workflow"]["variables"] == []
+    assert "variables" not in api.jobs[0]
+    assert api.template["actions"][1]["type"] == "function_email"
 
 
 def test_shared_workflow_keeps_city_audiences_separate():
@@ -230,6 +241,19 @@ def test_posthog_requires_confirmed_audience():
     api.template["actions"][0]["config"]["filters"]["properties"] = []
     with pytest.raises(ValueError, match="Audience requires"):
         api.send("template", {"city": "Malmö", "start": "2026-10-16", "end": "2026-10-22", "films": []})
+    assert api.jobs == []
+
+
+@pytest.mark.parametrize("invalid", ["draft", "wrong_event"])
+def test_delivery_must_be_listening_before_dispatch(invalid):
+    api = FakePostHog()
+    if invalid == "draft":
+        api.template["status"] = "draft"
+    else:
+        api.template["actions"][0]["config"]["filters"]["events"] = [{"id": "other_event"}]
+    with pytest.raises(ValueError, match=r"active event|must listen"):
+        api.send("template", {"city": "Malmö", "start": "2026-10-16", "end": "2026-10-22", "films": []})
+    assert api.flows == []
     assert api.jobs == []
 
 
@@ -257,11 +281,8 @@ def test_single_recipient_test_never_enables_or_batches(outcome):
     invocation = api.invocations[0]
     assert invocation["current_action_id"] == "email"
     assert invocation["mock_async_functions"] is False
-    assert invocation["globals"]["variables"] == {
-        "email": "reader@example.org",
-        "city": "Göteborg",
-        "newsletter": data,
-    }
+    assert invocation["globals"]["variables"] == {"email": "reader@example.org"}
+    assert invocation["globals"]["event"]["properties"]["newsletter"] == data
     value = api.flows[0]["actions"][1]["config"]["inputs"]["email"]["value"]
     assert value == {"from": {"integrationId": 7}, "to": {"email": "{{ variables.email }}"}}
 
