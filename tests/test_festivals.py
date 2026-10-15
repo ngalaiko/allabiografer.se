@@ -216,8 +216,10 @@ def test_festival_stylesheet_braces_balance():
 def test_festival_selection_restores_locally_but_shared_links_take_priority(festival):
     playwright = pytest.importorskip("playwright.sync_api")
     festival["screenings"].append({**festival["screenings"][0], "id": "two", "film_id": "another"})
-    html = build._make_env().get_template("festival.html").render(
-        festival=prepare(festival), versions={"css": "test", "js": "test"}, city_url="/stad/stockholm/"
+    html = (
+        build._make_env()
+        .get_template("festival.html")
+        .render(festival=prepare(festival), versions={"css": "test", "js": "test"}, city_url="/stad/stockholm/")
     )
 
     def serve(route):

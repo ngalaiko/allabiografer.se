@@ -245,9 +245,7 @@ def test_source_with_showings_outranks_unused_source(db, tmp_path):
 def test_festival_banner_on_all_stockholm_programme_pages_only(db, tmp_path):
     write_movie(Movie.from_dict({"tmdb_id": 42, "title_sv": "Filmen", "genres": ["Drama"]}), path=db)
     tomorrow = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
-    write_screenings(
-        [screening(tmdb_id=42, city=city, date=tomorrow) for city in ("Stockholm", "Göteborg")], path=db
-    )
+    write_screenings([screening(tmdb_id=42, city=city, date=tomorrow) for city in ("Stockholm", "Göteborg")], path=db)
     out = tmp_path / "out"
     sd = build._load_data(out)
     build._build_programme_pages(build._make_env(), sd)
