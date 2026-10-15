@@ -242,6 +242,24 @@ def test_source_with_showings_outranks_unused_source(db, tmp_path):
     assert sd.movies[neg_id].overview_sv == "Handling från egen källa."
 
 
+def test_festival_banner_on_all_stockholm_programme_pages_only(db, tmp_path):
+    write_movie(Movie.from_dict({"tmdb_id": 42, "title_sv": "Filmen", "genres": ["Drama"]}), path=db)
+    tomorrow = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
+    write_screenings(
+        [screening(tmdb_id=42, city=city, date=tomorrow) for city in ("Stockholm", "Göteborg")], path=db
+    )
+    out = tmp_path / "out"
+    sd = build._load_data(out)
+    build._build_programme_pages(build._make_env(), sd)
+    for path in out.rglob("index.html"):
+        banner = BeautifulSoup(path.read_text(), "html.parser").select_one(".festival-banner")
+        if path.is_relative_to(out / "stad/stockholm"):
+            assert banner is not None
+            assert banner.a["href"] == "/festival/stockholms-filmfestival/2026/"
+        else:
+            assert banner is None
+
+
 @pytest.mark.parametrize("directors", [None, [], ["A & B", "<Co-director>"]])
 def test_programme_directors_go_in_the_details_line(db, tmp_path, directors):
     write_movie(

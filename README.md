@@ -82,8 +82,10 @@ APIs, selected by each edition's `source`:
   are excluded.
 
 The planner supports selections, a personal calendar, overlap warnings, shared
-URLs, and downloaded iCal files. Selections are stored in the URL. Calendar
-exports are snapshots; export again after programme changes.
+URLs, and downloaded iCal files. Selections are stored in the URL and locally
+in the browser for each festival edition. Explicit selections in a shared URL
+replace the saved selection; otherwise, the saved schedule is restored.
+Calendar exports are snapshots; export again after programme changes.
 
 Run planner logic tests with `node --test tests/festival.test.cjs`.
 

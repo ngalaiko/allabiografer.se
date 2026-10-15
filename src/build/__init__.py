@@ -1264,6 +1264,7 @@ def _write_programme(
         og_type=og_type,
         breadcrumbs=breadcrumbs,
         clear_filter_url=clear_filter_url,
+        city=city,
         days=days,
         num_days=max(1, len(page_days)),
         blocks=blocks,

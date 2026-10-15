@@ -2,6 +2,7 @@
 
 from datetime import date
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 
@@ -210,3 +211,43 @@ def test_festival_stylesheet_braces_balance():
         depth += {"{": 1, "}": -1}.get(char, 0)
         assert depth >= 0
     assert depth == 0
+
+
+def test_festival_selection_restores_locally_but_shared_links_take_priority(festival):
+    playwright = pytest.importorskip("playwright.sync_api")
+    festival["screenings"].append({**festival["screenings"][0], "id": "two", "film_id": "another"})
+    html = build._make_env().get_template("festival.html").render(
+        festival=prepare(festival), versions={"css": "test", "js": "test"}, city_url="/stad/stockholm/"
+    )
+
+    def serve(route):
+        if route.request.resource_type == "document":
+            route.fulfill(body=html, content_type="text/html")
+        else:
+            route.fulfill(path=Path("static") / urlparse(route.request.url).path.lstrip("/"))
+
+    with playwright.sync_playwright() as runtime:
+        if not Path(runtime.chromium.executable_path).exists():
+            pytest.skip("Install Chromium with playwright install chromium")
+        browser = runtime.chromium.launch()
+        context = browser.new_context()
+        context.route("https://festival.test/**", serve)
+        page = context.new_page()
+        url = "https://festival.test/festival/test-festival/2026/"
+        page.goto(url)
+        page.locator('[data-select="one"]').click()
+        page.close()
+
+        page = context.new_page()
+        page.goto(url)
+        assert page.locator('[data-select="one"]').get_attribute("aria-pressed") == "true"
+        assert "selected=one" in page.url
+        page.goto(url + "?selected=two,removed")
+        assert page.locator('[data-select="one"]').get_attribute("aria-pressed") == "false"
+        assert page.locator('[data-select="two"]').get_attribute("aria-pressed") == "true"
+        page.goto(url)
+        assert page.locator('[data-select="two"]').get_attribute("aria-pressed") == "true"
+        page.locator('[data-select="two"]').click()
+        page.goto(url)
+        assert page.locator("#festival-count").inner_text() == "0"
+        browser.close()

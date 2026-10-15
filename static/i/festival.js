@@ -1,4 +1,4 @@
-/* Festival selections live in the URL; calendar dates use explicit UTC offsets. */
+/* Festival selections persist locally and in the URL; dates use explicit UTC offsets. */
 (() => {
   function conflicts(events) {
     const result = new Set();
@@ -46,16 +46,23 @@
   const festival = JSON.parse(source.textContent);
   const events = new Map(festival.screenings.map(event => [event.id, event]));
   const get = id => document.getElementById(`festival-${id}`);
+  const storageKey = `festival-${festival.slug}-${festival.year}-selected`;
   let selected = new Set();
   let view = "program";
   const readURL = () => {
     const params = new URL(location.href).searchParams;
-    selected = new Set((params.get("selected") || "").split(",").filter(id => events.has(id)));
+    let saved = params.get("selected");
+    if (saved === null) {
+      try { saved = localStorage.getItem(storageKey); } catch {}
+    }
+    selected = new Set((saved || "").split(",").filter(id => events.has(id)));
     view = params.get("view") === "selected" ? "selected" : "program";
   };
   const saveURL = () => {
     const url = new URL(location.href);
-    if (selected.size) url.searchParams.set("selected", [...selected].sort().join(","));
+    const saved = [...selected].sort().join(",");
+    try { localStorage.setItem(storageKey, saved); } catch {}
+    if (selected.size || url.searchParams.has("selected")) url.searchParams.set("selected", saved);
     else url.searchParams.delete("selected");
     if (view === "selected") url.searchParams.set("view", view);
     else url.searchParams.delete("view");
@@ -204,8 +211,9 @@
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
-  window.addEventListener("popstate", () => { readURL(); render(); revealScreenings(); });
+  window.addEventListener("popstate", () => { readURL(); saveURL(); render(); revealScreenings(); });
   readURL();
+  saveURL();
   render();
   revealScreenings();
 })();
