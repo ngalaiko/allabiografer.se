@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
+import build
 from store import DB_FILE, read_festivals
 
 TZ = ZoneInfo("Europe/Stockholm")
@@ -137,6 +138,7 @@ def build_festivals(env, sd, register, db_path: Path = DB_FILE) -> None:
                 ),
                 canonical=canonical,
                 festival=festival,
+                city_url=urlparse(build.city_programme_url(festival["city"])).path,
                 versions=versions,
             )
         )
