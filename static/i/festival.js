@@ -150,10 +150,15 @@
     if (get("program")) get("program").hidden = view !== "program";
     get("plan").hidden = view !== "selected";
     document.querySelector(".festival-actions").hidden = view !== "selected";
+    const overlap = conflicts(chosen);
     document.querySelectorAll("[data-select]").forEach(button => {
       const active = selected.has(button.dataset.select);
+      const event = events.get(button.dataset.select);
+      const conflicting = overlap.has(event.id);
       button.setAttribute("aria-pressed", String(active));
+      button.setAttribute("aria-label", `${active ? "Ta bort" : "Välj"} ${event.title}, ${event.date} ${event.time}, ${event.venue}${conflicting ? ", överlappar en annan vald visning" : ""}`);
       button.closest(".festival-screening").classList.toggle("selected", active);
+      button.closest(".festival-screening").classList.toggle("conflict", conflicting);
     });
     renderPlan(chosen);
   }

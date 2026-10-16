@@ -14,18 +14,18 @@
 /* Top row: spans the sheet; its two ends stay in view. Below the frame masks (z 50/55). */
 .festival-bar { position: sticky; top: var(--frame); z-index: 52; display: flex; align-items: center; height: var(--schedule-nav-height); background: var(--schedule-surface); border: 1px solid var(--border-color); border-bottom: 0; white-space: nowrap; }
 .festival-bar-start { position: sticky; left: var(--frame); display: flex; align-items: center; gap: 12px; min-width: 0; padding: 0 5px; }
-.festival-tabs { display: flex; gap: 12px; }
+.festival-tabs { display: flex; gap: 4px; }
 .festival-bar button { font: inherit; padding: 5px 0; border: 0; background: none; color: var(--link); }
+.festival-tabs button { padding-inline: 4px; }
 .festival-bar button:hover:not(:disabled) { color: var(--hover); text-decoration: underline; }
 .festival-tabs button[aria-pressed="true"] { color: var(--text); font-weight: 600; }
 .festival-actions { position: sticky; right: 0; display: flex; gap: 12px; margin-left: auto; padding: 0 5px; }
 .festival-crumbs .breadcrumb-label > h1, .festival-crumbs .breadcrumb-label > span { display: inline; margin: 0; font: inherit; }
 @keyframes festival-pulse {
-  0%, 100% { transform: scale(1); background: transparent; box-shadow: inset 0 0 0 0 transparent; }
-  18%, 60% { transform: scale(1.04); background: var(--selected); color: var(--selected-text); box-shadow: inset 0 0 0 2px var(--selected-border); }
-  40%, 85% { transform: scale(1); background: var(--selected); color: var(--selected-text); box-shadow: inset 0 0 0 0 transparent; }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
 }
-#festival-selected.pulse { animation: festival-pulse 1s ease-out; }
+#festival-selected.pulse { animation: festival-pulse .45s ease-out; }
 @media (prefers-reduced-motion: reduce) { #festival-selected.pulse { animation: none; } }
 
 /* Programme screenings: the time selects the screening. */
@@ -33,6 +33,8 @@
 .festival-screening a, .festival-time { font-family: inherit; border: 0; border-radius: 0; background: transparent; color: var(--link); }
 .festival-screening.selected { background: var(--selected); }
 .festival-screening.selected > .festival-time:not(:hover) { color: var(--selected-text); }
+.festival-screening.conflict { background: var(--conflict); }
+.festival-screening.conflict > .festival-time:not(:hover) { color: var(--conflict-border); }
 
 /* Personal calendar, below the top row and a breadcrumb row. */
 .festival-plan-crumbs { position: sticky; top: calc(var(--frame) + var(--schedule-top)); z-index: 51; background: var(--schedule-surface); }
@@ -50,7 +52,7 @@
 
 @media (max-width: 700px) {
   .festival-bar { border: 0; border-bottom: 1px solid var(--border-color); }
-  .festival-tabs, .festival-actions { gap: 10px; }
+  .festival-actions { gap: 10px; }
   .festival .cinema-location { display: none; }
   .festival .festival-screening { left: calc((var(--day-column) - 1) * var(--day-width) + var(--time-left)); }
   #festival-plan > [role="region"] { border: 0; }
