@@ -1,7 +1,4 @@
 .festival {
-  --selected: light-dark(#E0EEE5, #253C32);
-  --selected-text: light-dark(#17452F, #B3DDC3);
-  --selected-border: light-dark(#8BAD98, #527B63);
   --conflict: light-dark(#FFF0D8, #45351E);
   --conflict-border: light-dark(#A66B0E, #C99744);
   --calendar-line: light-dark(#EEE, #3B444F);
@@ -23,8 +20,12 @@
 .festival-tabs button[aria-pressed="true"] { color: var(--text); font-weight: 600; }
 .festival-actions { position: sticky; right: 0; display: flex; gap: 12px; margin-left: auto; padding: 0 5px; }
 .festival-crumbs .breadcrumb-label > h1, .festival-crumbs .breadcrumb-label > span { display: inline; margin: 0; font: inherit; }
-@keyframes festival-pulse { from { box-shadow: 0 0 0 0 rgb(32 92 66 / .7); } to { box-shadow: 0 0 0 8px rgb(32 92 66 / 0); } }
-#festival-selected.pulse { animation: festival-pulse .6s ease-out; }
+@keyframes festival-pulse {
+  0%, 100% { transform: scale(1); background: transparent; box-shadow: inset 0 0 0 0 transparent; }
+  18%, 60% { transform: scale(1.04); background: var(--selected); color: var(--selected-text); box-shadow: inset 0 0 0 2px var(--selected-border); }
+  40%, 85% { transform: scale(1); background: var(--selected); color: var(--selected-text); box-shadow: inset 0 0 0 0 transparent; }
+}
+#festival-selected.pulse { animation: festival-pulse 1s ease-out; }
 @media (prefers-reduced-motion: reduce) { #festival-selected.pulse { animation: none; } }
 
 /* Programme screenings: the time selects the screening. */

@@ -2,6 +2,7 @@
 
 from base64 import b64encode
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import pytest
 
@@ -98,6 +99,57 @@ def test_cinema_address_layout(browser, width, city):
             assert address_box["y"] > name_box["y"] + name_box["height"]
     finally:
         page.close()
+
+
+@pytest.mark.parametrize("width", [375, 1280])
+@pytest.mark.parametrize("blocked_storage", [False, True])
+def test_festival_banner_stays_visible_and_remembers_dismissal(browser, width, blocked_storage):
+    html = (
+        _make_env()
+        .get_template("program.html")
+        .render(city="Stockholm", num_days=10, blocks=[], breadcrumbs=" / Stockholm")
+    )
+    context = browser.new_context(viewport={"width": width, "height": 800})
+    if blocked_storage:
+        context.add_init_script("Object.defineProperty(window, 'localStorage', {get() { throw Error('blocked'); }});")
+    page = context.new_page()
+
+    def serve(route):
+        path = urlsplit(route.request.url).path
+        if path.startswith("/i/"):
+            route.fulfill(path=ROOT / "static" / path.lstrip("/"))
+        else:
+            route.fulfill(body=html, content_type="text/html")
+
+    page.route("https://allabiografer.test/**", serve)
+    try:
+        page.goto("https://allabiografer.test/stad/stockholm/")
+        page.add_style_tag(content=".program { min-height: 2000px; }")
+        banner = page.get_by_role("complementary", name="Filmfestival")
+        playwright.expect(banner.get_by_role("button", name="Stäng festivalbanner")).to_be_visible()
+        page.evaluate("document.fonts.ready")
+        initial = banner.bounding_box()
+        page.evaluate("""() => {
+            const scroll = innerWidth <= 700 ? document.querySelector('.schedule-scroll') : window;
+            scroll.scrollTo(400, 500);
+        }""")
+        playwright.expect(banner).to_be_in_viewport()
+        scrolled = banner.bounding_box()
+        assert scrolled["x"] == pytest.approx(initial["x"])
+        assert scrolled["y"] == pytest.approx(initial["y"])
+        assert page.locator(".schedule-header").bounding_box()["y"] >= scrolled["y"] + scrolled["height"]
+        banner.get_by_role("button", name="Stäng festivalbanner").click()
+        playwright.expect(banner).to_be_hidden()
+        # Closing the banner also reclaims the sticky header's space immediately.
+        assert page.locator(".schedule-header").bounding_box()["y"] == pytest.approx(initial["y"])
+        for path in ["/stad/stockholm/", "/stad/stockholm/bio/"]:
+            page.goto("https://allabiografer.test" + path)
+            if blocked_storage:
+                playwright.expect(banner).to_be_visible()
+                banner.get_by_role("button", name="Stäng festivalbanner").click()
+            playwright.expect(banner).to_be_hidden()
+    finally:
+        context.close()
 
 
 @pytest.mark.parametrize("width", [375, 1280])

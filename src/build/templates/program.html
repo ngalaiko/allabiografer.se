@@ -3,7 +3,7 @@
 {% block body %}
 <main class="program" aria-label="Bioprogram, rulla i sidled för fler datum" tabindex="0" style="--day-count: {{ num_days }};">
 {% if city == "Stockholm" %}
-<aside class="festival-banner" aria-label="Filmfestival"><a href="/festival/stockholms-filmfestival/2026/"><strong>Stockholm Film Festival 2026</strong> <span>· Se programmet</span></a></aside>
+<aside class="festival-banner" data-festival="stockholms-filmfestival-2026" aria-label="Filmfestival"><a href="/festival/stockholms-filmfestival/2026/"><strong>Stockholm Film Festival 2026</strong> <span>· Se programmet</span></a><button type="button" aria-label="Stäng festivalbanner" hidden><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.5 4.5L11.5 11.5M11.5 4.5L4.5 11.5" stroke="currentColor" stroke-width="1.5"/></svg></button></aside>
 {% endif %}
 <header class="schedule-header">
 <nav class="schedule-breadcrumbs" aria-label="Brödsmulor"><a class="home" href="/" aria-label="Alla städer">{% include "home_icon.html" %}</a><div class="breadcrumb-label">{{ breadcrumbs|safe }}{% if clear_filter_url %} <a class="filter-close" href="{{ clear_filter_url }}" aria-label="Ta bort filter"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4.5 4.5L11.5 11.5M11.5 4.5L4.5 11.5" stroke="currentColor" stroke-width="1.5"/></svg></a>{% endif %}</div></nav>
@@ -50,4 +50,5 @@
 </main>
 <script src="/i/synopsis.js?v={{ synopsis_version }}" defer></script>
 <script src="/i/showtimes.js?v={{ showtimes_version }}" defer></script>
+{% if city == "Stockholm" %}<script src="/i/festival-banner.js?v={{ festival_banner_version }}" defer></script>{% endif %}
 {% endblock %}

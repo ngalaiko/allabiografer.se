@@ -118,10 +118,11 @@ def prepare(festival: dict) -> dict:
     return festival
 
 
-def build_festivals(env, sd, register, db_path: Path = DB_FILE) -> None:
+def build_festivals(env, sd, register, db_path: Path = DB_FILE) -> list[dict]:
     festivals = [
         prepare({**asdict(festival), "screenings": [asdict(s) for s in screenings]})
         for festival, screenings in read_festivals(path=db_path)
+        if festival.city == "Stockholm"
     ]
     versions = {
         name: hashlib.sha256(Path(f"static/i/festival.{name}").read_bytes()).hexdigest()[:12] for name in ("css", "js")
@@ -153,3 +154,4 @@ def build_festivals(env, sd, register, db_path: Path = DB_FILE) -> None:
             active="festival",
         )
     )
+    return festivals

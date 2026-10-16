@@ -24,6 +24,9 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
   --link: light-dark(#0060A0, #80C5F7);
   --hover: light-dark(#D43B16, #FF9975);
   --hover-background: light-dark(#FEE1E4, #48302E);
+  --selected: light-dark(#E0EEE5, #253C32);
+  --selected-text: light-dark(#17452F, #B3DDC3);
+  --selected-border: light-dark(#8BAD98, #527B63);
   --border-color: light-dark(#DDD, #3B444F);
   --poster: light-dark(#D5D5D5, #343D48);
   --schedule-nav-height: 32px;
@@ -75,8 +78,12 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .program { --frame: 20px; --schedule-top: 0px; --day-width: 200px; --sheet-width: calc(445px + var(--day-count) * var(--day-width)); padding: 20px 20px 0; cursor: default; width: max-content; position: relative; }
 .program::before { content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 20px; z-index: 50; background: var(--background); }
 .program::after { content: ""; position: fixed; top: 0; left: 0; width: 20px; height: 100vh; z-index: 55; background: var(--background); }
-.festival-banner { position: sticky; left: var(--frame); width: calc(100vw - 2 * var(--frame)); margin-bottom: 12px; background: var(--schedule-surface); border: 1px solid var(--border-color); border-left: 3px solid var(--link); }
+.festival-banner { --link: var(--selected-text); --hover: var(--selected-text); position: sticky; left: var(--frame); width: calc(100vw - 2 * var(--frame)); margin-bottom: 12px; background: var(--selected); border: 1px solid var(--selected-border); border-left: 3px solid var(--selected-text); display: grid; grid-template-columns: 1fr auto; }
+.festival-banner[hidden] { display: none; }
+.festival-banner.sticky { top: var(--frame); z-index: 52; box-shadow: 0 12px var(--background); }
 .festival-banner a { display: block; padding: 10px 12px; }
+.festival-banner button { align-self: center; margin-right: 8px; padding: 8px; border: 0; background: none; color: var(--selected-text); cursor: pointer; }
+.festival-banner button:hover { background: var(--selected-border); }
 .festival-banner strong { font-weight: 600; }
 .festival-banner strong, .festival-banner span { white-space: nowrap; }
 .schedule-header { position: sticky; top: calc(var(--frame) + var(--schedule-top)); z-index: 50; width: var(--sheet-width); display: grid; grid-template-columns: 445px 1fr; background: var(--schedule-surface); }

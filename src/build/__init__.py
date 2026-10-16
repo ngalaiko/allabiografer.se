@@ -665,6 +665,9 @@ def _make_env() -> Environment:
     env.globals["synopsis_version"] = hashlib.sha256(Path("static/i/synopsis.js").read_bytes()).hexdigest()[:12]
     env.globals["links_version"] = hashlib.sha256(Path("static/i/links.js").read_bytes()).hexdigest()[:12]
     env.globals["showtimes_version"] = hashlib.sha256(Path("static/i/showtimes.js").read_bytes()).hexdigest()[:12]
+    env.globals["festival_banner_version"] = hashlib.sha256(
+        Path("static/i/festival-banner.js").read_bytes()
+    ).hexdigest()[:12]
     env.globals["font_versions"] = {
         weight: hashlib.sha256(Path(f"static/i/FiraSans-{weight}.woff2").read_bytes()).hexdigest()[:12]
         for weight in ("Regular", "SemiBold")
@@ -679,7 +682,7 @@ def _make_env() -> Environment:
 # ---------------------------------------------------------------------------
 
 
-def _build_index(env: Environment, sd: SiteData) -> None:
+def _build_index(env: Environment, sd: SiteData, festivals: list[dict]) -> None:
     print("Building /")
 
     groups: list[tuple[str, list[dict]]] = []
@@ -712,6 +715,7 @@ def _build_index(env: Environment, sd: SiteData) -> None:
         jsonld=_website_jsonld(),
         active="index",
         groups=groups,
+        festivals=festivals,
     )
     out.write_text(html, encoding="utf-8")
 
@@ -1528,11 +1532,11 @@ def main() -> None:
     sd = _load_data(out_dir)
     env = _make_env()
 
-    _build_index(env, sd)
+    festivals = build_festivals(env, sd, _register, DB_FILE)
+    _build_index(env, sd, festivals)
     _build_premiarer(env, sd)
     _build_filmer(env, sd)
     _build_programme_pages(env, sd)
-    build_festivals(env, sd, _register, DB_FILE)
 
     _write_robots(out_dir)
     _write_sitemap(sd)

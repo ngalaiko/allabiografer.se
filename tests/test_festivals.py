@@ -5,6 +5,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
+from bs4 import BeautifulSoup
 
 import build
 from build.festivals import build_festivals, prepare
@@ -41,9 +42,29 @@ def test_festival_build_keeps_full_programme_before_and_after_festival(tmp_path,
     festival["screenings"][0].update(genres="Genre not shown", sections="COMPETITION, ICONS")
     screenings = [FestivalScreening(**s) for s in festival.pop("screenings")]
     write_festival(Festival(**festival, source="stockholm"), screenings, path=db)
+    write_festival(
+        Festival(
+            **{
+                **festival,
+                "slug": "goteborg-film-festival-prisma",
+                "name": "Göteborg Film Festival Prisma",
+                "city": "Göteborg",
+            },
+            source="prisma",
+        ),
+        screenings,
+        path=db,
+    )
     for today in (date(2026, 1, 1), date(2027, 1, 1)):
-        sd = build.SiteData(out_dir=tmp_path / str(today.year), today=today)
-        build_festivals(build._make_env(), sd, build._register, db)
+        sd = build.SiteData(
+            out_dir=tmp_path / str(today.year),
+            today=today,
+            cities={"Göteborg": 1},
+            city_slugs={"Göteborg": "goteborg"},
+        )
+        env = build._make_env()
+        festivals = build_festivals(env, sd, build._register, db)
+        build._build_index(env, sd, festivals)
         html = (sd.out_dir / "festival/test-festival/2026/index.html").read_text()
         assert "Film &lt;ett&gt;" in html
         assert "2026-11-22" in html
@@ -53,7 +74,15 @@ def test_festival_build_keeps_full_programme_before_and_after_festival(tmp_path,
         assert "COMPETITION, ICONS" in html.split('id="festival-data"')[0]
         assert "Genre not shown" not in html.split('id="festival-data"')[0]
         assert "https://allabiografer.se/festival/test-festival/2026/" in sd.sitemap_urls
-        assert "/festival/test-festival/2026/" in (sd.out_dir / "festival/index.html").read_text()
+        for path in ("index.html", "festival/index.html"):
+            soup = BeautifulSoup((sd.out_dir / path).read_text(), "html.parser")
+            assert soup.select_one("a[href='/festival/test-festival/2026/']").get_text() == "Testfestival 2026"
+            assert not soup.select("a[href*='goteborg-film-festival-prisma']")
+        home = BeautifulSoup((sd.out_dir / "index.html").read_text(), "html.parser")
+        assert [a["href"] for a in home.select("h1 a")] == ["/premiarer/", "/filmer/", "/festival/"]
+        assert home.select_one("a[href='/stad/goteborg/']") is not None
+        assert not (sd.out_dir / "festival/goteborg-film-festival-prisma").exists()
+        assert not any("goteborg-film-festival-prisma" in url for url in sd.sitemap_urls)
 
 
 def test_overlapping_screenings_have_separate_lanes(festival):
