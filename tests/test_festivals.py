@@ -79,7 +79,9 @@ def test_festival_build_keeps_full_programme_before_and_after_festival(tmp_path,
             assert soup.select_one("a[href='/festival/test-festival/2026/']").get_text() == "Testfestival 2026"
             assert not soup.select("a[href*='goteborg-film-festival-prisma']")
         home = BeautifulSoup((sd.out_dir / "index.html").read_text(), "html.parser")
-        assert [a["href"] for a in home.select("h1 a")] == ["/premiarer/", "/filmer/", "/festival/"]
+        assert home.h1 is None
+        assert home.select_one("a[href='/festival/']") is None
+        assert home.select_one("main h2").get_text() == "Filmfestivaler"
         assert home.select_one("a[href='/stad/goteborg/']") is not None
         assert not (sd.out_dir / "festival/goteborg-film-festival-prisma").exists()
         assert not any("goteborg-film-festival-prisma" in url for url in sd.sitemap_urls)
