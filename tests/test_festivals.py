@@ -244,7 +244,8 @@ def test_festival_stylesheet_braces_balance():
     assert depth == 0
 
 
-def test_festival_selection_restores_locally_but_shared_links_take_priority(festival):
+@pytest.mark.parametrize("share_method", ["native", "clipboard"])
+def test_festival_selection_restores_locally_but_shared_links_take_priority(festival, share_method):
     playwright = pytest.importorskip("playwright.sync_api")
     festival["screenings"].append({**festival["screenings"][0], "id": "two", "film_id": "another"})
     html = (
@@ -265,6 +266,9 @@ def test_festival_selection_restores_locally_but_shared_links_take_priority(fest
         browser = runtime.chromium.launch()
         context = browser.new_context()
         context.route("https://festival.test/**", serve)
+        context.add_init_script("""window.captured = [];
+            window.posthog = {capture: (name, properties) => window.captured.push({name, ...properties})};
+        """)
         page = context.new_page()
         url = "https://festival.test/festival/test-festival/2026/"
         page.goto(url)
@@ -282,5 +286,84 @@ def test_festival_selection_restores_locally_but_shared_links_take_priority(fest
         assert page.locator('[data-select="two"]').get_attribute("aria-pressed") == "true"
         page.locator('[data-select="two"]').click()
         page.goto(url)
+        assert page.locator("#festival-count").inner_text() == "0"
+        assert page.evaluate("window.captured") == []  # Restoring a schedule is not a user selection.
+
+        page.locator('[data-select="two"]').click()
+        page.locator('[data-select="one"]').click()
+        page.locator("#festival-selected").click()
+        page.locator("#festival-selected").click()  # Re-clicking the active tab is not a view change.
+        page.evaluate(
+            """method => {
+            const share = async () => { if (window.failShare) throw new Error('Cancelled or denied'); };
+            Object.defineProperty(navigator, 'share', {configurable: true,
+                value: method === 'native' ? share : undefined});
+            Object.defineProperty(navigator, 'clipboard', {value: {writeText: share}});
+        }""",
+            share_method,
+        )
+        page.locator("#festival-share").click()
+        page.wait_for_function("window.captured.some(event => event.name === 'festival_schedule_shared')")
+        page.evaluate("window.failShare = true")
+        page.locator("#festival-share").click()
+        with page.expect_download() as download:
+            page.locator("#festival-export").click()
+        assert download.value.suggested_filename == "test-festival-2026.ics"
+        # Prevent navigation without suppressing the ticket event or its propagation behavior.
+        page.locator(".festival-calendar-event a").first.evaluate(
+            "link => link.addEventListener('click', event => event.preventDefault())"
+        )
+        page.locator(".festival-calendar-event a").first.click()
+        assert page.locator("#festival-count").inner_text() == "2"
+        page.get_by_role("button", name="Ta bort Film <ett>, 2026-11-11 17:30", exact=True).first.press("Enter")
+        page.locator("#festival-all").click()
+
+        common = {"festival_slug": "test-festival", "festival_year": 2026, "city": "Stockholm"}
+        assert page.evaluate("window.captured") == [
+            {
+                **common,
+                "name": "festival_screening_selected",
+                "view": "program",
+                "selected_count": 1,
+                "screening_id": "two",
+                "film_id": "another",
+            },
+            {
+                **common,
+                "name": "festival_screening_selected",
+                "view": "program",
+                "selected_count": 2,
+                "screening_id": "one",
+                "film_id": "film",
+            },
+            {**common, "name": "festival_view_changed", "view": "selected", "selected_count": 2},
+            {
+                **common,
+                "name": "festival_schedule_shared",
+                "view": "selected",
+                "selected_count": 2,
+                "method": share_method,
+            },
+            {**common, "name": "festival_schedule_exported", "view": "selected", "selected_count": 2, "format": "ics"},
+            {
+                **common,
+                "name": "festival_ticket_clicked",
+                "view": "selected",
+                "selected_count": 2,
+                "screening_id": "one",
+                "film_id": "film",
+            },
+            {
+                **common,
+                "name": "festival_screening_deselected",
+                "view": "selected",
+                "selected_count": 1,
+                "screening_id": "one",
+                "film_id": "film",
+            },
+            {**common, "name": "festival_view_changed", "view": "program", "selected_count": 1},
+        ]
+        page.evaluate("delete window.posthog")
+        page.locator('[data-select="two"]').click()
         assert page.locator("#festival-count").inner_text() == "0"
         browser.close()

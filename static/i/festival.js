@@ -49,6 +49,14 @@
   const storageKey = `festival-${festival.slug}-${festival.year}-selected`;
   let selected = new Set();
   let view = "program";
+  const capture = (name, properties = {}) => window.posthog?.capture(name, {
+    festival_slug: festival.slug,
+    festival_year: festival.year,
+    city: festival.city,
+    view,
+    selected_count: selected.size,
+    ...properties,
+  });
   const readURL = () => {
     const params = new URL(location.href).searchParams;
     let saved = params.get("selected");
@@ -121,7 +129,10 @@
         card.tabIndex = 0;
         card.setAttribute("role", "button");
         card.setAttribute("aria-label", `Ta bort ${event.title}, ${event.date} ${event.time}`);
-        link.addEventListener("click", clicked => clicked.stopPropagation());
+        link.addEventListener("click", clicked => {
+          clicked.stopPropagation();
+          capture("festival_ticket_clicked", { screening_id: event.id, film_id: event.film_id });
+        });
         card.addEventListener("click", () => toggle(event.id));
         card.addEventListener("keydown", key => {
           if (key.target === card && (key.key === "Enter" || key.key === " ")) { key.preventDefault(); toggle(event.id); }
@@ -167,6 +178,10 @@
     if (selected.has(id)) selected.delete(id); else selected.add(id);
     saveURL();
     render();
+    capture(selected.has(id) ? "festival_screening_selected" : "festival_screening_deselected", {
+      screening_id: id,
+      film_id: events.get(id).film_id,
+    });
   }
   function revealScreenings() {
     // The document scrolls on desktop; the page wrapper scrolls on mobile, as on the schedule page.
@@ -197,11 +212,21 @@
   document.querySelectorAll("[data-enhanced]").forEach(element => { element.hidden = false; });
   get("selected").addEventListener("animationend", () => get("selected").classList.remove("pulse"));
   document.querySelectorAll("[data-select]").forEach(button => button.addEventListener("click", () => toggle(button.dataset.select)));
-  for (const [id, value] of [["all", "program"], ["selected", "selected"]]) get(id).addEventListener("click", () => { view = value; saveURL(); render(); revealScreenings(); });
+  for (const [id, value] of [["all", "program"], ["selected", "selected"]]) get(id).addEventListener("click", () => {
+    const changed = view !== value;
+    view = value;
+    saveURL();
+    render();
+    revealScreenings();
+    if (changed) capture("festival_view_changed");
+  });
   get("share").addEventListener("click", async () => {
+    const method = navigator.share ? "native" : "clipboard";
+    const selected_count = selected.size;
     try {
       if (navigator.share) await navigator.share({ title: `${festival.name} ${festival.year}`, url: location.href });
       else await navigator.clipboard.writeText(location.href);
+      capture("festival_schedule_shared", { method, selected_count });
     } catch {}
   });
   get("export").addEventListener("click", () => {
@@ -215,6 +240,7 @@
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+    capture("festival_schedule_exported", { format: "ics" });
   });
   window.addEventListener("popstate", () => { readURL(); saveURL(); render(); revealScreenings(); });
   readURL();
