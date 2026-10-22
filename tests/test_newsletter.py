@@ -171,7 +171,7 @@ class FakePostHog(PostHog):
 
     def request(self, method, path="", body=None):
         if method == "GET":
-            return {"results": self.flows} if path.startswith("?") else copy.deepcopy(self.template)
+            return copy.deepcopy(self.template)
         if not path:
             flow = {**copy.deepcopy(body), "id": "edition"}
             self.flows.append(flow)
@@ -188,7 +188,7 @@ class FakePostHog(PostHog):
 
 
 @pytest.mark.parametrize("ambiguous", [False, True])
-def test_posthog_preserves_audience_and_never_repeats_an_edition(ambiguous):
+def test_posthog_preserves_audience_and_allows_repeating_an_edition(ambiguous):
     api = FakePostHog()
     api.fail_send = ambiguous
     data = {
@@ -202,9 +202,11 @@ def test_posthog_preserves_audience_and_never_repeats_an_edition(ambiguous):
             api.send("template", data)
     else:
         assert api.send("template", data) == "batch"
-    with pytest.raises(ValueError, match="already exists"):
-        api.send("template", data)
     assert len(api.jobs) == 1
+    api.fail_send = False
+    assert api.send("template", data) == "batch"
+    assert len(api.jobs) == 2
+    assert [flow["name"] for flow in api.flows] == ["allabiografer:Stockholm:2026-10-16"] * 2
     sent = api.jobs[0]["workflow"]["actions"]
     assert sent[0]["config"]["filters"]["properties"] == [
         {"key": "newsletter_confirmed", "type": "person", "operator": "exact", "value": ["yes"]},

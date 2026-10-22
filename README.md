@@ -200,9 +200,9 @@ scraping history can make continuing films appear new, especially during the
 first week. The script does not claim source completeness.
 
 Every city/week becomes a separate PostHog workflow, named
-`allabiografer:<city>:<Friday date>`. Existing editions block automatic resends,
-including after an uncertain API response. Inspect that edition's batch jobs in
-PostHog before manually recovering a failed run. Do not delete its record to retry
-unless you have verified that no batch was accepted. GitHub serializes runs;
-do not run concurrent local senders. API writes are not automatically retried.
+`allabiografer:<city>:<Friday date>`. Sending frequency relies on the GitHub schedule,
+not an existing-edition check: repeated runs create another workflow and batch
+for the same edition. Inspect that edition's batch jobs in PostHog before manually
+recovering a failed run, especially after an uncertain API response. GitHub
+serializes runs; do not run concurrent local senders. API writes are not automatically retried.
 The job reports a queued batch, not confirmed delivery; inspect delivery in PostHog.

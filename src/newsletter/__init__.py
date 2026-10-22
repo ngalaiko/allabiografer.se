@@ -146,15 +146,6 @@ class PostHog:
 
     def send(self, template_id: str, data: dict) -> str:
         name = f"allabiografer:{data['city']}:{data['start']}"
-        page = self.request("GET", f"?search={quote(name)}")
-        while True:
-            if any(flow["name"] == name for flow in page["results"]):
-                raise ValueError(
-                    f"Edition already exists: {name}. Inspect its batch jobs in PostHog; refusing to resend."
-                )
-            if not page.get("next"):
-                break
-            page = self.request("GET", page["next"])
         source = self.request("GET", f"{quote(template_id, safe='')}/")
         actions = copy.deepcopy(source["actions"])
         triggers = [a for a in actions if a["type"] == "trigger"]
