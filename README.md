@@ -94,12 +94,22 @@ Run planner logic tests with `node --test tests/festival.test.cjs`.
 The `Newsletter` GitHub Actions job prepares city editions on Thursdays at
 09:00 Europe/Stockholm (GitHub may start scheduled jobs late). PostHog owns the
 audience, verified sender, marketing opt-outs, suppression, and delivery metrics.
-Python only compares screening weeks, supplies structured movie data, and starts a batch.
+Python only compares screening weeks, supplies structured movie data, and starts city batches.
 The PostHog library template owns the subject, HTML, plain text, and all wording.
 No subscriber addresses are downloaded to GitHub or committed to this repository.
 
-Python queries PostHog for distinct `newsletter_city` values among confirmed
-subscribers with a nonempty email. Addresses stay in PostHog. City values must
+The city-page form uses single opt-in: browser JavaScript sends `newsletter_signup`
+directly through the existing `/salong` PostHog proxy using the public project token.
+It uses a normalized email identity, sets `email` and `newsletter_confirmed = yes`,
+and adds `newsletter_subscribed_city_<city> = yes` without replacing other cities.
+It does not attach the email to the anonymous analytics identity or clear marketing opt-outs.
+No additional signup backend or private browser credential is needed. Build with the
+existing `POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST` arguments; without them signup stays disabled.
+The form links to `/nyhetsbrev/` for subscription and privacy information.
+
+Python discovers cities from these membership properties and the legacy
+`newsletter_city` property among opted-in subscribers with a nonempty email.
+Addresses stay in PostHog. City values must
 match scraped city names exactly; unknown cities fail before any batches start.
 New subscribed cities need no GitHub configuration or separate template workflow.
 
@@ -107,12 +117,15 @@ Use one **active**, unscheduled PostHog delivery workflow: event trigger → one
 email → exit. It listens for `newsletter_edition_ready` and its ID is
 `01a1408b-a71f-0000-c69b-722f68f522a8`.
 Its flat, AND-combined audience filters require `newsletter_confirmed` equal to
-the string `yes`, set only after explicit confirmed signup. Do not restrict the
-city in this shared workflow: Python creates a batch dispatcher with those filters
-plus `newsletter_city = edition city`. The batch captures one event per matching
+the string `yes`, set on explicit single-opt-in signup. Do not restrict the
+city in this shared workflow: Python creates two batch dispatchers with those filters,
+one for legacy `newsletter_city = edition city` and one for
+`newsletter_subscribed_city_<edition city> = yes`. Each captures one event per matching
 person with the edition in `event.properties.newsletter`. The delivery workflow
 renders that event and enforces marketing opt-outs. Recipient addresses stay in PostHog.
-The shared workflow deduplicates recipient/city/edition events for seven days.
+The shared workflow must deduplicate `{person.id}:{event.properties.newsletter.city}:{event.properties.newsletter.start}`
+for at least seven days, without a threshold. This prevents duplicate delivery when
+a person matches both audiences, while allowing one edition for each subscribed city.
 
 Select a verified sender and a **marketing** message category. Leave the recipient
 as `{{ person.properties.email }}`, without CC/BCC. Optional audience filters and
@@ -127,8 +140,8 @@ JSON data to PostHog's capture-event action, never generated HTML. Do not move t
 into workflow variables: they have a 5KB limit, and batch overrides did not propagate
 to invocations in production. A complete edition is substantially larger.
 The template loops over films with Liquid and uses `{{ unsubscribe_url }}`.
-Signup/confirmation UI is not included in this job; manage confirmed subscribers
-in PostHog until a signup flow is added.
+Unsubscribe applies to all city editions in the newsletter's marketing category.
+A signup does not override an existing unsubscribe or suppression.
 
 Set these GitHub repository settings:
 
@@ -199,10 +212,10 @@ the same path on any day and select the upcoming Thursday's edition. Incomplete
 scraping history can make continuing films appear new, especially during the
 first week. The script does not claim source completeness.
 
-Every city/week becomes a separate PostHog workflow, named
+Every city/week creates two PostHog batch workflows, named
 `allabiografer:<city>:<Friday date>`. Sending frequency relies on the GitHub schedule,
-not an existing-edition check: repeated runs create another workflow and batch
-for the same edition. Inspect that edition's batch jobs in PostHog before manually
+not an existing-edition check: repeated runs create more workflows and batches
+for the same edition, with delivery deduplicated for seven days. Inspect that edition's batch jobs in PostHog before manually
 recovering a failed run, especially after an uncertain API response. GitHub
 serializes runs; do not run concurrent local senders. API writes are not automatically retried.
 The job reports a queued batch, not confirmed delivery; inspect delivery in PostHog.

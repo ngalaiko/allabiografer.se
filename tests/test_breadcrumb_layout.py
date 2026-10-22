@@ -12,6 +12,114 @@ playwright = pytest.importorskip("playwright.sync_api")
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def test_newsletter_signup_adds_cities_without_replacing_previous_choices(browser):
+    env = _make_env()
+    env.globals.update(posthog_token="public-test-token", posthog_host="/salong")
+    people = {}
+    requests = []
+    reject = False
+
+    def serve(route):
+        path = urlsplit(route.request.url).path
+        if path == "/salong/i/v0/e/":
+            data = route.request.post_data_json
+            requests.append(data)
+            if not reject:
+                people.setdefault(data["distinct_id"], {}).update(data["properties"]["$set"])
+            route.fulfill(status=503 if reject else 200, json={"status": 1 if len(requests) == 1 else "Ok"})
+        elif path.startswith("/i/"):
+            route.fulfill(path=ROOT / "static" / path.lstrip("/"))
+        else:
+            route.fulfill(
+                body=env.get_template("program.html").render(
+                    city="Göteborg" if "gothenburg" in path else "Stockholm",
+                    num_days=10,
+                    days=[],
+                    blocks=[{"film_title": f"Film {i}", "cinemas": []} for i in range(5)],
+                ),
+                content_type="text/html",
+            )
+
+    # Independent browser contexts must still use the same normalized email identity.
+    for city_path, email in [("stockholm", "PERSON@Example.com"), ("gothenburg", "person@example.com")]:
+        page = browser.new_page(viewport={"width": 390, "height": 800})
+        page.route("https://allabiografer.test/**", serve)
+        page.goto(f"https://allabiografer.test/{city_path}/")
+        page.get_by_role("textbox", name="E-postadress").fill(email)
+        page.get_by_role("button", name="Prenumerera").click()
+        playwright.expect(page.get_by_role("status")).to_contain_text("Tack!")
+        page.close()
+    assert people == {
+        "newsletter:person@example.com": {
+            "email": "person@example.com",
+            "newsletter_confirmed": "yes",
+            "newsletter_subscribed_city_Stockholm": "yes",
+            "newsletter_subscribed_city_Göteborg": "yes",
+        }
+    }
+    assert requests[1]["properties"]["$set"] == {
+        "email": "person@example.com",
+        "newsletter_confirmed": "yes",
+        "newsletter_subscribed_city_Göteborg": "yes",
+    }
+    assert all(data["properties"]["$process_person_profile"] for data in requests)
+    assert all(data["properties"]["$geoip_disable"] for data in requests)
+
+    reject = True
+    page = browser.new_page()
+    page.route("https://allabiografer.test/**", serve)
+    page.goto("https://allabiografer.test/stockholm/")
+    page.get_by_role("textbox", name="E-postadress").fill("other@example.com")
+    page.get_by_role("button", name="Prenumerera").click()
+    playwright.expect(page.get_by_role("status")).to_contain_text("Försök igen")
+    playwright.expect(page.get_by_role("button", name="Prenumerera")).to_be_enabled()
+    assert len(people) == 1
+    page.close()
+
+
+@pytest.mark.parametrize("width", [375, 700, 1280])
+def test_newsletter_stays_in_view_when_dates_scroll(browser, width):
+    html = (
+        _make_env()
+        .get_template("program.html")
+        .render(
+            city="Göteborg",
+            num_days=10,
+            days=[],
+            blocks=[{"film_title": f"Film {i}", "cinemas": []} for i in range(6)],
+        )
+    )
+    page = browser.new_page(viewport={"width": width, "height": 800})
+    try:
+        page.set_content(html)
+        page.add_style_tag(content=(ROOT / "static/i/style.css").read_text())
+        row = page.get_by_role("region", name="Nytt på bio i Göteborg")
+        assert row.count() == 1
+        assert row.evaluate("el => el.previousElementSibling.querySelector('h2').textContent") == "Film 3"
+        assert row.evaluate("el => el.nextElementSibling.querySelector('h2').textContent") == "Film 4"
+        assert row.bounding_box()["width"] == page.locator(".schedule-header").bounding_box()["width"]
+        content = row.locator(".newsletter-content")
+        before = content.bounding_box()
+        scroll_left = page.evaluate("""() => {
+            if (matchMedia('(max-width: 700px)').matches) {
+                const scroller = document.querySelector('.schedule-scroll');
+                scroller.scrollLeft = 500;
+                return scroller.scrollLeft;
+            }
+            window.scrollTo(500, 0);
+            return window.scrollX;
+        }""")
+        assert scroll_left == 500
+        after = content.bounding_box()
+        assert abs(before["x"] - after["x"]) < 1
+        assert after["x"] >= 0
+        assert after["x"] + after["width"] <= width
+        controls = page.locator(".newsletter-controls").bounding_box()
+        assert controls["x"] + controls["width"] <= width
+    finally:
+        page.close()
+
+
 @pytest.fixture(scope="module")
 def browser():
     with playwright.sync_playwright() as runtime:

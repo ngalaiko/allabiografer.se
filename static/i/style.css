@@ -114,8 +114,35 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .schedule-cell .past { color: var(--past); }
 .no-screenings { padding: 16px 12px; }
 
+/** Newsletter — scroll with films vertically, not with dates horizontally. **/
+.newsletter-row { width: var(--sheet-width); background: color-mix(in srgb, var(--link) 8%, var(--background)); border: 1px solid var(--border-color); border-top: 0; }
+.newsletter-content { position: sticky; left: calc(var(--frame) + 1px); width: calc(100vw - 2 * var(--frame) - 2px); display: grid; grid-template-columns: 430px minmax(0, 1fr); align-items: center; gap: 6px 10px; padding: 8px 5px; }
+.newsletter-copy h2 { margin: 0; font: inherit; color: var(--link); }
+.newsletter-frequency { display: none; }
+.newsletter-copy p, .newsletter-form > p { color: var(--muted); font-size: var(--cap-height-9-5); }
+.newsletter-form { max-width: 430px; min-width: 0; }
+.newsletter-form label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.newsletter-controls { display: flex; gap: 5px; }
+.newsletter-controls input, .newsletter-controls button { min-height: 32px; border: 1px solid var(--border-color); border-radius: 0; padding: 4px 7px; font: inherit; }
+.newsletter-controls input { min-width: 0; width: 100%; background: var(--background); color: var(--text); }
+.newsletter-controls input::placeholder { color: var(--muted); opacity: 1; }
+.newsletter-controls button { background: var(--background); color: var(--link); cursor: pointer; }
+.newsletter-controls button:hover { color: var(--hover); background: var(--hover-background); }
+.newsletter-controls button:disabled { opacity: 0.6; cursor: default; }
+.newsletter-form > p { margin-top: 2px; }
+.newsletter-info { max-width: 620px; }
+.newsletter-info p { margin-block: 8px; }
+@media (max-width: 1000px) {
+  .newsletter-content { grid-template-columns: minmax(0, 1fr); }
+}
+
 @media (max-width: 700px) {
   .program { --schedule-inset: 12px; }
+  .newsletter-row { border-inline: 0; }
+  .newsletter-content { left: 0; width: 100vw; padding: 8px var(--schedule-inset); }
+  .newsletter-frequency { display: inline; }
+  .newsletter-copy p { display: none; }
+  .newsletter-controls input, .newsletter-controls button { min-height: 36px; }
   .schedule-breadcrumbs { height: var(--schedule-nav-height); padding-block: 0; }
   .breadcrumb-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .home { padding-block: 2px; text-align: center; }

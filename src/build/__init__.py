@@ -665,6 +665,7 @@ def _make_env() -> Environment:
     env.globals["synopsis_version"] = hashlib.sha256(Path("static/i/synopsis.js").read_bytes()).hexdigest()[:12]
     env.globals["links_version"] = hashlib.sha256(Path("static/i/links.js").read_bytes()).hexdigest()[:12]
     env.globals["showtimes_version"] = hashlib.sha256(Path("static/i/showtimes.js").read_bytes()).hexdigest()[:12]
+    env.globals["newsletter_version"] = hashlib.sha256(Path("static/i/newsletter.js").read_bytes()).hexdigest()[:12]
     env.globals["festival_banner_version"] = hashlib.sha256(
         Path("static/i/festival-banner.js").read_bytes()
     ).hexdigest()[:12]
@@ -1537,6 +1538,15 @@ def main() -> None:
     _build_premiarer(env, sd)
     _build_filmer(env, sd)
     _build_programme_pages(env, sd)
+
+    newsletter_info = out_dir / "nyhetsbrev/index.html"
+    newsletter_info.parent.mkdir(parents=True, exist_ok=True)
+    newsletter_info.write_text(
+        env.get_template("newsletter.html").render(
+            title="Om nyhetsbrevet – allabiografer.se", canonical=_register(sd, newsletter_info)
+        ),
+        encoding="utf-8",
+    )
 
     _write_robots(out_dir)
     _write_sitemap(sd)

@@ -45,10 +45,31 @@
 </section>
 {% endfor %}
 </article>
+{% if city and loop.index == 4 %}
+<section class="newsletter-row" aria-labelledby="newsletter-title">
+<div class="newsletter-content">
+<div class="newsletter-copy">
+<h2 id="newsletter-title">Nytt på bio i {{ city }}<span class="newsletter-frequency"> · varje torsdag</span></h2>
+<p>Ett mejl varje torsdag.</p>
+</div>
+<form class="newsletter-form ph-no-capture" aria-label="Prenumerera på nyhetsbrevet" aria-describedby="newsletter-note" data-posthog-token="{{ posthog_token }}" data-posthog-host="{{ posthog_host }}">
+<input type="hidden" name="city" value="{{ city }}">
+<label for="newsletter-email">E-postadress</label>
+<div class="newsletter-controls">
+<input id="newsletter-email" name="email" type="email" autocomplete="email" placeholder="du@exempel.se" required aria-describedby="newsletter-note">
+<button type="submit" disabled>Prenumerera</button>
+</div>
+<p id="newsletter-note" role="status">Avsluta när du vill. <a href="/nyhetsbrev/">Om nyhetsbrevet</a></p>
+<noscript><p>Aktivera JavaScript för att prenumerera.</p></noscript>
+</form>
+</div>
+</section>
+{% endif %}
 {% endfor %}
 {% if not blocks %}<p class="no-screenings">Inga visningar de närmaste två veckorna.</p>{% endif %}
 </main>
 <script src="/i/synopsis.js?v={{ synopsis_version }}" defer></script>
 <script src="/i/showtimes.js?v={{ showtimes_version }}" defer></script>
+{% if city %}<script src="/i/newsletter.js?v={{ newsletter_version }}" defer></script>{% endif %}
 {% if city == "Stockholm" %}<script src="/i/festival-banner.js?v={{ festival_banner_version }}" defer></script>{% endif %}
 {% endblock %}

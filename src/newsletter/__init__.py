@@ -18,6 +18,7 @@ from store import DB_FILE, title_key
 
 STOCKHOLM = ZoneInfo("Europe/Stockholm")
 NEWSLETTER_EVENT = "newsletter_edition_ready"
+CITY_PREFIX = "newsletter_subscribed_city_"
 
 
 def newsletter_url(url: str, start: date, content: str) -> str:
@@ -132,10 +133,15 @@ class PostHog:
                 "refresh": "force_blocking",
                 "query": {
                     "kind": "HogQLQuery",
-                    "query": "SELECT DISTINCT properties.newsletter_city AS city FROM persons "
-                    "WHERE properties.newsletter_confirmed = 'yes' "
-                    "AND properties.newsletter_city != '' AND properties.email != '' "
-                    "ORDER BY city LIMIT 10000",
+                    "query": "SELECT DISTINCT city FROM ("
+                    "SELECT properties.newsletter_city AS city FROM persons "
+                    "WHERE properties.newsletter_confirmed = 'yes' AND properties.email != '' "
+                    "UNION ALL SELECT arrayJoin(arrayMap(key -> "
+                    f"substring(key, {len(CITY_PREFIX) + 1}, length(key)), arrayFilter(key -> "
+                    f"startsWith(key, '{CITY_PREFIX}') AND JSONExtractString(properties, key) = 'yes', "
+                    "JSONExtractKeys(properties)))) AS city FROM persons "
+                    "WHERE properties.newsletter_confirmed = 'yes' AND properties.email != ''"
+                    ") WHERE city != '' ORDER BY city LIMIT 10000",
                 },
             },
         )
@@ -169,8 +175,15 @@ class PostHog:
             not any(all(p.get(k) == v for k, v in condition.items()) for p in properties) for condition in required
         ):
             raise ValueError("Audience requires newsletter_confirmed = yes")
-        if any(p.get("key") == "newsletter_city" for p in properties):
+        if any(p.get("key") == "newsletter_city" or p.get("key", "").startswith(CITY_PREFIX) for p in properties):
             raise ValueError("Shared workflow must not restrict newsletter_city; Python adds each city's filter")
+        masking = source.get("trigger_masking") or {}
+        if (
+            masking.get("hash") != "{person.id}:{event.properties.newsletter.city}:{event.properties.newsletter.start}"
+            or masking.get("ttl", 0) < 604800
+            or masking.get("threshold") is not None
+        ):
+            raise ValueError("Shared delivery must deduplicate person/city/edition for seven days")
         triggers[0]["config"] = {
             "type": "batch",
             "filters": {
@@ -213,9 +226,20 @@ class PostHog:
             "variables": [],
             "exit_condition": "exit_only_at_end",
         }
-        flow = self.request("POST", body=payload)
-        job = self.request("POST", f"{flow['id']}/batch_jobs/", {})
-        return str(job["id"])
+        jobs = []
+        # Native batch conditions are AND-only. Preserve legacy subscribers without
+        # migration; the shared workflow deduplicates overlap by person/city/edition.
+        for key, value in [("newsletter_city", data["city"]), (CITY_PREFIX + data["city"], "yes")]:
+            triggers[0]["config"]["filters"]["properties"][-1] = {
+                "key": key,
+                "type": "person",
+                "operator": "exact",
+                "value": [value],
+            }
+            flow = self.request("POST", body=payload)
+            job = self.request("POST", f"{flow['id']}/batch_jobs/", {})
+            jobs.append(str(job["id"]))
+        return ",".join(jobs)
 
     def send_test(self, workflow_id: str, email: str, data: dict) -> str:
         """Run exactly one email step, without enabling a workflow or expanding an audience."""

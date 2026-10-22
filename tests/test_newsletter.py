@@ -100,7 +100,8 @@ def test_registered_cities_query(monkeypatch, truncated):
         assert request.full_url == "https://eu.posthog.com/api/projects/123/query/"
         query = json.loads(request.data)
         assert query["refresh"] == "force_blocking"
-        assert "SELECT DISTINCT properties.newsletter_city AS city FROM persons" in query["query"]["query"]
+        assert "properties.newsletter_city AS city FROM persons" in query["query"]["query"]
+        assert "newsletter_subscribed_city_" in query["query"]["query"]
         assert "properties.newsletter_confirmed = 'yes'" in query["query"]["query"]
         return BytesIO(json.dumps({"results": [["Göteborg"], ["Malmö"]], "hasMore": truncated}).encode())
 
@@ -123,6 +124,10 @@ class FakePostHog(PostHog):
         self.fail_send = False
         self.template = {
             "status": "active",
+            "trigger_masking": {
+                "hash": "{person.id}:{event.properties.newsletter.city}:{event.properties.newsletter.start}",
+                "ttl": 604800,
+            },
             "actions": [
                 {
                     "id": "trigger",
@@ -201,12 +206,13 @@ def test_posthog_preserves_audience_and_allows_repeating_an_edition(ambiguous):
         with pytest.raises(TimeoutError):
             api.send("template", data)
     else:
-        assert api.send("template", data) == "batch"
-    assert len(api.jobs) == 1
+        assert api.send("template", data) == "batch,batch"
+    initial_jobs = 1 if ambiguous else 2
+    assert len(api.jobs) == initial_jobs
     api.fail_send = False
-    assert api.send("template", data) == "batch"
-    assert len(api.jobs) == 2
-    assert [flow["name"] for flow in api.flows] == ["allabiografer:Stockholm:2026-10-16"] * 2
+    assert api.send("template", data) == "batch,batch"
+    assert len(api.jobs) == initial_jobs + 2
+    assert [flow["name"] for flow in api.flows] == ["allabiografer:Stockholm:2026-10-16"] * (initial_jobs + 2)
     sent = api.jobs[0]["workflow"]["actions"]
     assert sent[0]["config"]["filters"]["properties"] == [
         {"key": "newsletter_confirmed", "type": "person", "operator": "exact", "value": ["yes"]},
@@ -233,9 +239,56 @@ def test_shared_workflow_keeps_city_audiences_separate():
         api.send("template", {"city": city, "start": "2026-10-16", "end": "2026-10-22", "films": []})
     assert [job["workflow"]["actions"][0]["config"]["filters"]["properties"][-1]["value"] for job in api.jobs] == [
         ["Göteborg"],
+        ["yes"],
         ["Malmö"],
+        ["yes"],
+    ]
+    assert [job["workflow"]["actions"][0]["config"]["filters"]["properties"][-1]["key"] for job in api.jobs] == [
+        "newsletter_city",
+        "newsletter_subscribed_city_Göteborg",
+        "newsletter_city",
+        "newsletter_subscribed_city_Malmö",
     ]
     assert len(api.template["actions"][0]["config"]["filters"]["properties"]) == 1
+
+
+def test_multiple_city_audiences_preserve_legacy_and_exclude_non_subscribers():
+    api = FakePostHog()
+    people = [
+        {
+            "id": "both",
+            "newsletter_confirmed": "yes",
+            "newsletter_city": "Stockholm",
+            "newsletter_subscribed_city_Stockholm": "yes",
+            "newsletter_subscribed_city_Göteborg": "yes",
+        },
+        {"id": "gothenburg", "newsletter_confirmed": "yes", "newsletter_subscribed_city_Göteborg": "yes"},
+        {"id": "legacy", "newsletter_confirmed": "yes", "newsletter_city": "Stockholm"},
+        {"id": "not-consenting", "newsletter_subscribed_city_Stockholm": "yes"},
+        {"id": "other-city", "newsletter_confirmed": "yes", "newsletter_city": "Malmö"},
+    ]
+    recipients = set()
+    for city in ["Stockholm", "Göteborg"]:
+        api.send("template", {"city": city, "start": "2026-10-16", "end": "2026-10-22", "films": []})
+        for job in api.jobs[-2:]:
+            filters = job["workflow"]["actions"][0]["config"]["filters"]["properties"]
+            recipients.update(
+                (person["id"], city) for person in people if all(person.get(f["key"]) in f["value"] for f in filters)
+            )
+    assert recipients == {
+        ("both", "Stockholm"),
+        ("both", "Göteborg"),
+        ("gothenburg", "Göteborg"),
+        ("legacy", "Stockholm"),
+    }
+
+
+def test_overlapping_audiences_require_delivery_deduplication():
+    api = FakePostHog()
+    api.template["trigger_masking"] = None
+    with pytest.raises(ValueError, match="deduplicate"):
+        api.send("template", {"city": "Stockholm", "start": "2026-10-16", "end": "2026-10-22", "films": []})
+    assert api.jobs == []
 
 
 def test_posthog_requires_confirmed_audience():
