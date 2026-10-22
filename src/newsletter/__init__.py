@@ -36,12 +36,12 @@ def newsletter_url(url: str, start: date, content: str) -> str:
 
 
 def edition(db: Path, city: str, today: date) -> dict:
-    """Compare Friday–Thursday windows using scraped titles, not release metadata."""
+    """Exclude titles screened locally in the 30 days before the Friday–Thursday edition."""
     if not city.strip():
         raise ValueError("A city is required")
     city_url = quote(city_programme_url(city), safe=":/")
     start = today + timedelta(days=(3 - today.weekday()) % 7 + 1)
-    previous = start - timedelta(days=7)
+    previous = start - timedelta(days=30)
     end = start + timedelta(days=7)
     with sqlite3.connect(f"{db.resolve().as_uri()}?mode=ro", uri=True) as conn:
         rows = conn.execute(

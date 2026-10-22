@@ -94,7 +94,7 @@ Run planner logic tests with `node --test tests/festival.test.cjs`.
 The `Newsletter` GitHub Actions job prepares city editions on Thursdays at
 09:00 Europe/Stockholm (GitHub may start scheduled jobs late). PostHog owns the
 audience, verified sender, marketing opt-outs, suppression, and delivery metrics.
-Python only compares screening weeks, supplies structured movie data, and starts city batches.
+Python compares upcoming screenings against 30 days of history, supplies structured movie data, and starts city batches.
 The PostHog library template owns the subject, HTML, plain text, and all wording.
 No subscriber addresses are downloaded to GitHub or committed to this repository.
 
@@ -185,8 +185,9 @@ Failures and skipped sends fail the job; an uncertain response is not retried. I
 PostHog before rerunning, since a manual rerun sends another email.
 
 An edition includes films screening next Friday through Thursday, excluding any
-with a screening in that city the preceding Friday through Thursday (including
-send day). Identity uses normalized scraped titles across cinemas; differently
+with a screening in that city during the 30 days before the edition's Friday
+(including send day). The 30-day boundary is inclusive; older screenings do not
+exclude a film. Identity uses normalized scraped titles across cinemas; differently
 named editions/translations may still appear separately. Emails show posters,
 titles, descriptions, directors, genres, runtime, age ratings and release years
 when available, newest year first then Swedish alphabetical order;

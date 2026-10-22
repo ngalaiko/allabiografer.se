@@ -12,7 +12,7 @@ from newsletter import PostHog, edition
 
 
 @pytest.mark.parametrize("edition_day", [14, 15])
-def test_city_edition_compares_screening_weeks(tmp_path, edition_day):
+def test_city_edition_excludes_films_screened_in_previous_month(tmp_path, edition_day):
     db = tmp_path / "screenings.db"
     with sqlite3.connect(db) as conn:
         conn.execute("CREATE TABLE screenings (title, date, time, cinema, ticket_url, city, film_key, tmdb_id)")
@@ -26,7 +26,11 @@ def test_city_edition_compares_screening_weeks(tmp_path, edition_day):
             ("ONGOING!", "2026-10-16", "Stockholm"),
             ("Thursday", "2026-10-15", "Stockholm"),
             ("Thursday", "2026-10-22", "Stockholm"),
-            ("Returning", "2026-10-08", "Stockholm"),
+            ("Recent return", "2026-10-08", "Stockholm"),
+            ("Recent return", "2026-10-16", "Stockholm"),
+            ("History boundary", "2026-09-16", "Stockholm"),
+            ("History boundary", "2026-10-16", "Stockholm"),
+            ("Returning", "2026-09-15", "Stockholm"),
             ("Returning", "2026-10-16", "Stockholm"),
             ("Local debut", "2026-10-10", "Malmö"),
             ("Local debut", "2026-10-22", "Stockholm"),
