@@ -130,8 +130,6 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .newsletter-controls button:hover { color: var(--hover); background: var(--hover-background); }
 .newsletter-controls button:disabled { opacity: 0.6; cursor: default; }
 .newsletter-form > p { margin-top: 2px; }
-.newsletter-info { max-width: 620px; }
-.newsletter-info p { margin-block: 8px; }
 @media (max-width: 1000px) {
   .newsletter-content { grid-template-columns: minmax(0, 1fr); }
 }

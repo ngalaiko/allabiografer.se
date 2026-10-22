@@ -1539,15 +1539,6 @@ def main() -> None:
     _build_filmer(env, sd)
     _build_programme_pages(env, sd)
 
-    newsletter_info = out_dir / "nyhetsbrev/index.html"
-    newsletter_info.parent.mkdir(parents=True, exist_ok=True)
-    newsletter_info.write_text(
-        env.get_template("newsletter.html").render(
-            title="Om nyhetsbrevet – allabiografer.se", canonical=_register(sd, newsletter_info)
-        ),
-        encoding="utf-8",
-    )
-
     _write_robots(out_dir)
     _write_sitemap(sd)
 
