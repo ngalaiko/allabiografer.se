@@ -102,7 +102,8 @@ def test_cinema_address_layout(browser, width, city):
 
 
 @pytest.mark.parametrize("toolbar_height", [0, 180])
-def test_movie_link_keeps_dates_visible_with_mobile_browser_toolbar(browser, toolbar_height):
+@pytest.mark.parametrize("outer_scroll", [0, 32])
+def test_movie_link_keeps_header_visible_with_mobile_browser_toolbar(browser, toolbar_height, outer_scroll):
     html = (
         _make_env()
         .get_template("program.html")
@@ -132,6 +133,9 @@ def test_movie_link_keeps_dates_visible_with_mobile_browser_toolbar(browser, too
             # its dynamic viewport is only the visible page. Chromium equates
             # the units, so emulate that difference without changing 100dvh.
             css = (ROOT / "static/i/style.css").read_text().replace("100vh", f"{740 + toolbar_height}px")
+            # Allow outer-document scrolling independently of the schedule,
+            # reproducing the navigation row being clipped above the dates.
+            css += f"\nhtml {{ padding-bottom: {outer_scroll}px; }}"
             route.fulfill(body=css, content_type="text/css")
         elif path.startswith("/i/"):
             route.fulfill(path=ROOT / "static" / path.lstrip("/"))
@@ -141,10 +145,11 @@ def test_movie_link_keeps_dates_visible_with_mobile_browser_toolbar(browser, too
     page.route("https://allabiografer.test/**", serve)
     try:
         page.goto("https://allabiografer.test/stad/goteborg/?utm_medium=email#film-the-thing")
+        page.evaluate("y => window.scrollTo(0, y)", outer_scroll)
+        playwright.expect(page.get_by_role("navigation", name="Brödsmulor")).to_be_in_viewport(ratio=1)
         dates = page.locator(".schedule-dates")
         playwright.expect(dates).to_be_in_viewport(ratio=1)
         playwright.expect(page.locator(":target")).to_be_in_viewport()
-        assert page.evaluate("scrollY") == 0
     finally:
         page.close()
 
