@@ -4,7 +4,7 @@
 :target { scroll-margin-block: 5ex; }
 img, picture, video, canvas, svg { display: block; max-width: 100%; height: auto; }
 p, h1, h2, h3 { overflow-wrap: break-word; }
-body { min-height: 100vh; display: flex; flex-direction: column; }
+body { min-height: 100dvh; display: flex; flex-direction: column; }
 
 /** Shared **/
 :root {

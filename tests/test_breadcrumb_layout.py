@@ -101,6 +101,54 @@ def test_cinema_address_layout(browser, width, city):
         page.close()
 
 
+@pytest.mark.parametrize("toolbar_height", [0, 180])
+def test_movie_link_keeps_dates_visible_with_mobile_browser_toolbar(browser, toolbar_height):
+    html = (
+        _make_env()
+        .get_template("program.html")
+        .render(
+            num_days=2,
+            days=[{"date": "2026-10-23", "label": "Fre. 23 okt."}, {"date": "2026-10-24", "label": "Lör. 24 okt."}],
+            breadcrumbs=" / Göteborg",
+            blocks=[
+                {
+                    "film_title": title,
+                    "film_id": anchor,
+                    "film_url": "/film/",
+                    "anchors": [anchor],
+                    "full_desc": "Film description",
+                    "cinemas": [{"name": "Bio Roy", "min_height": 600, "cells": []}],
+                }
+                for title, anchor in [("Rosetta", "film-rosetta"), ("The Thing", "film-the-thing")]
+            ],
+        )
+    )
+    page = browser.new_page(viewport={"width": 402, "height": 740}, is_mobile=True)
+
+    def serve(route):
+        path = urlsplit(route.request.url).path
+        if path == "/i/style.css":
+            # Mobile Safari's large viewport includes the open browser toolbar;
+            # its dynamic viewport is only the visible page. Chromium equates
+            # the units, so emulate that difference without changing 100dvh.
+            css = (ROOT / "static/i/style.css").read_text().replace("100vh", f"{740 + toolbar_height}px")
+            route.fulfill(body=css, content_type="text/css")
+        elif path.startswith("/i/"):
+            route.fulfill(path=ROOT / "static" / path.lstrip("/"))
+        else:
+            route.fulfill(body=html, content_type="text/html")
+
+    page.route("https://allabiografer.test/**", serve)
+    try:
+        page.goto("https://allabiografer.test/stad/goteborg/?utm_medium=email#film-the-thing")
+        dates = page.locator(".schedule-dates")
+        playwright.expect(dates).to_be_in_viewport(ratio=1)
+        playwright.expect(page.locator(":target")).to_be_in_viewport()
+        assert page.evaluate("scrollY") == 0
+    finally:
+        page.close()
+
+
 @pytest.mark.parametrize("width", [375, 1280])
 @pytest.mark.parametrize("blocked_storage", [False, True])
 def test_festival_banner_stays_visible_and_remembers_dismissal(browser, width, blocked_storage):
