@@ -94,6 +94,20 @@ def test_city_edition_excludes_films_screened_in_previous_month(tmp_path, editio
     with pytest.raises(ValueError, match="city"):
         edition(db, "", date(2026, 10, 15))
 
+    with sqlite3.connect(db) as conn:
+        # Same-day shows count separately, including normalized title variants.
+        conn.executemany(
+            "INSERT INTO screenings VALUES (?, '2026-10-16', ?, 'Bio', "
+            "'https://example.com/ticket', 'Stockholm', 'Returning', 1)",
+            [("Returning", "20:00"), ("RETURNING!", "21:00")],
+        )
+        conn.execute(
+            "INSERT INTO screenings VALUES ('Zebra', '2026-10-17', '20:00', 'Bio', "
+            "'https://example.com/ticket', 'Stockholm', 'Zebra', NULL)"
+        )
+    ranked = edition(db, "Stockholm", date(2026, 10, edition_day))
+    assert [f["title"] for f in ranked["films"]] == ["RETURNING!", "Zebra", "Local debut", "Åter", "Unknown"]
+
 
 @pytest.mark.parametrize("truncated", [False, True])
 def test_registered_cities_query(monkeypatch, truncated):

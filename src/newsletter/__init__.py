@@ -6,6 +6,7 @@ import json
 import os
 import re
 import sqlite3
+from collections import Counter
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from urllib.parse import quote, urlencode, urlparse, urlsplit, urlunsplit
@@ -45,7 +46,7 @@ def edition(db: Path, city: str, today: date) -> dict:
     end = start + timedelta(days=7)
     with sqlite3.connect(f"{db.resolve().as_uri()}?mode=ro", uri=True) as conn:
         rows = conn.execute(
-            "SELECT DISTINCT s.title, s.date, coalesce(nullif(m.release_date, ''), f.release_date, ''), "
+            "SELECT s.title, s.date, coalesce(nullif(m.release_date, ''), f.release_date, ''), "
             "coalesce(nullif(f.poster_url, ''), CASE WHEN m.poster_path != '' "
             "THEN 'https://image.tmdb.org/t/p/w342' || m.poster_path ELSE '' END, ''), "
             "coalesce(nullif(m.overview_sv, ''), f.overview, ''), "
@@ -58,10 +59,12 @@ def edition(db: Path, city: str, today: date) -> dict:
         ).fetchall()
     old = {title_key(row[0]) for row in rows if row[1] < start.isoformat()}
     films = {}
+    screening_counts = Counter()
     for title, day, release, poster, overview, genres, directors, runtime, age_rating in rows:
         key = title_key(title)
         if day < start.isoformat() or not key or key in old:
             continue
+        screening_counts[key] += 1
         film = films.setdefault(key, {"title": title, "year": None, "poster": ""})
         if not film["year"] and release[:4].isdigit() and 1000 <= int(release[:4]) <= 9999:
             film["year"] = int(release[:4])
@@ -94,6 +97,7 @@ def edition(db: Path, city: str, today: date) -> dict:
         "films": sorted(
             films.values(),
             key=lambda f: (
+                -screening_counts[title_key(f["title"])],
                 -(f["year"] or 0),
                 title_key(f["title"]).translate(str.maketrans({"å": "{", "ä": "|", "ö": "}"})),
             ),
