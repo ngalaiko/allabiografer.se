@@ -1304,7 +1304,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
         out_path = sd.out_dir / "stad" / slug / "index.html"
         canonical = _register(sd, out_path)
         n_films = len({s.tmdb_id for s in _schedule_screenings(sd, city_screenings)})
-        title = f"På bio i {city_name} – speltider och biografer"
+        title = f"Bio i {city_name} – program och speltider"
         _write_programme(
             env,
             sd,
@@ -1331,11 +1331,12 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
         cinema_slug = sd.cinema_slugs[(city_name, cinema_name)]
         out_path = sd.out_dir / "stad" / city_slug / cinema_slug / "index.html"
         canonical = _register(sd, out_path)
+        location = "" if re.search(rf"\b{re.escape(city_name)}\b", cinema_name, re.IGNORECASE) else f" i {city_name}"
         _write_programme(
             env,
             sd,
             cinema_screenings,
-            title=f"{cinema_name} i {city_name} – program och speltider",
+            title=f"{cinema_name}{location} – program och speltider",
             description=(
                 f"Program och speltider för {cinema_name} i {city_name}. Se vilka filmer som visas och köp biljetter."
             ),

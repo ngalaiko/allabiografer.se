@@ -321,6 +321,34 @@ def test_programme_synopsis_has_expand_toggle(db, tmp_path):
         assert matches[0].find_parent("article").select_one("h2").get_text() == "Filmen"
 
 
+@pytest.mark.parametrize(
+    ("city", "cinema", "expected_cinema_title"),
+    [
+        ("Örebro", "Filmstaden Örebro", "Filmstaden Örebro – program och speltider"),
+        ("Stockholm", "Grand", "Grand i Stockholm – program och speltider"),
+        ("Göteborg", "Göteborg Bio", "Göteborg Bio – program och speltider"),
+        ("Örebro", "BIO ÖREBRO", "BIO ÖREBRO – program och speltider"),
+        ("Lund", "Lundsbrunn Bio", "Lundsbrunn Bio i Lund – program och speltider"),
+    ],
+)
+def test_city_and_cinema_page_titles(db, tmp_path, city, cinema, expected_cinema_title):
+    write_movie(movie(42), path=db)
+    write_screenings([screening(tmdb_id=42, city=city, cinema_name=cinema)], path=db)
+    out = tmp_path / "out"
+    sd = build._load_data(out)
+    build._build_programme_pages(build._make_env(), sd)
+
+    city_dir = out / "stad" / sd.city_slugs[city]
+    cinema_dir = city_dir / sd.cinema_slugs[(city, cinema)]
+    for directory, expected in [
+        (city_dir, f"Bio i {city} – program och speltider"),
+        (cinema_dir, expected_cinema_title),
+    ]:
+        page = BeautifulSoup((directory / "index.html").read_text(), "html.parser")
+        assert page.title.string == expected
+        assert page.find("meta", property="og:title")["content"] == expected
+
+
 @pytest.mark.parametrize("cinema_count", [0, 1, 2])
 def test_city_film_description_uses_local_schedule(db, tmp_path, cinema_count):
     synopsis = "En berättelse om en familj."
