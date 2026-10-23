@@ -1,6 +1,26 @@
 {% extends "base.html" %}
 {% block page %}<div class="schedule-scroll" role="region" tabindex="0" aria-label="Bioprogram">{{ super() }}</div>{% endblock %}
 {% block body %}
+{% macro newsletter() %}
+<section class="newsletter-row" aria-labelledby="newsletter-title">
+<div class="newsletter-content">
+<div class="newsletter-copy">
+<h2 id="newsletter-title">Nytt på bio i {{ city }}<span class="newsletter-frequency"> · varje torsdag</span></h2>
+<p>Ett mejl varje torsdag.</p>
+</div>
+<form class="newsletter-form ph-no-capture" aria-label="Prenumerera på nyhetsbrevet" aria-describedby="newsletter-note" data-posthog-token="{{ posthog_token }}" data-posthog-host="{{ posthog_host }}">
+<input type="hidden" name="city" value="{{ city }}">
+<label for="newsletter-email">E-postadress</label>
+<div class="newsletter-controls">
+<input id="newsletter-email" name="email" type="email" autocomplete="email" placeholder="du@exempel.se" required aria-describedby="newsletter-note">
+<button type="submit" disabled>Prenumerera</button>
+</div>
+<p id="newsletter-note" role="status">Avsluta när du vill.</p>
+<noscript><p>Aktivera JavaScript för att prenumerera.</p></noscript>
+</form>
+</div>
+</section>
+{% endmacro %}
 <main class="program" aria-label="Bioprogram, rulla i sidled för fler datum" tabindex="0" style="--day-count: {{ num_days }};">
 {% if city == "Stockholm" %}
 <aside class="festival-banner" data-festival="stockholms-filmfestival-2026" aria-label="Filmfestival"><a href="/festival/stockholms-filmfestival/2026/"><strong>Stockholm Film Festival 2026</strong> <span>· Se programmet</span></a><button type="button" aria-label="Stäng festivalbanner" hidden><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.5 4.5L11.5 11.5M11.5 4.5L4.5 11.5" stroke="currentColor" stroke-width="1.5"/></svg></button></aside>
@@ -45,28 +65,10 @@
 </section>
 {% endfor %}
 </article>
-{% if city and loop.index == 4 %}
-<section class="newsletter-row" aria-labelledby="newsletter-title">
-<div class="newsletter-content">
-<div class="newsletter-copy">
-<h2 id="newsletter-title">Nytt på bio i {{ city }}<span class="newsletter-frequency"> · varje torsdag</span></h2>
-<p>Ett mejl varje torsdag.</p>
-</div>
-<form class="newsletter-form ph-no-capture" aria-label="Prenumerera på nyhetsbrevet" aria-describedby="newsletter-note" data-posthog-token="{{ posthog_token }}" data-posthog-host="{{ posthog_host }}">
-<input type="hidden" name="city" value="{{ city }}">
-<label for="newsletter-email">E-postadress</label>
-<div class="newsletter-controls">
-<input id="newsletter-email" name="email" type="email" autocomplete="email" placeholder="du@exempel.se" required aria-describedby="newsletter-note">
-<button type="submit" disabled>Prenumerera</button>
-</div>
-<p id="newsletter-note" role="status">Avsluta när du vill.</p>
-<noscript><p>Aktivera JavaScript för att prenumerera.</p></noscript>
-</form>
-</div>
-</section>
-{% endif %}
+{% if city and (loop.index == 4 or (loop.last and loop.index < 4)) %}{{ newsletter() }}{% endif %}
 {% endfor %}
 {% if not blocks %}<p class="no-screenings">Inga visningar de närmaste två veckorna.</p>{% endif %}
+{% if city and not blocks %}{{ newsletter() }}{% endif %}
 </main>
 <script src="/i/synopsis.js?v={{ synopsis_version }}" defer></script>
 <script src="/i/showtimes.js?v={{ showtimes_version }}" defer></script>

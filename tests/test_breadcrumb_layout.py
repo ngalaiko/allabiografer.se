@@ -78,7 +78,8 @@ def test_newsletter_signup_adds_cities_without_replacing_previous_choices(browse
 
 
 @pytest.mark.parametrize("width", [375, 700, 1280])
-def test_newsletter_stays_in_view_when_dates_scroll(browser, width):
+@pytest.mark.parametrize("film_count", [0, 1, 3, 4, 5, 6])
+def test_newsletter_stays_in_view_when_dates_scroll(browser, width, film_count):
     html = (
         _make_env()
         .get_template("program.html")
@@ -86,7 +87,7 @@ def test_newsletter_stays_in_view_when_dates_scroll(browser, width):
             city="Göteborg",
             num_days=10,
             days=[],
-            blocks=[{"film_title": f"Film {i}", "cinemas": []} for i in range(6)],
+            blocks=[{"film_title": f"Film {i}", "cinemas": []} for i in range(film_count)],
         )
     )
     page = browser.new_page(viewport={"width": width, "height": 800})
@@ -95,8 +96,15 @@ def test_newsletter_stays_in_view_when_dates_scroll(browser, width):
         page.add_style_tag(content=(ROOT / "static/i/style.css").read_text())
         row = page.get_by_role("region", name="Nytt på bio i Göteborg")
         assert row.count() == 1
-        assert row.evaluate("el => el.previousElementSibling.querySelector('h2').textContent") == "Film 3"
-        assert row.evaluate("el => el.nextElementSibling.querySelector('h2').textContent") == "Film 4"
+        if film_count:
+            previous_title = row.evaluate("el => el.previousElementSibling.querySelector('h2').textContent")
+            assert previous_title == f"Film {min(film_count, 4) - 1}"
+        else:
+            assert row.evaluate("el => el.previousElementSibling.className") == "no-screenings"
+        if film_count > 4:
+            assert row.evaluate("el => el.nextElementSibling.querySelector('h2').textContent") == "Film 4"
+        else:
+            assert row.evaluate("el => el.nextElementSibling") is None
         assert row.bounding_box()["width"] == page.locator(".schedule-header").bounding_box()["width"]
         content = row.locator(".newsletter-content")
         before = content.bounding_box()
