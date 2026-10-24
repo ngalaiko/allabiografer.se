@@ -1,5 +1,6 @@
 """Festival imports and static pages."""
 
+import os
 from datetime import date
 from pathlib import Path
 from urllib.parse import urlparse
@@ -261,9 +262,10 @@ def test_festival_selection_restores_locally_but_shared_links_take_priority(fest
             route.fulfill(path=Path("static") / urlparse(route.request.url).path.lstrip("/"))
 
     with playwright.sync_playwright() as runtime:
-        if not Path(runtime.chromium.executable_path).exists():
+        executable = os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH")
+        if not executable and not Path(runtime.chromium.executable_path).exists():
             pytest.skip("Install Chromium with playwright install chromium")
-        browser = runtime.chromium.launch()
+        browser = runtime.chromium.launch(executable_path=executable)
         context = browser.new_context()
         context.route("https://festival.test/**", serve)
         context.add_init_script("""window.captured = [];

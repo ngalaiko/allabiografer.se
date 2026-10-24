@@ -1,5 +1,6 @@
 """Synopsis expansion at desktop and mobile widths."""
 
+import os
 from pathlib import Path
 
 import pytest
@@ -13,9 +14,10 @@ ROOT = Path(__file__).resolve().parents[1]
 @pytest.fixture(scope="module")
 def browser():
     with playwright.sync_playwright() as runtime:
-        if not Path(runtime.chromium.executable_path).exists():
+        executable = os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH")
+        if not executable and not Path(runtime.chromium.executable_path).exists():
             pytest.skip("Install Chromium with playwright install chromium")
-        instance = runtime.chromium.launch()
+        instance = runtime.chromium.launch(executable_path=executable)
         yield instance
         instance.close()
 

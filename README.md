@@ -2,6 +2,40 @@
 
 A static site aggregating cinema screenings across Sweden. Reimplementation of [allekinos.de](https://allekinos.de/) by [Nikita Tonsky](https://tonsky.me/) for the Sweden.
 
+## Development (Nix on Linux)
+
+Enter the pinned development shell (Nix with flakes enabled):
+
+```sh
+nix develop
+git lfs install --local
+git lfs pull origin
+uv sync --locked --group dev --group parse --group build
+```
+
+The shell supplies uv, Git LFS, mise, Node, Chromium, fallback fonts, and the
+C++ runtime needed by Python wheels such as greenlet and curl_cffi. Python
+dependencies and tasks remain managed by `pyproject.toml`, `uv.lock`, and
+`mise.toml`; Nix does not install Python packages. The database, posters, and
+web fonts use Git LFS: hydrate them before building or testing, rather than
+using the small pointer files from an unhydrated checkout.
+
+Before using `mise run` in a new checkout, review `mise.toml` and run
+`mise trust` if mise reports that the configuration is not trusted.
+
+Run tests inside the shell:
+
+```sh
+uv run --locked --group dev --group parse --group build pytest
+node --test tests/*.test.cjs
+```
+
+Browser tests use the shell's `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` and font
+configuration; no `playwright install` or browser download is needed. Outside
+Nix, tests retain Playwright's default browser lookup (or accept the same
+environment variable for an existing Chromium). The Nix shell currently
+supports x86_64 and aarch64 Linux.
+
 ## Usage
 
 Screenings, movies, films and venues live in `data/allabiografer.db`; posters in `data/posters/` — `{tmdb_id}.jpg` for TMDB, `{source}/{title}.jpg` for posters taken from a cinema's own site.

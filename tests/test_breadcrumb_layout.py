@@ -1,5 +1,6 @@
 """Browser geometry checks for breadcrumbs and cinema locations."""
 
+import os
 from base64 import b64encode
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -131,9 +132,10 @@ def test_newsletter_stays_in_view_when_dates_scroll(browser, width, film_count):
 @pytest.fixture(scope="module")
 def browser():
     with playwright.sync_playwright() as runtime:
-        if not Path(runtime.chromium.executable_path).exists():
+        executable = os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH")
+        if not executable and not Path(runtime.chromium.executable_path).exists():
             pytest.skip("Install Chromium with playwright install chromium")
-        instance = runtime.chromium.launch()
+        instance = runtime.chromium.launch(executable_path=executable)
         yield instance
         instance.close()
 

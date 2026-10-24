@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 .venv/
 *.lock
+!flake.lock
 build/
 !src/build
 www/
