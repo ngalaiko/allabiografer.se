@@ -2,6 +2,18 @@
 (() => {
   const form = document.querySelector(".newsletter-form");
   if (!form) return;
+  const row = form.closest(".newsletter-row");
+  const city = form.elements.city.value;
+  const storageKey = `newsletter-hidden:${city}`;
+  try {
+    if (localStorage.getItem(storageKey)) row.hidden = true;
+  } catch { /* Signup still works when storage is unavailable. */ }
+  const dismiss = row.querySelector(".newsletter-dismiss");
+  dismiss.hidden = false;
+  dismiss.addEventListener("click", () => {
+    row.hidden = true;
+    try { localStorage.setItem(storageKey, "dismissed"); } catch { /* Optional persistence. */ }
+  });
   const button = form.querySelector("button");
   const note = document.getElementById("newsletter-note");
   const token = form.dataset.posthogToken;
@@ -19,7 +31,6 @@
     note.textContent = "Skickar…";
     try {
       const email = form.elements.email.value.trim().toLowerCase();
-      const city = form.elements.city.value;
       // Keep the existing newsletter identity convention. Hash long addresses
       // to stay within PostHog's 200-character distinct_id limit without collisions.
       let identity = email;
@@ -45,6 +56,8 @@
       const result = await response.json();
       if (!response.ok || ![1, "Ok"].includes(result.status)) throw new Error("Signup rejected");
       note.textContent = `Tack! Du prenumererar nu på nyhetsbrevet för ${city}.`;
+      form.querySelector(".newsletter-controls").hidden = true;
+      try { localStorage.setItem(storageKey, "subscribed"); } catch { /* Optional persistence. */ }
     } catch {
       note.textContent = "Kunde inte nå servern. Försök igen om en stund.";
     } finally {

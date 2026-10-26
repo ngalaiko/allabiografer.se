@@ -49,6 +49,16 @@ def test_newsletter_signup_adds_cities_without_replacing_previous_choices(browse
         page.get_by_role("textbox", name="E-postadress").fill(email)
         page.get_by_role("button", name="Prenumerera").click()
         playwright.expect(page.get_by_role("status")).to_contain_text("Tack!")
+        playwright.expect(page.get_by_role("textbox", name="E-postadress")).to_be_hidden()
+        page.reload()
+        playwright.expect(page.locator(".newsletter-row")).to_be_hidden()
+        other_city = "gothenburg" if city_path == "stockholm" else "stockholm"
+        page.goto(f"https://allabiografer.test/{other_city}/")
+        playwright.expect(page.locator(".newsletter-row")).to_be_visible()
+        page.locator(".newsletter-dismiss").click()
+        playwright.expect(page.locator(".newsletter-row")).to_be_hidden()
+        page.reload()
+        playwright.expect(page.locator(".newsletter-row")).to_be_hidden()
         page.close()
     assert people == {
         "newsletter:person@example.com": {
@@ -74,6 +84,8 @@ def test_newsletter_signup_adds_cities_without_replacing_previous_choices(browse
     page.get_by_role("button", name="Prenumerera").click()
     playwright.expect(page.get_by_role("status")).to_contain_text("Försök igen")
     playwright.expect(page.get_by_role("button", name="Prenumerera")).to_be_enabled()
+    page.reload()
+    playwright.expect(page.locator(".newsletter-row")).to_be_visible()
     assert len(people) == 1
     page.close()
 

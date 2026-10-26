@@ -115,9 +115,12 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .no-screenings { padding: 16px 12px; }
 
 /** Newsletter — scroll with films vertically, not with dates horizontally. **/
-.newsletter-row { width: var(--sheet-width); background: color-mix(in srgb, var(--link) 8%, var(--background)); border: 1px solid var(--border-color); border-top: 0; }
-.newsletter-content { position: sticky; left: calc(var(--frame) + 1px); width: calc(100vw - 2 * var(--frame) - 2px); display: grid; grid-template-columns: 430px minmax(0, 1fr); align-items: center; gap: 6px 10px; padding: 8px 5px; }
-.newsletter-copy h2 { margin: 0; font: inherit; color: var(--link); }
+.newsletter-row { --link: light-dark(#0060A0, #F1C66F); width: var(--sheet-width); background: light-dark(color-mix(in srgb, var(--link) 10%, var(--background)), #352D20); border: 1px solid var(--border-color); border-top: 0; }
+.newsletter-content { position: sticky; left: calc(var(--frame) + 1px); width: calc(100vw - 2 * var(--frame) - 2px); display: grid; grid-template-columns: 410px minmax(0, 1fr); align-items: center; gap: 8px 16px; padding: 16px 48px 16px 16px; border-left: 3px solid var(--link); }
+.newsletter-copy h2 { margin: 0 0 4px; font-size: var(--cap-height-13); font-weight: 600; color: var(--link); }
+.newsletter-dismiss { position: absolute; top: 8px; right: 8px; padding: 8px; border: 0; background: none; color: var(--link); cursor: pointer; }
+.newsletter-dismiss:hover { background: var(--hover-background); color: var(--hover); }
+.newsletter-dismiss[hidden], .newsletter-controls[hidden] { display: none; }
 .newsletter-frequency { display: none; }
 .newsletter-copy p, .newsletter-form > p { color: var(--muted); font-size: var(--cap-height-9-5); }
 .newsletter-form { max-width: 430px; min-width: 0; }
@@ -126,7 +129,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .newsletter-controls input, .newsletter-controls button { min-height: 32px; border: 1px solid var(--border-color); border-radius: 0; padding: 4px 7px; font: inherit; }
 .newsletter-controls input { min-width: 0; width: 100%; background: var(--background); color: var(--text); }
 .newsletter-controls input::placeholder { color: var(--muted); opacity: 1; }
-.newsletter-controls button { background: var(--background); color: var(--link); cursor: pointer; }
+.newsletter-controls button { background: var(--link); color: var(--background); border-color: var(--link); font-weight: 600; cursor: pointer; }
 .newsletter-controls button:hover { color: var(--hover); background: var(--hover-background); }
 .newsletter-controls button:disabled { opacity: 0.6; cursor: default; }
 .newsletter-form > p { margin-top: 2px; }
@@ -137,7 +140,8 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 @media (max-width: 700px) {
   .program { --schedule-inset: 12px; }
   .newsletter-row { border-inline: 0; }
-  .newsletter-content { left: 0; width: 100vw; padding: 8px var(--schedule-inset); }
+  .newsletter-content { left: 0; width: 100cqw; padding: 14px var(--schedule-inset); }
+  .newsletter-copy { padding-right: 28px; }
   .newsletter-frequency { display: inline; }
   .newsletter-copy p { display: none; }
   .newsletter-controls input, .newsletter-controls button { min-height: 36px; }
@@ -145,7 +149,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
   .breadcrumb-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .home { padding-block: 2px; text-align: center; }
   .schedule-breadcrumbs .home { flex-basis: 24px; }
-  .schedule-scroll { position: fixed; inset: 0; display: block; width: 100%; height: 100dvh; overflow: auto; scroll-padding-top: 186px; }
+  .schedule-scroll { position: fixed; inset: 0; display: block; width: 100%; height: 100dvh; overflow: auto; scroll-padding-top: 186px; container-type: inline-size; }
   .schedule-scroll > .site-footer { position: sticky; left: 0; width: 100%; padding-top: 12px; }
   .program { --frame: 0px; padding: 0; width: max-content; --day-width: 200px; --sheet-width: max(100vw, calc(var(--day-count) * var(--day-width))); --header-height: calc(var(--schedule-nav-height) + var(--schedule-day-height)); --film-height: 56px; scroll-padding-top: calc(var(--header-height) + var(--film-height) + 70px); }
   .program::before, .program::after { display: none; }
