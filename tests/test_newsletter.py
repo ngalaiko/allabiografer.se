@@ -135,6 +135,9 @@ class FakePostHog(PostHog):
     """In-memory API model: batch records are the observable send outcome."""
 
     def __init__(self):
+        self.base = "https://eu.posthog.com/api/projects/123/hog_flows/"
+        self.categories = []
+        self.deliveries = {}
         self.flows = []
         self.jobs = []
         self.invocations = []
@@ -172,7 +175,6 @@ class FakePostHog(PostHog):
                         "template_id": "template-email",
                         "template_uuid": "library-template",
                         "message_category_type": "marketing",
-                        "message_category_id": "news",
                         "inputs": {
                             "email": {
                                 "value": {
@@ -193,9 +195,28 @@ class FakePostHog(PostHog):
         }
 
     def request(self, method, path="", body=None):
+        if "messaging_categories/" in path:
+            if method == "GET":
+                return {"results": copy.deepcopy(self.categories)}
+            category = {"id": body["key"], **copy.deepcopy(body)}
+            self.categories.append(category)
+            return category
         if method == "GET":
+            if path.startswith("?"):
+                name = parse_qs(path[1:])["search"][0]
+                return {"results": [copy.deepcopy(f) for f in self.deliveries.values() if f["name"] == name]}
+            if path.rstrip("/") in self.deliveries:
+                return copy.deepcopy(self.deliveries[path.rstrip("/")])
             return copy.deepcopy(self.template)
+        if method == "PATCH":
+            flow = self.deliveries[path.rstrip("/")]
+            flow.update(body)
+            return copy.deepcopy(flow)
         if not path:
+            if body["name"].startswith("allabiografer:delivery:"):
+                flow = {**copy.deepcopy(body), "id": f"delivery-{len(self.deliveries)}"}
+                self.deliveries[flow["id"]] = flow
+                return copy.deepcopy(flow)
             flow = {**copy.deepcopy(body), "id": "edition"}
             self.flows.append(flow)
             return flow
@@ -240,7 +261,7 @@ def test_posthog_preserves_audience_and_allows_repeating_an_edition(ambiguous):
     assert sent[1]["type"] == "function"
     assert sent[1]["config"]["template_id"] == "template-posthog-capture"
     inputs = sent[1]["config"]["inputs"]
-    assert inputs["event"]["value"] == "newsletter_edition_ready"
+    assert inputs["event"]["value"] == "newsletter_edition_ready:Stockholm"
     assert inputs["distinct_id"]["value"] == "{event.distinct_id}"
     expression = inputs["properties"]["value"]["newsletter"]
     assert expression.startswith("{jsonParse(")
@@ -268,6 +289,56 @@ def test_shared_workflow_keeps_city_audiences_separate():
         "newsletter_subscribed_city_Malmö",
     ]
     assert len(api.template["actions"][0]["config"]["filters"]["properties"]) == 1
+
+
+def test_city_delivery_reuses_categories_and_deduplication_across_editions():
+    api = FakePostHog()
+    for city, start in [("Göteborg", "2026-10-16"), ("Stockholm", "2026-10-16"), ("Göteborg", "2026-10-23")]:
+        api.send("template", {"city": city, "start": start, "end": start, "films": []})
+    assert {c["key"] for c in api.categories} == {"newsletter-city-goteborg", "newsletter-city-stockholm"}
+    assert len(api.deliveries) == 2
+    assert {job["workflow"]["actions"][1]["config"]["inputs"]["event"]["value"] for job in api.jobs} == {
+        "newsletter_edition_ready:Göteborg",
+        "newsletter_edition_ready:Stockholm",
+    }
+    for flow in api.deliveries.values():
+        city = flow["name"].removeprefix("allabiografer:delivery:")
+        trigger, email, _ = flow["actions"]
+        assert trigger["config"]["filters"]["events"][0]["id"] == f"newsletter_edition_ready:{city}"
+        category = next(c for c in api.categories if c["id"] == email["config"]["message_category_id"])
+        assert category["name"] == f"Nytt på bio i {city}"
+        assert category["category_type"] == email["config"]["message_category_type"] == "marketing"
+        assert flow["trigger_masking"] == api.template["trigger_masking"]
+        assert email["config"]["inputs"]["email"]["value"]["to"] == {"email": "{{ person.properties.email }}"}
+
+
+@pytest.mark.parametrize("unsafe", ["paused", "wrong_category", "wrong_event", "no_dedup"])
+def test_invalid_city_delivery_never_dispatches(unsafe):
+    api = FakePostHog()
+    data = {"city": "Göteborg", "start": "2026-10-16", "end": "2026-10-22", "films": []}
+    api.send("template", data)
+    flow = next(iter(api.deliveries.values()))
+    if unsafe == "paused":
+        flow["email_sending_paused_at"] = "2026-10-16T12:00:00Z"
+    elif unsafe == "wrong_category":
+        flow["actions"][1]["config"]["message_category_id"] = "newsletter-city-stockholm"
+    elif unsafe == "wrong_event":
+        flow["actions"][0]["config"]["filters"]["events"][0]["id"] = "newsletter_edition_ready:Stockholm"
+    else:
+        flow["trigger_masking"]["ttl"] = 60
+    jobs_before = len(api.jobs)
+    with pytest.raises(ValueError, match="Invalid or paused"):
+        api.send("template", data)
+    assert len(api.jobs) == jobs_before
+
+
+def test_existing_category_consent_requires_explicit_migration():
+    api = FakePostHog()
+    api.template["actions"][1]["config"]["message_category_id"] = "old-newsletter"
+    with pytest.raises(ValueError, match="Migrate"):
+        api.send("template", {"city": "Stockholm", "start": "2026-10-16", "end": "2026-10-22", "films": []})
+    assert api.jobs == []
+    assert api.deliveries == {}
 
 
 def test_multiple_city_audiences_preserve_legacy_and_exclude_non_subscribers():
@@ -358,6 +429,8 @@ def test_single_recipient_test_never_enables_or_batches(outcome):
     assert invocation["globals"]["event"]["properties"]["newsletter"] == data
     value = api.flows[0]["actions"][1]["config"]["inputs"]["email"]["value"]
     assert value == {"from": {"integrationId": 7}, "to": {"email": "{{ variables.email }}"}}
+    category_id = api.flows[0]["actions"][1]["config"]["message_category_id"]
+    assert next(c for c in api.categories if c["id"] == category_id)["key"] == "newsletter-city-goteborg"
 
 
 @pytest.mark.parametrize("unsafe", ["multiple", "cc", "batch"])

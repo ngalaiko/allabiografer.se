@@ -147,26 +147,39 @@ Addresses stay in PostHog. City values must
 match scraped city names exactly; unknown cities fail before any batches start.
 New subscribed cities need no GitHub configuration or separate template workflow.
 
-Use one **active**, unscheduled PostHog delivery workflow: event trigger → one native
+Use one **active**, unscheduled PostHog delivery blueprint: event trigger → one native
 email → exit. It listens for `newsletter_edition_ready` and its ID is
 `01a1408b-a71f-0000-c69b-722f68f522a8`.
 Its flat, AND-combined audience filters require `newsletter_confirmed` equal to
 the string `yes`, set on explicit single-opt-in signup. Do not restrict the
-city in this shared workflow: Python creates two batch dispatchers with those filters,
+city in this blueprint: Python creates two batch dispatchers with those filters,
 one for legacy `newsletter_city = edition city` and one for
 `newsletter_subscribed_city_<edition city> = yes`. Each captures one event per matching
-person with the edition in `event.properties.newsletter`. The delivery workflow
-renders that event and enforces marketing opt-outs. Recipient addresses stay in PostHog.
-The shared workflow must deduplicate `{person.id}:{event.properties.newsletter.city}:{event.properties.newsletter.start}`
+person with the edition in `event.properties.newsletter`.
+
+Before dispatch, Python finds or creates a persistent `allabiografer:delivery:<city>`
+workflow and a `newsletter-city-<ASCII city slug>` marketing category. The city workflow
+copies the blueprint's sender, email snapshot, audience filters, rate limit and deduplication.
+It listens only for `newsletter_edition_ready:<city>`; the generic blueprint cannot
+also send that event. Existing city workflows are reused, not recreated for each edition.
+Paused or misconfigured city workflows fail before any batch for that city is dispatched.
+Recipient addresses stay in PostHog.
+Both the blueprint and city workflows must deduplicate
+`{person.id}:{event.properties.newsletter.city}:{event.properties.newsletter.start}`
 for at least seven days, without a threshold. This prevents duplicate delivery when
 a person matches both audiences, while allowing one edition for each subscribed city.
 
-Select a verified sender and a **marketing** message category. Leave the recipient
+Select a verified sender and **marketing** message type on the blueprint, without
+a named category: legacy unsubscribe preferences are global and continue to apply
+to every city. If migrating a blueprint with a named category, preserve its existing
+opt-outs before changing categories; the sender refuses to do that migration implicitly.
+Leave the recipient
 as `{{ person.properties.email }}`, without CC/BCC. Optional audience filters and
-email sending rate limits remain on the shared delivery workflow. Select the library template
+email sending rate limits belong on the blueprint and city workflows. Select the library template
 `01a138fb-15dd-0000-72dc-6b0dc068ba35` on the email action (`config.template_uuid`).
-Template-library edits do not automatically update the delivery workflow's snapshot:
-update and publish its email action in PostHog after changing the library template.
+Template-library edits do not automatically update workflow snapshots:
+update and publish the blueprint and existing city email actions in PostHog after
+changing the library template. New city workflows copy the blueprint at first use.
 The template reads `event.properties.newsletter`: `city`, `city_url`, `home_url`, `start`, `end`, and
 `films` (each with `title`, `url`, `poster`, `year`, `description`, `genres`,
 `genre_links` as `{name, url}` records, `directors`, `runtime`, and `age_rating`). Python supplies
@@ -174,8 +187,14 @@ JSON data to PostHog's capture-event action, never generated HTML. Do not move t
 into workflow variables: they have a 5KB limit, and batch overrides did not propagate
 to invocations in production. A complete edition is substantially larger.
 The template loops over films with Liquid and uses `{{ unsubscribe_url }}`.
-Unsubscribe applies to all city editions in the newsletter's marketing category.
-A signup does not override an existing unsubscribe or suppression.
+This opens PostHog's preferences page with an independent toggle for each city's
+newsletter and an **All marketing communications** toggle. A city opt-out blocks
+only that city; the global opt-out blocks every city, including newly added ones.
+Preference changes are not instantaneous: live validation observed delayed enforcement,
+consistent with PostHog's upstream recipient cache refreshing after roughly 5–6 minutes.
+These preferences are separate from the city-membership person properties:
+opting in on the preferences page does not enroll someone in a new city's audience.
+A signup does not override an existing city/global unsubscribe or suppression.
 
 Set these GitHub repository settings:
 
@@ -210,11 +229,16 @@ Tests use the upcoming Thursday's edition (today if Thursday), and may run any d
 Incomplete history can produce an incorrect “new this week” selection.
 An empty selection fails without sending. Test delivery does not subscribe the recipient.
 Each test clones the manual PostHog workflow as a draft to snapshot the latest library
-template, then invokes only its email step with the `email` variable and newsletter event data.
+template, selects the city's marketing category, then invokes only its email step
+with the `email` variable and newsletter event data.
 This checks rendering/delivery only; use the normal `Newsletter` job to test audience dispatch
 and the event handoff end to end.
+An immediate test after changing opt-outs may still use cached preferences.
+To validate consent enforcement, allow at least six minutes after the last preference
+change and use normal city events for an explicitly authorized test recipient,
+never a broadcast to the subscriber audience.
 It never enables a workflow or creates a batch. The email step must use
-`{{ variables.email }}`, no CC/BCC, and the marketing message type. Opt-outs still apply.
+`{{ variables.email }}`, no CC/BCC, and the marketing message type.
 Failures and skipped sends fail the job; an uncertain response is not retried. Inspect
 PostHog before rerunning, since a manual rerun sends another email.
 

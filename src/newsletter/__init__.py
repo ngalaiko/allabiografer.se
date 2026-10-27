@@ -14,7 +14,7 @@ from urllib.request import Request, urlopen
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
-from build import BASE_URL, _slugify_sv, city_programme_url, film_anchor
+from build import BASE_URL, _slugify, _slugify_sv, city_programme_url, film_anchor
 from store import DB_FILE, title_key
 
 STOCKHOLM = ZoneInfo("Europe/Stockholm")
@@ -115,8 +115,9 @@ class PostHog:
 
     def request(self, method: str, path: str = "", body: dict | None = None):
         url = path if path.startswith("https://") else self.base + path
-        if not url.startswith(self.base) and url != self.base.removesuffix("hog_flows/") + "query/":
-            raise ValueError("Refusing to send credentials outside the workflow and query APIs")
+        project = self.base.removesuffix("hog_flows/")
+        if not (url.startswith((self.base, project + "messaging_categories/")) or url == project + "query/"):
+            raise ValueError("Refusing to send credentials outside the workflow, category and query APIs")
         req = Request(
             url,
             method=method,
@@ -126,6 +127,85 @@ class PostHog:
         # Writes deliberately have no automatic retries: an uncertain send needs reconciliation.
         with urlopen(req, timeout=60) as response:
             return json.load(response)
+
+    def category(self, city: str) -> dict:
+        url = self.base.removesuffix("hog_flows/") + "messaging_categories/"
+        categories = self.request("GET", url + "?limit=1000")
+        if categories.get("next"):
+            raise ValueError("Marketing category lookup was truncated")
+        key = "newsletter-city-" + _slugify(city)
+        category = next((c for c in categories["results"] if c["key"] == key), None)
+        if not category:
+            category = self.request(
+                "POST",
+                url,
+                {
+                    "key": key,
+                    "name": f"Nytt på bio i {city}",
+                    "public_description": f"Ett mejl varje torsdag med nya filmer på bio i {city}.",
+                    "category_type": "marketing",
+                },
+            )
+        if category["category_type"] != "marketing":
+            raise ValueError(f"The newsletter category for {city} must be marketing")
+        return category
+
+    def delivery(self, source: dict, city: str) -> dict:
+        """Reuse a persistent city workflow so opt-outs and edition dedup survive each batch."""
+        name = f"allabiografer:delivery:{city}"
+        flows = self.request("GET", "?" + urlencode({"search": name, "limit": 100}))
+        if flows.get("next"):
+            raise ValueError("City delivery lookup was truncated")
+        matches = [flow for flow in flows["results"] if flow["name"] == name]
+        if len(matches) > 1:
+            raise ValueError(f"Multiple delivery workflows for {city}; reconcile before sending")
+        email = next(a for a in source["actions"] if a["type"] == "function_email")
+        if email["config"].get("message_category_id"):
+            raise ValueError("Migrate the template category's opt-outs before creating city delivery workflows")
+        category = self.category(city)
+        event = f"{NEWSLETTER_EVENT}:{city}"
+        if matches:
+            flow = self.request("GET", f"{quote(matches[0]['id'], safe='')}/")
+        else:
+            actions = copy.deepcopy(source["actions"])
+            trigger = next(a for a in actions if a["type"] == "trigger")
+            trigger["config"]["filters"] = {
+                "events": [{"id": event, "type": "events", "order": 0}],
+                "properties": trigger["config"]["filters"].get("properties", []),
+            }
+            next(a for a in actions if a["type"] == "function_email")["config"]["message_category_id"] = category["id"]
+            flow = self.request(
+                "POST",
+                body={
+                    "name": name,
+                    "description": f"Newsletter delivery for {city}; uses its own marketing opt-out category.",
+                    "status": "draft",
+                    "actions": actions,
+                    "edges": source["edges"],
+                    "trigger_masking": {k: v for k, v in source["trigger_masking"].items() if k != "bytecode"},
+                    "email_sending_rate_limit": source.get("email_sending_rate_limit"),
+                    "exit_condition": "exit_only_at_end",
+                },
+            )
+            # Enabling listens only for the new city event; it never starts a batch.
+            flow = self.request("PATCH", f"{flow['id']}/", {"status": "active"})
+        emails = [a for a in flow["actions"] if a["type"] == "function_email"]
+        triggers = [a for a in flow["actions"] if a["type"] == "trigger"]
+        if (
+            flow["status"] != "active"
+            or flow.get("email_sending_paused_at")
+            or len(emails) != 1
+            or len(triggers) != 1
+            or triggers[0]["config"]["type"] != "event"
+            or [e.get("id") for e in triggers[0]["config"]["filters"].get("events", [])] != [event]
+            or emails[0]["config"].get("message_category_id") != category["id"]
+            or emails[0]["config"].get("message_category_type") != "marketing"
+            or flow.get("trigger_masking", {}).get("hash") != source["trigger_masking"]["hash"]
+            or (flow.get("trigger_masking", {}).get("ttl") or 0) < 604800
+            or flow.get("trigger_masking", {}).get("threshold") is not None
+        ):
+            raise ValueError(f"Invalid or paused city delivery workflow for {city}; no batch dispatched")
+        return flow
 
     def cities(self) -> list[str]:
         """Fetch distinct registered cities, never subscriber addresses."""
@@ -166,6 +246,7 @@ class PostHog:
             or any(a["type"] not in {"trigger", "function_email", "exit"} for a in actions)
             or triggers[0]["config"]["type"] != "event"
             or source.get("status") != "active"
+            or source.get("email_sending_paused_at")
         ):
             raise ValueError("Use an active event → email → exit workflow for shared delivery")
         events = triggers[0]["config"].get("filters", {}).get("events", [])
@@ -205,6 +286,7 @@ class PostHog:
             raise ValueError("Use the default person email recipient without CC/BCC for audience deduplication")
         if not config.get("template_uuid"):
             raise ValueError("Select a PostHog library email template for the newsletter")
+        self.delivery(source, data["city"])
         # Batch overrides are not propagated to runs, and workflow variables have a
         # 5KB limit. Capture the edition as event data instead; PostHog keeps recipients.
         literal = json.dumps(data, ensure_ascii=False).replace("\\", "\\\\").replace("'", "\\'")
@@ -215,7 +297,7 @@ class PostHog:
             config={
                 "template_id": "template-posthog-capture",
                 "inputs": {
-                    "event": {"value": NEWSLETTER_EVENT},
+                    "event": {"value": f"{NEWSLETTER_EVENT}:{data['city']}"},
                     "distinct_id": {"value": "{event.distinct_id}"},
                     "properties": {"value": {"newsletter": "{jsonParse('" + literal + "')}"}},
                 },
@@ -272,6 +354,7 @@ class PostHog:
             raise ValueError(
                 "Test email requires a library template, marketing type and only variables.email as recipient"
             )
+        config["message_category_id"] = self.category(data["city"])["id"]
         for field in ("subject", "text", "html", "design", "preheader"):
             value.pop(field, None)
         config["inputs"]["email"]["templating"] = "liquid"
