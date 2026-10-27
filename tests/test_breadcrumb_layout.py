@@ -92,13 +92,14 @@ def test_newsletter_signup_adds_cities_without_replacing_previous_choices(browse
 
 @pytest.mark.parametrize("width", [375, 700, 1280])
 @pytest.mark.parametrize("film_count", [0, 1, 3, 4, 5, 6])
-def test_newsletter_stays_in_view_when_dates_scroll(browser, width, film_count):
+@pytest.mark.parametrize("num_days", [1, 2, 10])
+def test_newsletter_stays_in_view_when_dates_scroll(browser, width, film_count, num_days):
     html = (
         _make_env()
         .get_template("program.html")
         .render(
             city="Göteborg",
-            num_days=10,
+            num_days=num_days,
             days=[],
             blocks=[{"film_title": f"Film {i}", "cinemas": []} for i in range(film_count)],
         )
@@ -121,6 +122,13 @@ def test_newsletter_stays_in_view_when_dates_scroll(browser, width, film_count):
         assert row.bounding_box()["width"] == page.locator(".schedule-header").bounding_box()["width"]
         content = row.locator(".newsletter-content")
         before = content.bounding_box()
+        row_box = row.bounding_box()
+        assert before["x"] + before["width"] <= row_box["x"] + row_box["width"]
+        for selector in [".newsletter-controls", ".newsletter-dismiss"]:
+            box = row.locator(selector).bounding_box()
+            if box:
+                assert box["x"] >= before["x"]
+                assert box["x"] + box["width"] <= before["x"] + before["width"]
         scroll_left = page.evaluate("""() => {
             if (matchMedia('(max-width: 700px)').matches) {
                 const scroller = document.querySelector('.schedule-scroll');
@@ -130,7 +138,8 @@ def test_newsletter_stays_in_view_when_dates_scroll(browser, width, film_count):
             window.scrollTo(500, 0);
             return window.scrollX;
         }""")
-        assert scroll_left == 500
+        if num_days == 10:
+            assert scroll_left == 500
         after = content.bounding_box()
         assert abs(before["x"] - after["x"]) < 1
         assert after["x"] >= 0

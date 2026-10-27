@@ -116,14 +116,15 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 
 /** Newsletter — scroll with films vertically, not with dates horizontally. **/
 .newsletter-row { --link: light-dark(#0060A0, #F1C66F); width: var(--sheet-width); background: light-dark(color-mix(in srgb, var(--link) 10%, var(--background)), #352D20); border: 1px solid var(--border-color); border-top: 0; }
-.newsletter-content { position: sticky; left: calc(var(--frame) + 1px); width: calc(100vw - 2 * var(--frame) - 2px); display: grid; grid-template-columns: 410px minmax(0, 1fr); align-items: center; gap: 8px 16px; padding: 16px 48px 16px 16px; border-left: 3px solid var(--link); }
+.newsletter-content { position: sticky; left: calc(var(--frame) + 1px); width: min(100%, calc(100vw - 2 * var(--frame) - 2px)); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 16px 48px 16px 16px; border-left: 3px solid var(--link); }
+.newsletter-copy { flex: 0 1 410px; }
 .newsletter-copy h2 { margin: 0 0 4px; font-size: var(--cap-height-13); font-weight: 600; color: var(--link); }
 .newsletter-dismiss { position: absolute; top: 8px; right: 8px; padding: 8px; border: 0; background: none; color: var(--link); cursor: pointer; }
 .newsletter-dismiss:hover { background: var(--hover-background); color: var(--hover); }
 .newsletter-dismiss[hidden], .newsletter-controls[hidden] { display: none; }
 .newsletter-frequency { display: none; }
 .newsletter-copy p, .newsletter-form > p { color: var(--muted); font-size: var(--cap-height-9-5); }
-.newsletter-form { max-width: 430px; min-width: 0; }
+.newsletter-form { flex: 1 1 280px; max-width: 430px; min-width: 0; }
 .newsletter-form label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .newsletter-controls { display: flex; gap: 5px; }
 .newsletter-controls input, .newsletter-controls button { min-height: 32px; border: 1px solid var(--border-color); border-radius: 0; padding: 4px 7px; font: inherit; }
@@ -133,9 +134,6 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .newsletter-controls button:hover { color: var(--hover); background: var(--hover-background); }
 .newsletter-controls button:disabled { opacity: 0.6; cursor: default; }
 .newsletter-form > p { margin-top: 2px; }
-@media (max-width: 1000px) {
-  .newsletter-content { grid-template-columns: minmax(0, 1fr); }
-}
 
 @media (max-width: 700px) {
   .program { --schedule-inset: 12px; }
