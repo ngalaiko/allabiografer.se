@@ -24,8 +24,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SECRET = "test-only-signing-secret-32-characters-long"
 
 
-@pytest.fixture
-def newsletter_api(tmp_path):
+@pytest.fixture(params=[False, True], ids=["native-json-null", "alpine-table-null"])
+def newsletter_api(tmp_path, request):
     nginx = shutil.which("openresty")
     if not nginx:
         pytest.skip("Run inside nix develop for Lua-enabled nginx")
@@ -141,13 +141,36 @@ def newsletter_api(tmp_path):
         "NEWSLETTER_CITIES_FILE": str(cities),
     }
     lua_path = f"{ROOT}/etc/nginx/lua/?.lua;" + os.environ["NEWSLETTER_LUA_PATH"]
+    # Alpine cjson 2.1.0 represents JSON null as a table, unlike OpenResty's build.
+    table_null = (
+        """
+        init_by_lua_block {
+            local json = require "cjson.safe"
+            local decode, old_null = json.decode, json.null
+            json.null = {}
+            local function replace(value)
+                if value == old_null then return json.null end
+                if type(value) == "table" then
+                    for key, item in pairs(value) do value[key] = replace(item) end
+                end
+                return value
+            end
+            json.decode = function(...)
+                local value, err = decode(...)
+                return replace(value), err
+            end
+        }
+    """
+        if request.param
+        else ""
+    )
     config = tmp_path / "nginx.conf"
     config.write_text(
         "\n".join(f"env {key};" for key in env if key.startswith(("POSTHOG_", "NEWSLETTER_")))
         + f"\npid {tmp_path}/nginx.pid; error_log {tmp_path}/error.log;\n"
         + "events {}\nhttp { access_log off; lua_shared_dict newsletter_locks 1m;"
         + "lua_shared_dict newsletter_pending 1m;"
-        + f"lua_package_path '{lua_path}'; server {{listen 127.0.0.1:{port};"
+        + f"lua_package_path '{lua_path}'; {table_null} server {{listen 127.0.0.1:{port};"
         + "location /api/newsletter/ {client_max_body_size 2k; content_by_lua_block {require('newsletter').handle()}}}}"
     )
     process = subprocess.Popen([nginx, "-p", str(tmp_path), "-c", str(config), "-g", "daemon off;"], env=env)

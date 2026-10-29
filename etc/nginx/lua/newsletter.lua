@@ -56,7 +56,7 @@ end
 local function encode(data)
     -- Alpine's standard cjson has no empty_array sentinel. Only this known array
     -- needs special handling; cjson still escapes every user-controlled value.
-    return assert(json.encode(data)):gsub('"newsletter_cities":{}', '"newsletter_cities":[]')
+    return (assert(json.encode(data)):gsub('"newsletter_cities":{}', '"newsletter_cities":[]'))
 end
 
 local function run()
@@ -133,7 +133,9 @@ local function run()
         local mutex = assert(lock:new("newsletter_locks", {timeout = 5, exptime = 300}))
         if not mutex:lock(identity) then fail(503) end
         local ok, result = pcall(function()
-            local pending = json.decode(ngx.shared.newsletter_pending:get(identity) or "null")
+            -- Alpine cjson represents JSON null as a table, not lightuserdata.
+            local stored = ngx.shared.newsletter_pending:get(identity)
+            local pending = stored and json.decode(stored)
             local person
             if type(pending) == "table" then
                 -- Never resend an uncertain write or let another update overtake it.
