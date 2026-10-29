@@ -238,11 +238,14 @@ Before deploying this version, pause newsletter dispatch and old signups, then:
    resuming the schedule. Prune legacy fields separately with `--apply --prune` only
    after verification; do not run old senders after pruning legacy properties.
 
-Dry-run summaries contain counts, not addresses or tokens. Backfill uses a random opaque
-identifier per person and HMAC-SHA256 scoped to newsletter preferences, with constant-time
-signature comparison in Lua. Tokens never contain email addresses. They are long-lived
+Dry-run summaries contain counts, not addresses or tokens. Links use PostHog's person
+UUID and HMAC-SHA256 scoped to newsletter preferences, with constant-time signature
+comparison in Lua. Signup creates and reads back a new profile before signing its UUID.
+Backfill replaces old tokens and removes `newsletter_preferences_id`; old links stop working.
+Tokens never contain email addresses. They are long-lived
 bearer credentials: forwarding a link grants access to that recipient's newsletter
-preferences only. Replacing a person's stored token revokes the old link.
+preferences only. Replacing a person's stored token revokes the old link. Merging or
+deleting that PostHog person can also invalidate its links.
 
 Set these GitHub repository settings:
 

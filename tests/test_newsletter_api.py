@@ -13,6 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from io import BytesIO
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
+from uuid import uuid4
 
 import pytest
 import requests
@@ -65,7 +66,9 @@ def newsletter_api(tmp_path):
             for pending in list(state["pending"]):
                 when, identity, properties = pending
                 if time.monotonic() >= when:
-                    person = people.setdefault(identity, {"uuid": f"person-{len(people)}", "properties": {}})
+                    person = people.setdefault(
+                        identity, {"uuid": str(uuid4()), "distinct_ids": [identity], "properties": {}}
+                    )
                     person["properties"].update(properties)
                     state["pending"].remove(pending)
             url = urlsplit(self.path)
@@ -76,13 +79,11 @@ def newsletter_api(tmp_path):
                 elif "distinct_id" in query:
                     result = [people[query["distinct_id"][0]]] if query["distinct_id"][0] in people else []
                 else:
-                    opaque_id = json.loads(query["properties"][0])[0]["value"][0]
-                    result = [
-                        p for p in people.values() if p["properties"].get("newsletter_preferences_id") == opaque_id
-                    ]
+                    raise AssertionError("Unexpected person collection lookup")
                 return self.respond({"results": [{"uuid": p["uuid"]} for p in result], "next": None})
             if "/persons/" in url.path:
-                return self.respond(next(p for p in people.values() if p["uuid"] == url.path.split("/")[-2]))
+                person = next((p for p in people.values() if p["uuid"] == url.path.split("/")[-2]), None)
+                return self.respond(person, 200 if person else 404)
             if url.path.endswith("/messaging_categories/"):
                 return self.respond({"results": categories, "next": None})
             if url.path.endswith("/opt_outs/"):
@@ -188,7 +189,8 @@ def test_signup_and_property_unsubscribe_end_to_end(newsletter_api):
     assert person["newsletter_cities"] == ["Göteborg", "Stockholm"]
     assert not any(key.startswith("newsletter_subscribed_city_") for key in person)
     token = person["newsletter_preferences_token"]
-    assert token == preferences_token(SECRET, person["newsletter_preferences_id"])
+    assert "newsletter_preferences_id" not in person
+    assert token == preferences_token(SECRET, people["newsletter:person@example.com"]["uuid"])
     expected = {"delivery_blocked": False, "cities": ["Göteborg", "Stockholm"]}
     response = call("preferences", token=token)
     assert response.status_code == 200, response.text
@@ -219,10 +221,16 @@ def test_api_rejects_forged_links_and_upstream_errors(newsletter_api):
         "garbage",
         token[:-1] + ("0" if token[-1] != "0" else "1"),
         preferences_token(SECRET, "a" * 32),
+        preferences_token(SECRET, str(uuid4())),
+        preferences_token(SECRET, "aaaaaaaaa-aaa-aaaa-aaaa-aaaaaaaaaaaa"),
     ]:
         assert call("preferences", {"unsubscribe": True}, bad_token).status_code == 401
     assert people == before
     assert writes == []
+    properties = people["newsletter:p@example.com"]["properties"]
+    properties["newsletter_preferences_token"] = "revoked"
+    assert call("preferences", token=token).status_code == 401
+    properties["newsletter_preferences_token"] = token
     assert call("preferences", token=token, origin="https://evil.test").status_code == 403
     assert call("signup", {"email": "p@example.com", "city": "Invented"}).status_code == 400
     state["fail"] = True
@@ -256,6 +264,7 @@ def test_migration_is_dry_run_idempotent_and_preserves_consent(native_optout, mo
                 "newsletter_subscribed_city_Stockholm": "yes",
                 "newsletter_subscribed_city_Göteborg": "yes",
                 "newsletter_subscribed_city_Malmö": "no",
+                "newsletter_preferences_id": "a" * 32,
             }
 
         def request(self, method, path, body=None):
@@ -278,9 +287,13 @@ def test_migration_is_dry_run_idempotent_and_preserves_consent(native_optout, mo
                         }
                     return {"results": []}
                 if "?" in path:
-                    return {"results": [{"uuid": "person-1"}], "next": None}
-                return {"properties": copy.deepcopy(self.properties), "distinct_ids": ["existing-subscriber"]}
-            assert "/persons/person-1/" in path  # No opt-out or delivery mutations.
+                    return {"results": [{"uuid": "12345678-1234-5678-9abc-123456789abc"}], "next": None}
+                return {
+                    "uuid": "12345678-1234-5678-9abc-123456789abc",
+                    "properties": copy.deepcopy(self.properties),
+                    "distinct_ids": ["existing-subscriber"],
+                }
+            assert "/persons/12345678-1234-5678-9abc-123456789abc/" in path  # No opt-out or delivery mutations.
             assert method == "POST"
             for key in body["$unset"]:
                 self.properties.pop(key)
@@ -296,6 +309,8 @@ def test_migration_is_dry_run_idempotent_and_preserves_consent(native_optout, mo
         assert payload["event"] == "$set"
         assert payload["distinct_id"] == "existing-subscriber"
         client.properties.update(payload["properties"]["$set"])
+        for key in payload["properties"]["$unset"]:
+            client.properties.pop(key, None)
         return BytesIO(b'{"status":1}')
 
     monkeypatch.setenv("POSTHOG_PROJECT_TOKEN", "test-public-key")
@@ -306,6 +321,10 @@ def test_migration_is_dry_run_idempotent_and_preserves_consent(native_optout, mo
     assert migrate(client, SECRET, apply=True, prune=True)["legacy_properties"] == 4
     expected = {None: ["Göteborg", "Stockholm"], "city": ["Stockholm"], "global": []}
     assert client.properties["newsletter_cities"] == expected[native_optout]
+    assert "newsletter_preferences_id" not in client.properties
+    assert client.properties["newsletter_preferences_token"] == preferences_token(
+        SECRET, "12345678-1234-5678-9abc-123456789abc"
+    )
     assert client.properties["newsletter_confirmed"] == "yes"
     assert not any(k.startswith("newsletter_subscribed_city_") for k in client.properties)
     assert migrate(client, SECRET, apply=True) == {"people": 1, "updates": 0, "legacy_properties": 0}

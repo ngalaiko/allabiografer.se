@@ -2,7 +2,6 @@
 local json = require "cjson.safe"
 local http = require "resty.http"
 local hmac = require "resty.openssl.hmac"
-local rand = require "resty.openssl.rand"
 local digest = require "resty.openssl.digest"
 local hex = require("resty.string").to_hex
 local lock = require "resty.lock"
@@ -17,9 +16,12 @@ end
 local function token_for(secret, id) return id .. "." .. signature(secret, id) end
 
 local function verified_id(secret, token)
-    if type(token) ~= "string" or #token ~= 97 then fail(401) end
-    local id, supplied = token:match("^([a-f0-9]+)%.([a-f0-9]+)$")
-    if not id or #id ~= 32 or #supplied ~= 64 then fail(401) end
+    if type(token) ~= "string" or #token ~= 101 then fail(401) end
+    local id, supplied = token:match("^([a-f0-9%-]+)%.([a-f0-9]+)$")
+    if not id or #id ~= 36 or #supplied ~= 64
+        or not id:match("^%x+%-%x+%-%x+%-%x+%-%x+$")
+        or id:sub(9, 9) ~= "-" or id:sub(14, 14) ~= "-"
+        or id:sub(19, 19) ~= "-" or id:sub(24, 24) ~= "-" then fail(401) end
     local expected, difference = signature(secret, id), 0
     for i = 1, #expected do
         difference = bit.bor(difference, bit.bxor(expected:byte(i), supplied:byte(i)))
@@ -79,6 +81,7 @@ local function run()
             headers = {Authorization = "Bearer " .. key, ["Content-Type"] = "application/json"},
             ssl_verify = true, keepalive = false,
         })
+        if response and response.status == 404 and path:match("^persons/[^/]+/$") then return nil end
         if not response or response.status < 200 or response.status >= 300 then fail(502) end
         if response.body == "" then return {} end
         local data = json.decode(response.body)
@@ -126,7 +129,8 @@ local function run()
 
     local function edit(email, transform, event)
         local identity = identity_for(email)
-        local mutex = assert(lock:new("newsletter_locks", {timeout = 1, exptime = 300}))
+        -- New profiles require two ingestion round trips before a waiting signup can proceed.
+        local mutex = assert(lock:new("newsletter_locks", {timeout = 5, exptime = 300}))
         if not mutex:lock(identity) then fail(503) end
         local ok, result = pcall(function()
             local pending = json.decode(ngx.shared.newsletter_pending:get(identity) or "null")
@@ -137,7 +141,14 @@ local function run()
             else
                 person = person_lookup("email=" .. ngx.escape_uri(email))
             end
-            local desired = transform(person and person.properties or {})
+            if not person and event == "newsletter_signup" then
+                -- PostHog assigns the UUID, so create and read back the profile before signing its link.
+                local initial = {email = email}
+                if not ngx.shared.newsletter_pending:safe_set(identity, encode(initial)) then fail(503) end
+                capture(identity, initial, "$set")
+                person = wait_for(email, initial)
+            end
+            local desired = transform(person and person.properties or {}, person and person.uuid)
             if not ngx.shared.newsletter_pending:safe_set(identity, encode(desired)) then fail(503) end
             local distinct_id = person and person.distinct_ids and person.distinct_ids[1] or identity
             capture(distinct_id, desired, event)
@@ -161,14 +172,13 @@ local function run()
         local allowed = json.decode(file:read("*a"))
         file:close()
         if not allowed or not allowed[body.city] then fail(400) end
-        edit(email, function(properties)
+        edit(email, function(properties, id)
             local memberships, seen = cities(properties), false
             for _, city in ipairs(memberships) do if city == body.city then seen = true end end
             if not seen then memberships[#memberships + 1] = body.city end
             table.sort(memberships)
-            local id = properties.newsletter_preferences_id or hex(assert(rand.bytes(16)))
             return {email = email, newsletter_confirmed = "yes", newsletter_cities = memberships,
-                newsletter_preferences_id = id, newsletter_preferences_token = token_for(secret, id)}
+                newsletter_preferences_token = token_for(secret, id)}
         end, "newsletter_signup")
         -- Never disclose whether a person exists, or return their bearer token.
         return {success = true}
@@ -177,8 +187,7 @@ local function run()
     if ngx.var.uri ~= "/api/newsletter/preferences" then fail(404) end
     local token = (ngx.var.http_authorization or ""):match("^Bearer (.+)$")
     local id = verified_id(secret, token)
-    local filter = {{key = "newsletter_preferences_id", type = "person", operator = "exact", value = {id}}}
-    local person = person_lookup("properties=" .. ngx.escape_uri(json.encode(filter)))
+    local person = request("GET", "persons/" .. id .. "/")
     if not person or person.properties.newsletter_preferences_token ~= token then fail(401) end
     local email = person.properties.email
     if type(email) ~= "string" or email == "" then fail(401) end
@@ -195,8 +204,7 @@ local function run()
                 end
                 if not found then fail(400) end
             end
-            return {newsletter_cities = remaining, newsletter_preferences_id = id,
-                newsletter_preferences_token = token}
+            return {newsletter_cities = remaining, newsletter_preferences_token = token}
         end, "newsletter_preferences_updated")
     elseif next(body) ~= nil then fail(400) end
 

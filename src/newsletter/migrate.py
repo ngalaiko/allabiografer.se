@@ -5,10 +5,10 @@ import hashlib
 import hmac
 import json
 import os
-import secrets
 import time
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
+from uuid import UUID
 
 from build import _slugify
 from newsletter import CITY_PREFIX, PostHog, city_filter
@@ -94,16 +94,15 @@ def migrate(client: PostHog, secret: str, *, apply: bool = False, prune: bool = 
             if not membership(properties) and "newsletter_cities" not in properties:
                 continue
             cities = active_membership(client, properties, category_page["results"])
-            identifier = properties.get("newsletter_preferences_id") or secrets.token_hex(16)
-            if len(identifier) != 32 or any(c not in "0123456789abcdef" for c in identifier):
-                raise ValueError("Invalid stored preferences identifier")
+            identifier = str(UUID(person["uuid"]))
             updated = {
                 "newsletter_cities": cities,
-                "newsletter_preferences_id": identifier,
                 "newsletter_preferences_token": preferences_token(secret, identifier),
             }
             legacy = [key for key in properties if key == "newsletter_city" or key.startswith(CITY_PREFIX)]
-            changed = any(properties.get(key) != value for key, value in updated.items())
+            changed = any(properties.get(key) != value for key, value in updated.items()) or (
+                "newsletter_preferences_id" in properties
+            )
             counts["people"] += 1
             counts["updates"] += changed
             counts["legacy_properties"] += len(legacy)
@@ -119,7 +118,12 @@ def migrate(client: PostHog, secret: str, *, apply: bool = False, prune: bool = 
                             "api_key": public_key,
                             "event": "$set",
                             "distinct_id": person["distinct_ids"][0],
-                            "properties": {"$process_person_profile": True, "$geoip_disable": True, "$set": updated},
+                            "properties": {
+                                "$process_person_profile": True,
+                                "$geoip_disable": True,
+                                "$set": updated,
+                                "$unset": ["newsletter_preferences_id"],
+                            },
                         }
                     ).encode(),
                     headers={"Content-Type": "application/json"},
@@ -130,7 +134,9 @@ def migrate(client: PostHog, secret: str, *, apply: bool = False, prune: bool = 
             # Read back asynchronous person writes before declaring success or pruning.
             for _ in range(30):
                 fresh = client.request("GET", person_url)["properties"]
-                if all(fresh.get(key) == value for key, value in updated.items()):
+                if all(fresh.get(key) == value for key, value in updated.items()) and (
+                    "newsletter_preferences_id" not in fresh
+                ):
                     break
                 time.sleep(1)
             else:
