@@ -1,2 +1,2 @@
-#!/bin/sh
+#!/command/with-contenv sh
 exec nginx -g "daemon off;"
