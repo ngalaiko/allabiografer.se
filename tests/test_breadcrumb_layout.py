@@ -13,21 +13,20 @@ playwright = pytest.importorskip("playwright.sync_api")
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_newsletter_signup_adds_cities_without_replacing_previous_choices(browser):
+def test_newsletter_signup_uses_backend_and_remembers_city_dismissal(browser):
     env = _make_env()
-    env.globals.update(posthog_token="public-test-token", posthog_host="/salong")
-    people = {}
+    env.globals.update(posthog_token="")
     requests = []
     reject = False
 
     def serve(route):
         path = urlsplit(route.request.url).path
-        if path == "/salong/i/v0/e/":
+        if path == "/api/newsletter/signup":
             data = route.request.post_data_json
             requests.append(data)
-            if not reject:
-                people.setdefault(data["distinct_id"], {}).update(data["properties"]["$set"])
-            route.fulfill(status=503 if reject else 200, json={"status": 1 if len(requests) == 1 else "Ok"})
+            assert route.request.method == "POST"
+            assert "authorization" not in route.request.headers
+            route.fulfill(status=503 if reject else 200, json={"success": not reject})
         elif path.startswith("/i/"):
             route.fulfill(path=ROOT / "static" / path.lstrip("/"))
         else:
@@ -41,7 +40,7 @@ def test_newsletter_signup_adds_cities_without_replacing_previous_choices(browse
                 content_type="text/html",
             )
 
-    # Independent browser contexts must still use the same normalized email identity.
+    # Normalization and merging city subscriptions belong to the backend.
     for city_path, email in [("stockholm", "PERSON@Example.com"), ("gothenburg", "person@example.com")]:
         page = browser.new_page(viewport={"width": 390, "height": 800})
         page.route("https://allabiografer.test/**", serve)
@@ -60,21 +59,10 @@ def test_newsletter_signup_adds_cities_without_replacing_previous_choices(browse
         page.reload()
         playwright.expect(page.locator(".newsletter-row")).to_be_hidden()
         page.close()
-    assert people == {
-        "newsletter:person@example.com": {
-            "email": "person@example.com",
-            "newsletter_confirmed": "yes",
-            "newsletter_subscribed_city_Stockholm": "yes",
-            "newsletter_subscribed_city_Göteborg": "yes",
-        }
-    }
-    assert requests[1]["properties"]["$set"] == {
-        "email": "person@example.com",
-        "newsletter_confirmed": "yes",
-        "newsletter_subscribed_city_Göteborg": "yes",
-    }
-    assert all(data["properties"]["$process_person_profile"] for data in requests)
-    assert all(data["properties"]["$geoip_disable"] for data in requests)
+    assert requests == [
+        {"email": "PERSON@Example.com", "city": "Stockholm"},
+        {"email": "person@example.com", "city": "Göteborg"},
+    ]
 
     reject = True
     page = browser.new_page()
@@ -86,7 +74,7 @@ def test_newsletter_signup_adds_cities_without_replacing_previous_choices(browse
     playwright.expect(page.get_by_role("button", name="Prenumerera")).to_be_enabled()
     page.reload()
     playwright.expect(page.locator(".newsletter-row")).to_be_visible()
-    assert len(people) == 1
+    assert requests[-1] == {"email": "other@example.com", "city": "Stockholm"}
     page.close()
 
 

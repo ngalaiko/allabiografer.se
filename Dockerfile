@@ -55,10 +55,12 @@ RUN \
           exit 1; \
     esac; \
     rm -rf "/tmp/*"; \
-    apk add --update --no-cache ca-certificates gettext-libs libmaxminddb ncurses-libs nginx nginx-mod-http-brotli openssl tzdata zlib
+    apk add --update --no-cache ca-certificates gettext-libs libmaxminddb ncurses-libs nginx nginx-mod-http-brotli nginx-mod-http-lua lua5.1-cjson lua-resty-http lua-resty-lock lua-resty-openssl lua-resty-string openssl tzdata zlib
 COPY --from=goaccess-build /dist/usr/bin/goaccess /usr/bin/goaccess
 COPY --from=goaccess-build /dist/usr/share /usr/share
 COPY --from=build /app/www /var/www/allabiografer.se
+ARG POSTHOG_PROJECT_TOKEN
+ENV POSTHOG_PROJECT_TOKEN=$POSTHOG_PROJECT_TOKEN
 COPY etc /etc
 COPY init-wrapper /
 ENTRYPOINT ["/init-wrapper"]

@@ -666,6 +666,9 @@ def _make_env() -> Environment:
     env.globals["links_version"] = hashlib.sha256(Path("static/i/links.js").read_bytes()).hexdigest()[:12]
     env.globals["showtimes_version"] = hashlib.sha256(Path("static/i/showtimes.js").read_bytes()).hexdigest()[:12]
     env.globals["newsletter_version"] = hashlib.sha256(Path("static/i/newsletter.js").read_bytes()).hexdigest()[:12]
+    env.globals["newsletter_preferences_version"] = hashlib.sha256(
+        Path("static/i/newsletter-preferences.js").read_bytes()
+    ).hexdigest()[:12]
     env.globals["festival_banner_version"] = hashlib.sha256(
         Path("static/i/festival-banner.js").read_bytes()
     ).hexdigest()[:12]
@@ -681,6 +684,21 @@ def _make_env() -> Environment:
 # ---------------------------------------------------------------------------
 # Page builders
 # ---------------------------------------------------------------------------
+
+
+def _build_newsletter_preferences(env: Environment, out_dir: Path) -> None:
+    # Private utility page: deliberately not registered in the public sitemap.
+    out_path = out_dir / "nyhetsbrev" / "installningar" / "index.html"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(env.get_template("newsletter-preferences.html").render(), encoding="utf-8")
+
+
+def _write_newsletter_cities(sd: SiteData) -> None:
+    # Public signup allowlist, independent of newsletter subscription state.
+    mapping = {city: "newsletter-city-" + _slugify(city) for city in sorted(sd.cities)}
+    out_path = sd.out_dir / "i" / "newsletter-cities.json"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(mapping, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def _build_index(env: Environment, sd: SiteData, festivals: list[dict]) -> None:
@@ -1539,6 +1557,8 @@ def main() -> None:
     _build_premiarer(env, sd)
     _build_filmer(env, sd)
     _build_programme_pages(env, sd)
+    _build_newsletter_preferences(env, out_dir)
+    _write_newsletter_cities(sd)
 
     _write_robots(out_dir)
     _write_sitemap(sd)

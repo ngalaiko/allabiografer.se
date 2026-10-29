@@ -42,6 +42,8 @@ def nginx_server(tmp_path):
     config.write_text(
         f"pid {tmp_path}/nginx.pid;\nerror_log {tmp_path}/error.log;\n"
         "events {}\nhttp {\naccess_log off;\n"
+        "limit_req_zone $binary_remote_addr zone=newsletter_signup:1m rate=5r/m;\n"
+        "limit_req_zone $binary_remote_addr zone=newsletter_preferences:1m rate=30r/m;\n"
         "map $request_uri $posthog_upstream { default eu.i.posthog.com; }\n"
         "map $remote_addr $posthog_client_ip { default $remote_addr; }\n"
         f"{site}\n}}\n"

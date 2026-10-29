@@ -5,6 +5,22 @@ server {
     root /var/www/allabiografer.se;
     index index.html;
 
+    location = /api/newsletter/signup {
+        limit_req zone=newsletter_signup burst=3 nodelay;
+        limit_req_status 429;
+        client_max_body_size 2k;
+        access_log off;
+        content_by_lua_block { require('newsletter').handle() }
+    }
+
+    location = /api/newsletter/preferences {
+        limit_req zone=newsletter_preferences burst=5 nodelay;
+        limit_req_status 429;
+        client_max_body_size 2k;
+        access_log off;
+        content_by_lua_block { require('newsletter').handle() }
+    }
+
     location ^~ /salong/ {
         resolver 1.1.1.1 8.8.8.8 valid=300s ipv6=off;
         resolver_timeout 5s;

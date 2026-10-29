@@ -92,7 +92,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .schedule-dates > time { min-height: var(--schedule-day-height); padding: 5px; line-height: 20px; text-align: center; background: var(--schedule-surface); border-block: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
 .schedule-film { display: grid; grid-template-columns: 135px 310px repeat(var(--day-count), var(--day-width)); width: var(--sheet-width); background: var(--schedule-surface); border-bottom: 1px solid var(--border-color); }
 .film-title { grid-column: 2 / 4; grid-row: 1; position: sticky; left: 20px; padding: 5px var(--schedule-inset) 0; background: var(--schedule-surface); border-left: 1px solid var(--border-color); }
-.film-title h2 { font-size: var(--cap-height-13); line-height: 19px; margin: 0 0 7px; }
+.film-title h2, .preferences-heading h1 { font-size: var(--cap-height-13); line-height: 19px; margin: 0 0 7px; }
 .film-variant { font-weight: inherit; }
 .film-meta, .film-description { font-size: var(--cap-height-9-5); line-height: 19px; }
 .film-meta { white-space: normal; }
@@ -110,7 +110,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .schedule-cell { grid-column: calc(var(--day-column) + 2); grid-row: var(--cinema-row); position: relative; min-height: var(--cinema-height); background: var(--background); border-top: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
 .schedule-cell > a, .schedule-cell > span { position: absolute; left: var(--time-left); top: var(--time-top); }
 .schedule-cell > a, .schedule-cell > span, .festival-time, .festival-screening a { width: 45px; min-height: 20px; padding: 5px; line-height: 10px; white-space: nowrap; text-align: center; font-feature-settings: 'case' 1; font-size: var(--cap-height-10); }
-.schedule-cell > a:hover, .festival-time:hover, .festival-screening a:hover { color: var(--hover); text-decoration: none; background: var(--hover-background); }
+.schedule-cell > a:hover, .festival-time:hover, .festival-screening a:hover, .newsletter-preferences button:hover:not(:disabled) { color: var(--hover); text-decoration: none; background: var(--hover-background); }
 .schedule-cell .past { color: var(--past); }
 .no-screenings { padding: 16px 12px; }
 
@@ -127,22 +127,45 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .newsletter-form { flex: 1 1 280px; max-width: 430px; min-width: 0; }
 .newsletter-form label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .newsletter-controls { display: flex; gap: 5px; }
-.newsletter-controls input, .newsletter-controls button { min-height: 32px; border: 1px solid var(--border-color); border-radius: 0; padding: 4px 7px; font: inherit; }
+.newsletter-controls input, .newsletter-controls button, .newsletter-preferences button { min-height: 32px; border: 1px solid var(--border-color); border-radius: 0; padding: 4px 7px; font: inherit; }
 .newsletter-controls input { min-width: 0; width: 100%; background: var(--background); color: var(--text); }
 .newsletter-controls input::placeholder { color: var(--muted); opacity: 1; }
 .newsletter-controls button { background: var(--link); color: var(--background); border-color: var(--link); font-weight: 600; cursor: pointer; }
 .newsletter-controls button:hover { color: var(--hover); background: var(--hover-background); }
-.newsletter-controls button:disabled { opacity: 0.6; cursor: default; }
+.newsletter-controls button:disabled, .newsletter-preferences button:disabled { opacity: 0.6; cursor: default; }
 .newsletter-form > p { margin-top: 2px; }
+
+/** Private newsletter settings **/
+.newsletter-preferences { width: min(100%, 640px); margin-inline: auto; padding: 20px; }
+.preferences-heading { padding: 10px var(--schedule-inset); background: var(--schedule-surface); border: 1px solid var(--border-color); }
+.preferences-heading h1 { font-weight: 600; }
+.preferences-heading p { color: var(--muted); font-size: var(--cap-height-9-5); }
+.preferences-body { padding: 10px var(--schedule-inset); border: 1px solid var(--border-color); border-top: 0; }
+.preferences-body h2 { margin-top: 14px; }
+.preferences-body p { margin-bottom: 10px; }
+.preferences-body p:empty { display: none; }
+#preferences-cities { border-top: 1px solid var(--border-color); }
+#preferences-cities.preferences-empty { padding: 20px 10px; background: var(--schedule-surface); border: 1px solid var(--border-color); }
+.preferences-actions { display: flex; justify-content: flex-end; padding: 5px; }
+.preferences-actions[hidden] { display: none; }
+.preferences-city { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px; border-bottom: 1px solid var(--border-color); }
+.preferences-city > span { min-width: 0; overflow-wrap: anywhere; }
+.newsletter-preferences button { flex-shrink: 0; color: var(--link); background: var(--background); cursor: pointer; }
+#preferences-status { color: var(--muted); font-size: var(--cap-height-9-5); }
+#preferences-error:not(:empty), #preferences-delivery-warning { padding: 10px; background: var(--hover-background); border-left: 3px solid var(--hover); }
 
 @media (max-width: 700px) {
   .program { --schedule-inset: 12px; }
+  .newsletter-preferences { --schedule-inset: 12px; width: 100%; padding: 0; }
+  .preferences-heading, .preferences-body { border-inline: 0; }
+  .preferences-heading { padding-block: 12px; }
+  .preferences-heading h1 { line-height: 1.4; }
   .newsletter-row { border-inline: 0; }
   .newsletter-content { left: 0; width: 100cqw; padding: 14px var(--schedule-inset); }
   .newsletter-copy { padding-right: 28px; }
   .newsletter-frequency { display: inline; }
   .newsletter-copy p { display: none; }
-  .newsletter-controls input, .newsletter-controls button { min-height: 36px; }
+  .newsletter-controls input, .newsletter-controls button, .newsletter-preferences button { min-height: 36px; }
   .schedule-breadcrumbs { height: var(--schedule-nav-height); padding-block: 0; }
   .breadcrumb-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .home { padding-block: 2px; text-align: center; }

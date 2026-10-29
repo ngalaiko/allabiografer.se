@@ -132,17 +132,18 @@ Python compares upcoming screenings against 30 days of history, supplies structu
 The PostHog library template owns the subject, HTML, plain text, and all wording.
 No subscriber addresses are downloaded to GitHub or committed to this repository.
 
-The city-page form uses single opt-in: browser JavaScript sends `newsletter_signup`
-directly through the existing `/salong` PostHog proxy using the public project token.
-It uses a normalized email identity, sets `email` and `newsletter_confirmed = yes`,
-and adds `newsletter_subscribed_city_<city> = yes` without replacing other cities.
-It does not attach the email to the anonymous analytics identity or clear marketing opt-outs.
-No additional signup backend or private browser credential is needed. Build with the
-existing `POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST` arguments; without them signup stays disabled.
+The city-page form uses single opt-in: JavaScript POSTs `{email, city}` to
+`/api/newsletter/signup`. Nginx's Lua module validates the city against the generated
+`/i/newsletter-cities.json`, normalizes the email, and adds it to the person's
+`newsletter_cities` array in PostHog. This array is the only subscription state:
+removing a city unsubscribes it; an empty array means unsubscribed from everything.
+There is no receive boolean or disabled-city history. `newsletter_confirmed = yes`
+remains the explicit-signup consent marker, not a receive switch.
+Signup does not attach the email to the anonymous analytics identity, clear native
+marketing opt-outs, or disclose a person's preferences token to the browser.
 The form links to `/nyhetsbrev/` for subscription and privacy information.
 
-Python discovers cities from these membership properties and the legacy
-`newsletter_city` property among opted-in subscribers with a nonempty email.
+Python discovers cities from `newsletter_cities` among confirmed subscribers with a nonempty email.
 Addresses stay in PostHog. City values must
 match scraped city names exactly; unknown cities fail before any batches start.
 New subscribed cities need no GitHub configuration or separate template workflow.
@@ -152,22 +153,21 @@ email → exit. It listens for `newsletter_edition_ready` and its ID is
 `01a1408b-a71f-0000-c69b-722f68f522a8`.
 Its flat, AND-combined audience filters require `newsletter_confirmed` equal to
 the string `yes`, set on explicit single-opt-in signup. Do not restrict the
-city in this blueprint: Python creates two batch dispatchers with those filters,
-one for legacy `newsletter_city = edition city` and one for
-`newsletter_subscribed_city_<edition city> = yes`. Each captures one event per matching
+city in this blueprint: Python creates one batch dispatcher with those filters
+and membership in `newsletter_cities`. It captures one event per matching
 person with the edition in `event.properties.newsletter`.
 
 Before dispatch, Python finds or creates a persistent `allabiografer:delivery:<city>`
-workflow and a `newsletter-city-<ASCII city slug>` marketing category. The city workflow
+workflow without a named marketing category. The city workflow
 copies the blueprint's sender, email snapshot, audience filters, rate limit and deduplication.
-It listens only for `newsletter_edition_ready:<city>`; the generic blueprint cannot
+It also checks city membership, and listens only for `newsletter_edition_ready:<city>`; the generic blueprint cannot
 also send that event. Existing city workflows are reused, not recreated for each edition.
 Paused or misconfigured city workflows fail before any batch for that city is dispatched.
 Recipient addresses stay in PostHog.
 Both the blueprint and city workflows must deduplicate
 `{person.id}:{event.properties.newsletter.city}:{event.properties.newsletter.start}`
-for at least seven days, without a threshold. This prevents duplicate delivery when
-a person matches both audiences, while allowing one edition for each subscribed city.
+for at least seven days, without a threshold. This prevents repeat delivery while
+allowing one edition for each subscribed city.
 
 Select a verified sender and **marketing** message type on the blueprint, without
 a named category: legacy unsubscribe preferences are global and continue to apply
@@ -186,15 +186,61 @@ The template reads `event.properties.newsletter`: `city`, `city_url`, `home_url`
 JSON data to PostHog's capture-event action, never generated HTML. Do not move this data
 into workflow variables: they have a 5KB limit, and batch overrides did not propagate
 to invocations in production. A complete edition is substantially larger.
-The template loops over films with Liquid and uses `{{ unsubscribe_url }}`.
-This opens PostHog's preferences page with an independent toggle for each city's
-newsletter and an **All marketing communications** toggle. A city opt-out blocks
-only that city; the global opt-out blocks every city, including newly added ones.
-Preference changes are not instantaneous: live validation observed delayed enforcement,
-consistent with PostHog's upstream recipient cache refreshing after roughly 5–6 minutes.
-These preferences are separate from the city-membership person properties:
-opting in on the preferences page does not enroll someone in a new city's audience.
-A signup does not override an existing city/global unsubscribe or suppression.
+The template loops over films with Liquid. Its visible HTML and plain-text preferences
+link must be `https://allabiografer.se/nyhetsbrev/installningar/#token={{ person.properties.newsletter_preferences_token }}`,
+not `{{ unsubscribe_url }}`. The static private page calls `/api/newsletter/preferences`
+using the signed token in an Authorization header. It lists only active subscriptions,
+and offers one-city removal and unsubscribe-all. Rejoining uses the city-page signup form.
+It has no analytics, referrers or persistent token storage. The URL fragment is removed
+immediately. Refreshing requires reopening the original email link.
+
+PostHog still sends marketing emails and enforces native email-client unsubscribe
+and bounce suppression; these protections are never bypassed by marking mail transactional.
+A native global unsubscribe is shown as a delivery warning on our page and is not
+cleared by signup. Native opt-outs may take roughly 5–6 minutes to affect delivery.
+Person updates are asynchronous too: the API waits for read-back before claiming success,
+retains uncertain writes in shared memory, and does not automatically resend them.
+
+### Preferences backend and migration
+
+The Alpine image installs nginx's Lua/NDK modules plus cjson, resty HTTP, lock,
+OpenSSL and string libraries. Runtime environment needs `POSTHOG_PROJECT_ID`,
+`POSTHOG_PROJECT_TOKEN`, `POSTHOG_PERSONAL_API_KEY` (Person Read and Hog flow Read),
+and `NEWSLETTER_SIGNING_SECRET` (at least 32 random ASCII characters). The secret
+must be the same for the migration and app; keep it stable so old links work.
+Provision secrets through the existing deployment secret mechanism, never build args.
+The public project token may be provided at build time; it is retained for runtime.
+`POSTHOG_API_HOST` defaults to EU Cloud; `POSTHOG_CAPTURE_HOST` defaults to EU ingestion.
+HTTP loopback overrides and `NEWSLETTER_CITIES_FILE` are used only in local tests.
+
+Run **one backend instance**. Lua locks serialize each email's array updates within
+that instance, including signup versus unsubscribe; multi-instance writes require a
+shared lock/store before scaling. Do not run the migration concurrently with signups.
+The static `mise run serve` preview does not run Lua. API tests run real Lua-enabled
+nginx in the Nix shell against a local PostHog HTTP fixture.
+
+Before deploying this version, pause newsletter dispatch and old signups, then:
+
+1. Configure the runtime credentials and signing secret. The migration additionally
+   needs Person Write and Hog flow Write. Do not emit secrets or tokens into logs.
+2. Run `uv run python -m newsletter.migrate` for a read-only summary. It combines legacy
+   city keys, removes native city opt-outs, and empties globally opted-out lists.
+   Existing `newsletter_cities`, including `[]`, are authoritative on reruns.
+3. After approval, run with `--apply --prune --cutover`. It writes and verifies arrays
+   and signed personal links, removes old keys, then removes named categories from
+   existing city delivery workflows and adds membership filters. It never sends mail,
+   clears native opt-outs, or changes suppression. Unknown named blueprint/test
+   categories need explicit consent review; the sender refuses them.
+4. Replace the visible library-template preferences links, then publish updated
+   blueprint and city email snapshots in PostHog. Keep native List-Unsubscribe intact.
+5. Deploy one app instance and validate with an explicitly authorized recipient before
+   resuming the schedule. Do not run old senders after pruning legacy properties.
+
+Dry-run summaries contain counts, not addresses or tokens. Backfill uses a random opaque
+identifier per person and HMAC-SHA256 scoped to newsletter preferences, with constant-time
+signature comparison in Lua. Tokens never contain email addresses. They are long-lived
+bearer credentials: forwarding a link grants access to that recipient's newsletter
+preferences only. Replacing a person's stored token revokes the old link.
 
 Set these GitHub repository settings:
 
@@ -229,7 +275,7 @@ Tests use the upcoming Thursday's edition (today if Thursday), and may run any d
 Incomplete history can produce an incorrect “new this week” selection.
 An empty selection fails without sending. Test delivery does not subscribe the recipient.
 Each test clones the manual PostHog workflow as a draft to snapshot the latest library
-template, selects the city's marketing category, then invokes only its email step
+template, keeps marketing type without a named category, then invokes only its email step
 with the `email` variable and newsletter event data.
 This checks rendering/delivery only; use the normal `Newsletter` job to test audience dispatch
 and the event handoff end to end.
@@ -271,7 +317,7 @@ the same path on any day and select the upcoming Thursday's edition. Incomplete
 scraping history can make continuing films appear new, especially during the
 first week. The script does not claim source completeness.
 
-Every city/week creates two PostHog batch workflows, named
+Every city/week creates one PostHog batch workflow, named
 `allabiografer:<city>:<Friday date>`. Sending frequency relies on the GitHub schedule,
 not an existing-edition check: repeated runs create more workflows and batches
 for the same edition, with delivery deduplicated for seven days. Inspect that edition's batch jobs in PostHog before manually

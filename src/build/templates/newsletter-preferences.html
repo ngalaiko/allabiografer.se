@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Inställningar för nyhetsbrevet – Alla biografer</title>
+<style>
+@font-face { font-family: 'Fira Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url('/i/FiraSans-Regular.woff2?v={{ font_versions['Regular'] }}') format('woff2'); }
+@font-face { font-family: 'Fira Sans'; font-style: normal; font-weight: 600; font-display: swap; src: url('/i/FiraSans-SemiBold.woff2?v={{ font_versions['SemiBold'] }}') format('woff2'); }
+</style>
+<link href="/i/style.css?v={{ style_version }}" rel="stylesheet">
+<script src="/i/newsletter-preferences.js?v={{ newsletter_preferences_version }}"></script>
+</head>
+<body>
+<main class="newsletter-preferences">
+<header class="preferences-heading">
+<h1>Inställningar för nyhetsbrevet</h1>
+<p>Ett mejl varje torsdag med nytt på bio i dina städer.</p>
+</header>
+<div class="preferences-body">
+<p id="preferences-status" role="status" aria-live="polite">Hämtar inställningar…</p>
+<p id="preferences-error" role="alert"></p>
+<button id="preferences-retry" type="button" hidden>Försök igen</button>
+<div id="preferences-controls" hidden>
+<p id="preferences-delivery-warning" role="alert" hidden>Mejlleveransen är blockerad. En tidigare avregistrering eller leveransspärr hos vår mejltjänst PostHog kan hindra utskick även om du har städer i listan. Att lägga till en stad garanterar inte att leveransspärren hävs.</p>
+<h2>Dina städer</h2>
+<div id="preferences-cities"></div>
+<div class="preferences-actions">
+<button id="preferences-unsubscribe-all" type="button" disabled>Avsluta alla prenumerationer</button>
+</div>
+</div>
+<noscript><p>Aktivera JavaScript och öppna länken från nyhetsbrevet igen för att ändra dina inställningar.</p></noscript>
+</div>
+</main>
+</body>
+</html>
