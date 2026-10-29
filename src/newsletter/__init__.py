@@ -339,6 +339,14 @@ class PostHog:
             )
         if config.get("message_category_id"):
             raise ValueError("Migrate the test workflow's category opt-outs before removing its category")
+        people_url = self.base.removesuffix("hog_flows/") + "persons/"
+        people = self.request("GET", people_url + "?" + urlencode({"email": email}))
+        matches = [p for p in people["results"] if p["properties"].get("email", "").casefold() == email.casefold()]
+        if people.get("next") or len(matches) != 1:
+            raise ValueError("Test recipient must have exactly one existing newsletter profile")
+        person = self.request("GET", people_url + quote(str(matches[0]["uuid"]), safe="") + "/")
+        if not person["properties"].get("newsletter_preferences_token") or not person.get("distinct_ids"):
+            raise ValueError("Migrate the test recipient's preferences before sending")
         for field in ("subject", "text", "html", "design", "preheader"):
             value.pop(field, None)
         config["inputs"]["email"]["templating"] = "liquid"
@@ -364,10 +372,11 @@ class PostHog:
                     "event": {
                         "uuid": str(uuid4()),
                         "event": "newsletter_test",
-                        "distinct_id": f"newsletter-test:{uuid4()}",
+                        "distinct_id": person["distinct_ids"][0],
                         "timestamp": datetime.now(STOCKHOLM).isoformat(),
                         "properties": {"newsletter": data},
                     },
+                    "person": {"id": person["uuid"], "properties": person["properties"]},
                     "variables": {"email": email},
                 },
             },

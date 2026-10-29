@@ -144,6 +144,13 @@ class FakePostHog(PostHog):
         self.invocations = []
         self.test_result = {"status": "success", "errors": [], "logs": []}
         self.fail_send = False
+        self.people = [
+            {
+                "uuid": "reader-profile",
+                "distinct_ids": ["existing-reader"],
+                "properties": {"email": "reader@example.org", "newsletter_preferences_token": "signed-link"},
+            }
+        ]
         self.template = {
             "status": "active",
             "trigger_masking": {
@@ -196,6 +203,10 @@ class FakePostHog(PostHog):
         }
 
     def request(self, method, path="", body=None):
+        if "persons/" in path:
+            if "?" in path:
+                return {"results": copy.deepcopy(self.people)}
+            return copy.deepcopy(self.people[0])
         if "messaging_categories/" in path:
             if method == "GET":
                 return {"results": copy.deepcopy(self.categories)}
@@ -443,9 +454,30 @@ def test_single_recipient_test_never_enables_or_batches(outcome):
     assert invocation["mock_async_functions"] is False
     assert invocation["globals"]["variables"] == {"email": "reader@example.org"}
     assert invocation["globals"]["event"]["properties"]["newsletter"] == data
+    assert invocation["globals"]["event"]["distinct_id"] == "existing-reader"
+    assert invocation["globals"]["person"]["properties"]["newsletter_preferences_token"] == "signed-link"
     value = api.flows[0]["actions"][1]["config"]["inputs"]["email"]["value"]
     assert value == {"from": {"integrationId": 7}, "to": {"email": "{{ variables.email }}"}}
     assert not api.flows[0]["actions"][1]["config"].get("message_category_id")
+
+
+@pytest.mark.parametrize("invalid", ["missing", "duplicate", "unmigrated", "different-email"])
+def test_single_recipient_test_requires_matching_migrated_profile(invalid):
+    api = FakePostHog()
+    api.template["actions"][0]["config"]["type"] = "manual"
+    api.template["actions"][1]["config"]["inputs"]["email"]["value"]["to"] = {"email": "{{ variables.email }}"}
+    if invalid == "missing":
+        api.people = []
+    elif invalid == "duplicate":
+        api.people *= 2
+    elif invalid == "unmigrated":
+        del api.people[0]["properties"]["newsletter_preferences_token"]
+    else:
+        api.people[0]["properties"]["email"] = "different@example.org"
+    with pytest.raises(ValueError, match=r"profile|preferences"):
+        api.send_test("manual", "reader@example.org", {"city": "Göteborg", "films": []})
+    assert api.flows == []
+    assert api.invocations == []
 
 
 @pytest.mark.parametrize("unsafe", ["multiple", "cc", "batch"])

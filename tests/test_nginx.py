@@ -38,6 +38,8 @@ def nginx_server(tmp_path):
     site = site.replace("listen 8080;", f"listen 127.0.0.1:{port};")
     site = site.replace("/var/www/allabiografer.se", str(root))
     site = site.replace("/etc/ssl/certs/ca-certificates.crt", certs.where())
+    # This fixture tests static routing on plain nginx; test_newsletter_api owns Lua API coverage.
+    site = site.replace("content_by_lua_block { require('newsletter').handle() }", "return 503;")
     config = tmp_path / "nginx.conf"
     config.write_text(
         f"pid {tmp_path}/nginx.pid;\nerror_log {tmp_path}/error.log;\n"
