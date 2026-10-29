@@ -10,6 +10,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from io import BytesIO
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
@@ -243,7 +244,7 @@ def test_concurrent_signups_preserve_cities_across_ingestion_delay(newsletter_ap
 
 
 @pytest.mark.parametrize("native_optout", [None, "city", "global"])
-def test_migration_is_dry_run_idempotent_and_preserves_consent(native_optout):
+def test_migration_is_dry_run_idempotent_and_preserves_consent(native_optout, monkeypatch):
     class MigrationAPI:
         base = "https://eu.posthog.com/api/projects/123/hog_flows/"
 
@@ -278,16 +279,27 @@ def test_migration_is_dry_run_idempotent_and_preserves_consent(native_optout):
                     return {"results": []}
                 if "?" in path:
                     return {"results": [{"uuid": "person-1"}], "next": None}
-                return {"properties": copy.deepcopy(self.properties)}
+                return {"properties": copy.deepcopy(self.properties), "distinct_ids": ["existing-subscriber"]}
             assert "/persons/person-1/" in path  # No opt-out or delivery mutations.
-            if method == "PATCH":
-                self.properties.update(body["properties"])
-            elif method == "POST":
-                for key in body["$unset"]:
-                    self.properties.pop(key)
+            assert method == "POST"
+            for key in body["$unset"]:
+                self.properties.pop(key)
             return {}
 
     client = MigrationAPI()
+
+    def capture(request, timeout):
+        assert request.full_url == "https://eu.i.posthog.com/i/v0/e/"
+        assert not request.has_header("Authorization")
+        payload = json.loads(request.data)
+        assert payload["api_key"] == "test-public-key"
+        assert payload["event"] == "$set"
+        assert payload["distinct_id"] == "existing-subscriber"
+        client.properties.update(payload["properties"]["$set"])
+        return BytesIO(b'{"status":1}')
+
+    monkeypatch.setenv("POSTHOG_PROJECT_TOKEN", "test-public-key")
+    monkeypatch.setattr("newsletter.migrate.urlopen", capture)
     before = copy.deepcopy(client.properties)
     assert migrate(client, SECRET)["updates"] == 1
     assert client.properties == before

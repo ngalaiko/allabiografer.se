@@ -221,20 +221,22 @@ nginx in the Nix shell against a local PostHog HTTP fixture.
 
 Before deploying this version, pause newsletter dispatch and old signups, then:
 
-1. Configure the runtime credentials and signing secret. The migration additionally
-   needs Person Write and Hog flow Write. Do not emit secrets or tokens into logs.
+1. Configure the runtime credentials and signing secret. The migration reuses the
+   public project token for profile updates and needs Hog flow Write for cutover.
+   Only optional legacy-field pruning needs Person Write. Do not emit secrets or tokens into logs.
 2. Run `uv run python -m newsletter.migrate` for a read-only summary. It combines legacy
    city keys, removes native city opt-outs, and empties globally opted-out lists.
    Existing `newsletter_cities`, including `[]`, are authoritative on reruns.
-3. After approval, run with `--apply --prune --cutover`. It writes and verifies arrays
-   and signed personal links, removes old keys, then removes named categories from
+3. After approval, run with `--apply --cutover`. It writes and verifies arrays
+   and signed personal links, retains old keys for rollback, then removes named categories from
    existing city delivery workflows and adds membership filters. It never sends mail,
    clears native opt-outs, or changes suppression. Unknown named blueprint/test
    categories need explicit consent review; the sender refuses them.
 4. Replace the visible library-template preferences links, then publish updated
    blueprint and city email snapshots in PostHog. Keep native List-Unsubscribe intact.
 5. Deploy one app instance and validate with an explicitly authorized recipient before
-   resuming the schedule. Do not run old senders after pruning legacy properties.
+   resuming the schedule. Prune legacy fields separately with `--apply --prune` only
+   after verification; do not run old senders after pruning legacy properties.
 
 Dry-run summaries contain counts, not addresses or tokens. Backfill uses a random opaque
 identifier per person and HMAC-SHA256 scoped to newsletter preferences, with constant-time

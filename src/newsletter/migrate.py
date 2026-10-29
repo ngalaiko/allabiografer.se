@@ -3,10 +3,12 @@
 import argparse
 import hashlib
 import hmac
+import json
 import os
 import secrets
 import time
 from urllib.parse import quote, urlencode
+from urllib.request import Request, urlopen
 
 from build import _slugify
 from newsletter import CITY_PREFIX, PostHog, city_filter
@@ -70,6 +72,9 @@ def preferences_token(secret: str, identifier: str) -> str:
 def migrate(client: PostHog, secret: str, *, apply: bool = False, prune: bool = False) -> dict:
     if len(secret) < 32:
         raise ValueError("NEWSLETTER_SIGNING_SECRET must have at least 32 characters")
+    public_key = os.environ.get("POSTHOG_PROJECT_TOKEN")
+    if apply and not public_key:
+        raise ValueError("POSTHOG_PROJECT_TOKEN is required to apply the migration")
     base = client.base.removesuffix("hog_flows/") + "persons/"
     url = base + "?limit=100"
     category_page = client.request("GET", client.base.removesuffix("hog_flows/") + "messaging_categories/?limit=1000")
@@ -105,7 +110,23 @@ def migrate(client: PostHog, secret: str, *, apply: bool = False, prune: bool = 
             if not apply:
                 continue
             if changed:
-                client.request("PATCH", person_url, {"properties": updated})
+                # Use the same ingestion path as signup; the existing newsletter key needs only Person Read.
+                host = "eu" if client.base.startswith("https://eu.posthog.com/") else "us"
+                request = Request(
+                    f"https://{host}.i.posthog.com/i/v0/e/",
+                    data=json.dumps(
+                        {
+                            "api_key": public_key,
+                            "event": "$set",
+                            "distinct_id": person["distinct_ids"][0],
+                            "properties": {"$process_person_profile": True, "$geoip_disable": True, "$set": updated},
+                        }
+                    ).encode(),
+                    headers={"Content-Type": "application/json"},
+                )
+                with urlopen(request, timeout=60) as response:
+                    if json.load(response).get("status") not in (1, "Ok"):
+                        raise RuntimeError("Person capture not accepted; inspect before rerunning")
             # Read back asynchronous person writes before declaring success or pruning.
             for _ in range(30):
                 fresh = client.request("GET", person_url)["properties"]
