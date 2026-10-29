@@ -35,6 +35,7 @@ server {
         proxy_ssl_server_name on;
         proxy_ssl_name $posthog_upstream;
         proxy_ssl_verify on;
+        proxy_ssl_verify_depth 2;
         proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
         client_max_body_size 64m;
         access_log off;
