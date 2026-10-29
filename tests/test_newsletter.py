@@ -9,6 +9,7 @@ from urllib.parse import parse_qs, urlsplit
 import pytest
 
 from newsletter import PostHog, edition
+from newsletter.migrate import cutover_workflows
 
 
 @pytest.mark.parametrize("edition_day", [14, 15])
@@ -118,8 +119,8 @@ def test_registered_cities_query(monkeypatch, truncated):
         assert request.full_url == "https://eu.posthog.com/api/projects/123/query/"
         query = json.loads(request.data)
         assert query["refresh"] == "force_blocking"
-        assert "properties.newsletter_city AS city FROM persons" in query["query"]["query"]
-        assert "newsletter_subscribed_city_" in query["query"]["query"]
+        assert "JSONExtract(properties, 'newsletter_cities', 'Array(String)')" in query["query"]["query"]
+        assert "newsletter_subscribed_city_" not in query["query"]["query"]
         assert "properties.newsletter_confirmed = 'yes'" in query["query"]["query"]
         return BytesIO(json.dumps({"results": [["Göteborg"], ["Malmö"]], "hasMore": truncated}).encode())
 
@@ -245,17 +246,20 @@ def test_posthog_preserves_audience_and_allows_repeating_an_edition(ambiguous):
         with pytest.raises(TimeoutError):
             api.send("template", data)
     else:
-        assert api.send("template", data) == "batch,batch"
-    initial_jobs = 1 if ambiguous else 2
+        assert api.send("template", data) == "batch"
+    initial_jobs = 1
     assert len(api.jobs) == initial_jobs
     api.fail_send = False
-    assert api.send("template", data) == "batch,batch"
-    assert len(api.jobs) == initial_jobs + 2
-    assert [flow["name"] for flow in api.flows] == ["allabiografer:Stockholm:2026-10-16"] * (initial_jobs + 2)
+    assert api.send("template", data) == "batch"
+    assert len(api.jobs) == initial_jobs + 1
+    assert [flow["name"] for flow in api.flows] == ["allabiografer:Stockholm:2026-10-16"] * (initial_jobs + 1)
     sent = api.jobs[0]["workflow"]["actions"]
     assert sent[0]["config"]["filters"]["properties"] == [
         {"key": "newsletter_confirmed", "type": "person", "operator": "exact", "value": ["yes"]},
-        {"key": "newsletter_city", "type": "person", "operator": "exact", "value": ["Stockholm"]},
+        {
+            "type": "hogql",
+            "key": "has(JSONExtract(ifNull(properties.newsletter_cities, '[]'), 'Array(String)'), 'Stockholm')",
+        },
     ]
     assert sent[0]["config"]["type"] == "batch"
     assert sent[1]["type"] == "function"
@@ -276,26 +280,18 @@ def test_shared_workflow_keeps_city_audiences_separate():
     api = FakePostHog()
     for city in ["Göteborg", "Malmö"]:
         api.send("template", {"city": city, "start": "2026-10-16", "end": "2026-10-22", "films": []})
-    assert [job["workflow"]["actions"][0]["config"]["filters"]["properties"][-1]["value"] for job in api.jobs] == [
-        ["Göteborg"],
-        ["yes"],
-        ["Malmö"],
-        ["yes"],
-    ]
     assert [job["workflow"]["actions"][0]["config"]["filters"]["properties"][-1]["key"] for job in api.jobs] == [
-        "newsletter_city",
-        "newsletter_subscribed_city_Göteborg",
-        "newsletter_city",
-        "newsletter_subscribed_city_Malmö",
+        "has(JSONExtract(ifNull(properties.newsletter_cities, '[]'), 'Array(String)'), 'Göteborg')",
+        "has(JSONExtract(ifNull(properties.newsletter_cities, '[]'), 'Array(String)'), 'Malmö')",
     ]
     assert len(api.template["actions"][0]["config"]["filters"]["properties"]) == 1
 
 
-def test_city_delivery_reuses_categories_and_deduplication_across_editions():
+def test_city_delivery_uses_property_membership_and_deduplication_across_editions():
     api = FakePostHog()
     for city, start in [("Göteborg", "2026-10-16"), ("Stockholm", "2026-10-16"), ("Göteborg", "2026-10-23")]:
         api.send("template", {"city": city, "start": start, "end": start, "films": []})
-    assert {c["key"] for c in api.categories} == {"newsletter-city-goteborg", "newsletter-city-stockholm"}
+    assert api.categories == []
     assert len(api.deliveries) == 2
     assert {job["workflow"]["actions"][1]["config"]["inputs"]["event"]["value"] for job in api.jobs} == {
         "newsletter_edition_ready:Göteborg",
@@ -305,9 +301,11 @@ def test_city_delivery_reuses_categories_and_deduplication_across_editions():
         city = flow["name"].removeprefix("allabiografer:delivery:")
         trigger, email, _ = flow["actions"]
         assert trigger["config"]["filters"]["events"][0]["id"] == f"newsletter_edition_ready:{city}"
-        category = next(c for c in api.categories if c["id"] == email["config"]["message_category_id"])
-        assert category["name"] == f"Nytt på bio i {city}"
-        assert category["category_type"] == email["config"]["message_category_type"] == "marketing"
+        assert not email["config"].get("message_category_id")
+        assert email["config"]["message_category_type"] == "marketing"
+        assert {"type": "hogql", "key": f"has(person.properties.newsletter_cities, '{city}')"} in trigger["config"][
+            "filters"
+        ]["properties"]
         assert flow["trigger_masking"] == api.template["trigger_masking"]
         assert email["config"]["inputs"]["email"]["value"]["to"] == {"email": "{{ person.properties.email }}"}
 
@@ -341,35 +339,53 @@ def test_existing_category_consent_requires_explicit_migration():
     assert api.deliveries == {}
 
 
-def test_multiple_city_audiences_preserve_legacy_and_exclude_non_subscribers():
+@pytest.mark.parametrize("unknown_category", [False, True])
+def test_workflow_cutover_preserves_filters_and_rejects_unknown_consent(unknown_category):
+    class CutoverAPI(FakePostHog):
+        def request(self, method, path="", body=None):
+            if path.startswith("?search=allabiografer%3Adelivery%3A"):
+                return {"results": list(copy.deepcopy(self.deliveries).values())}
+            result = super().request(method, path, body)
+            if method == "GET" and path == "old/":
+                result["actions"][0]["config"]["filters"]["bytecode"] = ["server-compiled"]
+            return result
+
+    api = CutoverAPI()
+    api.categories = [{"id": "cat-g", "key": "newsletter-city-goteborg"}]
+    flow = copy.deepcopy(api.template)
+    flow.update(id="old", name="allabiografer:delivery:Göteborg")
+    flow["actions"][1]["config"]["message_category_id"] = "unknown" if unknown_category else "cat-g"
+    api.deliveries["old"] = flow
+    before = copy.deepcopy(flow)
+    if unknown_category:
+        with pytest.raises(ValueError, match="preserve its opt-outs"):
+            cutover_workflows(api)
+        assert api.deliveries["old"] == before
+    else:
+        assert cutover_workflows(api) == 1
+        migrated = api.deliveries["old"]
+        assert migrated["actions"][0]["config"]["filters"]["properties"] == [
+            *before["actions"][0]["config"]["filters"]["properties"],
+            {"type": "hogql", "key": "has(person.properties.newsletter_cities, 'Göteborg')"},
+        ]
+        expected_email = before["actions"][1]
+        expected_email["config"]["message_category_id"] = None
+        assert migrated["actions"][1] == expected_email
+        assert cutover_workflows(api) == 1  # Idempotent, without duplicated filters.
+        assert api.deliveries["old"] == migrated
+    assert api.jobs == []
+
+
+def test_city_membership_expressions_escape_literals_in_both_scopes():
     api = FakePostHog()
-    people = [
-        {
-            "id": "both",
-            "newsletter_confirmed": "yes",
-            "newsletter_city": "Stockholm",
-            "newsletter_subscribed_city_Stockholm": "yes",
-            "newsletter_subscribed_city_Göteborg": "yes",
-        },
-        {"id": "gothenburg", "newsletter_confirmed": "yes", "newsletter_subscribed_city_Göteborg": "yes"},
-        {"id": "legacy", "newsletter_confirmed": "yes", "newsletter_city": "Stockholm"},
-        {"id": "not-consenting", "newsletter_subscribed_city_Stockholm": "yes"},
-        {"id": "other-city", "newsletter_confirmed": "yes", "newsletter_city": "Malmö"},
-    ]
-    recipients = set()
-    for city in ["Stockholm", "Göteborg"]:
-        api.send("template", {"city": city, "start": "2026-10-16", "end": "2026-10-22", "films": []})
-        for job in api.jobs[-2:]:
-            filters = job["workflow"]["actions"][0]["config"]["filters"]["properties"]
-            recipients.update(
-                (person["id"], city) for person in people if all(person.get(f["key"]) in f["value"] for f in filters)
-            )
-    assert recipients == {
-        ("both", "Stockholm"),
-        ("both", "Göteborg"),
-        ("gothenburg", "Göteborg"),
-        ("legacy", "Stockholm"),
+    api.send("template", {"city": "Göte'borg\\East", "start": "2026-10-16", "end": "2026-10-22", "films": []})
+    batch = api.jobs[0]["workflow"]["actions"][0]["config"]["filters"]["properties"][-1]
+    assert batch == {
+        "type": "hogql",
+        "key": "has(JSONExtract(ifNull(properties.newsletter_cities, '[]'), 'Array(String)'), 'Göte\\'borg\\\\East')",
     }
+    event = next(iter(api.deliveries.values()))["actions"][0]["config"]["filters"]["properties"][-1]
+    assert event == {"type": "hogql", "key": "has(person.properties.newsletter_cities, 'Göte\\'borg\\\\East')"}
 
 
 def test_overlapping_audiences_require_delivery_deduplication():
@@ -429,8 +445,7 @@ def test_single_recipient_test_never_enables_or_batches(outcome):
     assert invocation["globals"]["event"]["properties"]["newsletter"] == data
     value = api.flows[0]["actions"][1]["config"]["inputs"]["email"]["value"]
     assert value == {"from": {"integrationId": 7}, "to": {"email": "{{ variables.email }}"}}
-    category_id = api.flows[0]["actions"][1]["config"]["message_category_id"]
-    assert next(c for c in api.categories if c["id"] == category_id)["key"] == "newsletter-city-goteborg"
+    assert not api.flows[0]["actions"][1]["config"].get("message_category_id")
 
 
 @pytest.mark.parametrize("unsafe", ["multiple", "cc", "batch"])

@@ -6,6 +6,10 @@ on:
       timezone: Europe/Stockholm
   workflow_dispatch:
     inputs:
+      migration_dry_run:
+        description: Preview the newsletter preferences migration without writes or emails
+        type: boolean
+        default: false
       send:
         description: Send real emails to registered subscribers; otherwise create previews
         type: boolean
@@ -22,8 +26,31 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  migration-dry-run:
+    if: github.event_name == 'workflow_dispatch' && inputs.migration_dry_run
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - name: Preview preferences migration (read only)
+        env:
+          POSTHOG_PERSONAL_API_KEY: ${{ secrets.POSTHOG_PERSONAL_API_KEY }}
+          POSTHOG_PROJECT_ID: ${{ vars.POSTHOG_PROJECT_ID }}
+        run: |
+          uv run --locked python - <<'PY'
+          import secrets
+          from newsletter import PostHog
+          from newsletter.migrate import migrate
+
+          # Exercise signing without exposing the production secret to this preview.
+          # No generated identifier, token or property is written to PostHog.
+          counts = migrate(PostHog(), secrets.token_hex(32), apply=False)
+          print("Dry run (no writes; ephemeral preview signing key)", counts)
+          PY
+
   send:
-    if: github.event_name == 'workflow_dispatch' || vars.NEWSLETTER_ENABLED == 'true'
+    if: "!inputs.migration_dry_run && (github.event_name == 'workflow_dispatch' || vars.NEWSLETTER_ENABLED == 'true')"
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

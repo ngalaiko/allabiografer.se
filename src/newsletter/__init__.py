@@ -14,12 +14,23 @@ from urllib.request import Request, urlopen
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
-from build import BASE_URL, _slugify, _slugify_sv, city_programme_url, film_anchor
+from build import BASE_URL, _slugify_sv, city_programme_url, film_anchor
 from store import DB_FILE, title_key
 
 STOCKHOLM = ZoneInfo("Europe/Stockholm")
 NEWSLETTER_EVENT = "newsletter_edition_ready"
 CITY_PREFIX = "newsletter_subscribed_city_"
+
+
+def city_filter(city: str, *, batch: bool = False) -> dict:
+    # Batch HogQL extracts JSON strings; event filters receive parsed person arrays.
+    value = city.replace("\\", "\\\\").replace("'", "\\'")
+    array = (
+        "JSONExtract(ifNull(properties.newsletter_cities, '[]'), 'Array(String)')"
+        if batch
+        else "person.properties.newsletter_cities"
+    )
+    return {"type": "hogql", "key": f"has({array}, '{value}')"}
 
 
 def newsletter_url(url: str, start: date, content: str) -> str:
@@ -116,8 +127,13 @@ class PostHog:
     def request(self, method: str, path: str = "", body: dict | None = None):
         url = path if path.startswith("https://") else self.base + path
         project = self.base.removesuffix("hog_flows/")
-        if not (url.startswith((self.base, project + "messaging_categories/")) or url == project + "query/"):
-            raise ValueError("Refusing to send credentials outside the workflow, category and query APIs")
+        if not (
+            url.startswith(
+                (self.base, project + "messaging_categories/", project + "messaging_preferences/", project + "persons/")
+            )
+            or url == project + "query/"
+        ):
+            raise ValueError("Refusing to send credentials outside the workflow, category, person and query APIs")
         req = Request(
             url,
             method=method,
@@ -126,32 +142,11 @@ class PostHog:
         )
         # Writes deliberately have no automatic retries: an uncertain send needs reconciliation.
         with urlopen(req, timeout=60) as response:
-            return json.load(response)
-
-    def category(self, city: str) -> dict:
-        url = self.base.removesuffix("hog_flows/") + "messaging_categories/"
-        categories = self.request("GET", url + "?limit=1000")
-        if categories.get("next"):
-            raise ValueError("Marketing category lookup was truncated")
-        key = "newsletter-city-" + _slugify(city)
-        category = next((c for c in categories["results"] if c["key"] == key), None)
-        if not category:
-            category = self.request(
-                "POST",
-                url,
-                {
-                    "key": key,
-                    "name": f"Nytt på bio i {city}",
-                    "public_description": f"Ett mejl varje torsdag med nya filmer på bio i {city}.",
-                    "category_type": "marketing",
-                },
-            )
-        if category["category_type"] != "marketing":
-            raise ValueError(f"The newsletter category for {city} must be marketing")
-        return category
+            data = response.read()
+            return json.loads(data) if data else {}
 
     def delivery(self, source: dict, city: str) -> dict:
-        """Reuse a persistent city workflow so opt-outs and edition dedup survive each batch."""
+        """Reuse a persistent city workflow for edition deduplication."""
         name = f"allabiografer:delivery:{city}"
         flows = self.request("GET", "?" + urlencode({"search": name, "limit": 100}))
         if flows.get("next"):
@@ -162,7 +157,6 @@ class PostHog:
         email = next(a for a in source["actions"] if a["type"] == "function_email")
         if email["config"].get("message_category_id"):
             raise ValueError("Migrate the template category's opt-outs before creating city delivery workflows")
-        category = self.category(city)
         event = f"{NEWSLETTER_EVENT}:{city}"
         if matches:
             flow = self.request("GET", f"{quote(matches[0]['id'], safe='')}/")
@@ -171,14 +165,16 @@ class PostHog:
             trigger = next(a for a in actions if a["type"] == "trigger")
             trigger["config"]["filters"] = {
                 "events": [{"id": event, "type": "events", "order": 0}],
-                "properties": trigger["config"]["filters"].get("properties", []),
+                "properties": [
+                    *trigger["config"]["filters"].get("properties", []),
+                    city_filter(city),
+                ],
             }
-            next(a for a in actions if a["type"] == "function_email")["config"]["message_category_id"] = category["id"]
             flow = self.request(
                 "POST",
                 body={
                     "name": name,
-                    "description": f"Newsletter delivery for {city}; uses its own marketing opt-out category.",
+                    "description": f"Newsletter delivery for {city}; audience uses newsletter_cities.",
                     "status": "draft",
                     "actions": actions,
                     "edges": source["edges"],
@@ -198,7 +194,8 @@ class PostHog:
             or len(triggers) != 1
             or triggers[0]["config"]["type"] != "event"
             or [e.get("id") for e in triggers[0]["config"]["filters"].get("events", [])] != [event]
-            or emails[0]["config"].get("message_category_id") != category["id"]
+            or city_filter(city) not in triggers[0]["config"]["filters"].get("properties", [])
+            or emails[0]["config"].get("message_category_id")
             or emails[0]["config"].get("message_category_type") != "marketing"
             or flow.get("trigger_masking", {}).get("hash") != source["trigger_masking"]["hash"]
             or (flow.get("trigger_masking", {}).get("ttl") or 0) < 604800
@@ -217,15 +214,9 @@ class PostHog:
                 "refresh": "force_blocking",
                 "query": {
                     "kind": "HogQLQuery",
-                    "query": "SELECT DISTINCT city FROM ("
-                    "SELECT properties.newsletter_city AS city FROM persons "
-                    "WHERE properties.newsletter_confirmed = 'yes' AND properties.email != '' "
-                    "UNION ALL SELECT arrayJoin(arrayMap(key -> "
-                    f"substring(key, {len(CITY_PREFIX) + 1}, length(key)), arrayFilter(key -> "
-                    f"startsWith(key, '{CITY_PREFIX}') AND JSONExtractString(properties, key) = 'yes', "
-                    "JSONExtractKeys(properties)))) AS city FROM persons "
-                    "WHERE properties.newsletter_confirmed = 'yes' AND properties.email != ''"
-                    ") WHERE city != '' ORDER BY city LIMIT 10000",
+                    "query": "SELECT DISTINCT arrayJoin(JSONExtract(properties, 'newsletter_cities', 'Array(String)')) "
+                    "AS city FROM persons WHERE properties.newsletter_confirmed = 'yes' "
+                    "AND properties.email != '' AND city != '' ORDER BY city LIMIT 10000",
                 },
             },
         )
@@ -260,8 +251,11 @@ class PostHog:
             not any(all(p.get(k) == v for k, v in condition.items()) for p in properties) for condition in required
         ):
             raise ValueError("Audience requires newsletter_confirmed = yes")
-        if any(p.get("key") == "newsletter_city" or p.get("key", "").startswith(CITY_PREFIX) for p in properties):
-            raise ValueError("Shared workflow must not restrict newsletter_city; Python adds each city's filter")
+        if any(
+            p.get("key") in {"newsletter_city", "newsletter_cities"} or p.get("key", "").startswith(CITY_PREFIX)
+            for p in properties
+        ):
+            raise ValueError("Shared workflow must not restrict newsletter cities; Python adds each city's filter")
         masking = source.get("trigger_masking") or {}
         if (
             masking.get("hash") != "{person.id}:{event.properties.newsletter.city}:{event.properties.newsletter.start}"
@@ -274,7 +268,7 @@ class PostHog:
             "filters": {
                 "properties": [
                     *properties,
-                    {"key": "newsletter_city", "type": "person", "operator": "exact", "value": [data["city"]]},
+                    city_filter(data["city"], batch=True),
                 ]
             },
         }
@@ -312,20 +306,9 @@ class PostHog:
             "variables": [],
             "exit_condition": "exit_only_at_end",
         }
-        jobs = []
-        # Native batch conditions are AND-only. Preserve legacy subscribers without
-        # migration; the shared workflow deduplicates overlap by person/city/edition.
-        for key, value in [("newsletter_city", data["city"]), (CITY_PREFIX + data["city"], "yes")]:
-            triggers[0]["config"]["filters"]["properties"][-1] = {
-                "key": key,
-                "type": "person",
-                "operator": "exact",
-                "value": [value],
-            }
-            flow = self.request("POST", body=payload)
-            job = self.request("POST", f"{flow['id']}/batch_jobs/", {})
-            jobs.append(str(job["id"]))
-        return ",".join(jobs)
+        flow = self.request("POST", body=payload)
+        job = self.request("POST", f"{flow['id']}/batch_jobs/", {})
+        return str(job["id"])
 
     def send_test(self, workflow_id: str, email: str, data: dict) -> str:
         """Run exactly one email step, without enabling a workflow or expanding an audience."""
@@ -354,7 +337,8 @@ class PostHog:
             raise ValueError(
                 "Test email requires a library template, marketing type and only variables.email as recipient"
             )
-        config["message_category_id"] = self.category(data["city"])["id"]
+        if config.get("message_category_id"):
+            raise ValueError("Migrate the test workflow's category opt-outs before removing its category")
         for field in ("subject", "text", "html", "design", "preheader"):
             value.pop(field, None)
         config["inputs"]["email"]["templating"] = "liquid"
