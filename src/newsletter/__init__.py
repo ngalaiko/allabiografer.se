@@ -215,8 +215,7 @@ class PostHog:
                 "query": {
                     "kind": "HogQLQuery",
                     "query": "SELECT DISTINCT arrayJoin(JSONExtract(properties, 'newsletter_cities', 'Array(String)')) "
-                    "AS city FROM persons WHERE properties.newsletter_confirmed = 'yes' "
-                    "AND properties.email != '' AND city != '' ORDER BY city LIMIT 10000",
+                    "AS city FROM persons WHERE properties.email != '' AND city != '' ORDER BY city LIMIT 10000",
                 },
             },
         )
@@ -244,13 +243,6 @@ class PostHog:
         if len(events) != 1 or events[0].get("id") != NEWSLETTER_EVENT:
             raise ValueError(f"Delivery workflow must listen for {NEWSLETTER_EVENT}")
         properties = triggers[0]["config"].get("filters", {}).get("properties", [])
-        required = [
-            {"key": "newsletter_confirmed", "type": "person", "operator": "exact", "value": ["yes"]},
-        ]
-        if not isinstance(properties, list) or any(
-            not any(all(p.get(k) == v for k, v in condition.items()) for p in properties) for condition in required
-        ):
-            raise ValueError("Audience requires newsletter_confirmed = yes")
         if any(
             p.get("key") in {"newsletter_city", "newsletter_cities"} or p.get("key", "").startswith(CITY_PREFIX)
             for p in properties

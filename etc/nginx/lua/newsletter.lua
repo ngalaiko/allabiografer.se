@@ -179,7 +179,7 @@ local function run()
             for _, city in ipairs(memberships) do if city == body.city then seen = true end end
             if not seen then memberships[#memberships + 1] = body.city end
             table.sort(memberships)
-            return {email = email, newsletter_confirmed = "yes", newsletter_cities = memberships,
+            return {email = email, newsletter_cities = memberships,
                 newsletter_preferences_token = token_for(secret, id)}
         end, "newsletter_signup")
         -- Never disclose whether a person exists, or return their bearer token.

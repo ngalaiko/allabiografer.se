@@ -121,7 +121,7 @@ def test_registered_cities_query(monkeypatch, truncated):
         assert query["refresh"] == "force_blocking"
         assert "JSONExtract(properties, 'newsletter_cities', 'Array(String)')" in query["query"]["query"]
         assert "newsletter_subscribed_city_" not in query["query"]["query"]
-        assert "properties.newsletter_confirmed = 'yes'" in query["query"]["query"]
+        assert "newsletter_confirmed" not in query["query"]["query"]
         return BytesIO(json.dumps({"results": [["Göteborg"], ["Malmö"]], "hasMore": truncated}).encode())
 
     monkeypatch.setattr("newsletter.urlopen", respond)
@@ -167,10 +167,9 @@ class FakePostHog(PostHog):
                             "events": [{"id": "newsletter_edition_ready"}],
                             "properties": [
                                 {
-                                    "key": "newsletter_confirmed",
+                                    "key": "email",
                                     "type": "person",
-                                    "operator": "exact",
-                                    "value": ["yes"],
+                                    "operator": "is_set",
                                 },
                             ],
                         },
@@ -266,7 +265,7 @@ def test_posthog_preserves_audience_and_allows_repeating_an_edition(ambiguous):
     assert [flow["name"] for flow in api.flows] == ["allabiografer:Stockholm:2026-10-16"] * (initial_jobs + 1)
     sent = api.jobs[0]["workflow"]["actions"]
     assert sent[0]["config"]["filters"]["properties"] == [
-        {"key": "newsletter_confirmed", "type": "person", "operator": "exact", "value": ["yes"]},
+        {"key": "email", "type": "person", "operator": "is_set"},
         {
             "type": "hogql",
             "key": "has(JSONExtract(ifNull(properties.newsletter_cities, '[]'), 'Array(String)'), 'Stockholm')",
@@ -407,12 +406,16 @@ def test_overlapping_audiences_require_delivery_deduplication():
     assert api.jobs == []
 
 
-def test_posthog_requires_confirmed_audience():
+def test_city_membership_does_not_require_confirmation():
     api = FakePostHog()
     api.template["actions"][0]["config"]["filters"]["properties"] = []
-    with pytest.raises(ValueError, match="Audience requires"):
-        api.send("template", {"city": "Malmö", "start": "2026-10-16", "end": "2026-10-22", "films": []})
-    assert api.jobs == []
+    api.send("template", {"city": "Malmö", "start": "2026-10-16", "end": "2026-10-22", "films": []})
+    assert api.jobs[0]["workflow"]["actions"][0]["config"]["filters"]["properties"] == [
+        {
+            "type": "hogql",
+            "key": "has(JSONExtract(ifNull(properties.newsletter_cities, '[]'), 'Array(String)'), 'Malmö')",
+        }
+    ]
 
 
 @pytest.mark.parametrize("invalid", ["draft", "wrong_event"])

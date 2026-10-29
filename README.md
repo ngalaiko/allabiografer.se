@@ -137,13 +137,12 @@ The city-page form uses single opt-in: JavaScript POSTs `{email, city}` to
 `/i/newsletter-cities.json`, normalizes the email, and adds it to the person's
 `newsletter_cities` array in PostHog. This array is the only subscription state:
 removing a city unsubscribes it; an empty array means unsubscribed from everything.
-There is no receive boolean or disabled-city history. `newsletter_confirmed = yes`
-remains the explicit-signup consent marker, not a receive switch.
+There is no receive boolean, separate confirmation flag, or disabled-city history.
 Signup does not attach the email to the anonymous analytics identity, clear native
 marketing opt-outs, or disclose a person's preferences token to the browser.
 The form links to `/nyhetsbrev/` for subscription and privacy information.
 
-Python discovers cities from `newsletter_cities` among confirmed subscribers with a nonempty email.
+Python discovers cities from `newsletter_cities` among people with a nonempty email.
 Addresses stay in PostHog. City values must
 match scraped city names exactly; unknown cities fail before any batches start.
 New subscribed cities need no GitHub configuration or separate template workflow.
@@ -151,9 +150,7 @@ New subscribed cities need no GitHub configuration or separate template workflow
 Use one **active**, unscheduled PostHog delivery blueprint: event trigger → one native
 email → exit. It listens for `newsletter_edition_ready` and its ID is
 `01a1408b-a71f-0000-c69b-722f68f522a8`.
-Its flat, AND-combined audience filters require `newsletter_confirmed` equal to
-the string `yes`, set on explicit single-opt-in signup. Do not restrict the
-city in this blueprint: Python creates one batch dispatcher with those filters
+Do not restrict the city in this blueprint: Python creates one batch dispatcher with its audience filters
 and membership in `newsletter_cities`. It captures one event per matching
 person with the edition in `event.properties.newsletter`.
 

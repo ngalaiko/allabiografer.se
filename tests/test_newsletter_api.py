@@ -211,6 +211,7 @@ def test_signup_and_property_unsubscribe_end_to_end(newsletter_api):
     person = people["newsletter:person@example.com"]["properties"]
     assert person["newsletter_cities"] == ["Göteborg", "Stockholm"]
     assert not any(key.startswith("newsletter_subscribed_city_") for key in person)
+    assert "newsletter_confirmed" not in person
     token = person["newsletter_preferences_token"]
     assert "newsletter_preferences_id" not in person
     assert token == preferences_token(SECRET, people["newsletter:person@example.com"]["uuid"])
@@ -341,14 +342,14 @@ def test_migration_is_dry_run_idempotent_and_preserves_consent(native_optout, mo
     before = copy.deepcopy(client.properties)
     assert migrate(client, SECRET)["updates"] == 1
     assert client.properties == before
-    assert migrate(client, SECRET, apply=True, prune=True)["legacy_properties"] == 4
+    assert migrate(client, SECRET, apply=True, prune=True)["legacy_properties"] == 5
     expected = {None: ["Göteborg", "Stockholm"], "city": ["Stockholm"], "global": []}
     assert client.properties["newsletter_cities"] == expected[native_optout]
     assert "newsletter_preferences_id" not in client.properties
     assert client.properties["newsletter_preferences_token"] == preferences_token(
         SECRET, "12345678-1234-5678-9abc-123456789abc"
     )
-    assert client.properties["newsletter_confirmed"] == "yes"
+    assert "newsletter_confirmed" not in client.properties
     assert not any(k.startswith("newsletter_subscribed_city_") for k in client.properties)
     assert migrate(client, SECRET, apply=True) == {"people": 1, "updates": 0, "legacy_properties": 0}
     # A rerun before pruning must never resurrect a removed city from legacy keys.

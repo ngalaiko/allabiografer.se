@@ -99,7 +99,11 @@ def migrate(client: PostHog, secret: str, *, apply: bool = False, prune: bool = 
                 "newsletter_cities": cities,
                 "newsletter_preferences_token": preferences_token(secret, identifier),
             }
-            legacy = [key for key in properties if key == "newsletter_city" or key.startswith(CITY_PREFIX)]
+            legacy = [
+                key
+                for key in properties
+                if key in {"newsletter_city", "newsletter_confirmed"} or key.startswith(CITY_PREFIX)
+            ]
             changed = any(properties.get(key) != value for key, value in updated.items()) or (
                 "newsletter_preferences_id" in properties
             )
