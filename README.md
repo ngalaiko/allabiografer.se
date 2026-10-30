@@ -161,6 +161,13 @@ It also checks city membership, and listens only for `newsletter_edition_ready:<
 also send that event. Existing city workflows are reused, not recreated for each edition.
 Paused or misconfigured city workflows fail before any batch for that city is dispatched.
 Recipient addresses stay in PostHog.
+At the start of each `--send` run, Python archives previous edition batch dispatchers
+only when all their batch jobs are completed, no running/failed/canceled runs are
+reported since workflow creation, and PostHog confirms there are no in-flight runs.
+Scheduled workflows and workflows with unpublished drafts are left alone. Unknown
+in-flight counts defer cleanup; API errors stop the run before dispatch. Preview
+and single-recipient test runs never archive workflows. Persistent city delivery
+workflows and the shared blueprint remain active between editions.
 Both the blueprint and city workflows must deduplicate
 `{person.id}:{event.properties.newsletter.city}:{event.properties.newsletter.start}`
 for at least seven days, without a threshold. This prevents repeat delivery while

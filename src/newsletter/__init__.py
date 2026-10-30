@@ -145,6 +145,48 @@ class PostHog:
             data = response.read()
             return json.loads(data) if data else {}
 
+    def archive_completed_batches(self) -> int:
+        """Archive idle edition dispatchers, never persistent delivery workflows."""
+        url = "?" + urlencode({"search": "allabiografer:", "status": "active", "limit": 100})
+        flows = []
+        while url:
+            page = self.request("GET", url)
+            flows.extend(page["results"])
+            url = page.get("next")
+            if url and not url.startswith(self.base + "?"):
+                raise ValueError("Unexpected workflow pagination URL")
+        # Collect pages before changing statuses: archiving shifts the active list.
+        archived = 0
+        for summary in flows:
+            if not re.fullmatch(r"allabiografer:[^:]+:\d{4}-\d{2}-\d{2}", summary["name"]):
+                continue
+            path = quote(str(summary["id"]), safe="") + "/"
+            flow = self.request("GET", path)
+            triggers = [action for action in flow["actions"] if action["type"] == "trigger"]
+            if (
+                flow["status"] != "active"
+                or flow.get("draft")
+                or flow.get("schedules")
+                or len(triggers) != 1
+                or triggers[0]["config"]["type"] != "batch"
+            ):
+                continue
+            jobs = self.request("GET", path + "batch_jobs/")
+            if not jobs or any(job["status"] != "completed" for job in jobs):
+                continue
+            query = urlencode({"after": flow["created_at"], "status": "failed,canceled,running"})
+            if self.request("GET", path + "invocation_results_count/?" + query)["count"] != 0:
+                continue
+            # Null means unavailable, not idle. Include runs parked on waits/delays.
+            in_flight = self.request("GET", path + "in_flight/")
+            if in_flight["count"] != 0 or in_flight["position_unknown"] != 0:
+                continue
+            self.request("PATCH", path, {"status": "archived"})
+            if self.request("GET", path)["status"] != "archived":
+                raise RuntimeError("Batch archival not visible; inspect before rerunning")
+            archived += 1
+        return archived
+
     def delivery(self, source: dict, city: str) -> dict:
         """Reuse a persistent city workflow for edition deduplication."""
         name = f"allabiografer:delivery:{city}"
@@ -417,6 +459,8 @@ def main():
     if args.city:
         parser.error("--city is only used with --test-email")
     client = PostHog()
+    if args.send:
+        print(f"Archived {client.archive_completed_batches()} completed, idle edition batches")
     cities = client.cities()
     with sqlite3.connect(f"{args.db.resolve().as_uri()}?mode=ro", uri=True) as conn:
         known_cities = {row[0] for row in conn.execute("SELECT DISTINCT city FROM screenings")}

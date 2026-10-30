@@ -8,6 +8,7 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
+import newsletter
 from newsletter import PostHog, edition
 from newsletter.migrate import cutover_workflows
 
@@ -142,6 +143,8 @@ class FakePostHog(PostHog):
         self.flows = []
         self.jobs = []
         self.invocations = []
+        self.runs = {}
+        self.in_flight = {}
         self.test_result = {"status": "success", "errors": [], "logs": []}
         self.fail_send = False
         self.people = [
@@ -213,14 +216,42 @@ class FakePostHog(PostHog):
             self.categories.append(category)
             return category
         if method == "GET":
-            if path.startswith("?"):
-                name = parse_qs(path[1:])["search"][0]
-                return {"results": [copy.deepcopy(f) for f in self.deliveries.values() if f["name"] == name]}
+            parsed = urlsplit(path)
+            if parsed.query and (not parsed.path or path.startswith(self.base + "?")):
+                query = parse_qs(parsed.query)
+                matches = [f for f in [*self.deliveries.values(), *self.flows] if query["search"][0] in f["name"]]
+                if "status" in query:
+                    matches = [f for f in matches if f["status"] == query["status"][0]]
+                offset = int(query.get("offset", [0])[0])
+                page = {"results": copy.deepcopy(matches[offset : offset + 2])}
+                if offset + 2 < len(matches):
+                    page["next"] = self.base + f"?search=allabiografer%3A&status=active&offset={offset + 2}"
+                return page
+            flow_id = parsed.path.split("/")[0]
+            if parsed.path.endswith("/batch_jobs/"):
+                return [copy.deepcopy(job) for job in self.jobs if job["workflow"]["id"] == flow_id]
+            if parsed.path.endswith("/invocation_results_count/"):
+                query = parse_qs(parsed.query)
+                statuses = query.get("status", ["failed,canceled,running,succeeded"])[0].split(",")
+                # Model PostHog's default seven-day window: old failures must not disappear.
+                after = query.get("after", ["2026-10-23T00:00:00Z"])[0]
+                return {
+                    "count": sum(
+                        run["status"] in statuses and run["scheduled_at"] >= after for run in self.runs.get(flow_id, [])
+                    )
+                }
+            if parsed.path.endswith("/in_flight/"):
+                return self.in_flight.get(flow_id, {"count": 0, "position_unknown": 0})
             if path.rstrip("/") in self.deliveries:
                 return copy.deepcopy(self.deliveries[path.rstrip("/")])
+            for flow in self.flows:
+                if flow["id"] == path.rstrip("/"):
+                    return copy.deepcopy(flow)
             return copy.deepcopy(self.template)
         if method == "PATCH":
-            flow = self.deliveries[path.rstrip("/")]
+            flow = self.deliveries.get(path.rstrip("/"))
+            if flow is None:
+                flow = next(f for f in self.flows if f["id"] == path.rstrip("/"))
             flow.update(body)
             return copy.deepcopy(flow)
         if not path:
@@ -240,6 +271,79 @@ class FakePostHog(PostHog):
         if self.fail_send:
             raise TimeoutError("Response lost after server accepted batch")
         return self.jobs[-1]
+
+
+@pytest.fixture
+def completed_batch():
+    api = FakePostHog()
+    flow = copy.deepcopy(api.template)
+    flow.update(id="old-edition", name="allabiografer:Stockholm:2026-09-18", created_at="2026-09-17T09:00:00Z")
+    flow["actions"][0]["config"]["type"] = "batch"
+    return flow
+
+
+def test_archive_only_completed_idle_editions_across_pages(completed_batch):
+    api = FakePostHog()
+    cases = {
+        "finished": {},
+        "no-jobs": {"jobs": []},
+        "pending": {"jobs": ["completed", "in_progress"]},
+        "failed-batch": {"jobs": ["failed", "completed"]},
+        "canceled-batch": {"jobs": ["canceled"]},
+        "failed-run": {"run": "failed"},
+        "canceled-run": {"run": "canceled"},
+        "running": {"run": "running"},
+        "delayed": {"in_flight": {"count": 2, "position_unknown": 0}},
+        "unknown-count": {"in_flight": {"count": None, "position_unknown": None}},
+        "unknown-position": {"in_flight": {"count": 0, "position_unknown": 1}},
+        "edited": {"draft": {"actions": []}},
+        "scheduled": {"schedules": [{"status": "active"}]},
+        "event": {"trigger": "event"},
+        "delivery": {"name": "allabiografer:delivery:Stockholm"},
+        "blueprint": {"name": "allabiografer:blueprint"},
+        "test": {"name": "allabiografer:test:Stockholm:2026-09-18"},
+        "unrelated": {"name": "other:Stockholm:2026-09-18"},
+        "archived": {"status": "archived"},
+        "finished-last-page": {},
+    }
+    for key, case in cases.items():
+        flow = copy.deepcopy(completed_batch)
+        flow.update(id=key)
+        flow.update({k: v for k, v in case.items() if k in {"name", "status", "draft", "schedules"}})
+        if "trigger" in case:
+            flow["actions"][0]["config"]["type"] = case["trigger"]
+        api.flows.append(flow)
+        api.jobs.extend({"workflow": flow, "status": status} for status in case.get("jobs", ["completed"]))
+        api.runs[key] = [{"status": case.get("run", "succeeded"), "scheduled_at": "2026-09-18T09:00:00Z"}]
+        if "in_flight" in case:
+            api.in_flight[key] = case["in_flight"]
+    original = copy.deepcopy(api.flows)
+
+    assert api.archive_completed_batches() == 2
+    for before, after in zip(original, api.flows, strict=True):
+        expected = copy.deepcopy(before)
+        if before["id"] in {"finished", "finished-last-page"}:
+            expected["status"] = "archived"
+        assert after == expected
+    assert api.archive_completed_batches() == 0
+
+
+@pytest.mark.parametrize("send", [False, True])
+def test_newsletter_run_archives_only_when_sending(tmp_path, monkeypatch, completed_batch, send):
+    api = FakePostHog()
+    api.flows.append(completed_batch)
+    api.jobs.append({"workflow": completed_batch, "status": "completed"})
+    monkeypatch.setattr(api, "cities", list)
+    monkeypatch.setattr(newsletter, "PostHog", lambda: api)
+    db = tmp_path / "screenings.db"
+    with sqlite3.connect(db) as conn:
+        conn.execute("CREATE TABLE screenings (city)")
+    monkeypatch.setattr(
+        "sys.argv",
+        ["newsletter", "--db", str(db), "--output", str(tmp_path / "preview"), *(["--send"] if send else [])],
+    )
+    newsletter.main()
+    assert api.flows[0]["status"] == ("archived" if send else "active")
 
 
 @pytest.mark.parametrize("ambiguous", [False, True])
