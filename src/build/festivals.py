@@ -137,6 +137,14 @@ def build_festivals(env, sd, register, db_path: Path = DB_FILE) -> list[dict]:
                 description=(
                     f"Planera {festival['name']}: välj visningar, dela ditt schema och exportera till kalendern."
                 ),
+                og_image=build._abs(
+                    build.write_card(
+                        sd.out_dir,
+                        title=festival["name"],
+                        subtitle="Program och eget schema",
+                        year=festival["year"],
+                    )
+                ),
                 canonical=canonical,
                 festival=festival,
                 city_url=urlparse(build.city_programme_url(festival["city"])).path,
@@ -149,6 +157,9 @@ def build_festivals(env, sd, register, db_path: Path = DB_FILE) -> list[dict]:
         env.get_template("festivals.html").render(
             title="Filmfestivaler – program och egna scheman",
             description="Filmfestivaler i Sverige. Planera ditt festivalschema.",
+            og_image=build._abs(
+                build.write_card(sd.out_dir, title="Filmfestivaler", subtitle="Program och egna scheman")
+            ),
             canonical=register(sd, out),
             festivals=festivals,
             active="festival",

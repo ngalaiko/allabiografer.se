@@ -50,6 +50,25 @@ mise run serve
 The static preview serves the built site on port 8000; it does not run the
 newsletter's nginx/Lua API. See [newsletter operations](newsletter.md) for that backend.
 
+### Sharing images
+
+The build generates 1200 × 630 JPEG cards in `/og/` for every public page type.
+`src/build/og.py` reads the light-mode colours from `static/i/style.css` and uses
+the same Fira Sans Regular/SemiBold WOFF2 files as the website. Cards have a header
+with the existing favicon and domain, followed by the poster (when available),
+title and subtitle, using the site's background and text colours without footers
+or grid lines. Poster and title share a top edge. Check text at actual 300px
+and 600px preview widths. Film cards contain
+the original poster without cropping; missing or unreadable posters fall back to
+text-only cards. Festival cards include the edition year in the title.
+Newsletter preferences use the generic site card, without subscriber data.
+
+Image URLs hash the card content, artwork, renderer, CSS, fonts and favicon so changes get
+new URLs. Generated images are build output, not tracked assets. Open Graph and
+Twitter metadata share the same absolute image URL, dimensions and descriptive alt
+text. To inspect a card locally, follow its generated HTML's `og:image` path under
+the output directory.
+
 Successful non-empty parses replace each source's screenings from today onward
 (Europe/Stockholm), removing cancelled or rescheduled listings. Screenings on
 past dates are retained. Failed or empty parses keep the previous programme.

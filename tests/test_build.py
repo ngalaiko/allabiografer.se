@@ -4,9 +4,11 @@ from datetime import datetime, time, timedelta
 
 import pytest
 from bs4 import BeautifulSoup
+from PIL import Image
 
 import build
 from build import SWEDEN_TZ
+from build.og import write_card
 from store import (
     Film,
     Movie,
@@ -341,12 +343,58 @@ def test_city_and_cinema_page_titles(db, tmp_path, city, cinema, expected_cinema
     city_dir = out / "stad" / sd.city_slugs[city]
     cinema_dir = city_dir / sd.cinema_slugs[(city, cinema)]
     for directory, expected in [
-        (city_dir, f"Bio i {city} – program och speltider"),
+        (city_dir, f"Bio i {city} – program för alla biografer"),
         (cinema_dir, expected_cinema_title),
     ]:
         page = BeautifulSoup((directory / "index.html").read_text(), "html.parser")
         assert page.title.string == expected
         assert page.find("meta", property="og:title")["content"] == expected
+        assert page.find("meta", attrs={"name": "twitter:title"})["content"] == expected
+        image_url = page.find("meta", property="og:image")["content"]
+        assert image_url.startswith(f"{build.BASE_URL}/og/")
+        assert page.find("meta", attrs={"name": "twitter:image"})["content"] == image_url
+        assert page.find("meta", property="og:image:alt")["content"] == expected
+        assert page.find("meta", property="og:image:width")["content"] == "1200"
+        assert page.find("meta", property="og:image:height")["content"] == "630"
+        with Image.open(out / image_url.removeprefix(build.BASE_URL).lstrip("/")) as image:
+            assert image.format == "JPEG"
+            assert image.size == (1200, 630)
+
+
+@pytest.mark.parametrize("size", [(40, 160), (160, 40)])
+def test_sharing_card_preserves_entire_poster_and_versions_content(tmp_path, size):
+    poster = tmp_path / "poster.png"
+    art = Image.new("RGB", size, "#00FF00")
+    art.paste("#FF0000", (0, 0, size[0], size[1] // 4))
+    art.paste("#0000FF", (0, size[1] * 3 // 4, size[0], size[1]))
+    art.save(poster)
+    options = {
+        "title": "Mordet på Jesse James av ynkryggen Robert Ford",
+        "subtitle": "Speltider i Örnsköldsvik",
+        "poster": poster,
+    }
+    url = write_card(tmp_path, **options)
+    assert write_card(tmp_path, **options) == url
+    assert write_card(tmp_path, **{**options, "subtitle": "Speltider i Göteborg"}) != url
+    with Image.open(tmp_path / url.lstrip("/")) as image:
+        # Both end bands survive even for very tall/wide posters. A centre crop
+        # would remove them. Allow JPEG variation without assuming a position.
+        colors = image.getcolors(image.width * image.height)
+        assert sum(count for count, (r, g, b) in colors if r > 240 and g < 15 and b < 15) > 100
+        assert sum(count for count, (r, g, b) in colors if b > 240 and r < 15 and g < 15) > 100
+    art.paste("#FFFF00", (0, 0, *size))
+    art.save(poster)
+    assert write_card(tmp_path, **options) != url
+
+
+def test_sharing_card_falls_back_without_artwork_and_versions_festival_year(tmp_path):
+    options = {"title": "Göteborg Film Festival Prisma", "subtitle": "Program och eget schema"}
+    url = write_card(tmp_path, **options, year=2026)
+    assert write_card(tmp_path, **options, year=2027) != url
+    assert write_card(tmp_path, **options, year=2026, poster=tmp_path / "missing.jpg") == url
+    broken = tmp_path / "broken.jpg"
+    broken.write_text("unreadable artwork")
+    assert write_card(tmp_path, **options, year=2026, poster=broken) == url
 
 
 @pytest.mark.parametrize("cinema_count", [0, 1, 2])

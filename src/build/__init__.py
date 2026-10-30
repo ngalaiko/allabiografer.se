@@ -34,6 +34,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from PIL import Image, UnidentifiedImageError
 
 from build.festivals import build_festivals
+from build.og import write_card
 from store import (
     DB_FILE,
     Film,
@@ -690,7 +691,10 @@ def _build_newsletter_preferences(env: Environment, out_dir: Path) -> None:
     # Private utility page: deliberately not registered in the public sitemap.
     out_path = out_dir / "nyhetsbrev" / "installningar" / "index.html"
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(env.get_template("newsletter-preferences.html").render(), encoding="utf-8")
+    out_path.write_text(
+        env.get_template("newsletter-preferences.html").render(og_image=_abs(write_card(out_dir))),
+        encoding="utf-8",
+    )
 
 
 def _write_newsletter_cities(sd: SiteData) -> None:
@@ -731,6 +735,7 @@ def _build_index(env: Environment, sd: SiteData, festivals: list[dict]) -> None:
         title="Alla biografer i Sverige – vad går på bio just nu?",
         description=SITE_DESCRIPTION,
         canonical=canonical,
+        og_image=_abs(write_card(sd.out_dir)),
         jsonld=_website_jsonld(),
         active="index",
         groups=groups,
@@ -794,6 +799,7 @@ def _build_premiarer(env: Environment, sd: SiteData) -> None:
         title="Kommande biopremiärer i Sverige",
         description=description,
         canonical=canonical,
+        og_image=_abs(write_card(sd.out_dir, title="Kommande biopremiärer", subtitle="På bio i Sverige")),
         jsonld=_collection_jsonld(
             "Kommande biopremiärer i Sverige",
             canonical,
@@ -833,6 +839,7 @@ def _build_filmer(env: Environment, sd: SiteData) -> None:
         title="Alla filmer som visas på bio i Sverige",
         description=description,
         canonical=canonical,
+        og_image=_abs(write_card(sd.out_dir, title="Filmer på bio", subtitle="Hitta filmer och speltider i Sverige")),
         jsonld=_collection_jsonld(
             "Alla filmer som visas på bio i Sverige",
             canonical,
@@ -1283,7 +1290,7 @@ def _write_programme(
         description=description,
         canonical=canonical,
         jsonld=jsonld,
-        og_image=og_image,
+        og_image=og_image or _abs(write_card(sd.out_dir)),
         og_type=og_type,
         breadcrumbs=breadcrumbs,
         clear_filter_url=clear_filter_url,
@@ -1322,12 +1329,13 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
         out_path = sd.out_dir / "stad" / slug / "index.html"
         canonical = _register(sd, out_path)
         n_films = len({s.tmdb_id for s in _schedule_screenings(sd, city_screenings)})
-        title = f"Bio i {city_name} – program och speltider"
+        title = f"Bio i {city_name} – program för alla biografer"
         _write_programme(
             env,
             sd,
             city_screenings,
             title=title,
+            og_image=_abs(write_card(sd.out_dir, title=f"Bio i {city_name}", subtitle="Program för alla biografer")),
             description=(
                 f"Vad går på bio i {city_name}? Se speltider för {n_films} filmer på alla "
                 f"biografer i {city_name} — uppdaterat dagligen."
@@ -1355,6 +1363,13 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             sd,
             cinema_screenings,
             title=f"{cinema_name}{location} – program och speltider",
+            og_image=_abs(
+                write_card(
+                    sd.out_dir,
+                    title=cinema_name,
+                    subtitle=f"{city_name} · Program och speltider",
+                )
+            ),
             description=(
                 f"Program och speltider för {cinema_name} i {city_name}. Se vilka filmer som visas och köp biljetter."
             ),
@@ -1377,6 +1392,13 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             sd,
             genre_screenings,
             title=f"{genre} på bio i {city_name} – speltider",
+            og_image=_abs(
+                write_card(
+                    sd.out_dir,
+                    title=f"{genre} på bio",
+                    subtitle=f"{city_name} · Program och speltider",
+                )
+            ),
             description=f"{genre}-filmer som visas på bio i {city_name} just nu, med speltider och biografer.",
             canonical=canonical,
             jsonld=_collection_jsonld(
@@ -1411,7 +1433,15 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
         else:
             description = f"Speltider för {film_title} i {city_name}. Inga visningar de närmaste två veckorna."
         jsonld = _film_jsonld(sd, movie, city_film_screenings, canonical) if movie else None
-        og_image = _abs(_poster_url(sd, movie.tmdb_id)) if movie else None
+        poster_key = sd.poster_keys.get(movie.tmdb_id) if movie else None
+        og_image = _abs(
+            write_card(
+                sd.out_dir,
+                title=film_title,
+                subtitle=f"Speltider i {city_name}",
+                poster=poster_path(poster_key, path=DB_FILE) if poster_key else None,
+            )
+        )
         _write_programme(
             env,
             sd,
@@ -1445,7 +1475,15 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
                 f"visas i {n_cities} {'stad' if n_cities == 1 else 'städer'}."
             )
         jsonld = _film_jsonld(sd, movie, film_screenings, canonical) if movie else None
-        og_image = _abs(_poster_url(sd, movie.tmdb_id)) if movie else None
+        poster_key = sd.poster_keys.get(movie.tmdb_id) if movie else None
+        og_image = _abs(
+            write_card(
+                sd.out_dir,
+                title=film_title,
+                subtitle="Speltider i Sverige",
+                poster=poster_path(poster_key, path=DB_FILE) if poster_key else None,
+            )
+        )
         _write_programme(
             env,
             sd,

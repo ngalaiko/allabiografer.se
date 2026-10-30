@@ -15,12 +15,15 @@
 {% if description %}<meta property="og:description" content="{{ description }}">{% endif %}
 {% if canonical %}<meta property="og:url" content="{{ canonical }}">{% endif %}
 {% if og_image %}<meta property="og:image" content="{{ og_image }}">
-<meta property="og:image:width" content="250">
-<meta property="og:image:height" content="354">{% endif %}
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{{ title }}">{% endif %}
 <meta name="twitter:card" content="{{ 'summary_large_image' if og_image else 'summary' }}">
 <meta name="twitter:title" content="{{ og_title or title }}">
 {% if description %}<meta name="twitter:description" content="{{ description }}">{% endif %}
-{% if og_image %}<meta name="twitter:image" content="{{ og_image }}">{% endif %}
+{% if og_image %}<meta name="twitter:image" content="{{ og_image }}">
+<meta name="twitter:image:alt" content="{{ title }}">{% endif %}
 <style>
 @font-face { font-family: 'Fira Sans'; font-style: normal; font-weight: 400; font-display: swap; src: local('Fira Sans Regular'), local('FiraSans-Regular'), url('/i/FiraSans-Regular.woff2?v={{ font_versions['Regular'] }}') format('woff2'); }
 @font-face { font-family: 'Fira Sans'; font-style: normal; font-weight: 600; font-display: swap; src: local('Fira Sans SemiBold'), local('FiraSans-SemiBold'), url('/i/FiraSans-SemiBold.woff2?v={{ font_versions['SemiBold'] }}') format('woff2'); }
