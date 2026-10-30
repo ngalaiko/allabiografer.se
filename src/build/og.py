@@ -86,31 +86,31 @@ def write_card(
     draw = ImageDraw.Draw(image)
     with Image.open(ASSETS / "favicon-32x32.png") as source:
         icon = source.convert("RGBA").resize((64, 64), Image.Resampling.LANCZOS)
-        image.paste(icon, (48, 32), icon)
-    draw.text((132, 40), "allabiografer.se", font=_font(56, "SemiBold"), fill=colors["text"], anchor="lt")
-    left = 48
+        image.paste(icon, (56, 44), icon)
+    draw.text((140, 52), "allabiografer.se", font=_font(56, "SemiBold"), fill=colors["text"], anchor="lt")
+    left = 56
+    width = 1088
     if artwork is not None:
-        artwork = ImageOps.contain(artwork, (300, 454), Image.Resampling.LANCZOS)
-        image.paste(artwork, (48, 128))
-        left = 392
-    width = 1152 - left
+        artwork = ImageOps.contain(artwork, (320, 518), Image.Resampling.LANCZOS)
+        image.paste(artwork, (1144 - artwork.width, 56))
+        width = 1144 - artwork.width - 48 - left
     subtitle_font = _font(52)
     subtitle_lines = _wrap(subtitle, subtitle_font, width)
-    for size in range(104, 23, -2):
+    for size in range(112, 23, -2):
         title_font = _font(size, "SemiBold")
         title_lines = _wrap(title, title_font, width)
-        line_height = round(size * 1.1)
-        block_height = len(title_lines) * line_height + 20 + len(subtitle_lines) * 64
-        if block_height <= 454:
+        line_height = round(size * 1.14)
+        block_height = len(title_lines) * line_height + 32 + len(subtitle_lines) * 64
+        if block_height <= 384:
             break
     else:
         raise ValueError(f"Sharing card title is too long: {title}")
 
-    y = 128
+    y = 190
     for line in title_lines:
         draw.text((left, y), line, font=title_font, fill=colors["text"], anchor="lt")
         y += line_height
-    y += 12
+    y += 32
     for line in subtitle_lines:
         draw.text((left, y), line, font=subtitle_font, fill=colors["text"], anchor="lt")
         y += 64

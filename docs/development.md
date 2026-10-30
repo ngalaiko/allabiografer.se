@@ -55,10 +55,11 @@ newsletter's nginx/Lua API. See [newsletter operations](newsletter.md) for that 
 The build generates 1200 × 630 JPEG cards in `/og/` for every public page type.
 `src/build/og.py` reads the light-mode colours from `static/i/style.css` and uses
 the same Fira Sans Regular/SemiBold WOFF2 files as the website. Cards have a header
-with the existing favicon and domain, followed by the poster (when available),
-title and subtitle, using the site's background and text colours without footers
-or grid lines. Poster and title share a top edge. Check text at actual 300px
-and 600px preview widths. Film cards contain
+with the existing favicon and domain, with the title and subtitle below and an
+optional poster on the right. Text-only cards use the full content width. Titles
+have generous space below the header and shrink to fit longer names. Cards use
+the site's background and text colours without footers or grid lines. Check text
+at actual 300px and 600px preview widths. Film cards contain
 the original poster without cropping; missing or unreadable posters fall back to
 text-only cards. Festival cards include the edition year in the title.
 Newsletter preferences use the generic site card, without subscriber data.
