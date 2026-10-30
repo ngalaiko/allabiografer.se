@@ -11,6 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch static assets for build tests
+        run: |
+          git lfs install --local
+          git lfs pull --include="static/i/*" --exclude=""
       - uses: jdx/mise-action@v2
       - run: mise run lint
       - run: mise run test
