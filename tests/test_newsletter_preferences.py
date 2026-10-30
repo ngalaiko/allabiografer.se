@@ -162,17 +162,16 @@ def test_last_city_removal_shows_empty_state(preferences):
 
 def test_delivery_blocked_warning_does_not_offer_reenable(preferences):
     page, state, calls, _, _ = preferences
+    state["cities"] = []
     state["delivery_blocked"] = True
     page.goto(URL + "#token=test-only")
     warning = page.locator("#preferences-delivery-warning")
     playwright.expect(warning).to_be_visible()
     assert warning.get_attribute("role") == "alert"
-    playwright.expect(warning).to_contain_text("PostHog")
-    playwright.expect(warning).to_contain_text("garanterar inte")
+    playwright.expect(warning).to_contain_text("Du har avslutat nyhetsbrevet.")
+    assert "posthog" not in page.locator("body").inner_text().lower()
+    playwright.expect(warning).to_contain_text("Prenumerera på en stads programsida")
+    playwright.expect(page.locator("#preferences-cities")).to_contain_text("inte på någon stad")
     assert page.locator("input, select").count() == 0
-    assert page.get_by_role("button").all_text_contents() == [
-        "Avsluta",
-        "Avsluta",
-        "Avsluta alla prenumerationer",
-    ]
+    playwright.expect(page.locator("#preferences-unsubscribe-all")).to_be_hidden()
     assert calls == [{}]

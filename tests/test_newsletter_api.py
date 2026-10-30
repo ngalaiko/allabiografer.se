@@ -13,11 +13,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from io import BytesIO
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
+from urllib.request import Request, urlopen
 from uuid import uuid4
 
 import pytest
 import requests
 
+from newsletter import PostHog
 from newsletter.migrate import migrate, preferences_token
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,7 +47,7 @@ def newsletter_api(tmp_path, request):
         },
         {"id": "cat-m", "key": "newsletter-city-malmo", "name": "Nytt på bio i Malmö", "category_type": "marketing"},
     ]
-    state = {"fail": False, "pending": [], "delay": 0}
+    state = {"fail": False, "pending": [], "delay": 0, "fail_optin": False}
 
     class PostHogHandler(BaseHTTPRequestHandler):
         def log_message(self, *_):
@@ -92,7 +94,7 @@ def newsletter_api(tmp_path, request):
                 rows = [
                     {"identifier": email, "preferences": prefs}
                     for email, prefs in preferences.items()
-                    if query["search"][0] in email and prefs.get(category_id) == "OPTED_OUT"
+                    if query.get("search", [""])[0] in email and prefs.get(category_id) == "OPTED_OUT"
                 ]
                 return self.respond({"results": rows, "next": None})
             return self.respond({}, 404)
@@ -107,8 +109,9 @@ def newsletter_api(tmp_path, request):
                 )
                 return self.respond({"status": 1})
             assert self.headers["Authorization"] == "Bearer test-private-key"
+            assert self.path.endswith(("/add_opt_out/", "/remove_opt_out/"))
             writes.append((self.path, data))
-            if state["fail"]:
+            if state["fail"] or state["fail_optin"]:
                 return self.respond({"error": "private upstream failure"}, 500)
             prefs = preferences.setdefault(data["identifier"], {})
             category_id = next((c["id"] for c in categories if c["key"] == data.get("category_key")), "$all")
@@ -140,6 +143,7 @@ def newsletter_api(tmp_path, request):
         "NEWSLETTER_SIGNING_SECRET": SECRET,
         "NEWSLETTER_CITIES_FILE": str(cities),
     }
+    state.update(upstream_url=f"http://127.0.0.1:{upstream.server_port}", api_url=f"http://127.0.0.1:{port}")
     lua_path = f"{ROOT}/etc/nginx/lua/?.lua;" + os.environ["NEWSLETTER_LUA_PATH"]
     # Alpine cjson 2.1.0 represents JSON null as a table, unlike OpenResty's build.
     table_null = (
@@ -231,8 +235,139 @@ def test_signup_and_property_unsubscribe_end_to_end(newsletter_api):
     prefs["person@example.com"] = {"$all": "OPTED_OUT"}
     assert call("signup", {"email": "person@example.com", "city": "Stockholm"}).status_code == 200
     assert person["newsletter_cities"] == ["Stockholm"]  # Does not restore removed Göteborg.
-    assert call("preferences", token=token).json() == {"cities": ["Stockholm"], "delivery_blocked": True}
-    assert prefs["person@example.com"]["$all"] == "OPTED_OUT"  # Native unsubscribe never bypassed.
+    assert call("preferences", token=token).json() == {"cities": ["Stockholm"], "delivery_blocked": False}
+    assert prefs["person@example.com"]["$all"] == "OPTED_IN"  # Explicit signup restores marketing consent.
+
+
+@pytest.mark.parametrize("entry", ["native-unsubscribe", "preferences"])
+def test_native_unsubscribe_clears_cities_and_late_events_preserve_signup(newsletter_api, entry):
+    call, people, prefs, _, state = newsletter_api
+    # Native events identify the recipient by email, not this existing distinct_id.
+    person = people["existing-browser-id"] = {
+        "uuid": str(uuid4()),
+        "distinct_ids": ["existing-browser-id"],
+        "properties": {"email": "person@example.com", "newsletter_cities": ["Göteborg", "Stockholm"]},
+    }
+    properties = person["properties"]
+    token = properties["newsletter_preferences_token"] = preferences_token(SECRET, person["uuid"])
+    callback_token = preferences_token(SECRET, "native-unsubscribe").split(".")[-1]
+    body, auth = ({"email": "person@example.com"}, callback_token) if entry == "native-unsubscribe" else ({}, token)
+    prefs["notperson@example.com"] = {"$all": "OPTED_OUT"}  # Search substring is not an exact email match.
+    assert call(entry, body, auth).status_code == 200
+    assert properties["newsletter_cities"] == ["Göteborg", "Stockholm"]
+    prefs["person@example.com"] = {"$all": "OPTED_OUT", "$tracking": "OPTED_OUT"}
+    state["delay"] = 0.2
+    response = call(entry, body, auth)
+    assert response.status_code == 200, response.text
+    assert properties["newsletter_cities"] == []
+    assert call("preferences", token=token).json() == {"cities": [], "delivery_blocked": True}
+    assert call(entry, body, auth).status_code == 200
+    assert properties["newsletter_cities"] == []
+    assert prefs["person@example.com"]["$all"] == "OPTED_OUT"  # Unsubscribe never grants consent.
+    assert call("signup", {"email": "person@example.com", "city": "Stockholm"}).status_code == 200
+    assert prefs["person@example.com"] == {"$all": "OPTED_IN", "$tracking": "OPTED_OUT"}
+    assert call("native-unsubscribe", {"email": "person@example.com"}, callback_token).status_code == 200
+    assert call("preferences", token=token).json() == {"cities": ["Stockholm"], "delivery_blocked": False}
+    assert len(people) == 1
+
+
+def test_native_callback_authentication_unknown_people_and_retry(newsletter_api):
+    call, people, prefs, _, state = newsletter_api
+    assert call("signup", {"email": "p@example.com", "city": "Göteborg"}).status_code == 200
+    token = people["newsletter:p@example.com"]["properties"]["newsletter_preferences_token"]
+    callback_token = preferences_token(SECRET, "native-unsubscribe").split(".")[-1]
+    prefs["p@example.com"] = {"$all": "OPTED_OUT"}
+    before = copy.deepcopy(people)
+    for bad in [None, "forged", token, callback_token[:-1] + ("0" if callback_token[-1] != "0" else "1")]:
+        assert call("native-unsubscribe", {"email": "p@example.com"}, bad).status_code == 401
+    assert people == before
+    assert call("native-unsubscribe", {"email": "stranger@example.com"}, callback_token).status_code == 200
+    assert people == before
+    state["fail"] = True
+    assert call("native-unsubscribe", {"email": "p@example.com"}, callback_token).status_code == 502
+    assert people == before
+    state["fail"] = False
+    assert call("native-unsubscribe", {"email": "p@example.com"}, callback_token).status_code == 200
+    assert call("preferences", token=token).json()["cities"] == []
+
+
+def test_signup_fails_if_native_consent_cannot_be_restored_and_never_resurrects_old_cities(newsletter_api):
+    call, people, prefs, writes, state = newsletter_api
+    assert call("signup", {"email": "p@example.com", "city": "Göteborg"}).status_code == 200
+    properties = people["newsletter:p@example.com"]["properties"]
+    prefs["p@example.com"] = {"$all": "OPTED_OUT"}
+    state["fail_optin"] = True
+    assert call("signup", {"email": "p@example.com", "city": "Stockholm"}).status_code == 502
+    assert properties["newsletter_cities"] == ["Stockholm"]
+    assert prefs["p@example.com"]["$all"] == "OPTED_OUT"
+    state["fail_optin"] = False
+    assert call("signup", {"email": "p@example.com", "city": "Stockholm"}).status_code == 200
+    assert properties["newsletter_cities"] == ["Stockholm"]
+    assert prefs["p@example.com"]["$all"] == "OPTED_IN"
+    assert all(path.endswith("/remove_opt_out/") and data == {"identifier": "p@example.com"} for path, data in writes)
+
+
+@pytest.mark.parametrize("rejoined", [False, True])
+def test_pre_send_fallback_repairs_missed_notification_without_undoing_new_signup(
+    newsletter_api, monkeypatch, rejoined
+):
+    call, people, prefs, _, state = newsletter_api
+    assert call("signup", {"email": "p@example.com", "city": "Göteborg"}).status_code == 200
+    properties = people["newsletter:p@example.com"]["properties"]
+    prefs.update({"p@example.com": {"$all": "OPTED_OUT"}, "unknown@example.com": {"$all": "OPTED_OUT"}})
+    monkeypatch.setenv("POSTHOG_PROJECT_ID", "123")
+    monkeypatch.setenv("POSTHOG_PERSONAL_API_KEY", "test-private-key")
+    monkeypatch.setenv("POSTHOG_API_HOST", "https://eu.posthog.com")
+
+    def local_transport(request, timeout):
+        url = urlsplit(request.full_url)
+        if url.netloc == "eu.posthog.com":
+            base = state["upstream_url"]
+            assert request.get_header("Authorization") == "Bearer test-private-key"
+        else:
+            assert url.netloc == "allabiografer.se"
+            assert url.path == "/api/newsletter/preferences"
+            assert request.get_header("Authorization") == "Bearer " + properties["newsletter_preferences_token"]
+            base = state["api_url"]
+        response = urlopen(
+            Request(base + url.path + "?" + url.query, data=request.data, headers=dict(request.header_items())),
+            timeout=timeout,
+        )
+        if rejoined and url.path.endswith("/opt_outs/"):
+            # The collected opt-out snapshot predates this newer signup.
+            assert call("signup", {"email": "p@example.com", "city": "Stockholm"}).status_code == 200
+        return response
+
+    monkeypatch.setattr("newsletter.urlopen", local_transport)
+    assert PostHog().reconcile_unsubscribes() == 1
+    assert properties["newsletter_cities"] == (["Stockholm"] if rejoined else [])
+    assert len(people) == 1
+    assert prefs["p@example.com"]["$all"] == ("OPTED_IN" if rejoined else "OPTED_OUT")
+
+
+@pytest.mark.parametrize("first", ["signup", "native-unsubscribe"])
+def test_concurrent_signup_and_native_notification_preserve_new_city(newsletter_api, first):
+    call, people, prefs, _, state = newsletter_api
+    assert call("signup", {"email": "p@example.com", "city": "Göteborg"}).status_code == 200
+    properties = people["newsletter:p@example.com"]["properties"]
+    prefs["p@example.com"] = {"$all": "OPTED_OUT"}
+    state["delay"] = 0.2
+    actions = {
+        "signup": ("signup", {"email": "p@example.com", "city": "Stockholm"}),
+        "native-unsubscribe": (
+            "native-unsubscribe",
+            {"email": "p@example.com"},
+            preferences_token(SECRET, "native-unsubscribe").split(".")[-1],
+        ),
+    }
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first_request = pool.submit(call, *actions.pop(first))
+        time.sleep(0.05)
+        second_request = pool.submit(call, *next(iter(actions.values())))
+        assert first_request.result().status_code == 200
+        assert second_request.result().status_code == 200
+    assert properties["newsletter_cities"] == ["Stockholm"]
+    assert prefs["p@example.com"]["$all"] == "OPTED_IN"
 
 
 def test_api_rejects_forged_links_and_upstream_errors(newsletter_api):

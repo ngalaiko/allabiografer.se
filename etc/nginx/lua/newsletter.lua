@@ -15,6 +15,15 @@ end
 
 local function token_for(secret, id) return id .. "." .. signature(secret, id) end
 
+local function equal(left, right)
+    if type(left) ~= "string" or #left ~= #right then return false end
+    local difference = 0
+    for i = 1, #right do
+        difference = bit.bor(difference, bit.bxor(left:byte(i), right:byte(i)))
+    end
+    return difference == 0
+end
+
 local function verified_id(secret, token)
     if type(token) ~= "string" or #token ~= 101 then fail(401) end
     local id, supplied = token:match("^([a-f0-9%-]+)%.([a-f0-9]+)$")
@@ -22,11 +31,7 @@ local function verified_id(secret, token)
         or not id:match("^%x+%-%x+%-%x+%-%x+%-%x+$")
         or id:sub(9, 9) ~= "-" or id:sub(14, 14) ~= "-"
         or id:sub(19, 19) ~= "-" or id:sub(24, 24) ~= "-" then fail(401) end
-    local expected, difference = signature(secret, id), 0
-    for i = 1, #expected do
-        difference = bit.bor(difference, bit.bxor(expected:byte(i), supplied:byte(i)))
-    end
-    if difference ~= 0 then fail(401) end
+    if not equal(supplied, signature(secret, id)) then fail(401) end
     return id
 end
 
@@ -98,6 +103,15 @@ local function run()
         return request("GET", "persons/" .. ngx.escape_uri(tostring(id)) .. "/")
     end
 
+    local function opted_out(email)
+        local data = request("GET", "messaging_preferences/opt_outs/?page_size=100&search=" .. ngx.escape_uri(email))
+        if data.next ~= nil and data.next ~= json.null then fail(502) end
+        for _, entry in ipairs(data.results or data) do
+            if entry.identifier == email then return true end
+        end
+        return false
+    end
+
     local function capture(identity, properties, event)
         local client = http.new()
         client:set_timeout(5000)
@@ -132,7 +146,7 @@ local function run()
         -- New profiles require two ingestion round trips before a waiting signup can proceed.
         local mutex = assert(lock:new("newsletter_locks", {timeout = 5, exptime = 300}))
         if not mutex:lock(identity) then fail(503) end
-        local ok, result = pcall(function()
+        local ok, result, blocked = pcall(function()
             -- Alpine cjson represents JSON null as a table, not lightuserdata.
             local stored = ngx.shared.newsletter_pending:get(identity)
             local pending = stored and json.decode(stored)
@@ -143,6 +157,7 @@ local function run()
             else
                 person = person_lookup("email=" .. ngx.escape_uri(email))
             end
+            if not person and event == "newsletter_native_unsubscribe" then return nil end
             if not person and event == "newsletter_signup" then
                 -- PostHog assigns the UUID, so create and read back the profile before signing its link.
                 local initial = {email = email}
@@ -150,32 +165,56 @@ local function run()
                 capture(identity, initial, "$set")
                 person = wait_for(email, initial)
             end
-            local desired = transform(person and person.properties or {}, person and person.uuid)
+            local native_block = opted_out(email)
+            local desired = transform(person and person.properties or {}, person and person.uuid, native_block)
+            if not desired then return person, native_block end
             if not ngx.shared.newsletter_pending:safe_set(identity, encode(desired)) then fail(503) end
             local distinct_id = person and person.distinct_ids and person.distinct_ids[1] or identity
             capture(distinct_id, desired, event)
-            return wait_for(email, desired)
+            local updated = wait_for(email, desired)
+            if event == "newsletter_signup" and native_block then
+                -- Restore marketing consent only after the new city list is visible.
+                -- This API never changes bounce/complaint suppression or tracking consent.
+                local restored = request("POST", "messaging_preferences/remove_opt_out/", {identifier = email})
+                if not restored.preferences or restored.preferences["$all"] ~= "OPTED_IN" then fail(502) end
+                if opted_out(email) then fail(503) end
+                native_block = false
+            end
+            return updated, native_block
         end)
         mutex:unlock()
         if not ok then error(result, 0) end
-        return result
+        return result, blocked
     end
 
     ngx.req.read_body()
     local body = json.decode(ngx.req.get_body_data() or "")
     if type(body) ~= "table" then fail(400) end
-    if ngx.var.uri == "/api/newsletter/signup" then
+    if ngx.var.uri == "/api/newsletter/native-unsubscribe" then
+        local bearer = (ngx.var.http_authorization or ""):match("^Bearer (.+)$")
+        if not equal(bearer, signature(secret, "native-unsubscribe")) then fail(401) end
+    end
+    if ngx.var.uri == "/api/newsletter/signup" or ngx.var.uri == "/api/newsletter/native-unsubscribe" then
         local email = type(body.email) == "string" and body.email:match("^%s*(.-)%s*$"):lower()
-        if not email or #email > 254 or not email:match("^[^%s@,;<>]+@[^%s@,;<>]+%.[^%s@,;<>]+$")
-            or type(body.city) ~= "string" then fail(400) end
+        if not email or #email > 254 or not email:match("^[^%s@,;<>]+@[^%s@,;<>]+%.[^%s@,;<>]+$") then fail(400) end
+        if ngx.var.uri == "/api/newsletter/native-unsubscribe" then
+            edit(email, function(properties, _, blocked)
+                -- Replayed/delayed events must not undo a later explicit signup.
+                if not blocked or #cities(properties) == 0 then return nil end
+                return {newsletter_cities = {}, newsletter_preferences_token = properties.newsletter_preferences_token}
+            end, "newsletter_native_unsubscribe")
+            return {success = true}
+        end
+        if type(body.city) ~= "string" then fail(400) end
         local file = io.open(os.getenv("NEWSLETTER_CITIES_FILE") or
             "/var/www/allabiografer.se/i/newsletter-cities.json", "r")
         if not file then fail(503) end
         local allowed = json.decode(file:read("*a"))
         file:close()
         if not allowed or not allowed[body.city] then fail(400) end
-        edit(email, function(properties, id)
-            local memberships, seen = cities(properties), false
+        edit(email, function(properties, id, blocked)
+            -- Never resurrect old cities when rejoining after a native opt-out.
+            local memberships, seen = blocked and {} or cities(properties), false
             for _, city in ipairs(memberships) do if city == body.city then seen = true end end
             if not seen then memberships[#memberships + 1] = body.city end
             table.sort(memberships)
@@ -195,9 +234,16 @@ local function run()
     if type(email) ~= "string" or email == "" then fail(401) end
     if body.unsubscribe ~= nil then
         if body.unsubscribe ~= true or (body.city ~= nil and type(body.city) ~= "string") then fail(400) end
-        person = edit(email:lower(), function(properties)
-            -- Revalidate after obtaining the same lock as signup.
-            if properties.newsletter_preferences_token ~= token then fail(401) end
+    elseif next(body) ~= nil then fail(400) end
+    local blocked
+    person, blocked = edit(email:lower(), function(properties, _, native_block)
+        -- Reconcile missed notifications on reads, under the same lock as signup.
+        if properties.newsletter_preferences_token ~= token then fail(401) end
+        if native_block then
+            if #cities(properties) == 0 then return nil end
+            return {newsletter_cities = {}, newsletter_preferences_token = token}
+        end
+        if body.unsubscribe then
             local remaining = {}
             if body.city then
                 local found = false
@@ -207,17 +253,9 @@ local function run()
                 if not found then fail(400) end
             end
             return {newsletter_cities = remaining, newsletter_preferences_token = token}
-        end, "newsletter_preferences_updated")
-    elseif next(body) ~= nil then fail(400) end
-
-    -- Native email-client unsubscribe remains an independent delivery safeguard.
-    -- It does not recreate a second subscription list or a receive boolean.
-    local optouts = request("GET", "messaging_preferences/opt_outs/?page_size=100&search=" .. ngx.escape_uri(email))
-    if optouts.next ~= nil and optouts.next ~= json.null then fail(502) end
-    local blocked = false
-    for _, entry in ipairs(optouts.results or optouts) do
-        if entry.identifier == email then blocked = true end
-    end
+        end
+        return nil
+    end, "newsletter_preferences_updated")
     return {cities = cities(person.properties), delivery_blocked = blocked}
 end
 

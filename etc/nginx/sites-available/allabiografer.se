@@ -21,6 +21,12 @@ server {
         content_by_lua_block { require('newsletter').handle() }
     }
 
+    location = /api/newsletter/native-unsubscribe {
+        client_max_body_size 2k;
+        access_log off;
+        content_by_lua_block { require('newsletter').handle() }
+    }
+
     location ^~ /salong/ {
         resolver 1.1.1.1 8.8.8.8 valid=300s ipv6=off;
         resolver_timeout 5s;

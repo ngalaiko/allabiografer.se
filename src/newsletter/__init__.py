@@ -145,6 +145,46 @@ class PostHog:
             data = response.read()
             return json.loads(data) if data else {}
 
+    def reconcile_unsubscribes(self) -> int:
+        """Repair missed native notifications through the backend's per-email lock."""
+        project = self.base.removesuffix("hog_flows/")
+        collection = project + "messaging_preferences/opt_outs/"
+        url = collection + "?page_size=100"
+        emails = set()
+        while url:
+            page = self.request("GET", url)
+            emails.update(row["identifier"] for row in page["results"])
+            url = page.get("next")
+            if url and not url.startswith(collection + "?"):
+                raise ValueError("Unexpected opt-out pagination URL")
+        count = 0
+        for email in sorted(emails):
+            page = self.request("GET", project + "persons/?" + urlencode({"email": email, "limit": 2}))
+            if page.get("next") or len(page["results"]) > 1:
+                raise ValueError("Ambiguous native unsubscribe profile; refusing to send")
+            if not page["results"]:
+                continue
+            person = self.request("GET", project + "persons/" + quote(str(page["results"][0]["uuid"]), safe="") + "/")
+            properties = person["properties"]
+            if not properties.get("newsletter_cities"):
+                continue
+            token = properties.get("newsletter_preferences_token")
+            if not token:
+                raise ValueError("Native unsubscribe profile is missing its preferences token")
+            # Recheck consent while locked: a stale snapshot must not undo a later signup.
+            # Only the person's scoped token, never the project API key, goes to our backend.
+            req = Request(
+                BASE_URL + "/api/newsletter/preferences",
+                data=b"{}",
+                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            )
+            with urlopen(req, timeout=60) as response:
+                data = json.load(response)
+                if not isinstance(data.get("cities"), list) or (data.get("delivery_blocked") and data["cities"]):
+                    raise RuntimeError("Native unsubscribe reconciliation failed; refusing to send")
+            count += 1
+        return count
+
     def archive_completed_batches(self) -> int:
         """Archive idle edition dispatchers, never persistent delivery workflows."""
         url = "?" + urlencode({"search": "allabiografer:", "status": "active", "limit": 100})
@@ -460,6 +500,7 @@ def main():
         parser.error("--city is only used with --test-email")
     client = PostHog()
     if args.send:
+        print(f"Reconciled {client.reconcile_unsubscribes()} native unsubscribes")
         print(f"Archived {client.archive_completed_batches()} completed, idle edition batches")
     cities = client.cities()
     with sqlite3.connect(f"{args.db.resolve().as_uri()}?mode=ro", uri=True) as conn:

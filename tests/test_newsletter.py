@@ -147,6 +147,7 @@ class FakePostHog(PostHog):
         self.in_flight = {}
         self.test_result = {"status": "success", "errors": [], "logs": []}
         self.fail_send = False
+        self.native_lookup_failed = False
         self.people = [
             {
                 "uuid": "reader-profile",
@@ -205,6 +206,10 @@ class FakePostHog(PostHog):
         }
 
     def request(self, method, path="", body=None):
+        if "messaging_preferences/opt_outs/" in path:
+            if self.native_lookup_failed:
+                raise RuntimeError("Native consent lookup failed")
+            return {"results": [], "next": None}
         if "persons/" in path:
             if "?" in path:
                 return {"results": copy.deepcopy(self.people)}
@@ -329,8 +334,12 @@ def test_archive_only_completed_idle_editions_across_pages(completed_batch):
 
 
 @pytest.mark.parametrize("send", [False, True])
-def test_newsletter_run_archives_only_when_sending(tmp_path, monkeypatch, completed_batch, send):
+@pytest.mark.parametrize("native_lookup_failed", [False, True])
+def test_newsletter_run_reconciles_before_dispatch_or_archival(
+    tmp_path, monkeypatch, completed_batch, send, native_lookup_failed
+):
     api = FakePostHog()
+    api.native_lookup_failed = native_lookup_failed
     api.flows.append(completed_batch)
     api.jobs.append({"workflow": completed_batch, "status": "completed"})
     monkeypatch.setattr(api, "cities", list)
@@ -342,8 +351,12 @@ def test_newsletter_run_archives_only_when_sending(tmp_path, monkeypatch, comple
         "sys.argv",
         ["newsletter", "--db", str(db), "--output", str(tmp_path / "preview"), *(["--send"] if send else [])],
     )
-    newsletter.main()
-    assert api.flows[0]["status"] == ("archived" if send else "active")
+    if send and native_lookup_failed:
+        with pytest.raises(RuntimeError, match="consent lookup failed"):
+            newsletter.main()
+    else:
+        newsletter.main()
+    assert api.flows[0]["status"] == ("archived" if send and not native_lookup_failed else "active")
 
 
 @pytest.mark.parametrize("ambiguous", [False, True])

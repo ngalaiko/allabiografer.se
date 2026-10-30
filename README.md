@@ -130,7 +130,8 @@ The `Newsletter` GitHub Actions job prepares city editions on Thursdays at
 audience, verified sender, marketing opt-outs, suppression, and delivery metrics.
 Python compares upcoming screenings against 30 days of history, supplies structured movie data, and starts city batches.
 The PostHog library template owns the subject, HTML, plain text, and all wording.
-No subscriber addresses are downloaded to GitHub or committed to this repository.
+Edition audiences stay in PostHog. Unsubscribe reconciliation reads opted-out
+addresses into runner memory only; addresses and tokens are never logged or committed.
 
 The city-page form uses single opt-in: JavaScript POSTs `{email, city}` to
 `/api/newsletter/signup`. Nginx's Lua module validates the city against the generated
@@ -138,12 +139,16 @@ The city-page form uses single opt-in: JavaScript POSTs `{email, city}` to
 `newsletter_cities` array in PostHog. This array is the only subscription state:
 removing a city unsubscribes it; an empty array means unsubscribed from everything.
 There is no receive boolean, separate confirmation flag, or disabled-city history.
-Signup does not attach the email to the anonymous analytics identity, clear native
-marketing opt-outs, or disclose a person's preferences token to the browser.
+Signup does not attach the email to the anonymous analytics identity or disclose
+a person's preferences token to the browser. Explicit signup after a native global
+opt-out starts with only the requested city, waits for that list to be visible, then
+restores native marketing consent. It never restores previously opted-out cities
+or changes bounce/complaint suppression or tracking consent. Failure to restore
+marketing consent fails the signup request rather than claiming success.
 The form links to `/nyhetsbrev/` for subscription and privacy information.
 
 Python discovers cities from `newsletter_cities` among people with a nonempty email.
-Addresses stay in PostHog. City values must
+City values must
 match scraped city names exactly; unknown cities fail before any batches start.
 New subscribed cities need no GitHub configuration or separate template workflow.
 
@@ -200,16 +205,54 @@ immediately. Refreshing requires reopening the original email link.
 
 PostHog still sends marketing emails and enforces native email-client unsubscribe
 and bounce suppression; these protections are never bypassed by marking mail transactional.
-A native global unsubscribe is shown as a delivery warning on our page and is not
-cleared by signup. Native opt-outs may take roughly 5–6 minutes to affect delivery.
+A native global unsubscribe clears `newsletter_cities` through an authenticated
+webhook. The backend resolves the existing person by email, not the native event's
+distinct ID, and checks the current global opt-out while holding the signup lock.
+Duplicate notifications do nothing; delayed notifications cannot undo a later signup
+whose native marketing consent has been restored. Unknown recipients create no profiles.
+
+Notifications are best-effort. Opening our preferences page also reconciles a native
+opt-out, and every real `--send` run reconciles opted-out subscribers before discovering
+cities, archiving batches, or dispatching editions. That fallback uses the same locked
+backend and person-scoped token, never forwards the project API key to our site, and
+stops the run on failed or ambiguous reconciliation. Preview/test-email runs do not
+perform this project-wide cleanup. Until reconciliation finishes, PostHog's native
+delivery block remains in place. This is eventual consistency, not an atomic change
+across PostHog and our list. Native opt-outs may take roughly 5–6 minutes to affect delivery.
 Person updates are asynchronous too: the API waits for read-back before claiming success,
 retains uncertain writes in shared memory, and does not automatically resend them.
+
+### Native unsubscribe notification setup
+
+Deploy the backend before enabling the destination or running the updated sender.
+Keep existing native `List-Unsubscribe` headers and marketing classification intact.
+
+1. Enable `capture_workflows_engagement_events` through PostHog's
+   `/api/projects/{project_id}/workflow_sending_rules/current/` endpoint. These
+   engagement events count toward PostHog event usage.
+2. Configure an HTTP Webhook destination (`template-webhook`), filtered to
+   `$workflows_email_unsubscribed` with event property `category` exactly `$all`.
+   POST JSON to `https://allabiografer.se/api/newsletter/native-unsubscribe` with
+   `email` set from the event's `$email` property. Do not use the resolved person's ID.
+3. Set `Content-Type: application/json`, and put `Authorization: Bearer <token>`
+   in the destination's encrypted `secret_headers`, not ordinary headers.
+   Derive the token as lowercase hex HMAC-SHA256 using `NEWSLETTER_SIGNING_SECRET`
+   over the exact UTF-8 string `newsletter-preferences:v1:native-unsubscribe`.
+   Pass it directly to the encrypted input; never print it or put it in a URL.
+   The destination must treat non-2xx responses as failures so retryable errors retry.
+4. Publish/enable the destination and verify native unsubscribe, re-signup, and a
+   delayed callback using an authorized test recipient. Verify both the city array
+   and native global preference; do not remove bounce or complaint suppression.
+
+Our preferences-page actions write only `newsletter_cities`; they do not create
+native city categories or a second subscription flag. `delivery_blocked` in the API
+response is derived from the current native global opt-out, not a stored person property.
 
 ### Preferences backend and migration
 
 The Alpine image installs nginx's Lua/NDK modules plus cjson, resty HTTP, lock,
 OpenSSL and string libraries. Runtime environment needs `POSTHOG_PROJECT_ID`,
-`POSTHOG_PROJECT_TOKEN`, `POSTHOG_PERSONAL_API_KEY` (Person Read and Hog flow Read),
+`POSTHOG_PROJECT_TOKEN`, `POSTHOG_PERSONAL_API_KEY` (Person Read and Hog flow Read/Write),
 and `NEWSLETTER_SIGNING_SECRET` (at least 32 random ASCII characters). The secret
 must be the same for the migration and app; keep it stable so old links work.
 Provision secrets through the existing deployment secret mechanism, never build args.
