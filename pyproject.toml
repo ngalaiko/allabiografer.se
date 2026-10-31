@@ -65,7 +65,7 @@ build = [
 parse = [
     "beautifulsoup4>=4.12",
     "curl-cffi>=0.7",
-    "playwright>=1.49",
+    "playwright>=1.64.1",
     "requests>=2.31",
 ]
 dev = [
