@@ -47,7 +47,7 @@ def newsletter_api(tmp_path, request):
         },
         {"id": "cat-m", "key": "newsletter-city-malmo", "name": "Nytt på bio i Malmö", "category_type": "marketing"},
     ]
-    state = {"fail": False, "pending": [], "delay": 0, "fail_optin": False}
+    state = {"fail": False, "pending": [], "delay": 0, "fail_optin": False, "exceptions": []}
 
     class PostHogHandler(BaseHTTPRequestHandler):
         def log_message(self, *_):
@@ -89,6 +89,11 @@ def newsletter_api(tmp_path, request):
             if url.path.endswith("/messaging_categories/"):
                 return self.respond({"results": categories, "next": None})
             if url.path.endswith("/opt_outs/"):
+                if state.get("timeout_optout"):
+                    time.sleep(5.2)  # Longer than the real backend's upstream timeout.
+                    return None
+                if state.get("fail_optout"):
+                    return self.respond({"error": "private upstream failure"}, 500)
                 category_key = query.get("category_key", [""])[0]
                 category_id = next((c["id"] for c in categories if c["key"] == category_key), "$all")
                 rows = [
@@ -104,6 +109,9 @@ def newsletter_api(tmp_path, request):
             if self.path == "/i/v0/e/":
                 assert "Authorization" not in self.headers
                 assert data["api_key"] == "test-public-key"
+                if data["event"] == "$exception":
+                    state["exceptions"].append(data)
+                    return self.respond({"status": 1}, 500 if state.get("fail_error_capture") else 200)
                 state["pending"].append(
                     (time.monotonic() + state["delay"], data["distinct_id"], data["properties"]["$set"])
                 )
@@ -392,11 +400,64 @@ def test_api_rejects_forged_links_and_upstream_errors(newsletter_api):
     properties["newsletter_preferences_token"] = token
     assert call("preferences", token=token, origin="https://evil.test").status_code == 403
     assert call("signup", {"email": "p@example.com", "city": "Invented"}).status_code == 400
+    assert state["exceptions"] == []  # Expected client errors are not application exceptions.
     state["fail"] = True
     response = call("preferences", token=token)
     assert response.status_code == 502
     assert "private" not in response.text
     assert token not in response.text
+
+
+@pytest.mark.parametrize(
+    ("upstream_failure", "reporting_unavailable"), [("http", False), ("http", True), ("timeout", False)]
+)
+def test_partial_signup_reports_safe_diagnostics_without_changing_subscription(
+    newsletter_api, upstream_failure, reporting_unavailable
+):
+    call, people, _, _, state = newsletter_api
+    state.update(
+        fail_optout=upstream_failure == "http",
+        timeout_optout=upstream_failure == "timeout",
+        fail_error_capture=reporting_unavailable,
+    )
+    response = call("signup", {"email": "reader@example.com", "city": "Göteborg"})
+    assert response.status_code == 502
+    assert response.json() == {"error": "Request failed", "status": 502}
+    assert people["newsletter:reader@example.com"]["properties"] == {"email": "reader@example.com"}
+    for _ in range(100):
+        if state["exceptions"]:
+            break
+        time.sleep(0.01)
+    assert len(state["exceptions"]) == 1
+    event = state["exceptions"][0]
+    assert event["distinct_id"] == "newsletter-backend"
+    properties = event["properties"]
+    assert properties["$process_person_profile"] is False
+    assert properties["$geoip_disable"] is True
+    assert properties["endpoint"] == "/api/newsletter/signup"
+    assert properties["http_status"] == 502
+    assert properties["stage"] == "check_marketing_consent"
+    assert properties["upstream_operation"] == "GET messaging_preferences"
+    if upstream_failure == "http":
+        assert properties["upstream_status"] == 500
+        assert "upstream_error" not in properties
+    else:
+        assert "upstream_status" not in properties
+        assert properties["upstream_error"] == "timeout"
+    assert properties["$exception_list"] == [
+        {
+            "type": "NewsletterAPIError",
+            "value": "Newsletter API failed at check_marketing_consent",
+            "mechanism": {"handled": True, "synthetic": True},
+        }
+    ]
+    serialized = json.dumps(properties)
+    for private in ["reader@example.com", SECRET, "test-private-key", "private upstream failure", "$set", "token"]:
+        assert private not in serialized
+    state.update(fail_optout=False, timeout_optout=False)
+    assert call("signup", {"email": "reader@example.com", "city": "Stockholm"}).status_code == 200
+    assert people["newsletter:reader@example.com"]["properties"]["newsletter_cities"] == ["Stockholm"]
+    assert len(state["exceptions"]) == 1  # Reporting failures do not recursively report or retry.
 
 
 def test_concurrent_signups_preserve_cities_across_ingestion_delay(newsletter_api):

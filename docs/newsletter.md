@@ -417,6 +417,16 @@ The job reports a queued batch, not confirmed delivery; inspect delivery in Post
 
 ## Verification and troubleshooting
 
+Public pages capture unhandled JavaScript errors and promise rejections in PostHog.
+The private preferences page remains analytics-free. Newsletter backend 5xx failures
+emit best-effort `$exception` events under the non-person identity
+`newsletter-backend`, with the endpoint, failure stage, API resource/method and
+upstream HTTP status or a safe `timeout`/`transport_error` classification. They write these safe
+diagnostics to nginx's error log. Reports exclude emails, person IDs, request
+bodies/headers, credentials and raw exception messages. Expected 4xx rejections
+are not reported. Reporting runs outside the response path, does not retry, and
+cannot guarantee delivery during a PostHog outage; inspect nginx logs as fallback.
+
 - **Signup fails:** inspect city allowlist freshness, duplicate email profiles,
   API-key permissions, pending asynchronous writes and native opt-in restoration.
   Local signup-row hiding is not the source of subscription truth.

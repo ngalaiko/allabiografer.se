@@ -64,7 +64,27 @@ local function encode(data)
     return (assert(json.encode(data)):gsub('"newsletter_cities":{}', '"newsletter_cities":[]'))
 end
 
-local function run()
+local function report_error(premature, properties, timestamp)
+    if premature then return end
+    local key = os.getenv("POSTHOG_PROJECT_TOKEN") or ""
+    if key == "" then return end
+    local client = http.new()
+    client:set_timeout(1000)
+    local response = client:request_uri(
+        (os.getenv("POSTHOG_CAPTURE_HOST") or "https://eu.i.posthog.com") .. "/i/v0/e/", {
+            method = "POST", ssl_verify = true, keepalive = false,
+            headers = {["Content-Type"] = "application/json"},
+            body = encode({api_key = key, event = "$exception", distinct_id = "newsletter-backend",
+                timestamp = timestamp, properties = properties}),
+        })
+    local data = response and json.decode(response.body)
+    if not response or response.status ~= 200 or not data
+        or (data.status ~= 1 and data.status ~= "Ok") then
+        ngx.log(ngx.ERR, "Newsletter error reporting failed")
+    end
+end
+
+local function run(context)
     if ngx.req.get_method() ~= "POST" then fail(405) end
     if ngx.var.http_origin and ngx.var.http_origin ~= "https://allabiografer.se" then fail(403) end
     if not (ngx.var.content_type or ""):match("^application/json") then fail(415) end
@@ -79,13 +99,18 @@ local function run()
     local base = host .. "/api/projects/" .. project .. "/"
 
     local function request(method, path, body)
+        -- Only the API resource name is retained, never query values or person IDs.
+        context.upstream_operation = method .. " " .. path:match("^[^/?]+")
+        context.upstream_status, context.upstream_error = nil, nil
         local client = http.new()
         client:set_timeout(5000)
-        local response = client:request_uri(base .. path, {
+        local response, err = client:request_uri(base .. path, {
             method = method, body = body and encode(body),
             headers = {Authorization = "Bearer " .. key, ["Content-Type"] = "application/json"},
             ssl_verify = true, keepalive = false,
         })
+        context.upstream_status = response and response.status
+        if not response then context.upstream_error = err == "timeout" and "timeout" or "transport_error" end
         if response and response.status == 404 and path:match("^persons/[^/]+/$") then return nil end
         if not response or response.status < 200 or response.status >= 300 then fail(502) end
         if response.body == "" then return {} end
@@ -113,9 +138,10 @@ local function run()
     end
 
     local function capture(identity, properties, event)
+        context.upstream_operation, context.upstream_status, context.upstream_error = "POST capture", nil, nil
         local client = http.new()
         client:set_timeout(5000)
-        local response = client:request_uri(
+        local response, err = client:request_uri(
             (os.getenv("POSTHOG_CAPTURE_HOST") or "https://eu.i.posthog.com") .. "/i/v0/e/", {
                 method = "POST", ssl_verify = true, keepalive = false,
                 headers = {["Content-Type"] = "application/json"},
@@ -123,6 +149,8 @@ local function run()
                     properties = {["$process_person_profile"] = true, ["$geoip_disable"] = true,
                         ["$set"] = properties}}),
             })
+        context.upstream_status = response and response.status
+        if not response then context.upstream_error = err == "timeout" and "timeout" or "transport_error" end
         local data = response and json.decode(response.body)
         if not response or response.status ~= 200 or not data
             or (data.status ~= 1 and data.status ~= "Ok") then fail(502) end
@@ -144,6 +172,7 @@ local function run()
     local function edit(email, transform, event)
         local identity = identity_for(email)
         -- New profiles require two ingestion round trips before a waiting signup can proceed.
+        context.stage = "acquire_lock"
         local mutex = assert(lock:new("newsletter_locks", {timeout = 5, exptime = 300}))
         if not mutex:lock(identity) then fail(503) end
         local ok, result, blocked = pcall(function()
@@ -153,28 +182,37 @@ local function run()
             local person
             if type(pending) == "table" then
                 -- Never resend an uncertain write or let another update overtake it.
+                context.stage = "wait_for_pending_write"
                 person = wait_for(email, pending)
             else
+                context.stage = "lookup_person"
                 person = person_lookup("email=" .. ngx.escape_uri(email))
             end
             if not person and event == "newsletter_native_unsubscribe" then return nil end
             if not person and event == "newsletter_signup" then
                 -- PostHog assigns the UUID, so create and read back the profile before signing its link.
                 local initial = {email = email}
+                context.stage = "create_person"
                 if not ngx.shared.newsletter_pending:safe_set(identity, encode(initial)) then fail(503) end
                 capture(identity, initial, "$set")
+                context.stage = "wait_for_person"
                 person = wait_for(email, initial)
             end
+            context.stage = "check_marketing_consent"
             local native_block = opted_out(email)
+            context.stage = "prepare_subscription"
             local desired = transform(person and person.properties or {}, person and person.uuid, native_block)
             if not desired then return person, native_block end
+            context.stage = "save_subscription"
             if not ngx.shared.newsletter_pending:safe_set(identity, encode(desired)) then fail(503) end
             local distinct_id = person and person.distinct_ids and person.distinct_ids[1] or identity
             capture(distinct_id, desired, event)
+            context.stage = "wait_for_subscription"
             local updated = wait_for(email, desired)
             if event == "newsletter_signup" and native_block then
                 -- Restore marketing consent only after the new city list is visible.
                 -- This API never changes bounce/complaint suppression or tracking consent.
+                context.stage = "restore_marketing_consent"
                 local restored = request("POST", "messaging_preferences/remove_opt_out/", {identifier = email})
                 if not restored.preferences or restored.preferences["$all"] ~= "OPTED_IN" then fail(502) end
                 if opted_out(email) then fail(503) end
@@ -228,6 +266,7 @@ local function run()
     if ngx.var.uri ~= "/api/newsletter/preferences" then fail(404) end
     local token = (ngx.var.http_authorization or ""):match("^Bearer (.+)$")
     local id = verified_id(secret, token)
+    context.stage = "authenticate_preferences"
     local person = request("GET", "persons/" .. id .. "/")
     if not person or person.properties.newsletter_preferences_token ~= token then fail(401) end
     local email = person.properties.email
@@ -263,9 +302,26 @@ function M.handle()
     ngx.header["Content-Type"] = "application/json; charset=utf-8"
     ngx.header["Cache-Control"] = "no-store"
     ngx.header["Referrer-Policy"] = "no-referrer"
-    local ok, result = pcall(run)
+    local context = {stage = "validate_request"}
+    local ok, result = pcall(run, context)
     if not ok then
         ngx.status = type(result) == "table" and result.status or 503
+        if ngx.status >= 500 then
+            -- Do not send the error string, body, email, headers, token or person identity.
+            -- A timer keeps reporting best-effort and outside the request's response path.
+            local properties = {
+                ["$process_person_profile"] = false, ["$geoip_disable"] = true,
+                ["$exception_list"] = {{type = "NewsletterAPIError",
+                    value = "Newsletter API failed at " .. context.stage,
+                    mechanism = {handled = true, synthetic = true}}},
+                endpoint = ngx.var.uri, http_status = ngx.status, stage = context.stage,
+                upstream_operation = context.upstream_operation, upstream_status = context.upstream_status,
+                upstream_error = context.upstream_error,
+            }
+            ngx.log(ngx.ERR, "Newsletter API failed: ", json.encode(properties))
+            local scheduled = ngx.timer.at(0, report_error, properties, ngx.utctime():gsub(" ", "T") .. "Z")
+            if not scheduled then ngx.log(ngx.ERR, "Newsletter error reporting could not be scheduled") end
+        end
         ngx.say(json.encode({error = "Request failed", status = ngx.status}))
         return
     end
