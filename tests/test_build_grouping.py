@@ -437,4 +437,5 @@ def test_showtime_contains_stockholm_offset(monkeypatch):
         )
     )
     assert 'data-start="2030-01-01T18:00:00+01:00"' in html
+    assert '<time datetime="2030-01-01T18:00:00+01:00">18:00</time>' in html
     assert html.count("/i/showtimes.js?v=") == 1

@@ -58,15 +58,76 @@ film descriptions, versions, cinemas, dates, times and ticket links; festival
 pages include their full programmes. Scripts, forms and layout are omitted.
 
 Production nginx serves this representation at the original page URL when
-`Accept: text/markdown` is explicitly requested (except `q=0`), including when
-Markdown is one of several accepted types. HTML remains the default for browsers
-and wildcard requests. Responses declare `Vary: Accept` so caches distinguish
+`Accept: text/markdown` is explicitly requested with a positive quality value
+at least as high as HTML's. Explicit types take precedence over `text/*` and
+`*/*`; ties prefer Markdown. HTML remains the default for browsers and wildcard-only
+requests, and unsupported types retain the HTML fallback rather than returning 406.
+Public HTML pages advertise their direct `index.md` URL with `rel="alternate"`.
+Successful HTML and Markdown responses also include reciprocal HTTP `Link` headers.
+Screening times in programme and festival HTML use `<time datetime="…">` with
+the screening's full date and Stockholm UTC offset, without changing visible labels.
+Responses declare `Vary: Accept` so caches distinguish
 the variants, and Markdown uses `Content-Type: text/markdown; charset=utf-8`.
 Assets, API routes and missing-page fallbacks keep their existing behavior.
 No tokenizer is configured, so no `x-markdown-tokens` estimate is emitted.
 
 The Python static preview does not negotiate content; open `index.md` directly
-there. `tests/test_nginx.py` exercises negotiation through real nginx.
+there. `tests/test_nginx.py` exercises negotiation and discovery through real
+Lua-enabled nginx (`openresty` in `nix develop`, the same runtime used by newsletter tests).
+
+The build also generates `/llms.txt`: a factual access guide covering Markdown
+negotiation and direct URLs, programme indexes, the city JSON contract and its
+freshness/coverage limitations. Its city feed links come from the generated city
+list, not hard-coded examples. HTML pages link to the guide with `rel="help"`.
+It is a convenience for clients that discover or are given the URL, not a claim
+that assistants automatically fetch it. There is no full-site `llms-full.txt` dump.
+
+### City JSON feeds
+
+Every generated city programme also has a static `/stad/{slug}/index.json`,
+for example `/stad/göteborg/index.json`. City HTML advertises it with
+`<link rel="alternate" type="application/json">`; both HTML and Markdown
+responses advertise it in HTTP `Link` headers. Fetch the JSON URL directly;
+`Accept: application/json` does not change the representation at the HTML URL.
+JSON responses link back to the HTML programme. No authentication or backend is needed.
+
+The version 1 contract contains:
+
+- `schema_version`, `city`, the canonical programme `url`, and `timezone`
+  (`Europe/Stockholm`).
+- `generated_at`: an ISO 8601 build timestamp with UTC offset, shared by all
+  city feeds in a build. This is **not** the time a cinema's programme was fetched.
+- `coverage.starts_on` (inclusive) and `coverage.ends_before` (exclusive): the
+  same 14 local calendar days as HTML/Markdown, including elapsed times today.
+  `screening_count` counts records; `cinema_count` counts cinemas represented in
+  those records. `status` is `listings_found` or `no_listings_found`, while
+  `completeness` is always `unknown`: an empty feed does not prove that nothing
+  is showing, or distinguish an unpublished programme from a failed parser.
+- `sources`: source IDs observed in stored upcoming city data, including records
+  beyond the feed window. Each `fetched_at` is currently `null`: the database
+  records neither source fetch timestamps nor parser health. Failed/empty parses
+  can retain older listings. The source list is not a registry of every cinema or
+  an assurance that every source was fetched successfully.
+- `screenings`: chronologically ordered records with a timezone-aware `start`,
+  `film` (title, nullable TMDB ID, source key, programme URL and runtime in minutes),
+  `cinema` (name, nullable address and screen, programme URL), `ticket_url`, `source`,
+  `version`, `presentation`, and `accessibility`. Build-only synthetic movie IDs
+  are published as `null`. Missing URLs and metadata are `null`, not guessed.
+
+Version and presentation values follow the stored screening facts, not inferred
+film languages or merged display labels. Audio `kind: "unknown"` and an empty
+audio-language list mean unknown. Subtitle languages are `null` for unknown,
+`[]` for explicitly no subtitles, or an array of Swedish language names such as
+`["Engelska"]`. Presentation dimensions/media use `"unknown"` when missing;
+empty feature arrays mean no recorded facts, not confirmed absence. Accessibility
+is `null` when unknown, otherwise a list of recorded features (not an exhaustive
+assessment). No prices, seat availability or screening end times are inferred.
+Ticket links may target a cinema's general booking page rather than a specific show.
+
+Feeds contain regular programme data only, not the separate festival planner.
+They preserve individual source records, which can overlap; there is no 100-event
+JSON-LD cap. A city without a generated programme has no feed. Changes to the
+contract require updating this documentation and, for breaking changes, its version.
 
 ### Sharing images
 

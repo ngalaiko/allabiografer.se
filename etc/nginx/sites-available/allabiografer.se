@@ -8,6 +8,9 @@ server {
     charset_types text/markdown;
     add_header Vary Accept always;
 
+    set_by_lua_block $accept_markdown { return require('markdown').accept(ngx.var.http_accept) }
+    header_filter_by_lua_block { require('markdown').link() }
+
     location = /api/newsletter/signup {
         limit_req zone=newsletter_signup burst=3 nodelay;
         limit_req_status 429;

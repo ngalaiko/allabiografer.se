@@ -239,6 +239,7 @@ class SiteData:
     poster_urls: dict[str, str] = field(default_factory=dict)
     broken_posters: set[str] = field(default_factory=set)  # poster keys Pillow could not decode
     cities: dict[str, int] = field(default_factory=dict)
+    generated_at: datetime = field(default_factory=lambda: datetime.now(tz=SWEDEN_TZ))
     today: date = field(default_factory=lambda: datetime.now(tz=SWEDEN_TZ).date())
     days: list[date] = field(default_factory=list)
     venues: dict[tuple[str, str], Venue] = field(default_factory=dict)  # (city, name) → Venue
@@ -303,7 +304,7 @@ def _aggregate_movies(sd: SiteData) -> dict[int, int]:
 
 def _load_data(out_dir: Path) -> SiteData:
     sd = SiteData(out_dir=out_dir)
-    sd.today = datetime.now(tz=SWEDEN_TZ).date()
+    sd.today = sd.generated_at.date()
 
     print("Reading screenings…")
     all_screenings = read_screenings(path=DB_FILE)
@@ -1288,6 +1289,66 @@ def _prepare_programme_blocks(
     return blocks
 
 
+def _write_city_feed(sd: SiteData, city: str, screenings: list[Screening], out_path: Path) -> None:
+    """Publish observed screening facts, without inferring freshness or completeness."""
+    rows = []
+    for screening in sorted(
+        _schedule_screenings(sd, screenings),
+        key=lambda s: (s.date, s.time, s.cinema_name, s.title, s.ticket_url, s.source, s.screen),
+    ):
+        movie = sd.movies.get(screening.tmdb_id)
+        title = movie.title_sv if movie and movie.title_sv else screening.title
+        film_slug = sd.film_slugs.get(title, _slugify_sv(title))
+        city_slug = sd.city_slugs[city]
+        cinema_slug = sd.cinema_slugs[(city, screening.cinema_name)]
+        venue = sd.venues.get((city, screening.cinema_name))
+        facts = screening.to_dict()
+        rows.append(
+            {
+                "start": datetime.combine(screening.date, screening.time, tzinfo=SWEDEN_TZ).isoformat(),
+                "film": {
+                    "tmdb_id": screening.tmdb_id if screening.tmdb_id and screening.tmdb_id > 0 else None,
+                    "source_key": screening.film_key or None,
+                    "title": title,
+                    "url": f"{BASE_URL}/stad/{city_slug}/film/{film_slug}/" if movie and movie.title_sv else None,
+                    "runtime_minutes": movie.runtime if movie else None,
+                },
+                "cinema": {
+                    "name": screening.cinema_name,
+                    "address": venue.address if venue and venue.address else None,
+                    "url": f"{BASE_URL}/stad/{city_slug}/{cinema_slug}/",
+                    "screen": screening.screen or None,
+                },
+                "ticket_url": screening.ticket_url or None,
+                "source": screening.source or None,
+                "version": facts["version"],
+                "presentation": facts["presentation"],
+                "accessibility": facts["accessibility"] or None,
+            }
+        )
+    feed = {
+        "schema_version": 1,
+        "city": city,
+        "url": f"{BASE_URL}/stad/{sd.city_slugs[city]}/",
+        "generated_at": sd.generated_at.isoformat(),
+        "timezone": "Europe/Stockholm",
+        "coverage": {
+            "starts_on": sd.today.isoformat(),
+            "ends_before": (sd.today + timedelta(days=SCHEDULE_DAYS)).isoformat(),
+            "status": "listings_found" if rows else "no_listings_found",
+            "completeness": "unknown",
+            "screening_count": len(rows),
+            "cinema_count": len({row["cinema"]["name"] for row in rows}),
+        },
+        "sources": [
+            {"id": source, "fetched_at": None} for source in sorted({s.source for s in screenings if s.source})
+        ],
+        "screenings": rows,
+    }
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(feed, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
+
+
 def _write_programme(
     env: Environment,
     sd: SiteData,
@@ -1303,6 +1364,7 @@ def _write_programme(
     og_image: str | None = None,
     og_type: str | None = None,
     clear_filter_url: str | None = None,
+    json_feed_url: str | None = None,
 ) -> None:
     screenings = _schedule_screenings(sd, screenings)
     page_days = _compute_days(screenings)
@@ -1315,6 +1377,7 @@ def _write_programme(
         description=description,
         canonical=canonical,
         jsonld=jsonld,
+        json_feed_url=json_feed_url,
         og_image=og_image or _abs(write_card(sd.out_dir)),
         og_type=og_type,
         breadcrumbs=breadcrumbs,
@@ -1354,6 +1417,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
         print(f"  /stad/{slug}/")
         out_path = sd.out_dir / "stad" / slug / "index.html"
         canonical = _register(sd, out_path)
+        _write_city_feed(sd, city_name, city_screenings, out_path.with_suffix(".json"))
         n_films = len({s.tmdb_id for s in _schedule_screenings(sd, city_screenings)})
         title = f"Bio i {city_name} – program för alla biografer"
         _write_programme(
@@ -1367,6 +1431,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
                 f"biografer i {city_name} — uppdaterat dagligen."
             ),
             canonical=canonical,
+            json_feed_url=canonical + "index.json",
             jsonld=_collection_jsonld(
                 f"På bio i {city_name}",
                 canonical,
@@ -1562,6 +1627,60 @@ def _write_robots(out_dir: Path) -> None:
     (out_dir / "robots.txt").write_text("\n".join(lines), encoding="utf-8")
 
 
+def _write_llms(sd: SiteData) -> None:
+    """Describe public representations and list only feeds generated in this build."""
+    lines = [
+        "# allabiografer.se",
+        "",
+        "> Cinema programmes across Sweden, with showtimes, ticket links and separate festival programmes.",
+        "",
+        "## Access",
+        "",
+        "Public pages are server-rendered HTML. A Markdown representation is available at each page's index.md URL, "
+        "for example /stad/{city-slug}/index.md. The homepage is /index.md.",
+        "",
+        "The same page URL also serves Markdown for Accept: text/markdown when its positive quality value is at least "
+        "HTML's. Explicit ties prefer Markdown; wildcard-only requests keep HTML. Responses vary on Accept. "
+        "HTML alternate links and HTTP Link headers advertise available representations.",
+        "",
+        "## Programme indexes",
+        "",
+        f"- {link('Cities', BASE_URL + '/index.md')}: Links to generated city programmes.",
+        f"- {link('Films', BASE_URL + '/filmer/index.md')}: Films currently listed.",
+        f"- {link('Premieres', BASE_URL + '/premiarer/index.md')}: Upcoming cinema releases.",
+        f"- {link('Festivals', BASE_URL + '/festival/index.md')}: Separate festival programmes and planners.",
+        f"- {link('Sitemap', BASE_URL + '/sitemap.xml')}: Generated public HTML page URLs.",
+        "",
+        "## Feed contract and limitations",
+        "",
+        "City feeds are static JSON at /stad/{city-slug}/index.json, fetched directly without authentication. "
+        "Accept: application/json does not select JSON at the HTML page URL. The feeds have schema_version 1.",
+        "",
+        f"Coverage is {SCHEDULE_DAYS} local calendar days: coverage.starts_on is inclusive and coverage.ends_before "
+        "is exclusive. Today's elapsed showtimes are included. Times use Europe/Stockholm with explicit UTC offsets. "
+        "City feeds exclude the separate festival planner and preserve potentially overlapping source records.",
+        "",
+        "generated_at is the build time, not a source fetch time. Source fetched_at values are null because fetch "
+        "timestamps and parser health are not recorded. coverage.completeness is unknown; no_listings_found does not "
+        "prove that nothing is showing. Failed or empty parses can retain older listings.",
+        "",
+        "Screenings include start, film, cinema, ticket_url, source, version, presentation and accessibility. "
+        "Missing TMDB IDs and metadata are null. Audio languages are recorded screening facts, not inferred film "
+        "languages; an empty audio-language list means unknown. Subtitle languages are null when unknown, [] when "
+        "explicitly absent, or Swedish language names such as Engelska. Accessibility is null when unknown; recorded "
+        "features are not an exhaustive assessment. Prices, seat availability and end times are not inferred. "
+        "Ticket URLs can lead to a cinema's general booking page rather than a specific screening.",
+        "",
+        "## City JSON feeds",
+        "",
+    ]
+    lines.extend(
+        f"- {link(city, BASE_URL + '/stad/' + sd.city_slugs[city] + '/index.json')}"
+        for city in sorted(sd.cities, key=_swedish_sort_key)
+    )
+    (sd.out_dir / "llms.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def _write_sitemap(sd: SiteData) -> None:
     """sitemap.xml listing every generated page, newest-relevant first."""
     print(f"Writing sitemap.xml ({len(sd.sitemap_urls)} urls)")
@@ -1626,6 +1745,7 @@ def main() -> None:
     _write_newsletter_cities(sd)
 
     _write_robots(out_dir)
+    _write_llms(sd)
     _write_sitemap(sd)
 
     print(f"\nDone. Output in {out_dir}/")

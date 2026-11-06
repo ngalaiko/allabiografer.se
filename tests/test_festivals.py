@@ -71,6 +71,12 @@ def test_festival_build_keeps_full_programme_before_and_after_festival(tmp_path,
         assert "2026-11-22" in html
         assert "https://example.com/tickets" in html
         assert "festival-data" in html
+        soup = BeautifulSoup(html, "html.parser")
+        assert soup.select_one(".festival-time time")["datetime"] == "2026-11-11T17:30:00+01:00"
+        assert soup.select_one("noscript a time")["datetime"] == "2026-11-11T17:30:00+01:00"
+        assert soup.select_one('link[type="text/markdown"]')["href"] == (
+            "https://allabiografer.se/festival/test-festival/2026/index.md"
+        )
         assert '<a href="/stad/stockholm/">Stockholm</a>' in html
         assert "COMPETITION, ICONS" in html.split('id="festival-data"')[0]
         assert "Genre not shown" not in html.split('id="festival-data"')[0]

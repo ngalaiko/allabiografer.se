@@ -42,8 +42,8 @@
 <div class="schedule-cell" data-day="{{ cell.date }}" style="--day-column: {{ loop.index }};" aria-label="{{ cell.date }}">
 {% for s in cell.screenings %}
 <div class="festival-screening" data-screening="{{ s.id }}" style="--time-left:{{ s.left }}px;--time-top:{{ s.lane * 40 + 6 }}px" title="{{ s.title }} · {{ s.time }}{% if s.end_time %}–{{ s.end_time }}{% endif %} · {{ s.venue }}{% if s.language %} · {{ s.language }}{% endif %}{% if s.subtitles %} · Text: {{ s.subtitles }}{% endif %}">
-<button type="button" class="festival-time" data-select="{{ s.id }}" aria-pressed="false" aria-label="Välj {{ s.title }}, {{ s.date }} {{ s.time }}, {{ s.venue }}" hidden data-enhanced>{{ s.time }}</button>
-<noscript><a href="{{ s.url }}">{{ s.time }}</a></noscript>
+<button type="button" class="festival-time" data-select="{{ s.id }}" aria-pressed="false" aria-label="Välj {{ s.title }}, {{ s.date }} {{ s.time }}, {{ s.venue }}" hidden data-enhanced><time datetime="{{ s.start }}">{{ s.time }}</time></button>
+<noscript><a href="{{ s.url }}"><time datetime="{{ s.start }}">{{ s.time }}</time></a></noscript>
 </div>
 {% endfor %}</div>{% endfor %}
 </div>

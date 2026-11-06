@@ -1,6 +1,7 @@
 """Build data loading."""
 
-from datetime import datetime, time, timedelta
+import json
+from datetime import date, datetime, time, timedelta
 
 import pytest
 from bs4 import BeautifulSoup
@@ -13,17 +14,22 @@ from store import (
     Film,
     Movie,
     Screening,
+    Venue,
     film_key,
     poster_key_for_film,
     write_films,
     write_movie,
     write_poster,
     write_screenings,
+    write_venue,
 )
 from store.version import (
+    Accessibility,
+    AccessibilityFeature,
     AudioKind,
     AudioVersion,
     ContentVersion,
+    Dimension,
     Language,
     Presentation,
     PresentationSystem,
@@ -596,3 +602,105 @@ def test_unsubtitled_reads_ej_textad(db, tmp_path):
         ],
     )
     assert blocks[0]["mi"] == "Engelskt tal • Ej textad"
+
+
+def test_city_json_feed_matches_programme_window_and_preserves_unknown_facts(db, tmp_path):
+    day = date(2030, 3, 24)
+    write_movie(Movie.from_dict({"tmdb_id": 42, "title_sv": "Filmen", "runtime": 97}), path=db)
+    write_venue(Venue(city="Göteborg", name="Bio", address="Gatan 3"), path=db)
+    write_screenings(
+        [
+            screening(
+                tmdb_id=42,
+                city="Göteborg",
+                date=day + timedelta(days=1),
+                time=time(12 + i // 60, i % 60),
+                ticket_url=f"https://example.com/{i}",
+                source="chain",
+            )
+            for i in range(101)
+        ]
+        + [
+            screening(
+                city="Göteborg",
+                date=day,
+                time=time(9),
+                title=UNTITLED,
+                source="local",
+                film_key=film_key("local", UNTITLED),
+            ),
+            screening(
+                tmdb_id=42,
+                city="Göteborg",
+                cinema_name="Salong Ö",
+                date=day + timedelta(days=13),
+                time=time(20, 15),
+                source="chain",
+                screen="2",
+                version=ContentVersion(
+                    audio=AudioVersion(AudioKind.ORIGINAL, frozenset({Language.ENGLISH})),
+                    subtitles=SubtitleVersion(frozenset()),
+                ),
+                presentation=Presentation(dimension=Dimension.THREE_D),
+                accessibility=Accessibility(frozenset({AccessibilityFeature.AUDIO_DESCRIPTION})),
+            ),
+            screening(tmdb_id=42, city="Göteborg", date=day - timedelta(days=1)),
+            screening(tmdb_id=42, city="Göteborg", date=day + timedelta(days=14)),
+            screening(tmdb_id=42, city="Malmö", date=day),
+            screening(tmdb_id=42, city="Umeå", date=day + timedelta(days=14)),
+        ],
+        path=db,
+    )
+    out = tmp_path / "out"
+    sd = build._load_data(out)
+    sd.today = day
+    sd.generated_at = datetime(2030, 3, 24, 8, tzinfo=SWEDEN_TZ)
+    build._build_programme_pages(build._make_env(), sd)
+
+    feed = json.loads((out / "stad/göteborg/index.json").read_text())
+    assert feed["schema_version"] == 1
+    assert feed["city"] == "Göteborg"
+    assert feed["timezone"] == "Europe/Stockholm"
+    assert feed["generated_at"] == "2030-03-24T08:00:00+01:00"
+    assert feed["coverage"] == {
+        "starts_on": "2030-03-24",
+        "ends_before": "2030-04-07",
+        "status": "listings_found",
+        "completeness": "unknown",
+        "screening_count": 103,
+        "cinema_count": 2,
+    }
+    assert feed["sources"] == [{"id": "chain", "fetched_at": None}, {"id": "local", "fetched_at": None}]
+    first, *_, last = feed["screenings"]
+    assert first["start"] == "2030-03-24T09:00:00+01:00"
+    assert first["film"]["tmdb_id"] is None  # Build-only negative identities are not TMDB IDs.
+    assert first["film"]["source_key"] == film_key("local", UNTITLED)
+    assert first["film"]["title"] == UNTITLED
+    assert first["film"]["runtime_minutes"] is None
+    assert first["version"]["audio"] == {"kind": "unknown", "languages": []}
+    assert first["version"]["subtitles"] is None
+    assert first["accessibility"] is None
+    assert first["cinema"]["address"] == "Gatan 3"
+    assert last["start"] == "2030-04-06T20:15:00+02:00"
+    assert last["film"]["tmdb_id"] == 42
+    assert last["film"]["runtime_minutes"] == 97
+    assert last["cinema"]["screen"] == "2"
+    assert last["cinema"]["address"] is None
+    assert last["version"]["audio"] == {"kind": "original", "languages": ["Engelska"]}
+    assert last["version"]["subtitles"] == []
+    assert last["presentation"]["dimension"] == "3D"
+    assert last["accessibility"] == ["Syntolkning"]
+    for row in feed["screenings"]:
+        for url in (row["film"]["url"], row["cinema"]["url"]):
+            assert (out / url.removeprefix(build.BASE_URL).lstrip("/") / "index.html").exists()
+    html = BeautifulSoup((out / "stad/göteborg/index.html").read_text(), "html.parser")
+    assert html.select_one('link[type="application/json"]')["href"] == feed["url"] + "index.json"
+    assert len(html.select(".schedule-cell time")) == 103
+    assert json.loads((out / "stad/malmö/index.json").read_text())["coverage"]["screening_count"] == 1
+
+    empty = json.loads((out / "stad/umeå/index.json").read_text())
+    assert empty["generated_at"] == feed["generated_at"]
+    assert empty["coverage"]["status"] == "no_listings_found"
+    assert empty["coverage"]["completeness"] == "unknown"
+    assert empty["coverage"]["screening_count"] == empty["coverage"]["cinema_count"] == 0
+    assert empty["screenings"] == []
