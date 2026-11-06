@@ -46,6 +46,10 @@ def test_synopsis_overflow(browser, width, overflow):
     page = browser.new_page(viewport={"width": width, "height": 800})
     try:
         page.set_content(html)
+        page.evaluate("""() => {
+            window.errors = [];
+            window.addEventListener('error', event => window.errors.push(event.message));
+        }""")
         page.add_style_tag(content=(ROOT / "static/i/style.css").read_text())
         page.add_style_tag(
             content="""
@@ -73,5 +77,8 @@ def test_synopsis_overflow(browser, width, overflow):
             assert paragraph.evaluate("p => p.clientHeight") == 40
         else:
             assert paragraph.evaluate("p => p.clientHeight == p.scrollHeight")
+        # Let ResizeObserver deliver layout changes before checking global errors.
+        page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+        assert page.evaluate("window.errors") == []
     finally:
         page.close()

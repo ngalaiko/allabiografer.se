@@ -46,7 +46,8 @@
     });
   }
   // Re-measures when a hidden view is shown or the layout width changes.
-  const observer = new ResizeObserver(render);
+  // Clamping changes paragraph height; apply it outside resize delivery.
+  const observer = new ResizeObserver(() => requestAnimationFrame(render));
   for (const button of buttons) observer.observe(text(button));
   document.fonts?.addEventListener("loadingdone", render);
   render();
