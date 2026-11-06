@@ -1528,6 +1528,7 @@ def _write_robots(out_dir: Path) -> None:
     lines = []
     for agent in agents:
         lines.append(f"User-agent: {agent}")
+        lines.append("Content-Signal: ai-train=no, search=yes, ai-input=yes")
         lines.append("Allow: /")
         lines.append("")
     lines.append(f"Sitemap: {BASE_URL}/sitemap.xml")

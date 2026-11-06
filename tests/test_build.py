@@ -58,6 +58,19 @@ def movie(tmdb_id: int) -> Movie:
     return Movie.from_dict({"tmdb_id": tmdb_id, "title_sv": "Filmen"})
 
 
+def test_robots_declares_content_signals_for_every_crawler(tmp_path):
+    build._write_robots(tmp_path)
+
+    robots = (tmp_path / "robots.txt").read_text()
+    groups = robots.split("\n\n")
+    crawler_groups = [group for group in groups if group.startswith("User-agent:")]
+    assert "User-agent: *" in crawler_groups[0]
+    for group in crawler_groups:
+        assert "Content-Signal: ai-train=no, search=yes, ai-input=yes" in group.splitlines()
+        assert "Allow: /" in group.splitlines()
+    assert "Sitemap: https://allabiografer.se/sitemap.xml" in robots.splitlines()
+
+
 def test_load_data_ignores_synthetic_ids(db, tmp_path):
     write_screenings(
         [
