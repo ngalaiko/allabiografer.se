@@ -34,6 +34,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from PIL import Image, UnidentifiedImageError
 
 from build.festivals import build_festivals
+from build.markdown import link, text, write_page, write_programme
 from build.og import write_card
 from store import (
     DB_FILE,
@@ -695,6 +696,11 @@ def _build_newsletter_preferences(env: Environment, out_dir: Path) -> None:
         env.get_template("newsletter-preferences.html").render(og_image=_abs(write_card(out_dir))),
         encoding="utf-8",
     )
+    write_page(
+        out_path,
+        "Inställningar för nyhetsbrevet",
+        ["Öppna länken från nyhetsbrevet i en webbläsare med JavaScript för att ändra dina inställningar."],
+    )
 
 
 def _write_newsletter_cities(sd: SiteData) -> None:
@@ -742,6 +748,14 @@ def _build_index(env: Environment, sd: SiteData, festivals: list[dict]) -> None:
         festivals=festivals,
     )
     out.write_text(html, encoding="utf-8")
+    lines = [SITE_DESCRIPTION]
+    if festivals:
+        lines.append("## Filmfestivaler")
+        lines.extend(f"- {link(f['name'] + ' ' + str(f['year']), f['path'])}" for f in festivals)
+    for letter, cities in groups:
+        lines.append(f"## {letter}")
+        lines.extend(f"- {link(c['name'], '/stad/' + c['slug'] + '/')}" for c in cities)
+    write_page(out, "Alla biografer i Sverige – vad går på bio just nu?", lines)
 
 
 def _build_premiarer(env: Environment, sd: SiteData) -> None:
@@ -809,6 +823,11 @@ def _build_premiarer(env: Environment, sd: SiteData) -> None:
         date_groups=date_groups,
     )
     out.write_text(html, encoding="utf-8")
+    lines = [description]
+    for group in date_groups:
+        lines.append(f"## {text(group['label'])}")
+        lines.extend(f"- {link(f['title'], f['url'])}" for f in group["films"])
+    write_page(out, "Kommande biopremiärer i Sverige", lines)
 
 
 def _build_filmer(env: Environment, sd: SiteData) -> None:
@@ -849,6 +868,11 @@ def _build_filmer(env: Environment, sd: SiteData) -> None:
         films=films,
     )
     out.write_text(html, encoding="utf-8")
+    write_page(
+        out,
+        "Alla filmer som visas på bio i Sverige",
+        [description, *(f"- {link(f['title'], f['url'])}" for f in films)],
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1155,15 +1179,9 @@ def _prepare_programme_blocks(
         # Movie info line
         mi_parts: list[str] = []
         if movie:
-            for g in movie.genres:
-                if city:
-                    city_slug = sd.city_slugs.get(city, _slugify_sv(city))
-                    genre_slug = _slugify_sv(g)
-                    mi_parts.append(f'<a href="/stad/{city_slug}/genre/{genre_slug}/">{g}</a>')
-                else:
-                    mi_parts.append(g)
+            mi_parts.extend(movie.genres)
             if movie.directors:
-                mi_parts.append(escape(", ".join(movie.directors)))
+                mi_parts.append(", ".join(movie.directors))
             year = movie.release_date[:4] if movie.release_date else ""
             if year:
                 mi_parts.append(year)
@@ -1179,6 +1197,12 @@ def _prepare_programme_blocks(
             mi_parts.append(
                 subtitles_label(sorted(language.value for language in profile[2])) if profile[2] else "Ej textad"
             )
+        mi_html = [escape(part) for part in mi_parts]
+        if city and movie:
+            city_slug = sd.city_slugs.get(city, _slugify_sv(city))
+            for index, genre in enumerate(movie.genres):
+                genre_slug = _slugify_sv(genre)
+                mi_html[index] = f'<a href="/stad/{city_slug}/genre/{genre_slug}/">{escape(genre)}</a>'
         desc = ""
         full_desc = ""
         if movie and movie.overview_sv:
@@ -1253,7 +1277,8 @@ def _prepare_programme_blocks(
                 "film_title": film_title,
                 "variant": variant,
                 "film_url": film_url,
-                "mi": " • ".join(mi_parts) if mi_parts else "",
+                "mi": " • ".join(mi_html),
+                "mi_text": " • ".join(mi_parts),
                 "desc": desc,
                 "full_desc": full_desc,
                 "cinemas": cinema_rows,
@@ -1301,6 +1326,7 @@ def _write_programme(
     )
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html, encoding="utf-8")
+    write_programme(out_path, title, blocks, days)
 
 
 def _build_programme_pages(env: Environment, sd: SiteData) -> None:

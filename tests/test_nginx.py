@@ -29,6 +29,8 @@ def nginx_server(tmp_path):
         path = root / page
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(page)
+        if path.suffix == ".html":
+            path.with_suffix(".md").write_text(f"# {page}\n\nBioprogram i Sverige.\n")
 
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
@@ -44,6 +46,8 @@ def nginx_server(tmp_path):
     config.write_text(
         f"pid {tmp_path}/nginx.pid;\nerror_log {tmp_path}/error.log;\n"
         "events {}\nhttp {\naccess_log off;\n"
+        "types { text/html html; text/css css; }\n"
+        f"include {Path(__file__).resolve().parents[1]}/etc/nginx/markdown.conf;\n"
         "limit_req_zone $binary_remote_addr zone=newsletter_signup:1m rate=5r/m;\n"
         "limit_req_zone $binary_remote_addr zone=newsletter_preferences:1m rate=30r/m;\n"
         "map $request_uri $posthog_upstream { default eu.i.posthog.com; }\n"
@@ -105,5 +109,50 @@ def test_page_fallback(nginx_server, path, status, destination):
             assert location is None
         if status == 200:
             assert response.read().decode() == path.lstrip("/") + ("index.html" if path.endswith("/") else "")
+    finally:
+        connection.close()
+
+
+@pytest.mark.parametrize(
+    ("accept", "markdown"),
+    [
+        (None, False),
+        ("*/*", False),
+        ("text/html,application/xhtml+xml,*/*;q=0.8", False),
+        ("text/markdown", True),
+        ("text/html, text/markdown;q=0.8", True),
+        ("TEXT/MARKDOWN; charset=utf-8", True),
+        ("text/markdown;q=0", False),
+        ("text/markdown;q=0.000, text/html", False),
+        ("text/markdown-extra", False),
+    ],
+)
+@pytest.mark.parametrize("path", ["/", "/stad/stockholm/", "/film/current/", "/stad/stockholm/film/current/index.html"])
+def test_markdown_negotiation(nginx_server, accept, markdown, path):
+    connection = http.client.HTTPConnection("127.0.0.1", nginx_server)
+    try:
+        connection.request("GET", path, headers={"Accept": accept} if accept else {})
+        response = connection.getresponse()
+        assert response.status == 200
+        assert response.getheader("Content-Type").split(";")[0] == ("text/markdown" if markdown else "text/html")
+        assert "Accept" in response.getheader("Vary")
+        body = response.read().decode()
+        assert body.startswith("# ") is markdown
+        if markdown:
+            assert "Bioprogram i Sverige." in body
+    finally:
+        connection.close()
+
+
+@pytest.mark.parametrize(("path", "status"), [("/i/style.css", 200), ("/unrelated/", 404), ("/film/expired/", 302)])
+def test_markdown_preserves_nonpage_responses(nginx_server, path, status):
+    connection = http.client.HTTPConnection("127.0.0.1", nginx_server)
+    try:
+        connection.request("GET", path, headers={"Accept": "text/markdown"})
+        response = connection.getresponse()
+        assert response.status == status
+        if status == 200:
+            assert response.getheader("Content-Type").split(";")[0] == "text/css"
+            assert response.read() == b"i/style.css"
     finally:
         connection.close()

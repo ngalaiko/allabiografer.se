@@ -74,6 +74,11 @@ def test_festival_build_keeps_full_programme_before_and_after_festival(tmp_path,
         assert '<a href="/stad/stockholm/">Stockholm</a>' in html
         assert "COMPETITION, ICONS" in html.split('id="festival-data"')[0]
         assert "Genre not shown" not in html.split('id="festival-data"')[0]
+        markdown = (sd.out_dir / "festival/test-festival/2026/index.md").read_text()
+        assert "Film \\<ett\\>" in markdown
+        assert "[2026-11-11 17:30–19:30](https://example.com/tickets)" in markdown
+        assert "COMPETITION, ICONS" in markdown
+        assert "Genre not shown" not in markdown
         assert "https://allabiografer.se/festival/test-festival/2026/" in sd.sitemap_urls
         for path in ("index.html", "festival/index.html"):
             soup = BeautifulSoup((sd.out_dir / path).read_text(), "html.parser")

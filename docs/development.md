@@ -50,6 +50,24 @@ mise run serve
 The static preview serves the built site on port 8000; it does not run the
 newsletter's nginx/Lua API. See [newsletter operations](newsletter.md) for that backend.
 
+### Markdown for agents
+
+The build writes an `index.md` beside each HTML page, directly from the same
+database-backed page data rather than converting HTML. Programme text includes
+film descriptions, versions, cinemas, dates, times and ticket links; festival
+pages include their full programmes. Scripts, forms and layout are omitted.
+
+Production nginx serves this representation at the original page URL when
+`Accept: text/markdown` is explicitly requested (except `q=0`), including when
+Markdown is one of several accepted types. HTML remains the default for browsers
+and wildcard requests. Responses declare `Vary: Accept` so caches distinguish
+the variants, and Markdown uses `Content-Type: text/markdown; charset=utf-8`.
+Assets, API routes and missing-page fallbacks keep their existing behavior.
+No tokenizer is configured, so no `x-markdown-tokens` estimate is emitted.
+
+The Python static preview does not negotiate content; open `index.md` directly
+there. `tests/test_nginx.py` exercises negotiation through real nginx.
+
 ### Sharing images
 
 The build generates 1200 × 630 JPEG cards in `/og/` for every public page type.

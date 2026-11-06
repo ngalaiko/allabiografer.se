@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
 import build
+from build.markdown import link, write_festival, write_page
 from store import DB_FILE, read_festivals
 
 TZ = ZoneInfo("Europe/Stockholm")
@@ -151,6 +152,7 @@ def build_festivals(env, sd, register, db_path: Path = DB_FILE) -> list[dict]:
                 versions=versions,
             )
         )
+        write_festival(out, festival)
     out = sd.out_dir / "festival" / "index.html"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(
@@ -164,5 +166,10 @@ def build_festivals(env, sd, register, db_path: Path = DB_FILE) -> list[dict]:
             festivals=festivals,
             active="festival",
         )
+    )
+    write_page(
+        out,
+        "Filmfestivaler – program och egna scheman",
+        [f"- {link(f['name'] + ' ' + str(f['year']), f['path'])}" for f in festivals],
     )
     return festivals
