@@ -201,6 +201,23 @@ local function run(context)
             if not ngx.shared.newsletter_pending:safe_set(identity, encode(desired)) then fail(503) end
             local distinct_id = person and person.distinct_ids and person.distinct_ids[1] or identity
             capture(distinct_id, desired, event)
+            -- Acceptance is enough for ordinary signup. Keep the pending write so
+            -- the next update must observe it before changing the city array.
+            if event == "newsletter_signup" and not native_block then
+                local scheduled = ngx.timer.at(0, function(premature)
+                    if premature then return end
+                    local cleanup = lock:new("newsletter_locks", {timeout = 5, exptime = 300})
+                    if not cleanup or not cleanup:lock(identity) then return end
+                    -- Another request may already have confirmed or replaced this write.
+                    if ngx.shared.newsletter_pending:get(identity) == encode(desired) then
+                        local confirmed = pcall(wait_for, email, desired)
+                        if not confirmed then ngx.log(ngx.WARN, "Newsletter signup read-back remains pending") end
+                    end
+                    cleanup:unlock()
+                end)
+                if not scheduled then ngx.log(ngx.WARN, "Newsletter signup read-back could not be scheduled") end
+                return nil, false
+            end
             context.stage = "wait_for_subscription"
             local updated = wait_for(email, desired)
             if event == "newsletter_signup" and native_block then

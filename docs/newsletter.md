@@ -96,10 +96,13 @@ For a new address, the backend signs the normalized email without exposing it in
 the token, then writes email, city membership and preferences token in one ingestion
 event. There is no preliminary email-only profile or wait for a person UUID.
 Existing people are resolved by email and updated through their existing distinct
-ID; valid UUID-based preferences links are preserved. Consent checks and final
-read-back still require API reads: this is one subscription write, not one HTTP
-request. A slow read-back can return an uncertain result, but the accepted write
-already includes the requested city and token. The anonymous analytics browser
+ID; valid UUID-based preferences links are preserved. Ordinary signup returns
+success once PostHog accepts the complete ingestion event, without waiting for
+profile visibility. Read-back runs best-effort in the background. Rejoining after
+a native opt-out still waits for the saved city list and verified consent restoration.
+Consent checks still require API reads: this is one subscription write, not one HTTP
+request. Success for ordinary signup means accepted, not confirmed processed;
+the accepted write already includes the requested city and token. The anonymous analytics browser
 identity is not used for signup. Signup is
 single opt-in: there is no confirmation email or confirmation-state transition.
 It does not create a delivery workflow or immediately send an edition.
@@ -326,8 +329,13 @@ Run **one backend instance**. Lua locks serialize each email's array updates wit
 that instance, including signup versus unsubscribe; multi-instance writes require a
 shared lock/store before scaling.
 PostHog profile writes use ingestion and are asynchronous. While holding the lock,
-the backend waits for read-back and records pending writes in shared memory so
-later requests cannot overtake or blindly resend an uncertain write. Shared memory
+the backend records pending writes in shared memory so later requests cannot
+overtake or blindly resend an uncertain write. Ordinary signup releases the lock
+after ingestion acceptance; a background read-back reacquires it and clears the
+pending entry only after confirmation. If that fails or cannot run, the entry stays
+pending and the next request must confirm it before updating the subscription.
+Preferences updates, native unsubscribe callbacks and consent restoration still
+wait for read-back before returning success. Shared memory
 does not survive a machine restart; inspect outstanding state after recovery.
 The static `mise run serve` preview does not run Lua. API tests run real Lua-enabled
 nginx in the Nix shell against a local PostHog HTTP fixture.

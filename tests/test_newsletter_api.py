@@ -68,10 +68,7 @@ def newsletter_api(tmp_path, request):
             self.end_headers()
             self.wfile.write(payload)
 
-        def do_GET(self):
-            assert self.headers["Authorization"] == "Bearer test-private-key"
-            if state["fail"]:
-                return self.respond({"error": "private upstream failure"}, 500)
+        def apply_pending(self):
             for pending in list(state["pending"]):
                 when, identity, properties = pending
                 if time.monotonic() >= when:
@@ -80,6 +77,12 @@ def newsletter_api(tmp_path, request):
                     )
                     person["properties"].update(properties)
                     state["pending"].remove(pending)
+
+        def do_GET(self):
+            assert self.headers["Authorization"] == "Bearer test-private-key"
+            if state["fail"]:
+                return self.respond({"error": "private upstream failure"}, 500)
+            self.apply_pending()
             url = urlsplit(self.path)
             query = parse_qs(url.query, keep_blank_values=True)
             if url.path.endswith("/persons/"):
@@ -127,9 +130,12 @@ def newsletter_api(tmp_path, request):
                 if data["event"] == "$exception":
                     state["exceptions"].append(data)
                     return self.respond({"status": 1}, 500 if state.get("fail_error_capture") else 200)
+                if state.get("fail_capture"):
+                    return self.respond({"status": 0}, 500)
                 state["pending"].append(
                     (time.monotonic() + state["delay"], data["distinct_id"], data["properties"]["$set"])
                 )
+                self.apply_pending()
                 return self.respond({"status": 1})
             assert self.headers["Authorization"] == "Bearer test-private-key"
             assert self.path.endswith(("/add_opt_out/", "/remove_opt_out/"))
@@ -488,9 +494,16 @@ def test_signup_preflight_failure_reports_safe_diagnostics_without_creating_a_pr
 def test_slow_profile_creation_keeps_the_whole_subscription_and_retry_preserves_it(newsletter_api):
     call, people, _, _, state = newsletter_api
     state["delay"] = 11  # Beyond the backend's 20 half-second polls.
+    started = time.monotonic()
     response = call("signup", {"email": "reader@example.com", "city": "Göteborg"})
-    assert response.status_code == 503  # No false success while read-back is uncertain.
-    time.sleep(1.2)
+    assert response.status_code == 200
+    assert response.json() == {"success": True}  # Accepted, not necessarily visible yet.
+    assert time.monotonic() - started < 3
+    assert people == {}
+    # Another update must not overtake the accepted city while ingestion is delayed.
+    assert call("signup", {"email": "reader@example.com", "city": "Stockholm"}).status_code == 503
+    assert len(state["pending"]) == 1
+    time.sleep(max(0, started + 11.2 - time.monotonic()))
     response = requests.get(
         state["upstream_url"] + "/api/projects/123/persons/?email=reader@example.com",
         headers={"Authorization": "Bearer test-private-key"},
@@ -508,6 +521,14 @@ def test_slow_profile_creation_keeps_the_whole_subscription_and_retry_preserves_
     assert properties["newsletter_preferences_token"] == token
 
 
+def test_signup_does_not_claim_acceptance_when_ingestion_rejects_the_write(newsletter_api):
+    call, people, _, _, state = newsletter_api
+    state["fail_capture"] = True
+    assert call("signup", {"email": "reader@example.com", "city": "Stockholm"}).status_code == 502
+    assert people == {}
+    assert state["pending"] == []
+
+
 def test_concurrent_signups_preserve_cities_across_ingestion_delay(newsletter_api):
     call, people, _, _, state = newsletter_api
     state["delay"] = 0.2
@@ -516,4 +537,10 @@ def test_concurrent_signups_preserve_cities_across_ingestion_delay(newsletter_ap
             pool.map(lambda city: call("signup", {"email": "p@example.com", "city": city}), ["Stockholm", "Göteborg"])
         )
     assert [r.status_code for r in results] == [200, 200], [r.text for r in results]
+    # Reading preferences drains the last accepted write before asserting final state.
+    token = people["newsletter:p@example.com"]["properties"]["newsletter_preferences_token"]
+    assert call("preferences", token=token).json() == {
+        "cities": ["Göteborg", "Stockholm"],
+        "delivery_blocked": False,
+    }
     assert people["newsletter:p@example.com"]["properties"]["newsletter_cities"] == ["Göteborg", "Stockholm"]
