@@ -15,6 +15,10 @@ end
 
 local function token_for(secret, id) return id .. "." .. signature(secret, id) end
 
+local function email_token(secret, email)
+    return "v2." .. hex(assert(assert(hmac.new(secret, "sha256")):final("newsletter-preferences:v2:" .. email)))
+end
+
 local function equal(left, right)
     if type(left) ~= "string" or #left ~= #right then return false end
     local difference = 0
@@ -171,7 +175,6 @@ local function run(context)
 
     local function edit(email, transform, event)
         local identity = identity_for(email)
-        -- New profiles require two ingestion round trips before a waiting signup can proceed.
         context.stage = "acquire_lock"
         local mutex = assert(lock:new("newsletter_locks", {timeout = 5, exptime = 300}))
         if not mutex:lock(identity) then fail(503) end
@@ -189,15 +192,6 @@ local function run(context)
                 person = person_lookup("email=" .. ngx.escape_uri(email))
             end
             if not person and event == "newsletter_native_unsubscribe" then return nil end
-            if not person and event == "newsletter_signup" then
-                -- PostHog assigns the UUID, so create and read back the profile before signing its link.
-                local initial = {email = email}
-                context.stage = "create_person"
-                if not ngx.shared.newsletter_pending:safe_set(identity, encode(initial)) then fail(503) end
-                capture(identity, initial, "$set")
-                context.stage = "wait_for_person"
-                person = wait_for(email, initial)
-            end
             context.stage = "check_marketing_consent"
             local native_block = opted_out(email)
             context.stage = "prepare_subscription"
@@ -256,8 +250,11 @@ local function run(context)
             for _, city in ipairs(memberships) do if city == body.city then seen = true end end
             if not seen then memberships[#memberships + 1] = body.city end
             table.sort(memberships)
+            -- Preserve issued UUID links, but new profiles need no UUID bootstrap.
+            local token = properties.newsletter_preferences_token
+            if not id or not equal(token, token_for(secret, id)) then token = email_token(secret, email) end
             return {email = email, newsletter_cities = memberships,
-                newsletter_preferences_token = token_for(secret, id)}
+                newsletter_preferences_token = token}
         end, "newsletter_signup")
         -- Never disclose whether a person exists, or return their bearer token.
         return {success = true}
@@ -265,12 +262,20 @@ local function run(context)
 
     if ngx.var.uri ~= "/api/newsletter/preferences" then fail(404) end
     local token = (ngx.var.http_authorization or ""):match("^Bearer (.+)$")
-    local id = verified_id(secret, token)
     context.stage = "authenticate_preferences"
-    local person = request("GET", "persons/" .. id .. "/")
+    local person
+    local email_signed = type(token) == "string" and #token == 67 and token:match("^v2%.[a-f0-9]+$")
+    if email_signed then
+        local filter = {{key = "newsletter_preferences_token", type = "person", operator = "exact", value = {token}}}
+        person = person_lookup("properties=" .. ngx.escape_uri(json.encode(filter)))
+    else
+        local id = verified_id(secret, token)
+        person = request("GET", "persons/" .. id .. "/")
+    end
     if not person or person.properties.newsletter_preferences_token ~= token then fail(401) end
     local email = person.properties.email
     if type(email) ~= "string" or email == "" then fail(401) end
+    if email_signed and not equal(token, email_token(secret, email:lower())) then fail(401) end
     if body.unsubscribe ~= nil then
         if body.unsubscribe ~= true or (body.city ~= nil and type(body.city) ~= "string") then fail(400) end
     elseif next(body) ~= nil then fail(400) end

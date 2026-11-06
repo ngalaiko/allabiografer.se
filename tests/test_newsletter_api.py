@@ -1,6 +1,8 @@
 """Exercise the real nginx/Lua API against a local PostHog HTTP contract fixture."""
 
 import copy
+import hashlib
+import hmac
 import json
 import os
 import shutil
@@ -10,7 +12,6 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from io import BytesIO
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 from urllib.request import Request, urlopen
@@ -20,10 +21,16 @@ import pytest
 import requests
 
 from newsletter import PostHog
-from newsletter.migrate import migrate, preferences_token
 
 ROOT = Path(__file__).resolve().parents[1]
 SECRET = "test-only-signing-secret-32-characters-long"
+
+
+def preferences_token(secret, identifier):
+    signature = hmac.new(
+        secret.encode(), f"newsletter-preferences:v1:{identifier}".encode(), hashlib.sha256
+    ).hexdigest()
+    return f"{identifier}.{signature}"
 
 
 @pytest.fixture(params=[False, True], ids=["native-json-null", "alpine-table-null"])
@@ -80,6 +87,14 @@ def newsletter_api(tmp_path, request):
                     result = [p for p in people.values() if p["properties"].get("email") == query["email"][0]]
                 elif "distinct_id" in query:
                     result = [people[query["distinct_id"][0]]] if query["distinct_id"][0] in people else []
+                elif "properties" in query:
+                    [prop] = json.loads(query["properties"][0])
+                    assert (prop["key"], prop["type"], prop["operator"]) == (
+                        "newsletter_preferences_token",
+                        "person",
+                        "exact",
+                    )
+                    result = [p for p in people.values() if p["properties"].get(prop["key"]) in prop["value"]]
                 else:
                     raise AssertionError("Unexpected person collection lookup")
                 return self.respond({"results": [{"uuid": p["uuid"]} for p in result], "next": None})
@@ -226,7 +241,10 @@ def test_signup_and_property_unsubscribe_end_to_end(newsletter_api):
     assert "newsletter_confirmed" not in person
     token = person["newsletter_preferences_token"]
     assert "newsletter_preferences_id" not in person
-    assert token == preferences_token(SECRET, people["newsletter:person@example.com"]["uuid"])
+    expected_signature = hmac.new(
+        SECRET.encode(), b"newsletter-preferences:v2:person@example.com", hashlib.sha256
+    ).hexdigest()
+    assert token == "v2." + expected_signature
     expected = {"delivery_blocked": False, "cities": ["Göteborg", "Stockholm"]}
     response = call("preferences", token=token)
     assert response.status_code == 200, response.text
@@ -395,6 +413,13 @@ def test_api_rejects_forged_links_and_upstream_errors(newsletter_api):
     assert people == before
     assert writes == []
     properties = people["newsletter:p@example.com"]["properties"]
+    properties["email"] = "different@example.com"
+    assert call("preferences", token=token).status_code == 401  # A stored token must also sign this email.
+    properties["email"] = "p@example.com"
+    people["duplicate"] = copy.deepcopy(people["newsletter:p@example.com"])
+    people["duplicate"]["uuid"] = str(uuid4())
+    assert call("preferences", token=token).status_code == 409
+    del people["duplicate"]
     properties["newsletter_preferences_token"] = "revoked"
     assert call("preferences", token=token).status_code == 401
     properties["newsletter_preferences_token"] = token
@@ -411,7 +436,7 @@ def test_api_rejects_forged_links_and_upstream_errors(newsletter_api):
 @pytest.mark.parametrize(
     ("upstream_failure", "reporting_unavailable"), [("http", False), ("http", True), ("timeout", False)]
 )
-def test_partial_signup_reports_safe_diagnostics_without_changing_subscription(
+def test_signup_preflight_failure_reports_safe_diagnostics_without_creating_a_profile(
     newsletter_api, upstream_failure, reporting_unavailable
 ):
     call, people, _, _, state = newsletter_api
@@ -423,7 +448,7 @@ def test_partial_signup_reports_safe_diagnostics_without_changing_subscription(
     response = call("signup", {"email": "reader@example.com", "city": "Göteborg"})
     assert response.status_code == 502
     assert response.json() == {"error": "Request failed", "status": 502}
-    assert people["newsletter:reader@example.com"]["properties"] == {"email": "reader@example.com"}
+    assert people == {}  # Do not create an email-only profile before checking consent.
     for _ in range(100):
         if state["exceptions"]:
             break
@@ -460,6 +485,29 @@ def test_partial_signup_reports_safe_diagnostics_without_changing_subscription(
     assert len(state["exceptions"]) == 1  # Reporting failures do not recursively report or retry.
 
 
+def test_slow_profile_creation_keeps_the_whole_subscription_and_retry_preserves_it(newsletter_api):
+    call, people, _, _, state = newsletter_api
+    state["delay"] = 11  # Beyond the backend's 20 half-second polls.
+    response = call("signup", {"email": "reader@example.com", "city": "Göteborg"})
+    assert response.status_code == 503  # No false success while read-back is uncertain.
+    time.sleep(1.2)
+    response = requests.get(
+        state["upstream_url"] + "/api/projects/123/persons/?email=reader@example.com",
+        headers={"Authorization": "Bearer test-private-key"},
+        timeout=5,
+    )
+    assert response.status_code == 200
+    properties = people["newsletter:reader@example.com"]["properties"]
+    assert properties["email"] == "reader@example.com"
+    assert properties["newsletter_cities"] == ["Göteborg"]  # Not the old stranded email-only profile.
+    token = properties["newsletter_preferences_token"]
+    assert call("preferences", token=token).json() == {"cities": ["Göteborg"], "delivery_blocked": False}
+    state["delay"] = 0
+    assert call("signup", {"email": "reader@example.com", "city": "Stockholm"}).status_code == 200
+    assert properties["newsletter_cities"] == ["Göteborg", "Stockholm"]
+    assert properties["newsletter_preferences_token"] == token
+
+
 def test_concurrent_signups_preserve_cities_across_ingestion_delay(newsletter_api):
     call, people, _, _, state = newsletter_api
     state["delay"] = 0.2
@@ -469,87 +517,3 @@ def test_concurrent_signups_preserve_cities_across_ingestion_delay(newsletter_ap
         )
     assert [r.status_code for r in results] == [200, 200], [r.text for r in results]
     assert people["newsletter:p@example.com"]["properties"]["newsletter_cities"] == ["Göteborg", "Stockholm"]
-
-
-@pytest.mark.parametrize("native_optout", [None, "city", "global"])
-def test_migration_is_dry_run_idempotent_and_preserves_consent(native_optout, monkeypatch):
-    class MigrationAPI:
-        base = "https://eu.posthog.com/api/projects/123/hog_flows/"
-
-        def __init__(self):
-            self.properties = {
-                "email": "p@example.com",
-                "newsletter_confirmed": "yes",
-                "newsletter_city": "Stockholm",
-                "newsletter_subscribed_city_Stockholm": "yes",
-                "newsletter_subscribed_city_Göteborg": "yes",
-                "newsletter_subscribed_city_Malmö": "no",
-                "newsletter_preferences_id": "a" * 32,
-            }
-
-        def request(self, method, path, body=None):
-            if method == "GET":
-                if "messaging_categories/" in path:
-                    return {"results": [{"key": "newsletter-city-goteborg", "id": "cat-g"}]}
-                if "messaging_preferences/" in path:
-                    if native_optout == "global" or (
-                        native_optout == "city" and "category_key=newsletter-city-goteborg" in path
-                    ):
-                        return {
-                            "results": [
-                                {
-                                    "identifier": "p@example.com",
-                                    "preferences": {
-                                        "$all" if native_optout == "global" else "cat-g": "OPTED_OUT",
-                                    },
-                                }
-                            ]
-                        }
-                    return {"results": []}
-                if "?" in path:
-                    return {"results": [{"uuid": "12345678-1234-5678-9abc-123456789abc"}], "next": None}
-                return {
-                    "uuid": "12345678-1234-5678-9abc-123456789abc",
-                    "properties": copy.deepcopy(self.properties),
-                    "distinct_ids": ["existing-subscriber"],
-                }
-            assert "/persons/12345678-1234-5678-9abc-123456789abc/" in path  # No opt-out or delivery mutations.
-            assert method == "POST"
-            for key in body["$unset"]:
-                self.properties.pop(key)
-            return {}
-
-    client = MigrationAPI()
-
-    def capture(request, timeout):
-        assert request.full_url == "https://eu.i.posthog.com/i/v0/e/"
-        assert not request.has_header("Authorization")
-        payload = json.loads(request.data)
-        assert payload["api_key"] == "test-public-key"
-        assert payload["event"] == "$set"
-        assert payload["distinct_id"] == "existing-subscriber"
-        client.properties.update(payload["properties"]["$set"])
-        for key in payload["properties"]["$unset"]:
-            client.properties.pop(key, None)
-        return BytesIO(b'{"status":1}')
-
-    monkeypatch.setenv("POSTHOG_PROJECT_TOKEN", "test-public-key")
-    monkeypatch.setattr("newsletter.migrate.urlopen", capture)
-    before = copy.deepcopy(client.properties)
-    assert migrate(client, SECRET)["updates"] == 1
-    assert client.properties == before
-    assert migrate(client, SECRET, apply=True, prune=True)["legacy_properties"] == 5
-    expected = {None: ["Göteborg", "Stockholm"], "city": ["Stockholm"], "global": []}
-    assert client.properties["newsletter_cities"] == expected[native_optout]
-    assert "newsletter_preferences_id" not in client.properties
-    assert client.properties["newsletter_preferences_token"] == preferences_token(
-        SECRET, "12345678-1234-5678-9abc-123456789abc"
-    )
-    assert "newsletter_confirmed" not in client.properties
-    assert not any(k.startswith("newsletter_subscribed_city_") for k in client.properties)
-    assert migrate(client, SECRET, apply=True) == {"people": 1, "updates": 0, "legacy_properties": 0}
-    # A rerun before pruning must never resurrect a removed city from legacy keys.
-    client.properties["newsletter_cities"] = []
-    client.properties["newsletter_city"] = "Stockholm"
-    migrate(client, SECRET, apply=True)
-    assert client.properties["newsletter_cities"] == []

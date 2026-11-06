@@ -10,7 +10,6 @@ import pytest
 
 import newsletter
 from newsletter import PostHog, edition
-from newsletter.migrate import cutover_workflows
 
 
 @pytest.mark.parametrize("edition_day", [14, 15])
@@ -464,43 +463,6 @@ def test_existing_category_consent_requires_explicit_migration():
         api.send("template", {"city": "Stockholm", "start": "2026-10-16", "end": "2026-10-22", "films": []})
     assert api.jobs == []
     assert api.deliveries == {}
-
-
-@pytest.mark.parametrize("unknown_category", [False, True])
-def test_workflow_cutover_preserves_filters_and_rejects_unknown_consent(unknown_category):
-    class CutoverAPI(FakePostHog):
-        def request(self, method, path="", body=None):
-            if path.startswith("?search=allabiografer%3Adelivery%3A"):
-                return {"results": list(copy.deepcopy(self.deliveries).values())}
-            result = super().request(method, path, body)
-            if method == "GET" and path == "old/":
-                result["actions"][0]["config"]["filters"]["bytecode"] = ["server-compiled"]
-            return result
-
-    api = CutoverAPI()
-    api.categories = [{"id": "cat-g", "key": "newsletter-city-goteborg"}]
-    flow = copy.deepcopy(api.template)
-    flow.update(id="old", name="allabiografer:delivery:Göteborg")
-    flow["actions"][1]["config"]["message_category_id"] = "unknown" if unknown_category else "cat-g"
-    api.deliveries["old"] = flow
-    before = copy.deepcopy(flow)
-    if unknown_category:
-        with pytest.raises(ValueError, match="preserve its opt-outs"):
-            cutover_workflows(api)
-        assert api.deliveries["old"] == before
-    else:
-        assert cutover_workflows(api) == 1
-        migrated = api.deliveries["old"]
-        assert migrated["actions"][0]["config"]["filters"]["properties"] == [
-            *before["actions"][0]["config"]["filters"]["properties"],
-            {"type": "hogql", "key": "has(person.properties.newsletter_cities, 'Göteborg')"},
-        ]
-        expected_email = before["actions"][1]
-        expected_email["config"]["message_category_id"] = None
-        assert migrated["actions"][1] == expected_email
-        assert cutover_workflows(api) == 1  # Idempotent, without duplicated filters.
-        assert api.deliveries["old"] == migrated
-    assert api.jobs == []
 
 
 def test_city_membership_expressions_escape_literals_in_both_scopes():

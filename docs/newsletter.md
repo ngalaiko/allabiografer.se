@@ -92,10 +92,15 @@ or changes bounce/complaint suppression or tracking consent. Failure to restore
 marketing consent fails the signup request rather than claiming success.
 The form links to `/nyhetsbrev/` for subscription and privacy information.
 
-For a new address, the backend first creates a newsletter identity, waits for
-PostHog to assign a person UUID, then signs that UUID and writes the subscription.
+For a new address, the backend signs the normalized email without exposing it in
+the token, then writes email, city membership and preferences token in one ingestion
+event. There is no preliminary email-only profile or wait for a person UUID.
 Existing people are resolved by email and updated through their existing distinct
-ID. The anonymous analytics browser identity is not used for signup. Signup is
+ID; valid UUID-based preferences links are preserved. Consent checks and final
+read-back still require API reads: this is one subscription write, not one HTTP
+request. A slow read-back can return an uncertain result, but the accepted write
+already includes the requested city and token. The anonymous analytics browser
+identity is not used for signup. Signup is
 single opt-in: there is no confirmation email or confirmation-state transition.
 It does not create a delivery workflow or immediately send an edition.
 
@@ -300,17 +305,22 @@ The public project token may be provided at build time; it is retained for runti
 `POSTHOG_API_HOST` defaults to EU Cloud; `POSTHOG_CAPTURE_HOST` defaults to EU ingestion.
 HTTP loopback overrides and `NEWSLETTER_CITIES_FILE` are used only in local tests.
 
-Person links have the format `UUID.hex_signature`, where the signature is
-HMAC-SHA256 over `newsletter-preferences:v1:<UUID>`. The backend verifies both
-the signature and equality with the token stored on that person. Signup regenerates
-the same token for the same UUID/secret. These tokens have no built-in expiry;
+New links have the opaque format `v2.hex_signature`: HMAC-SHA256 over
+`newsletter-preferences:v2:<normalized email>`. The email itself is not included.
+The backend resolves the person by an exact stored-token filter, rejects ambiguous
+matches, and checks the HMAC against that person's email. Old `UUID.hex_signature`
+links (HMAC-SHA256 over `newsletter-preferences:v1:<UUID>`) still resolve directly
+by person UUID. Both formats must match the stored token. Existing valid UUID
+tokens are retained on signup. Deploying this flow requires no subscriber migration.
+These tokens have no built-in expiry;
 replacing the signing secret invalidates all links and also requires updating
 the unsubscribe destination's separately scoped credential. Never expose the
 personal API key or signing secret in static assets, build arguments, links or logs.
 Tokens contain no email address. They are long-lived bearer credentials:
 forwarding a link grants access to that recipient's newsletter preferences.
-Replacing the stored token revokes its link; signup regenerates the deterministic
-token described above. Merging or deleting the person can also invalidate links.
+Replacing the stored token revokes its link; signup can regenerate a deterministic
+email-signed token. Changing the email invalidates an email-signed link; merging
+or deleting the person can also invalidate links.
 
 Run **one backend instance**. Lua locks serialize each email's array updates within
 that instance, including signup versus unsubscribe; multi-instance writes require a
