@@ -79,7 +79,7 @@ def test_newsletter_signup_uses_backend_and_remembers_city_dismissal(browser):
 
 
 @pytest.mark.parametrize("width", [375, 700, 1280])
-@pytest.mark.parametrize("film_count", [0, 1, 3, 4, 5, 6])
+@pytest.mark.parametrize("film_count", [0, 1, 2, 3, 4, 5, 6])
 @pytest.mark.parametrize("num_days", [1, 2, 10])
 def test_newsletter_stays_in_view_when_dates_scroll(browser, width, film_count, num_days):
     html = (
@@ -100,11 +100,11 @@ def test_newsletter_stays_in_view_when_dates_scroll(browser, width, film_count, 
         assert row.count() == 1
         if film_count:
             previous_title = row.evaluate("el => el.previousElementSibling.querySelector('h2').textContent")
-            assert previous_title == f"Film {min(film_count, 4) - 1}"
+            assert previous_title == f"Film {min(film_count, 2) - 1}"
         else:
             assert row.evaluate("el => el.previousElementSibling.className") == "no-screenings"
-        if film_count > 4:
-            assert row.evaluate("el => el.nextElementSibling.querySelector('h2').textContent") == "Film 4"
+        if film_count > 2:
+            assert row.evaluate("el => el.nextElementSibling.querySelector('h2').textContent") == "Film 2"
         else:
             assert row.evaluate("el => el.nextElementSibling") is None
         assert row.bounding_box()["width"] == page.locator(".schedule-header").bounding_box()["width"]

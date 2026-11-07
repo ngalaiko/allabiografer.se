@@ -66,7 +66,7 @@
 </section>
 {% endfor %}
 </article>
-{% if city and (loop.index == 4 or (loop.last and loop.index < 4)) %}{{ newsletter() }}{% endif %}
+{% if city and (loop.index == 2 or (loop.last and loop.index < 2)) %}{{ newsletter() }}{% endif %}
 {% endfor %}
 {% if not blocks %}<p class="no-screenings">Inga visningar de närmaste två veckorna.</p>{% endif %}
 {% if city and not blocks %}{{ newsletter() }}{% endif %}
