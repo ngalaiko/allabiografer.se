@@ -1,2 +1,0 @@
-#!/command/execlineb -P
-goaccess --config-file /etc/goaccess/goaccess.conf

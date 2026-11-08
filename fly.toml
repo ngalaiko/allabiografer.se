@@ -12,10 +12,6 @@ primary_region = 'arn'
     POSTHOG_PROJECT_TOKEN = 'phc_BMbekuviuGc4cCqzgcoJ7Q2MiETp2yL8WEojww4Kzxjq'
     POSTHOG_HOST = '/salong'
 
-[[mounts]]
-  source = 'logs'
-  destination = '/var/log'
-
 [http_service]
   internal_port = 8080
   force_https = true
@@ -37,17 +33,6 @@ primary_region = 'arn'
     port = 80
     handlers = ['http']
     force_https = true
-
-[[services]]
-  protocol = 'tcp'
-  internal_port = 7890
-  auto_stop_machines = 'stop'
-  auto_start_machines = true
-  min_machines_running = 1
-
-  [[services.ports]]
-    port = 7890
-    handlers = ['tls', 'http']
 
 [[vm]]
   cpu_kind = 'shared'

@@ -11,29 +11,11 @@ ARG POSTHOG_PROJECT_TOKEN
 ARG POSTHOG_HOST=/salong
 RUN uv run build /app/www
 
-FROM alpine:3.22 AS goaccess-build
-ARG GOACCESS_VERSION=1.11
-ARG GOACCESS_SHA256=19f52862eb805bfa2682acc3184e7af09019c00df96a27f400480230b0bcaf73
-ADD "https://github.com/allinurl/goaccess/archive/refs/tags/v${GOACCESS_VERSION}.tar.gz" /tmp/goaccess.tar.gz
-RUN \
-    echo "${GOACCESS_SHA256}  /tmp/goaccess.tar.gz" > /tmp/goaccess.sha256; \
-    sha256sum -c /tmp/goaccess.sha256; \
-    apk add --no-cache \
-        autoconf automake build-base gettext-dev libmaxminddb-dev linux-headers ncurses-dev openssl-dev pkgconf zlib-dev
-WORKDIR /src
-RUN \
-    tar -xzf /tmp/goaccess.tar.gz --strip-components=1; \
-    autoreconf -fiv; \
-    ./configure --prefix=/usr --enable-utf8 --with-openssl --with-zlib --enable-geoip=mmdb; \
-    make -j"$(nproc)"; \
-    make DESTDIR=/dist install
-
 FROM alpine:3.22
 ARG S6_OVERLAY_VERSION=3.2.1.0
 ADD "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz" /tmp
 ADD "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-aarch64.tar.xz" /tmp
 ADD "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz" /tmp
-ADD "https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-Country.mmdb" /usr/local/share/GeoIP/GeoLite2-Country.mmdb
 RUN \
     sha256sum "/tmp/s6-overlay-noarch.tar.xz"; \
     echo "42e038a9a00fc0fef70bf0bc42f625a9c14f8ecdfe77d4ad93281edf717e10c5  /tmp/s6-overlay-noarch.tar.xz" | sha256sum -c; \
@@ -55,9 +37,7 @@ RUN \
           exit 1; \
     esac; \
     rm -rf "/tmp/*"; \
-    apk add --update --no-cache ca-certificates gettext-libs libmaxminddb ncurses-libs nginx nginx-mod-http-brotli nginx-mod-http-lua lua5.1-cjson lua-resty-http lua-resty-lock lua-resty-openssl lua-resty-string openssl tzdata zlib
-COPY --from=goaccess-build /dist/usr/bin/goaccess /usr/bin/goaccess
-COPY --from=goaccess-build /dist/usr/share /usr/share
+    apk add --update --no-cache ca-certificates nginx nginx-mod-http-brotli nginx-mod-http-lua lua5.1-cjson lua-resty-http lua-resty-lock lua-resty-openssl lua-resty-string openssl tzdata zlib
 COPY --from=build /app/www /var/www/allabiografer.se
 ARG POSTHOG_PROJECT_TOKEN
 ENV POSTHOG_PROJECT_TOKEN=$POSTHOG_PROJECT_TOKEN
