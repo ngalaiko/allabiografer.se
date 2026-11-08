@@ -5,6 +5,12 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+  workflow_dispatch:
+    inputs:
+      detach_log_volume:
+        description: Detach the unused log volume without deleting it
+        type: boolean
+        default: false
 
 jobs:
   check:
@@ -23,13 +29,26 @@ jobs:
 
   deploy:
     needs: check
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           lfs: true
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only
+      - name: Deploy
+        run: |
+          if [ "$DETACH_LOG_VOLUME" = true ]; then
+            flyctl volumes list --json > /tmp/volumes-before.json
+            flyctl deploy --remote-only --yes
+            flyctl volumes list --json > /tmp/volumes-after.json
+            jq -e --slurpfile after /tmp/volumes-after.json \
+              'all(.[]; .id as $id | any($after[0][]; .id == $id))' /tmp/volumes-before.json
+            flyctl machine list --json > /tmp/machines-after.json
+            jq -e 'length > 0 and all(.[]; (.config.mounts // []) | length == 0)' /tmp/machines-after.json
+          else
+            flyctl deploy --remote-only
+          fi
         env:
+          DETACH_LOG_VOLUME: ${{ inputs.detach_log_volume || false }}
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
