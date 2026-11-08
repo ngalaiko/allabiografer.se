@@ -211,3 +211,25 @@ fly deploy
 The newsletter backend runs in the same nginx container and requires a single
 backend instance. Runtime secrets, signing, and delivery configuration are
 documented in [Newsletter](newsletter.md#backend-api-credentials-and-concurrency).
+
+### HTTP caching
+
+Nginx defines cache policies in `etc/nginx/cache.conf`:
+
+- CSS, JavaScript and fonts with the build's `?v=` content hash, content-hashed
+  posters, and sharing images get `public, max-age=31536000, immutable`.
+- Unversioned icons get a one-day public cache lifetime.
+- Pages, Markdown, JSON feeds, other unversioned files, redirects and errors use
+  `no-cache`: stored responses must be revalidated before reuse. Nginx supplies
+  ETag and Last-Modified validators for static files.
+- Newsletter APIs retain their Lua `no-store` policy; the analytics proxy retains
+  upstream cache headers. Neither receives the static-site cache policy.
+
+Cache and `Vary: Accept` headers are set together at server scope, including on
+304 responses. Gzip and Brotli cover HTML, CSS, JavaScript, JSON, Markdown, plain
+text and XML.
+
+Cloudflare's Browser Cache TTL is set to **Respect Existing Headers** (API value
+`0`), so nginx owns browser expiration. Keep negotiated HTML/Markdown URLs out of
+edge caching unless the cache key distinguishes their representations; the
+origin's `Vary: Accept` alone is not sufficient for Cloudflare's default cache key.

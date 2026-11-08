@@ -203,7 +203,9 @@ def newsletter_api(tmp_path, request):
         + f"\npid {tmp_path}/nginx.pid; error_log {tmp_path}/error.log;\n"
         + "events {}\nhttp { access_log off; lua_shared_dict newsletter_locks 1m;"
         + "lua_shared_dict newsletter_pending 1m;"
+        + f"include {ROOT}/etc/nginx/cache.conf;"
         + f"lua_package_path '{lua_path}'; {table_null} server {{listen 127.0.0.1:{port};"
+        + "add_header Cache-Control $cache_control always;"
         + "location /api/newsletter/ {client_max_body_size 2k; content_by_lua_block {require('newsletter').handle()}}}}"
     )
     process = subprocess.Popen([nginx, "-p", str(tmp_path), "-c", str(config), "-g", "daemon off;"], env=env)

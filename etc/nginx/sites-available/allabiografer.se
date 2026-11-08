@@ -7,6 +7,7 @@ server {
     charset utf-8;
     charset_types text/markdown;
     add_header Vary Accept always;
+    add_header Cache-Control $cache_control always;
 
     set_by_lua_block $accept_markdown { return require('markdown').accept(ngx.var.http_accept) }
     header_filter_by_lua_block { require('markdown').link() }
@@ -55,7 +56,6 @@ server {
 
     location ~ ^/(i/.*\.(?:css|woff2)|posters/.*\.webp)$ {
         try_files $uri =404;
-        add_header Cache-Control "public, max-age=31536000, immutable";
     }
 
     location ~ ^(?<city_path>/stad/[^/]+)/.+$ {

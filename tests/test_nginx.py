@@ -25,6 +25,12 @@ def nginx_server(tmp_path):
         "stad/stockholm/film/current/index.html",
         "film/current/index.html",
         "i/style.css",
+        "i/links.js",
+        "i/FiraSans-Regular.woff2",
+        "i/favicon-32x32.png",
+        "i/newsletter-cities.json",
+        "posters/123-0123456789ab.webp",
+        "og/0123456789abcdef0123.jpg",
         "llms.txt",
     ]:
         path = root / page
@@ -34,6 +40,8 @@ def nginx_server(tmp_path):
             path.with_suffix(".md").write_text(f"# {page}\n\nBioprogram i Sverige.\n")
     for city in ("stockholm", "göteborg"):
         (root / "stad" / city / "index.json").write_text('{"schema_version":1,"screenings":[]}\n')
+    for suffix in ("js", "json", "md", "xml"):
+        (root / f"i/compression.{suffix}").write_text("compressible content\n" * 100)
 
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
@@ -45,13 +53,26 @@ def nginx_server(tmp_path):
     site = site.replace("/etc/ssl/certs/ca-certificates.crt", certs.where())
     # test_newsletter_api owns newsletter API coverage.
     site = site.replace("content_by_lua_block { require('newsletter').handle() }", "return 503;")
+    site = site.replace(
+        "proxy_pass https://$posthog_upstream;",
+        'content_by_lua_block { ngx.header["Cache-Control"] = "private, max-age=60"; ngx.say(ngx.var.uri) }',
+    )
+    # Exercise production gzip settings; OpenResty does not include the Brotli module.
+    compression = "\n".join(
+        line
+        for line in (Path(__file__).resolve().parents[1] / "etc/nginx/nginx.conf").read_text().splitlines()
+        if line.strip().startswith("gzip")
+    )
     config = tmp_path / "nginx.conf"
     config.write_text(
         f"pid {tmp_path}/nginx.pid;\nerror_log {tmp_path}/error.log;\n"
         "events {}\nhttp {\naccess_log off;\n"
         f"lua_package_path '{Path(__file__).resolve().parents[1]}/etc/nginx/lua/?.lua;;';\n"
-        "types { text/html html; text/css css; application/json json; text/plain txt; }\n"
+        "types { text/html html; text/css css; application/json json; text/plain txt; "
+        "application/javascript js; application/xml xml; }\n"
         f"include {Path(__file__).resolve().parents[1]}/etc/nginx/markdown.conf;\n"
+        f"include {Path(__file__).resolve().parents[1]}/etc/nginx/cache.conf;\n"
+        f"{compression}\n"
         "limit_req_zone $binary_remote_addr zone=newsletter_signup:1m rate=5r/m;\n"
         "limit_req_zone $binary_remote_addr zone=newsletter_preferences:1m rate=30r/m;\n"
         "map $request_uri $posthog_upstream { default eu.i.posthog.com; }\n"
@@ -227,5 +248,102 @@ def test_city_json_is_fetchable_without_negotiation(nginx_server, accept):
         assert response.getheader("Content-Type").split(";")[0] == "application/json"
         assert response.getheader("Link") == ('</stad/g%C3%B6teborg/index.html>; rel="alternate"; type="text/html"')
         assert response.read() == b'{"schema_version":1,"screenings":[]}\n'
+    finally:
+        connection.close()
+
+
+@pytest.mark.parametrize(
+    ("path", "status", "policy"),
+    [
+        ("/", 200, "no-cache"),
+        ("/index.md", 200, "no-cache"),
+        ("/stad/stockholm/index.json", 200, "no-cache"),
+        ("/i/newsletter-cities.json?v=0123456789ab", 200, "no-cache"),
+        ("/llms.txt", 200, "no-cache"),
+        ("/i/style.css", 200, "no-cache"),
+        ("/i/links.js?v=invalid", 200, "no-cache"),
+        ("/i/links.js?v=0123456789ab", 200, "public, max-age=31536000, immutable"),
+        ("/i/style.css?v=0123456789ab&other=1", 200, "public, max-age=31536000, immutable"),
+        ("/i/FiraSans-Regular.woff2?v=0123456789ab", 200, "public, max-age=31536000, immutable"),
+        ("/posters/123-0123456789ab.webp", 200, "public, max-age=31536000, immutable"),
+        ("/og/0123456789abcdef0123.jpg", 200, "public, max-age=31536000, immutable"),
+        ("/i/favicon-32x32.png", 200, "public, max-age=86400"),
+        ("/i/missing.js?v=0123456789ab", 404, "no-cache"),
+        ("/posters/missing-0123456789ab.webp", 404, "no-cache"),
+        ("/og/ffffffffffffffffffff.jpg", 404, "no-cache"),
+        ("/film/expired/", 302, "no-cache"),
+        ("/stad/stockholm/film/expired/", 302, "no-cache"),
+        ("/api/newsletter/signup", 503, None),
+        ("/salong/static/file.js?v=0123456789ab", 200, "private, max-age=60"),
+    ],
+)
+def test_cache_policy(nginx_server, path, status, policy):
+    connection = http.client.HTTPConnection("127.0.0.1", nginx_server)
+    try:
+        connection.request("GET", path)
+        response = connection.getresponse()
+        assert response.status == status
+        assert response.getheader("Cache-Control") == policy
+        assert "Accept" in response.getheader("Vary")
+        if path.startswith("/salong/"):
+            assert response.read().decode().strip() == "/static/file.js"
+    finally:
+        connection.close()
+
+
+@pytest.mark.parametrize(
+    ("path", "accept", "policy"),
+    [
+        ("/", "text/html", "no-cache"),
+        ("/", "text/markdown", "no-cache"),
+        ("/i/links.js?v=0123456789ab", "*/*", "public, max-age=31536000, immutable"),
+    ],
+)
+def test_conditional_cache_policy(nginx_server, path, accept, policy):
+    connection = http.client.HTTPConnection("127.0.0.1", nginx_server)
+    try:
+        connection.request("GET", path, headers={"Accept": accept})
+        response = connection.getresponse()
+        assert response.status == 200
+        etag = response.getheader("ETag")
+        modified = response.getheader("Last-Modified")
+        assert etag
+        assert modified
+        original = response.read()
+        for validator in ({"If-None-Match": etag}, {"If-Modified-Since": modified}):
+            connection.request("GET", path, headers={"Accept": accept, **validator})
+            response = connection.getresponse()
+            assert response.status == 304
+            assert response.getheader("Cache-Control") == policy
+            assert "Accept" in response.getheader("Vary")
+            assert response.read() == b""
+        connection.request("GET", path, headers={"Accept": accept, "Range": "bytes=2-5"})
+        response = connection.getresponse()
+        assert response.status == 206
+        assert response.getheader("Cache-Control") == policy
+        assert response.read() == original[2:6]
+    finally:
+        connection.close()
+
+
+@pytest.mark.parametrize("suffix", ["js", "json", "md", "xml"])
+def test_text_compression(nginx_server, suffix):
+    import gzip
+
+    connection = http.client.HTTPConnection("127.0.0.1", nginx_server)
+    try:
+        path = f"/i/compression.{suffix}"
+        connection.request("GET", path, headers={"Accept-Encoding": "identity"})
+        response = connection.getresponse()
+        assert response.status == 200
+        assert response.getheader("Content-Encoding") is None
+        original = response.read()
+        connection.request("GET", path, headers={"Accept-Encoding": "gzip"})
+        response = connection.getresponse()
+        assert response.status == 200
+        assert response.getheader("Content-Encoding") == "gzip"
+        assert "Accept-Encoding" in response.getheader("Vary")
+        assert "Accept" in response.getheader("Vary")
+        assert gzip.decompress(response.read()) == original
     finally:
         connection.close()
