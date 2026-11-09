@@ -10,7 +10,7 @@ Start with the [state model](#state-model-and-transitions) and
 ## Architecture and ownership
 
 The `Newsletter` GitHub Actions job prepares city editions on Thursdays at
-09:00 Europe/Stockholm (GitHub may start scheduled jobs late). Python compares
+09:17 Europe/Stockholm (GitHub may start scheduled jobs late). Python compares
 upcoming screenings against 30 days of history, supplies structured movie data,
 and starts city batches. The PostHog library template owns the subject, HTML,
 plain text, and all wording. Edition audiences stay in PostHog. Unsubscribe
@@ -419,7 +419,11 @@ Anchors cover canonical and scraped title aliases, once per
 film even with multiple presentation variants. Emails contain no individual
 screening dates, cinemas, or ticket links. Empty editions skip.
 
-GitHub owns scheduling: one Thursday 09:00 cron with `timezone: Europe/Stockholm`.
+GitHub owns scheduling: one Thursday 09:17 cron with `timezone: Europe/Stockholm`.
+The off-hour minute follows [GitHub's recommendation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
+to avoid top-of-hour load. This is a best-effort mitigation, not a delivery-time
+guarantee: [community reports](https://github.com/orgs/community/discussions/207346)
+describe multi-hour delays even after changing cron minutes.
 There are no runtime weekday, clock, or retained-history gates. Manual runs use
 the same path on any day and select the upcoming Thursday's edition. Incomplete
 scraping history can make continuing films appear new, especially during the

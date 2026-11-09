@@ -2,7 +2,8 @@ name: Newsletter
 
 on:
   schedule:
-    - cron: "0 9 * * 4"
+    # Avoid the top-of-hour load spike; GitHub schedules remain best-effort.
+    - cron: "17 9 * * 4"
       timezone: Europe/Stockholm
   workflow_dispatch:
     inputs:
