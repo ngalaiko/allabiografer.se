@@ -11,7 +11,7 @@ from parse import _http, _version
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue
-from store.version import Language
+from store.version import Dimension, Language
 
 log = logging.getLogger(__name__)
 
@@ -247,6 +247,25 @@ def parse() -> Iterator[Screening | Venue | Film]:
                     continue
                 bookings[booking] = len(screenings)
             screenings.append(screening)
+
+        # Brunflo's own programme confirms one showing for its named-hall/placeholder pair.
+        # Drop only the less informative copy, with every fact except hall and missing 2D matching.
+        if cinema["id"] == 2278:
+            screenings = [
+                s
+                for s in screenings
+                if not (
+                    s.screen == "Salongen"
+                    and s.presentation.dimension is Dimension.UNKNOWN
+                    and dataclasses.replace(
+                        s,
+                        screen="BrunfloOrdenshusbio",
+                        presentation=dataclasses.replace(s.presentation, dimension=Dimension.TWO_D),
+                        raw_attributes=("2D", *s.raw_attributes),
+                    )
+                    in screenings
+                )
+            ]
 
         yield from screenings
         if screenings:

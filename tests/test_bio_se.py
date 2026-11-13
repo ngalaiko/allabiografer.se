@@ -12,7 +12,7 @@ from parse.parsers import _films as _films_mod
 from parse.parsers import bio_se
 from parse.parsers.bio_se import _cinema_url, _merge, _showtimes, _ticket_url, _venue
 from store import Screening, Venue
-from store.version import AudioKind, Language
+from store.version import AudioKind, Dimension, Language
 
 _FIXTURES = Path(__file__).parent / "fixtures" / "bio_se"
 _CINEMAS = {c["title"]: c for c in json.loads((_FIXTURES / "cinemas.json").read_text())["cinemas"]}
@@ -454,6 +454,64 @@ def test_simultaneous_halls_and_unproven_booking_matches_remain_separate(monkeyp
         _payload({"title": "Annan film" if difference == "film" else "Film"}, second)["movies"][0],
     ]
     items = _parse(monkeypatch, {1: {"movies": entries}})
+    assert len([s for s in items if isinstance(s, Screening)]) == 2
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_brunflo_placeholder_duplicates_keep_named_2d_screening(monkeypatch, reverse):
+    fields = {
+        "payment_link": "https://bio.se/biografer/brunflo-ordensbio",
+        "language": "Svenska",
+        "text": "Svenska",
+    }
+    entries = [
+        _payload(
+            {"id": 43431, "title": "Småstadsliv: Mellan himmel och körtburkar"},
+            _session(**fields, show_date_time="2026-11-15T19:00:00", screen_name="BrunfloOrdenshusbio", format="2D"),
+        )["movies"][0],
+        _payload(
+            {"id": "43431", "title": "Småstadsliv: Mellan himmel och körtburkar"},
+            _session(**fields, show_date_time="2026-11-15T19:00", screen_name="Salongen"),
+        )["movies"][0],
+    ]
+    if reverse:
+        entries.reverse()
+    items = _parse(monkeypatch, {2278: {"movies": entries}, 2279: {"movies": entries}})
+    screenings = [s for s in items if isinstance(s, Screening)]
+    brunflo = [s for s in screenings if s.cinema_name == "Bio 2278"]
+
+    assert len(brunflo) == 1
+    assert (brunflo[0].date, brunflo[0].time, brunflo[0].screen, brunflo[0].presentation.dimension) == (
+        date(2026, 11, 15),
+        time(19),
+        "BrunfloOrdenshusbio",
+        Dimension.TWO_D,
+    )
+    assert brunflo[0].raw_attributes == ("2D",)
+    assert len([s for s in screenings if s.cinema_name == "Bio 2279"]) == 2
+
+
+@pytest.mark.parametrize(
+    ("named_changes", "placeholder_changes", "title"),
+    [
+        ({}, {"show_date_time": "2026-10-01T19:00:00"}, "Film"),
+        ({}, {"show_date_time": "2026-10-02T18:00:00"}, "Film"),
+        ({}, {}, "Annan film"),
+        ({}, {"language": "Engelska"}, "Film"),
+        ({}, {"text": "Engelska"}, "Film"),
+        ({"format": "3D"}, {}, "Film"),
+        ({}, {"format": "3D"}, "Film"),
+        ({}, {"screen_name": "Lilla salen"}, "Film"),
+        ({}, {"sessionInfoText": "Samtal efter filmen"}, "Film"),
+        ({}, {"payment_link": "https://example.se/another-booking"}, "Film"),
+    ],
+)
+def test_brunflo_distinct_screenings_remain_separate(monkeypatch, named_changes, placeholder_changes, title):
+    entries = [
+        _payload({}, _session(**({"screen_name": "BrunfloOrdenshusbio", "format": "2D"} | named_changes)))["movies"][0],
+        _payload({"title": title}, _session(**({"screen_name": "Salongen"} | placeholder_changes)))["movies"][0],
+    ]
+    items = _parse(monkeypatch, {2278: {"movies": entries}})
     assert len([s for s in items if isinstance(s, Screening)]) == 2
 
 
