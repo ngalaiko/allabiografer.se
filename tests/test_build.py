@@ -167,7 +167,7 @@ def other_film(title: str, **kwargs) -> Film:
     return film(title, key=film_key("filmstaden_se", title), source="filmstaden_se", **kwargs)
 
 
-def test_other_source_film_fills_title_only_screening(db, tmp_path):
+def test_unmatched_film_does_not_borrow_metadata_from_an_unrelated_source(db, tmp_path):
     a = film(UNTITLED, overview="", runtime=None)
     b = other_film(UNTITLED, overview="Handling från annan kedja.")
     write_films([a, b], path=db)
@@ -177,8 +177,9 @@ def test_other_source_film_fills_title_only_screening(db, tmp_path):
     sd = build._load_data(tmp_path / "out")
 
     neg_id = sd.screenings[0].tmdb_id
-    assert sd.movies[neg_id].overview_sv == "Handling från annan kedja."
-    assert sd.poster_keys[neg_id] == poster_key_for_film(b.key)
+    assert sd.movies[neg_id].overview_sv == ""
+    assert sd.movies[neg_id].runtime is None
+    assert neg_id not in sd.poster_keys
 
 
 def test_other_source_film_supplies_poster_for_tmdb_movie(db, tmp_path):
@@ -187,7 +188,13 @@ def test_other_source_film_supplies_poster_for_tmdb_movie(db, tmp_path):
     write_films([a, b], path=db)
     write_poster(poster_key_for_film(b.key), b"img", "image/jpeg", path=db)
     write_movie(movie(42), path=db)
-    write_screenings([screening(tmdb_id=42, film_key=a.key)], path=db)
+    write_screenings(
+        [
+            screening(tmdb_id=42, film_key=a.key),
+            screening(tmdb_id=42, film_key=b.key, ticket_url="https://example.com/b"),
+        ],
+        path=db,
+    )
 
     sd = build._load_data(tmp_path / "out")
 
@@ -211,7 +218,7 @@ def test_tmdb_metadata_wins_over_pooled_films(db, tmp_path):
     assert sd.poster_keys[42] == "42"
 
 
-def test_title_only_screening_without_film_key_matches_by_title(db, tmp_path):
+def test_title_only_screening_without_film_key_does_not_guess_metadata(db, tmp_path):
     f = film(UNTITLED)
     write_films([f], path=db)
     write_poster(poster_key_for_film(f.key), b"img", "image/jpeg", path=db)
@@ -220,8 +227,61 @@ def test_title_only_screening_without_film_key_matches_by_title(db, tmp_path):
     sd = build._load_data(tmp_path / "out")
 
     neg_id = sd.screenings[0].tmdb_id
-    assert sd.movies[neg_id].overview_sv == "Handling från biografen."
-    assert sd.poster_keys[neg_id] == poster_key_for_film(f.key)
+    assert sd.movies[neg_id].title_sv == UNTITLED
+    assert sd.movies[neg_id].overview_sv == ""
+    assert neg_id not in sd.poster_keys
+
+
+def test_same_title_works_keep_their_metadata_screenings_and_page_links(db, tmp_path):
+    day = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
+    musical = film("Kinky Boots", runtime=135, overview="West End recording.", age_rating="Barntillåten")
+    short = other_film("Kinky Boots", runtime=10, overview="An unrelated short.")
+    write_films([musical, short], path=db)
+    for identifier, runtime, overview in [(16367, 107, "2005 feature."), (42, 121, "Different adaptation.")]:
+        write_movie(
+            Movie.from_dict(
+                {"tmdb_id": identifier, "title_sv": "Kinky Boots", "runtime": runtime, "overview_sv": overview}
+            ),
+            path=db,
+        )
+    write_screenings(
+        [
+            screening(title="Kinky Boots", film_key=musical.key, date=day, ticket_url="https://example.com/musical"),
+            screening(title="Kinky Boots", film_key=short.key, date=day, ticket_url="https://example.com/short"),
+            screening(tmdb_id=16367, date=day, ticket_url="https://example.com/feature"),
+            screening(tmdb_id=42, date=day, ticket_url="https://example.com/adaptation"),
+        ],
+        path=db,
+    )
+    out = tmp_path / "out"
+    sd = build._load_data(out)
+    env = build._make_env()
+    build._build_programme_pages(env, sd)
+    build._build_filmer(env, sd)
+    build._build_premiarer(env, sd)
+    feed = json.loads((out / "stad/stockholm/index.json").read_text())
+    rows = {row["ticket_url"].rsplit("/", 1)[-1]: row for row in feed["screenings"]}
+    expected = {
+        "musical": (135, None, "West End recording."),
+        "short": (10, None, "An unrelated short."),
+        "feature": (107, 16367, "2005 feature."),
+        "adaptation": (121, 42, "Different adaptation."),
+    }
+    assert set(rows) == set(expected)
+    assert len({row["film"]["url"] for row in rows.values()}) == 4
+    for name, (runtime, tmdb_id, synopsis) in expected.items():
+        row = rows[name]
+        assert (row["film"]["runtime_minutes"], row["film"]["tmdb_id"]) == (runtime, tmdb_id)
+        path = row["film"]["url"].removeprefix(build.BASE_URL).strip("/")
+        for page_path in (path, path.removeprefix("stad/stockholm/")):
+            page = BeautifulSoup((out / page_path / "index.html").read_text(), "html.parser")
+            assert [p.get_text() for p in page.select(".synopsis")] == [synopsis]
+            assert {a["href"] for a in page.select("a[data-start]")} == {row["ticket_url"]}
+    for hub in ("filmer", "premiarer"):
+        page = BeautifulSoup((out / hub / "index.html").read_text(), "html.parser")
+        film_urls = {a["href"] for a in page.select('a[href^="/film/"]')}
+        assert len(film_urls) == 4
+        assert all((out / url.strip("/") / "index.html").exists() for url in film_urls)
 
 
 def test_source_with_more_showings_supplies_metadata(db, tmp_path):
@@ -458,6 +518,68 @@ def test_city_film_description_uses_local_schedule(db, tmp_path, cinema_count):
 
     nationwide_page = BeautifulSoup((out / "film/filmen/index.html").read_text(), "html.parser")
     assert nationwide_page.find("meta", attrs={"name": "description"})["content"] == synopsis
+
+
+@pytest.mark.parametrize("first_offset", [13, 14, 30])
+def test_film_pages_show_the_next_booked_day_when_outside_the_programme(db, tmp_path, first_offset):
+    today = datetime.now(tz=SWEDEN_TZ).date()
+    write_movie(
+        Movie.from_dict(
+            {
+                "tmdb_id": 42,
+                "title_sv": "Filmen",
+                "overview_sv": "En framtida resa.",
+                "runtime": 97,
+                "genres": ["Drama"],
+            }
+        ),
+        path=db,
+    )
+    write_screenings(
+        [
+            screening(tmdb_id=42, city="Göteborg", date=today + timedelta(days=first_offset), time=time(13, 15)),
+            screening(
+                tmdb_id=42,
+                date=today + timedelta(days=first_offset + 3),
+                time=time(21, 45),
+                ticket_url="https://example.com/stockholm",
+            ),
+            screening(
+                tmdb_id=42,
+                date=today + timedelta(days=first_offset + 8),
+                ticket_url="https://example.com/later",
+            ),
+        ],
+        path=db,
+    )
+    out = tmp_path / "out"
+    sd = build._load_data(out)
+    build._build_programme_pages(build._make_env(), sd)
+
+    for path, offset, label, ticket in [
+        ("film/filmen", first_offset, "13:15", "https://example.com/1"),
+        ("stad/stockholm/film/filmen", first_offset + 3, "21:45", "https://example.com/stockholm"),
+    ]:
+        day = today + timedelta(days=offset)
+        page = BeautifulSoup((out / path / "index.html").read_text(), "html.parser")
+        assert page.select_one(".synopsis").get_text() == "En framtida resa."
+        assert "1 tim. 37 min." in page.select_one(".film-meta").get_text()
+        assert {a["href"] for a in page.select("a[data-start]")} == {ticket}
+        assert [t["datetime"] for t in page.select(".schedule-dates time")] == [day.isoformat()]
+        note = page.select_one(".programme-note")
+        assert bool(note) == (offset >= 14)
+        md = (out / path / "index.md").read_text()
+        assert "En framtida resa." in md
+        assert f"{day.isoformat()}: [{label}]({ticket})" in md
+        if note:
+            assert "Inga visningar de närmaste två veckorna" in note.get_text()
+            assert str(day.year) in note.get_text()
+            assert note.get_text() in md
+
+    city = BeautifulSoup((out / "stad/stockholm/index.html").read_text(), "html.parser")
+    assert city.select_one(".programme-note") is None
+    assert not city.select(".schedule-film")
+    assert json.loads((out / "stad/stockholm/index.json").read_text())["screenings"] == []
 
 
 def _blocks(db, tmp_path, screenings):

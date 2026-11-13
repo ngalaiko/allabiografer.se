@@ -113,6 +113,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .schedule-cell > a:hover, .festival-time:hover, .festival-screening a:hover, .newsletter-preferences button:hover:not(:disabled) { color: var(--hover); text-decoration: none; background: var(--hover-background); }
 .schedule-cell .past { color: var(--past); }
 .no-screenings { padding: 16px 12px; }
+.programme-note { position: sticky; left: var(--frame); width: min(calc(100vw - 2 * var(--frame)), var(--sheet-width)); margin: 0; padding: 12px; }
 
 /** Newsletter — scroll with films vertically, not with dates horizontally. **/
 .newsletter-row { --link: light-dark(#0060A0, #F1C66F); width: var(--sheet-width); background: light-dark(color-mix(in srgb, var(--link) 10%, var(--background)), #352D20); border: 1px solid var(--border-color); border-top: 0; }

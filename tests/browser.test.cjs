@@ -10,7 +10,7 @@ function synopsis(storage = new Map(), href = 'https://allabiografer.se/stad/var
     add: value => classes.add(value),
     remove: value => classes.delete(value),
     toggle: (value, enabled) => enabled ? classes.add(value) : classes.delete(value),
-  } };
+  }, getBoundingClientRect: () => ({ width: 200 }) };
   const button = { dataset: { more: 'digger' }, attributes: {},
     getAttribute: () => 'synopsis-digger',
     setAttribute(name, value) { this.attributes[name] = value; },

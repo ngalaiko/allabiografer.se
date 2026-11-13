@@ -17,8 +17,8 @@ def write_page(path: Path, title: str, lines: list[str]) -> None:
     path.with_suffix(".md").write_text(f"# {text(title)}\n\n" + "\n\n".join(lines) + "\n", encoding="utf-8")
 
 
-def write_programme(path: Path, title: str, blocks: list[dict], days: list[dict]) -> None:
-    lines = []
+def write_programme(path: Path, title: str, blocks: list[dict], days: list[dict], *, note: str = "") -> None:
+    lines = [text(note)] if note else []
     for block in blocks:
         variant = f" ({block['variant']})" if block["variant"] else ""
         lines.append(f"## {link(block['film_title'], block['film_url'])}{text(variant)}")

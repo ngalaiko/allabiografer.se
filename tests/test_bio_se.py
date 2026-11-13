@@ -383,7 +383,7 @@ class _Session:
         return _Resp(body)
 
 
-def _parse(monkeypatch, films: dict, tmdb=lambda title, year=None: None) -> list:
+def _parse(monkeypatch, films: dict, tmdb=lambda title, runtime=None, year=None: None) -> list:
     cinemas = [{"id": i, "title": f"Bio {i}", "city": "Ort", "street_address": "Gatan 1"} for i in films]
     monkeypatch.setattr(bio_se._http, "session", lambda *a: _Session(cinemas, films))
     monkeypatch.setattr(bio_se._films, "register", lambda film, session=None: film)
@@ -404,7 +404,7 @@ def test_kino_address_does_not_point_to_sodran(monkeypatch):
     payload = _payload({}, _session())
     monkeypatch.setattr(bio_se._http, "session", lambda: _Session(cinemas, {2040: payload, 5519: payload}))
     monkeypatch.setattr(bio_se._films, "register", lambda film: film)
-    monkeypatch.setattr(bio_se, "_tmdb", lambda title: None)
+    monkeypatch.setattr(bio_se, "_tmdb", lambda title, **kwargs: None)
 
     items = list(bio_se.parse())
 
@@ -523,7 +523,7 @@ def test_bagarmossen_programme_uses_stockholm_instead_of_upstream_phone_number(m
     payload = _payload({}, _session())
     monkeypatch.setattr(bio_se._http, "session", lambda: _Session(cinemas, {50606: payload, 2: payload}))
     monkeypatch.setattr(bio_se._films, "register", lambda film: film)
-    monkeypatch.setattr(bio_se, "_tmdb", lambda title: None)
+    monkeypatch.setattr(bio_se, "_tmdb", lambda title, **kwargs: None)
 
     items = list(bio_se.parse())
 
@@ -553,5 +553,28 @@ def test_broadcasts_match_tmdb_entries_of_their_year(monkeypatch):
             {"movie": {"id": 2, "title": "Film"}, "sessions": [_session()]},
         ]
     }
-    _parse(monkeypatch, {1: payload}, tmdb=lambda title, year=None: calls.append((title, year)))
+    _parse(monkeypatch, {1: payload}, tmdb=lambda title, runtime=None, year=None: calls.append((title, year)))
     assert calls == [("Simson och Delila", 2026), ("Film", None)]
+
+
+def test_runtime_conflict_keeps_the_source_film_unmatched(monkeypatch, tmp_path):
+    from parse import tmdb
+    from store import Movie, tmdb_index_set, write_movie
+
+    db = tmp_path / "movies.db"
+    write_movie(Movie.from_dict({"tmdb_id": 16367, "title_sv": "Kinky Boots", "runtime": 107}), path=db)
+    tmdb_index_set("kinky boots||", 16367, path=db)
+    monkeypatch.setattr(
+        tmdb,
+        "_get",
+        lambda *args, **kwargs: {"results": [{"id": 16367, "title": "Kinky Boots"}]},
+    )
+    items = _parse(
+        monkeypatch,
+        {1: _payload({"title": "Kinky Boots", "run_time": "135"}, _session())},
+        tmdb=lambda title, **kwargs: tmdb.lookup(title, path=db, session=object(), **kwargs),
+    )
+
+    [show] = [item for item in items if isinstance(item, Screening)]
+    assert show.title == "Kinky Boots"
+    assert show.tmdb_id is None

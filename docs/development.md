@@ -92,6 +92,12 @@ mise run serve
 The static preview serves the built site on port 8000; it does not run the
 newsletter's nginx/Lua API. See [newsletter operations](newsletter.md) for that backend.
 
+Film pages normally show the same 14-day timetable as city programmes. When a
+national or city-specific film page has only later bookings, it shows the next
+booked day instead, with film details, ticket links and an explicit notice giving
+the next screening's date, year and time. HTML and Markdown use the same fallback;
+city, cinema, genre programmes and city JSON feeds retain their 14-day window.
+
 ### Markdown for agents
 
 The build writes an `index.md` beside each HTML page, directly from the same
@@ -212,6 +218,15 @@ Söderhamn, and Hudiksvall. See [mise tasks](../mise.toml) for all parser comman
 Screenings store typed content versions, presentation, and accessibility in JSON
 columns. Film languages belong to film metadata. Missing audio, subtitles,
 dimension, and projection remain unknown; explicit no subtitles is distinct.
+
+Film metadata is pooled only across screenings with the same TMDB identity.
+Unmatched films retain their source film key as a separate build-time identity;
+equal titles alone do not prove that two recordings or adaptations are the same
+work. Source metadata and posters stay with that identity. Same-title works have
+distinct programme pages and feed URLs; the preferred existing TMDB identity
+keeps the plain title slug and the others receive identity suffixes. Bio.se and
+Osby Borgen supply source runtimes to TMDB matching, so an incompatible runtime
+does not fall back to a cached title-only match.
 
 Programme blocks group compatible content and presentation facts, including all
 screening modifiers. Atmos, 4K, Laser, VIP, XL, and audio description each define

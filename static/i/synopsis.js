@@ -15,9 +15,10 @@
     history.replaceState(history.state, "", url);
   }
   const text = button => document.getElementById(button.getAttribute("aria-controls"));
+  const items = buttons.map(button => ({ button, paragraph: text(button), width: null }));
+  const byParagraph = new Map(items.map(item => [item.paragraph, item]));
   const measure = document.createElement("canvas").getContext("2d");
   function needsCollapse(paragraph) {
-    paragraph.classList.remove("clamped");
     const range = document.createRange();
     range.selectNodeContents(paragraph);
     const lines = [...range.getClientRects()];
@@ -25,30 +26,53 @@
     measure.font = getComputedStyle(paragraph).font;
     return overflow > measure.measureText("Visa mer…").width + 1;
   }
-  function render() {
-    for (const button of buttons) {
-      const paragraph = text(button);
-      const collapsible = needsCollapse(paragraph);
-      const open = expanded.has(button.dataset.more);
-      paragraph.classList.toggle("clamped", collapsible);
-      paragraph.classList.toggle("expanded", open);
-      button.setAttribute("aria-expanded", String(open));
-      button.textContent = open ? "Visa mindre" : "Visa mer…";
-      button.hidden = !collapsible;
+  function render({ button, paragraph }) {
+    const open = expanded.has(button.dataset.more);
+    paragraph.classList.toggle("expanded", open);
+    button.setAttribute("aria-expanded", String(open));
+    button.textContent = open ? "Visa mindre" : "Visa mer…";
+  }
+  function refresh(items) {
+    // Unclamp together, read layout together, then apply the results together.
+    for (const { paragraph } of items) paragraph.classList.remove("clamped");
+    const results = items.map(({ paragraph }) => ({
+      width: paragraph.getBoundingClientRect().width,
+      collapsible: needsCollapse(paragraph),
+    }));
+    for (const [index, item] of items.entries()) {
+      item.width = results[index].width;
+      item.paragraph.classList.toggle("clamped", results[index].collapsible);
+      item.button.hidden = !results[index].collapsible;
+      render(item);
     }
   }
-  for (const button of buttons) {
+  for (const item of items) {
+    const { button } = item;
     button.addEventListener("click", () => {
       const id = button.dataset.more;
       if (expanded.has(id)) expanded.delete(id); else expanded.add(id);
       try { localStorage.setItem(key, JSON.stringify([...expanded].sort())); } catch {}
-      render();
+      render(item);
     });
   }
-  // Re-measures when a hidden view is shown or the layout width changes.
-  // Clamping changes paragraph height; apply it outside resize delivery.
-  const observer = new ResizeObserver(() => requestAnimationFrame(render));
-  for (const button of buttons) observer.observe(text(button));
-  document.fonts?.addEventListener("loadingdone", render);
-  render();
+  const pending = new Set();
+  let frame = null;
+  function schedule(items) {
+    for (const item of items) pending.add(item);
+    if (frame !== null) return;
+    frame = requestAnimationFrame(() => {
+      frame = null;
+      const dirty = [...pending];
+      pending.clear();
+      refresh(dirty);
+    });
+  }
+  // Expansion changes height, not wrapping. Only changed widths invalidate clamping.
+  const observer = new ResizeObserver(entries => {
+    const changed = entries.filter(entry => byParagraph.get(entry.target).width !== entry.contentRect.width);
+    if (changed.length) schedule(changed.map(entry => byParagraph.get(entry.target)));
+  });
+  for (const { paragraph } of items) observer.observe(paragraph);
+  document.fonts?.addEventListener("loadingdone", () => schedule(items));
+  refresh(items);
 })();

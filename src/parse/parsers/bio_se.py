@@ -217,7 +217,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
             films[film.key] = _merge(films[film.key], film) if film.key in films else film
             screening = Screening(
                 # Broadcasts match only same-year TMDB entries, not older films of the same work.
-                tmdb_id=_tmdb(film.title, year=d.year) if broadcast else _tmdb(film.title),
+                tmdb_id=_tmdb(film.title, runtime=film.runtime, year=d.year if broadcast else None),
                 title=film.title,
                 film_key=film.key,
                 date=d,

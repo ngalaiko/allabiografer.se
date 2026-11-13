@@ -34,12 +34,13 @@ def test_synopsis_overflow(browser, width, overflow):
             blocks=[
                 {
                     "film_title": "Film",
-                    "film_id": "film",
+                    "film_id": film_id,
                     "film_url": "/film/",
                     "full_desc": "x" * (40 + overflow),
                     "desc": "Short description",
                     "cinemas": [],
                 }
+                for film_id in ["film", "other"]
             ],
         )
     )
@@ -58,8 +59,9 @@ def test_synopsis_overflow(browser, width, overflow):
         """
         )
         page.add_script_tag(content=(ROOT / "static/i/synopsis.js").read_text())
-        paragraph = page.locator(".synopsis")
-        button = page.locator(".synopsis-more")
+        paragraph = page.locator(".synopsis").first
+        other = page.locator(".synopsis").last
+        button = page.locator(".synopsis-more").first
         assert paragraph.is_visible()
         assert page.locator(".synopsis-short:visible").count() == 0
         assert button.is_visible() == (overflow > len("Visa mer…"))
@@ -67,6 +69,15 @@ def test_synopsis_overflow(browser, width, overflow):
             assert paragraph.evaluate("p => p.clientHeight") == 40
             button.click()
             assert paragraph.evaluate("p => p.clientHeight == p.scrollHeight")
+            assert other.evaluate("p => p.clientHeight") == 40
+            # Width changes must not discard the saved expansion state.
+            paragraph.evaluate("p => p.style.width = '80ch'")
+            playwright.expect(button).to_be_hidden()
+            paragraph.evaluate("p => p.style.width = '20ch'")
+            playwright.expect(button).to_be_visible()
+            assert button.get_attribute("aria-expanded") == "true"
+            assert paragraph.evaluate("p => p.clientHeight == p.scrollHeight")
+            assert other.evaluate("p => p.clientHeight") == 40
             button.click()
             assert paragraph.evaluate("p => p.clientHeight") == 40
             paragraph.evaluate("p => p.style.width = '80ch'")
@@ -80,5 +91,41 @@ def test_synopsis_overflow(browser, width, overflow):
         # Let ResizeObserver deliver layout changes before checking global errors.
         page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
         assert page.evaluate("window.errors") == []
+    finally:
+        page.close()
+
+
+def test_synopsis_remeasures_when_a_font_loads_without_a_width_change(browser):
+    page = browser.new_page()
+    try:
+        page.set_content(
+            f'<p class="synopsis" id="description">{"i" * 90}</p>'
+            '<button data-more="film" aria-controls="description" hidden>Visa mer…</button>'
+        )
+        page.add_style_tag(content=(ROOT / "static/i/style.css").read_text())
+        page.add_style_tag(
+            content='.synopsis { width: 200px; font: 16px/20px "SynopsisFont", monospace; overflow-wrap: anywhere; }'
+        )
+        page.add_script_tag(content=(ROOT / "static/i/synopsis.js").read_text())
+        button = page.locator("[data-more]")
+        playwright.expect(button).to_be_visible()
+        assert page.locator(".synopsis").evaluate("p => p.clientHeight") == 40
+        font = (ROOT / "static/i/FiraSans-Regular.woff2").read_bytes()
+        page.route(
+            "https://fonts.example/synopsis.woff2",
+            lambda route: route.fulfill(
+                body=font, content_type="font/woff2", headers={"Access-Control-Allow-Origin": "*"}
+            ),
+        )
+        page.evaluate(
+            """async () => {
+                const font = new FontFace('SynopsisFont', 'url(https://fonts.example/synopsis.woff2)');
+                document.fonts.add(font);
+                await font.load();
+                await document.fonts.ready;
+            }"""
+        )
+        playwright.expect(button).to_be_hidden()
+        assert page.locator(".synopsis").evaluate("p => p.clientWidth == 200 && p.clientHeight == p.scrollHeight")
     finally:
         page.close()

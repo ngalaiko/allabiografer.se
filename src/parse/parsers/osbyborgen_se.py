@@ -186,7 +186,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
             yield _films.register(film, session=session)
 
         yield Screening(
-            tmdb_id=_tmdb(film_title),
+            tmdb_id=_tmdb(film_title, runtime=film.runtime),
             title=film_title,
             film_key=film.key,
             date=d,
