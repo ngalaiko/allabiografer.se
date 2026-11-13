@@ -21,6 +21,48 @@ using pointer files from an unhydrated checkout.
 Before using `mise run` in a new checkout, review `mise.toml` and run
 `mise trust` if mise reports that the configuration is not trusted.
 
+### Amp MCP connections
+
+Repository-local servers are configured in [`.amp/settings.json`](../.amp/settings.json).
+Approve them when Amp prompts after opening the repository or reloading MCP.
+
+- **Cloudflare** and **PostHog** use the existing personal remote MCP connections
+  in [Amp integrations](https://ampcode.com/settings/integrations), rather than
+  duplicating their OAuth credentials in this repository. PostHog's
+  `allabiografer.se` project ID is `273892`.
+- **Fly.io** connects to the [official hosted server](https://mcp.fly.io) using
+  OAuth. Sign in when Amp prompts and limit the grant to the required
+  organization and the `allabiografer-se` app. No Fly token belongs in the repo.
+- **Google Search Console** runs the unofficial
+  [open-gsc-mcp](https://github.com/onlymoein/google-search-console-mcp) server,
+  pinned to `1.4.0`, through the repository's Nix-provided `uvx`. Its write tools
+  are disabled with `GSC_ENABLE_WRITES=0`. Authentication is separate from MCP
+  discovery: tools can load before Google credentials are available.
+
+For Search Console, enable the Google Search Console API in your Google Cloud
+project and create a **Desktop app** OAuth client. Keep the downloaded JSON
+outside the checkout, at `~/.config/open-gsc-mcp/client_secret.json` on the machine
+running Amp. Follow the server's [authentication instructions](https://github.com/onlymoein/google-search-console-mcp#quick-start),
+including consent-screen configuration, then sign in with read-only access:
+
+```sh
+nix develop --command uvx open-gsc-mcp==1.4.0 auth login --read-only --no-browser --client-file "$HOME/.config/open-gsc-mcp/client_secret.json"
+nix develop --command uvx open-gsc-mcp==1.4.0 auth status
+```
+
+The login command provides instructions for completing authorization from another
+device. OAuth tokens stay in the server's per-user configuration directory, never
+in Git. For a headless service account instead, supply `GSC_SERVICE_ACCOUNT_FILE`
+through the executor environment with an absolute path to a key outside the
+checkout, and grant that account access to the `allabiografer.se` Search Console
+property. Credentials on one runner are not automatically available in orbs.
+Verify access by calling `list_sites` and use the exact property it returns;
+do not assume a domain property rather than a URL-prefix property.
+
+These connections do not authorize deployments or production changes. Continue
+to obtain approval before changing Cloudflare settings, deploying on Fly.io, or
+modifying PostHog resources.
+
 ## Tests
 
 Run tests inside the shell:

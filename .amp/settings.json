@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ampcode.com/cli-settings.schema.json",
+  "amp.mcpServers": {
+    "fly": {
+      "url": "https://mcp.fly.io"
+    },
+    "google-search-console": {
+      "command": "nix",
+      "args": [
+        "develop",
+        "--command",
+        "uvx",
+        "open-gsc-mcp==1.4.0"
+      ],
+      "env": {
+        "GSC_ENABLE_WRITES": "0"
+      }
+    }
+  }
+}
