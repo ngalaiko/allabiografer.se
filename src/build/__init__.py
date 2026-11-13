@@ -629,7 +629,6 @@ def _film_jsonld(sd: SiteData, movie: Movie, screenings: list[Screening], canoni
             event["offers"] = {
                 "@type": "Offer",
                 "url": s.ticket_url,
-                "availability": "https://schema.org/InStock",
             }
         graph.append(event)
 
@@ -1446,7 +1445,9 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
         out_path = sd.out_dir / "stad" / slug / "index.html"
         canonical = _register(sd, out_path)
         _write_city_feed(sd, city_name, city_screenings, out_path.with_suffix(".json"))
-        n_films = len({s.tmdb_id for s in _schedule_screenings(sd, city_screenings)})
+        scheduled = _schedule_screenings(sd, city_screenings)
+        n_films = len({s.tmdb_id for s in scheduled})
+        n_cinemas = len({s.cinema_name for s in scheduled})
         title = f"Bio i {city_name} – program för alla biografer"
         _write_programme(
             env,
@@ -1455,8 +1456,11 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             title=title,
             og_image=_abs(write_card(sd.out_dir, title=f"Bio i {city_name}", subtitle="Program för alla biografer")),
             description=(
-                f"Vad går på bio i {city_name}? Se speltider för {n_films} filmer på alla "
-                f"biografer i {city_name} — uppdaterat dagligen."
+                f"Bio i {city_name}: se speltider för {n_films} {'film' if n_films == 1 else 'filmer'} "
+                f"på {n_cinemas} {'biograf' if n_cinemas == 1 else 'biografer'} "
+                "de närmaste två veckorna. Jämför program och hitta biljetter."
+                if scheduled
+                else f"Bio i {city_name}. Inga publicerade visningar de närmaste två veckorna."
             ),
             canonical=canonical,
             json_feed_url=canonical + "index.json",
@@ -1477,6 +1481,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
         out_path = sd.out_dir / "stad" / city_slug / cinema_slug / "index.html"
         canonical = _register(sd, out_path)
         location = "" if re.search(rf"\b{re.escape(city_name)}\b", cinema_name, re.IGNORECASE) else f" i {city_name}"
+        n_films = len({s.tmdb_id for s in _schedule_screenings(sd, cinema_screenings)})
         _write_programme(
             env,
             sd,
@@ -1490,7 +1495,11 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
                 )
             ),
             description=(
-                f"Program och speltider för {cinema_name} i {city_name}. Se vilka filmer som visas och köp biljetter."
+                f"{cinema_name}{location}: program och speltider för "
+                f"{n_films} {'film' if n_films == 1 else 'filmer'} de närmaste två veckorna. "
+                "Se visningar och hitta biljetter."
+                if n_films
+                else f"{cinema_name}{location}. Inga publicerade visningar de närmaste två veckorna."
             ),
             canonical=canonical,
             jsonld=_cinema_jsonld(sd, city_name, cinema_name, canonical),

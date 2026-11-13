@@ -519,6 +519,36 @@ def test_city_film_description_uses_local_schedule(db, tmp_path, cinema_count):
     nationwide_page = BeautifulSoup((out / "film/filmen/index.html").read_text(), "html.parser")
     assert nationwide_page.find("meta", attrs={"name": "description"})["content"] == synopsis
 
+    programme = BeautifulSoup((out / "stad/stockholm/index.html").read_text(), "html.parser")
+    city_description = programme.find("meta", attrs={"name": "description"})["content"]
+    if cinema_count:
+        assert (
+            f"1 film på {cinema_count} {'biograf' if cinema_count == 1 else 'biografer'} de närmaste två veckorna"
+            in city_description
+        )
+        cinema_page = BeautifulSoup((out / "stad/stockholm/bio-0/index.html").read_text(), "html.parser")
+        assert (
+            cinema_page.find("meta", attrs={"name": "description"})["content"]
+            == "Bio 0 i Stockholm: program och speltider för 1 film de närmaste två veckorna. "
+            "Se visningar och hitta biljetter."
+        )
+    else:
+        assert city_description == "Bio i Stockholm. Inga publicerade visningar de närmaste två veckorna."
+    assert programme.find("meta", property="og:description")["content"] == city_description
+    later_cinema = BeautifulSoup((out / "stad/stockholm/senare-bio/index.html").read_text(), "html.parser")
+    assert (
+        later_cinema.find("meta", attrs={"name": "description"})["content"]
+        == "Senare bio i Stockholm. Inga publicerade visningar de närmaste två veckorna."
+    )
+
+    graph = json.loads(nationwide_page.find("script", type="application/ld+json").string)["@graph"]
+    events = [node for node in graph if node["@type"] == "ScreeningEvent"]
+    assert len(events) == cinema_count * 2
+    assert {node["offers"]["url"] for node in events} == {
+        f"https://example.com/{i}/{j}" for i in range(cinema_count) for j in range(2)
+    }
+    assert all("availability" not in node["offers"] for node in events)
+
 
 @pytest.mark.parametrize("first_offset", [13, 14, 30])
 def test_film_pages_show_the_next_booked_day_when_outside_the_programme(db, tmp_path, first_offset):
