@@ -44,7 +44,9 @@ _MONTHS = {
 _LABEL = re.compile(r"(\d{1,2})\s+([a-zåäö]{3})\w*\s+(\d{4}),\s*([^,]+)", re.IGNORECASE)
 
 # "(Tal: Engelska)", "(Text: Svenska)"; titles are cut at 50 characters, which can drop the ")".
-_TAG = re.compile(r"\(\s*(Tal|Text|Txt)\s*:\s*([^()]*?)\s*(?:\)|$)", re.IGNORECASE)
+_TAG = re.compile(r"\(\s*(Tal|Text|Txt)\s*:\s*([^()]*(?:\([^()]*\)[^()]*)*)(?:\)|$)", re.IGNORECASE)
+_TEXTED = re.compile(r"\(\s*textad\s+på\s+([^()]+)\)", re.IGNORECASE)
+_CUT_TAG = re.compile(r"\s*\((?:T|Ta|Tal|Te|Tex|Text|Tx|Txt)?\s*$", re.IGNORECASE)
 _PARENS = re.compile(r"\([^)]*\)?")
 # Listing titles longer than this may be cut mid-word.
 _CUT = 45
@@ -128,13 +130,18 @@ def version(title: str) -> tuple[str, str, str]:
 
     Handles "(Tal: Engelska) (Text: Svenska)" and "(Sv. txt)" suffixes.
     """
+    # Metropol also writes both fields in one pair: "(Tal: Eng, Txt: Sv)".
+    title = re.sub(r",\s*(?=(?:Tal|Text|Txt)\s*:)", ") (", title, flags=re.IGNORECASE)
     language = subtitles = ""
     for kind, value in _TAG.findall(title):
         if kind.lower() == "tal":
             language = language or _version.language(value)
         else:
             subtitles = subtitles or _version.subtitles(value)
-    rest, _, spoken, subs = _version.split_title(" ".join(_TAG.sub(" ", title).split()))
+    for value in _TEXTED.findall(title):
+        subtitles = subtitles or _version.subtitles(value)
+    cleaned = _CUT_TAG.sub("", _TEXTED.sub(" ", _TAG.sub(" ", title)))
+    rest, _, spoken, subs = _version.split_title(" ".join(cleaned.split()))
     return rest, language or spoken, subtitles or subs
 
 

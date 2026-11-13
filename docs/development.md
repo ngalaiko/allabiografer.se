@@ -213,6 +213,27 @@ Folkets Hus och Parker includes Bio Roy in Göteborg, Spegeln in Malmö, and
 Röda Kvarn in Helsingborg. Cinemascenen includes Ystad, Katrineholm, Strängnäs,
 Söderhamn, and Hudiksvall. See [mise tasks](../mise.toml) for all parser commands.
 
+`capitolbio_se` imports Bio & Bistro Capitol in Stockholm for the next 14 days,
+using the public calendar's date filter to avoid its infinite-scroll limit.
+It is separate from Capitol Göteborg (`wp_theatre`) and Capitol Varberg
+(`filmstaden_se`). Wine-tasting events are excluded.
+
+`tickster_se` imports verified cinema organisers in Finspång, Emmaboda,
+Grebbestad, Sjöbo, Gnesta, Vilhelmina, Säter, Älvsbyn, Kristianstad (Roxy),
+Karlshamn (Metropol), Umeå (Ersboda) and Skarpnäck. It follows organiser pagination and
+uses event-page start times, not doors-open times. Only events tagged `bio`
+at the configured venues qualify; gift cards, templates, non-film events and
+dates more than a year ahead are excluded. Cinemas covered by another parser
+are deliberately left out. Extend its organiser list only after checking for
+existing coverage. A failed programme or event request aborts the import,
+preserving the previous programme rather than replacing it with partial data.
+
+`kraftenifinspang_se` supplements Tickster with explicitly free `Film/Bio`
+events from Kraften i Finspång's public calendar API. It follows every result
+page, converts UTC starts to Stockholm time and links to the event information
+page instead of requiring a purchase link. Unknown prices are not assumed free;
+paid events and events linking to Tickster are excluded to avoid overlap.
+
 ## Programme data and grouping
 
 Screenings store typed content versions, presentation, and accessibility in JSON

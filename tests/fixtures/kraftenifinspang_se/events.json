@@ -1,0 +1,98 @@
+{
+  "events": [
+    {
+      "id": 26215,
+      "title": "Bio: Tyst faller snön &#8211; Fri entré!",
+      "description": "<p>Skuld, sorg och frigörelse samspelar när en kvinna i sin ensamhet försöker hantera ärren från ett destruktivt förhållande i atmosfäriskt slow cinema-utförande. I efterdyningarna av ett självmord ställs sorg och saknad mot minnen av en relation präglad av psykisk ohälsa och våld. Scener från förr vävs in i vardagens sysslor, och en skepnad dröjer sig kvar i det gemensamma huset medan hon försöker förstå det inträffade och hitta en väg vidare. Tyst Faller Snön tar sig an svårformulerade och ambivalenta känslor i ett kontemplativt och stillsamt drama, förlagt till ett ödsligt och bistert vinterlandskap.</p>\n<p>En del av <em><strong>En vecka fri från våld </strong></em>och i samarbete med relationsvåldsteamet på Finspångs kommun</p>\n<p>Fri entré!</p>",
+      "url": "https://kraftenifinspang.se/evenemang/bio-tyst-faller-snon-fri-entre/",
+      "start_date": "2026-11-18 19:00:00",
+      "utc_start_date": "2026-11-18 18:00:00",
+      "end_date": "2026-11-18 20:30:00",
+      "cost": "Fri entré!",
+      "cost_details": {
+        "currency_symbol": "kr",
+        "currency_code": "SEK",
+        "currency_position": "prefix",
+        "values": [
+          "fri-entre"
+        ]
+      },
+      "custom_fields": {
+        "_ecp_custom_2": {
+          "label": "Kategorier man kan filtrera på",
+          "value": "Film/Bio"
+        }
+      },
+      "website": "",
+      "venue": {
+        "id": 9623,
+        "author": "7",
+        "status": "publish",
+        "date": "2024-07-02 12:01:09",
+        "date_utc": "2024-07-02 10:01:09",
+        "modified": "2024-12-09 14:36:34",
+        "modified_utc": "2024-12-09 13:36:34",
+        "url": "https://kraftenifinspang.se/plats/kulturhuset-finspang/",
+        "venue": "Kulturhuset Finspång",
+        "slug": "kulturhuset-finspang",
+        "address": "Bergslagsvägen 29",
+        "city": "Finspång",
+        "show_map": true,
+        "show_map_link": true,
+        "global_id": "kraftenifinspang.se?id=9623",
+        "global_id_lineage": [
+          "kraftenifinspang.se?id=9623"
+        ]
+      },
+      "all_day": false
+    },
+    {
+      "id": 27211,
+      "title": "Bio: Arne Goes to Space",
+      "description": "<p>Bröderna Arne (Lennart Jähkel) och Stefan (Rolf Lassgård) fyller dagarna i norrländska Brobyn med vedhuggning och jaktlagsgnabb. När en utomjording kraschlandar bakom vedboden vänds tillvaron upp och ned &#8211; Stefan vill inte ha någon snyltande rymdgubbe under sitt tak, medan Arne välkomnar den meterhöga figuren och döper honom till Roland. När Arnes hälsa sviktar tvingas Stefan hantera både sin nya inneboende och insikten att livet kanske aldrig blir detsamma. Arne Goes to Space är en varm komedi som återförenar Lassgård och Jähkel för första gången sedan Jägarna.</p>\n<p><center></center><b>I rollerna</b><br />\nLennart Jähkel, Rolf Lassgård, Margareta Petterson, Kiran Shah</p>\n<ul>\n<li><b>Regi</b> &#8211; Lars Vega</li>\n<li><b>Speltid</b> &#8211; 102 min</li>\n<li><b>Genre</b> &#8211; Drama, Komedi</li>\n</ul>",
+      "url": "https://kraftenifinspang.se/evenemang/bio-arne-goes-to-space/",
+      "start_date": "2026-11-29 19:00:00",
+      "utc_start_date": "2026-11-29 18:00:00",
+      "end_date": "2026-11-29 20:30:00",
+      "cost": "110kr",
+      "cost_details": {
+        "currency_symbol": "kr",
+        "currency_code": "SEK",
+        "currency_position": "suffix",
+        "values": [
+          "110"
+        ]
+      },
+      "custom_fields": {
+        "_ecp_custom_2": {
+          "label": "Kategorier man kan filtrera på",
+          "value": "Film/Bio"
+        }
+      },
+      "website": "https://www.tickster.com/se/sv/events/znael3z7x20w5lm/2026-11-29/bio-arne-goes-to-space",
+      "venue": {
+        "id": 9623,
+        "author": "7",
+        "status": "publish",
+        "date": "2024-07-02 12:01:09",
+        "date_utc": "2024-07-02 10:01:09",
+        "modified": "2024-12-09 14:36:34",
+        "modified_utc": "2024-12-09 13:36:34",
+        "url": "https://kraftenifinspang.se/plats/kulturhuset-finspang/",
+        "venue": "Kulturhuset Finspång",
+        "slug": "kulturhuset-finspang",
+        "address": "Bergslagsvägen 29",
+        "city": "Finspång",
+        "show_map": true,
+        "show_map_link": true,
+        "global_id": "kraftenifinspang.se?id=9623",
+        "global_id_lineage": [
+          "kraftenifinspang.se?id=9623"
+        ]
+      },
+      "all_day": false
+    }
+  ],
+  "total": 2,
+  "total_pages": 1
+}

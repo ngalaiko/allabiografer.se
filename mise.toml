@@ -37,6 +37,15 @@ run = "uv run --group parse parse cinemascenen_se"
 [tasks."parse:wp_theatre"]
 run = "uv run --group parse parse wp_theatre"
 
+[tasks."parse:capitolbio_se"]
+run = "uv run --group parse parse capitolbio_se"
+
+[tasks."parse:tickster_se"]
+run = "uv run --group parse parse tickster_se"
+
+[tasks."parse:kraftenifinspang_se"]
+run = "uv run --group parse parse kraftenifinspang_se"
+
 [tasks."parse:kiviksbio_se"]
 run = "uv run --group parse parse kiviksbio_se"
 

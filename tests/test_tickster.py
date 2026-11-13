@@ -5,6 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
+import pytest
 import requests
 
 from parse.parsers import _tickster
@@ -82,6 +83,20 @@ def test_version_reads_tags_cut_off_by_the_title_limit():
         "Engelskt tal",
         "Svensk text",
     )
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("Jakten på Jultomtens verkstad (Tal: Svenska) (Tex", ("Jakten på Jultomtens verkstad", "Svenskt tal", "")),
+        ("The Angry Birds Movie 3 (Tal: Svenska (dubbat)) (", ("The Angry Birds Movie 3", "Svenskt tal", "")),
+        ("Arco (textad på svenska)", ("Arco", "", "Svensk text")),
+        ("The Death of Robin Hood (Tal: Eng, Txt: Sv)", ("The Death of Robin Hood", "Engelskt tal", "Svensk text")),
+    ],
+)
+def test_version_reads_additional_cinema_tag_formats(raw, expected):
+    assert _tickster.version(raw) == expected
+    assert _tickster.labels(raw) == ()
 
 
 def test_programme_follows_pages():
