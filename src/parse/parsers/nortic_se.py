@@ -39,9 +39,9 @@ _SUFFIXES = (
 # Labels opening a fact in descriptions: "Speltid: 96 minuter Språk: Engelska Text: Svenska".
 _LABELS = (
     r"speltid|längd|runtime|genre|åldersgräns|age rating|originaltitel|originalspråk|land|språk|language|"
-    r"subtitles|tal|text|regi|manus|directors?|övrigt|biljetter|arrangör|bio"
+    r"subtitles|tal|text|regi|manus|directors?|skådespelare|medverkande|övrigt|biljetter|arrangör|bio"
 )
-_FIELD_END = rf"(?=\s+(?:{_LABELS})(?:\s*(?:&|och)\s*\w+)?\s*:|\.\s|\.?$)"
+_FIELD_END = rf"(?=\s+(?:{_LABELS})(?:\s*(?:&|och|/)\s*\w+)?\s*:|\.\s|\.?$)"
 _DUBBED = re.compile(r"\b(?:tal|språk|originalspråk)\s*:[^.:]*dubb", re.IGNORECASE)
 # Labels stating the screening's speech; "Originalspråk:" states the film's.
 _SPEECH = re.compile(r"\b(?:tal|språk|language)\s*:", re.IGNORECASE)
@@ -156,7 +156,9 @@ def _merge(old: Film, new: Film) -> Film:
 def _city(show: dict) -> str:
     raw = show.get("arenaCity") or ""
     # API sometimes returns city in ALL-CAPS (e.g. "ELLÖS")
-    return raw.title() if raw == raw.upper() else raw
+    city = raw.title() if raw == raw.upper() else raw
+    # The same Hässleholm arenas also list their culture house as part of the city.
+    return "Hässleholm" if city == "Hässleholm Kulturhus" else city
 
 
 def _arena(show: dict) -> tuple[str, str]:

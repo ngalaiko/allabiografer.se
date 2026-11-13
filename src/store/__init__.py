@@ -234,6 +234,7 @@ _CITY_ALIASES: dict[str, str] = {
     "Älvsjö": "Stockholm",
     "Hägersten": "Stockholm",
     "Johanneshov": "Stockholm",
+    "Kista": "Stockholm",
     "Midsommarkransen": "Stockholm",
     "Skärholmen": "Stockholm",
     "Spånga": "Stockholm",

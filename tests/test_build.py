@@ -17,6 +17,7 @@ from store import (
     Venue,
     film_key,
     poster_key_for_film,
+    read_screenings,
     write_films,
     write_movie,
     write_poster,
@@ -602,6 +603,119 @@ def test_unsubtitled_reads_ej_textad(db, tmp_path):
         ],
     )
     assert blocks[0]["mi"] == "Engelskt tal • Ej textad"
+
+
+@pytest.mark.parametrize(
+    ("city", "cinema", "other_source"),
+    [
+        ("Stockholm", "Biocafé Tellus", "nortic_se"),
+        ("Malmö", "Hypnos Theatre", "hypnostheatre_com"),
+        ("Götene", "Bio Göta Lejon", "nortic_se"),
+    ],
+)
+def test_cross_source_screenings_share_a_programme_without_duplicate_showtimes(
+    db, tmp_path, city, cinema, other_source
+):
+    day = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
+    known = {
+        "version": ContentVersion(
+            audio=AudioVersion(AudioKind.ORIGINAL, frozenset({Language.ENGLISH})),
+            subtitles=SubtitleVersion(frozenset({Language.SWEDISH})),
+        ),
+        "presentation": Presentation(dimension=Dimension.TWO_D),
+        "screen": "Salongen",
+    }
+    write_movie(movie(42), path=db)
+    write_venue(Venue(city=city, name=cinema, address="Gatan 1"), path=db)
+    write_screenings(
+        [
+            screening(
+                tmdb_id=42,
+                city=city,
+                cinema_name=cinema,
+                date=day,
+                source="bio_se",
+                ticket_url="https://bio.se/biografer/cinema",
+                **known,
+            ),
+            screening(
+                tmdb_id=42,
+                city=city,
+                cinema_name=cinema,
+                date=day,
+                source=other_source,
+                ticket_url="https://tickets.nortic.se/ticket/show/1",
+            ),
+            screening(
+                tmdb_id=42,
+                city=city,
+                cinema_name=cinema,
+                date=day,
+                time=time(19, 30),
+                source="bio_se",
+                ticket_url="https://bio.se/bokning/2",
+            ),
+            screening(
+                tmdb_id=42,
+                city=city,
+                cinema_name=cinema,
+                date=day,
+                time=time(20, 30),
+                source=other_source,
+                ticket_url="https://tickets.nortic.se/ticket/show/3",
+            ),
+        ],
+        path=db,
+    )
+    out = tmp_path / "out"
+    sd = build._load_data(out)
+    build._build_programme_pages(build._make_env(), sd)
+    city_dir = out / "stad" / build._slugify_sv(city)
+    feed = json.loads((city_dir / "index.json").read_text())
+    assert feed["coverage"]["cinema_count"] == 1
+    assert feed["coverage"]["screening_count"] == 3
+    assert [row["start"][11:16] for row in feed["screenings"]] == ["18:30", "19:30", "20:30"]
+    first = feed["screenings"][0]
+    assert first["ticket_url"] == "https://tickets.nortic.se/ticket/show/1"
+    assert first["version"]["audio"] == {"kind": "original", "languages": ["Engelska"]}
+    assert first["version"]["subtitles"] == ["Svenska"]
+    assert first["presentation"]["dimension"] == "2D"
+    assert first["cinema"]["screen"] == "Salongen"
+    html = BeautifulSoup((city_dir / "index.html").read_text(), "html.parser")
+    assert len(html.select(".schedule-cell time")) == 3
+    assert len(read_screenings(path=db)) == 4  # Source ownership is unchanged in storage.
+
+
+@pytest.mark.parametrize(
+    "difference", ["source", "hall", "language", "dimension", "ambiguous_hall", "ambiguous_language"]
+)
+def test_cross_source_deduplication_keeps_distinct_screenings(db, tmp_path, difference):
+    first = {"source": "bio_se", "screen": "1"}
+    second = {"source": "nortic_se", "screen": "1"}
+    if difference == "source":
+        second["source"] = "bio_se"
+    elif difference.endswith("hall"):
+        second["screen"] = "2"
+    elif difference.endswith("language"):
+        first["version"] = ContentVersion(audio=AudioVersion(languages=frozenset({Language.ENGLISH})))
+        second["version"] = ContentVersion(audio=AudioVersion(languages=frozenset({Language.SWEDISH})))
+    else:
+        first["presentation"] = Presentation(dimension=Dimension.TWO_D)
+        second["presentation"] = Presentation(dimension=Dimension.THREE_D)
+    observations = [first, second]
+    if difference.startswith("ambiguous"):
+        observations.append({"source": "local"})
+    write_movie(movie(42), path=db)
+    write_screenings(
+        [screening(tmdb_id=42, ticket_url=f"https://example.com/{i}", **facts) for i, facts in enumerate(observations)],
+        path=db,
+    )
+    out = tmp_path / "out"
+    sd = build._load_data(out)
+    sd.today += timedelta(days=30)
+    build._build_programme_pages(build._make_env(), sd)
+    feed = json.loads((out / "stad/stockholm/index.json").read_text())
+    assert feed["coverage"]["screening_count"] == len(observations)
 
 
 def test_city_json_feed_matches_programme_window_and_preserves_unknown_facts(db, tmp_path):

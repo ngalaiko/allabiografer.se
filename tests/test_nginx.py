@@ -6,6 +6,7 @@ import socket
 import subprocess
 import time
 from pathlib import Path
+from urllib.parse import unquote
 
 import pytest
 from requests import certs
@@ -22,7 +23,18 @@ def nginx_server(tmp_path):
         "index.html",
         "stad/stockholm/index.html",
         "stad/göteborg/index.html",
+        "stad/stockholm/bagarmossen-folkets-hus/index.html",
+        "stad/stockholm/genre/drama/index.html",
         "stad/stockholm/film/current/index.html",
+        "stad/stockholm/film/blir-du-ledsen-om-jag-dör/index.html",
+        "stad/stockholm/stockholm-bio-husby/index.html",
+        "stad/stockholm/biocafé-tellus/index.html",
+        "stad/malmö/hypnos-theatre/index.html",
+        "stad/götene/bio-göta-lejon/index.html",
+        "stad/hässleholm/index.html",
+        "stad/hässleholm/blå-salongen/index.html",
+        "stad/hässleholm/genre/dokumentär/index.html",
+        "stad/hässleholm/film/samma-sång-en-resa-till-peps-persson/index.html",
         "film/current/index.html",
         "i/style.css",
         "i/links.js",
@@ -50,6 +62,9 @@ def nginx_server(tmp_path):
     site = (Path(__file__).resolve().parents[1] / "etc/nginx/sites-available/allabiografer.se").read_text()
     site = site.replace("listen 8080;", f"listen 127.0.0.1:{port};")
     site = site.replace("/var/www/allabiografer.se", str(root))
+    site = site.replace(
+        "/etc/nginx/rewrites.conf", str(Path(__file__).resolve().parents[1] / "etc/nginx/rewrites.conf")
+    )
     site = site.replace("/etc/ssl/certs/ca-certificates.crt", certs.where())
     # test_newsletter_api owns newsletter API coverage.
     site = site.replace("content_by_lua_block { require('newsletter').handle() }", "return 503;")
@@ -110,6 +125,11 @@ def nginx_server(tmp_path):
         ("/stad/g%C3%B6teborg/film/expired/", 302, "/stad/göteborg/"),
         ("/stad/unknown/film/expired/", 404, None),
         ("/stad/unknown/", 404, None),
+        ("/stad/08-649-27-550/", 404, None),
+        ("/stad/h%C3%A4ssleholm-kulturhuset/", 404, None),
+        ("/stad/kistas/", 404, None),
+        ("/stad/stockholm/stockholm-biocaf%C3%A9-tellus-midsommarkransen-extra/", 302, "/stad/stockholm/"),
+        ("/stad/h%C3%A4ssleholm/genre/bosse-skoglund/", 302, "/stad/hässleholm/"),
         ("/film/current/", 200, None),
         ("/film/expired/", 302, "/"),
         ("/film/expired?selection=1", 302, "/"),
@@ -135,6 +155,75 @@ def test_page_fallback(nginx_server, path, status, destination):
             assert location is None
         if status == 200:
             assert response.read().decode() == path.lstrip("/") + ("index.html" if path.endswith("/") else "")
+    finally:
+        connection.close()
+
+
+@pytest.mark.parametrize(
+    ("path", "destination"),
+    [
+        ("/stad/stockholm", "/stad/stockholm/"),
+        ("/film/current?selection=1", "/film/current/?selection=1"),
+        ("/stad/stockholm/film/current", "/stad/stockholm/film/current/"),
+        ("/stad/g%C3%B6teborg", "/stad/g%C3%B6teborg/"),
+        ("/stad/kista", "/stad/stockholm/"),
+        ("/stad/kista/", "/stad/stockholm/"),
+        ("/stad/kista/stockholm-bio-husby/", "/stad/stockholm/stockholm-bio-husby/"),
+        ("/stad/kista/genre/drama/?selection=1", "/stad/stockholm/genre/drama/?selection=1"),
+        (
+            "/stad/kista/film/blir-du-ledsen-om-jag-d%C3%B6r/",
+            "/stad/stockholm/film/blir-du-ledsen-om-jag-d%C3%B6r/",
+        ),
+        (
+            "/stad/stockholm/stockholm-biocaf%C3%A9-tellus-midsommarkransen",
+            "/stad/stockholm/biocaf%C3%A9-tellus/",
+        ),
+        (
+            "/stad/stockholm/stockholm-biocaf%C3%A9-tellus-midsommarkransen/?selection=1",
+            "/stad/stockholm/biocaf%C3%A9-tellus/?selection=1",
+        ),
+        ("/stad/malm%C3%B6/malm%C3%B6-hypnos-theatre", "/stad/malm%C3%B6/hypnos-theatre/"),
+        ("/stad/malm%C3%B6/malm%C3%B6-hypnos-theatre/", "/stad/malm%C3%B6/hypnos-theatre/"),
+        ("/stad/g%C3%B6tene/g%C3%B6tene-bio-g%C3%B6ta-lejon", "/stad/g%C3%B6tene/bio-g%C3%B6ta-lejon/"),
+        ("/stad/g%C3%B6tene/g%C3%B6tene-bio-g%C3%B6ta-lejon/", "/stad/g%C3%B6tene/bio-g%C3%B6ta-lejon/"),
+        ("/stad/08-649-27-55", "/stad/stockholm/"),
+        ("/stad/08-649-27-55/", "/stad/stockholm/"),
+        ("/stad/08-649-27-55/bagarmossen-folkets-hus/", "/stad/stockholm/bagarmossen-folkets-hus/"),
+        ("/stad/08-649-27-55/genre/drama/", "/stad/stockholm/genre/drama/"),
+        ("/stad/08-649-27-55/film/current/?selection=1", "/stad/stockholm/film/current/?selection=1"),
+        (
+            "/stad/08-649-27-55/film/blir-du-ledsen-om-jag-d%C3%B6r/",
+            "/stad/stockholm/film/blir-du-ledsen-om-jag-d%C3%B6r/",
+        ),
+        ("/stad/h%C3%A4ssleholm-kulturhus", "/stad/h%C3%A4ssleholm/"),
+        ("/stad/h%C3%A4ssleholm-kulturhus/", "/stad/h%C3%A4ssleholm/"),
+        (
+            "/stad/h%C3%A4ssleholm-kulturhus/bl%C3%A5-salongen/?selection=1",
+            "/stad/h%C3%A4ssleholm/bl%C3%A5-salongen/?selection=1",
+        ),
+        (
+            "/stad/h%C3%A4ssleholm-kulturhus/genre/dokument%C3%A4r/",
+            "/stad/h%C3%A4ssleholm/genre/dokument%C3%A4r/",
+        ),
+        (
+            "/stad/h%C3%A4ssleholm-kulturhus/film/samma-s%C3%A5ng-en-resa-till-peps-persson/",
+            "/stad/h%C3%A4ssleholm/film/samma-s%C3%A5ng-en-resa-till-peps-persson/",
+        ),
+    ],
+)
+def test_public_redirects_preserve_paths_and_queries_without_origin_scheme_or_port(nginx_server, path, destination):
+    connection = http.client.HTTPConnection("127.0.0.1", nginx_server)
+    try:
+        connection.request("GET", path, headers={"Host": "allabiografer.se", "X-Forwarded-Proto": "https"})
+        response = connection.getresponse()
+        assert response.status == 301
+        assert response.getheader("Location") == destination
+        response.read()
+
+        connection.request("GET", destination)
+        response = connection.getresponse()
+        assert response.status == 200
+        assert response.read().decode() == unquote(destination.split("?")[0]).lstrip("/") + "index.html"
     finally:
         connection.close()
 

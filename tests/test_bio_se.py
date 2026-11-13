@@ -36,6 +36,19 @@ def test_venue_skips_records_without_a_location():
     assert _venue(_CINEMAS["Gåxsjö Bio"]) is None
 
 
+@pytest.mark.parametrize(
+    ("cinema_id", "name", "city", "canonical"),
+    [
+        (2126, "Stockholm Biocafé Tellus Midsommarkransen", "Hägersten", "Biocafé Tellus"),
+        (31791, "Malmö Hypnos Theatre", "Malmö", "Hypnos Theatre"),
+        (50407, "Götene Bio Göta Lejon", "Götene", "Bio Göta Lejon"),
+        (48734, "Arboga Bio Kontrast", "Arboga", "Arboga Bio Kontrast"),
+    ],
+)
+def test_verified_cinemas_share_names_with_their_other_sources(cinema_id, name, city, canonical):
+    assert _venue({"id": cinema_id, "title": name, "city": city}).name == canonical
+
+
 def _rows(name: str) -> list[tuple]:
     return [tuple((f.title, *rest)[:8]) for f, *rest in _showtimes(_films(name))]
 
@@ -381,6 +394,89 @@ def _parse(monkeypatch, films: dict, tmdb=lambda title, year=None: None) -> list
 def test_malformed_cinema_does_not_abort_the_others(monkeypatch):
     items = _parse(monkeypatch, {1: {"movies": None}, 2: _payload({}, _session())})
     assert [s.cinema_name for s in items if isinstance(s, Screening)] == ["Bio 2"]
+
+
+def test_kino_address_does_not_point_to_sodran(monkeypatch):
+    cinemas = [
+        {"id": 2040, "title": "Lund Kino", "city": "Lund", "street_address": "Mejeriet, Stora Södergatan 64"},
+        {"id": 5519, "title": "Lund Södran", "city": "Lund", "street_address": "Stora Södergatan 64 Lund"},
+    ]
+    payload = _payload({}, _session())
+    monkeypatch.setattr(bio_se._http, "session", lambda: _Session(cinemas, {2040: payload, 5519: payload}))
+    monkeypatch.setattr(bio_se._films, "register", lambda film: film)
+    monkeypatch.setattr(bio_se, "_tmdb", lambda title: None)
+
+    items = list(bio_se.parse())
+
+    assert [(v.name, v.address) for v in items if isinstance(v, Venue)] == [
+        ("Lund Kino", "Kyrkogatan 1"),
+        ("Lund Södran", "Stora Södergatan 64 Lund"),
+    ]
+    assert [s.cinema_name for s in items if isinstance(s, Screening)] == ["Lund Kino", "Lund Södran"]
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_same_tickster_booking_with_hall_alias_is_one_screening(monkeypatch, reverse):
+    url = "https://www.tickster.com/sv/events/631T3WDG5J0R346"
+    entries = [
+        _payload({"title": "Den nya triumfbågens arkitekt"}, _session(payment_link=url, screen_name=hall))["movies"][0]
+        for hall in ["Salongen", "Garvaren"]
+    ]
+    if reverse:
+        entries.reverse()
+    items = _parse(monkeypatch, {1: {"movies": entries}, 2: {"movies": entries}})
+    screenings = [s for s in items if isinstance(s, Screening)]
+    assert [(s.cinema_name, s.screen, s.ticket_url) for s in screenings] == [
+        ("Bio 1", "Garvaren", url),
+        ("Bio 2", "Garvaren", url),
+    ]
+
+
+@pytest.mark.parametrize("difference", ["booking", "fallback", "time", "film", "language", "format", "notice"])
+def test_simultaneous_halls_and_unproven_booking_matches_remain_separate(monkeypatch, difference):
+    url = "https://www.tickster.com/sv/events/631T3WDG5J0R346"
+    first = _session(payment_link=url, screen_name="Garvaren")
+    second = _session(payment_link=url, screen_name="Salongen")
+    if difference == "booking":
+        second["payment_link"] = "https://www.tickster.com/sv/events/3Y1J1JBC395M8EH"
+    elif difference == "fallback":
+        first["payment_link"] = second["payment_link"] = "https://bio.se/biografer/cinema"
+    elif difference == "time":
+        second["show_date_time"] = "2026-10-01T19:00:00"
+    elif difference == "language":
+        first["language"], second["language"] = "Svenska", "Engelska"
+    elif difference == "format":
+        first["format"], second["format"] = "2D", "3D"
+    elif difference == "notice":
+        second["sessionInfoText"] = "Samtal efter filmen"
+    entries = [
+        _payload({"title": "Film"}, first)["movies"][0],
+        _payload({"title": "Annan film" if difference == "film" else "Film"}, second)["movies"][0],
+    ]
+    items = _parse(monkeypatch, {1: {"movies": entries}})
+    assert len([s for s in items if isinstance(s, Screening)]) == 2
+
+
+def test_bagarmossen_programme_uses_stockholm_instead_of_upstream_phone_number(monkeypatch):
+    cinemas = [
+        {"id": 50606, "title": "Bagarmossen Folkets Hus", "city": "08-649 27 55", "street_address": ""},
+        {"id": 2, "title": "Bio", "city": "Alingsås", "street_address": "Gatan 1"},
+    ]
+    payload = _payload({}, _session())
+    monkeypatch.setattr(bio_se._http, "session", lambda: _Session(cinemas, {50606: payload, 2: payload}))
+    monkeypatch.setattr(bio_se._films, "register", lambda film: film)
+    monkeypatch.setattr(bio_se, "_tmdb", lambda title: None)
+
+    items = list(bio_se.parse())
+
+    assert [(v.name, v.city) for v in items if isinstance(v, Venue)] == [
+        ("Bagarmossen Folkets Hus", "Stockholm"),
+        ("Bio", "Alingsås"),
+    ]
+    assert [(s.cinema_name, s.city) for s in items if isinstance(s, Screening)] == [
+        ("Bagarmossen Folkets Hus", "Stockholm"),
+        ("Bio", "Alingsås"),
+    ]
 
 
 def test_http_failures_abort_the_run(monkeypatch):

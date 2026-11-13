@@ -27,6 +27,8 @@ _SUBTITLE_ATTRIBUTES = {"English subtitles": "Engelska"}
 _NOT_A_FILM = "Inte en film"
 # Session info texts up to this length are labels; longer ones are notices.
 _LABEL_MAX = 40
+# Match the same physical cinemas published by Nortic and their own websites.
+_CINEMA_NAMES = {2126: "Biocafé Tellus", 31791: "Hypnos Theatre", 50407: "Bio Göta Lejon"}
 
 
 def _ticket_url(payment_link: str) -> str:
@@ -107,9 +109,15 @@ def _merge(film: Film, other: Film) -> Film:
 
 def _venue(cinema: dict) -> Venue | None:
     """Venue for a cinema record, or None when the record carries no location."""
-    name = _clean(cinema.get("title", ""))
+    name = _CINEMA_NAMES.get(cinema.get("id"), _clean(cinema.get("title", "")))
     city = _clean(cinema.get("city", ""))
+    # Bagarmossen Folkets Hus: bio.se puts its phone number in the city field.
+    if cinema.get("id") == 50606:
+        city = "Stockholm"
     address = _clean(cinema.get("street_address", ""))
+    # The operator lists Kino at Kyrkogatan 1; bio.se supplies Södran's address.
+    if cinema.get("id") == 2040:
+        address = "Kyrkogatan 1"
     if not city and not address:
         return None
     return Venue(name=name, city=city or name.split()[0], address=address)
@@ -203,10 +211,11 @@ def parse() -> Iterator[Screening | Venue | Film]:
             log.warning("bio.se: %s: malformed films payload: %s", venue.name, exc)
             continue
 
-        count = 0
+        screenings: list[Screening] = []
+        bookings: dict[Screening, int] = {}
         for film, d, t, url, screen, fmt, language, subtitles, source_texts, raw_attributes, broadcast in rows:
             films[film.key] = _merge(films[film.key], film) if film.key in films else film
-            yield Screening(
+            screening = Screening(
                 # Broadcasts match only same-year TMDB entries, not older films of the same work.
                 tmdb_id=_tmdb(film.title, year=d.year) if broadcast else _tmdb(film.title),
                 title=film.title,
@@ -225,10 +234,23 @@ def parse() -> Iterator[Screening | Venue | Film]:
                 screen=screen,
                 ticket_url=url,
             )
-            count += 1
+            # Duplicate imports use different hall labels for the exact same Tickster event.
+            # Require all other facts to match; generic booking pages prove no event identity.
+            if re.fullmatch(r"https://(?:www\.)?tickster\.com/sv/events/[A-Za-z0-9]+/?", url):
+                booking = dataclasses.replace(screening, screen="")
+                if booking in bookings:
+                    index = bookings[booking]
+                    screenings[index] = min(
+                        (screenings[index], screening),
+                        key=lambda s: (s.screen.casefold() in {"", "salongen"}, s.screen),
+                    )
+                    continue
+                bookings[booking] = len(screenings)
+            screenings.append(screening)
 
-        if count:
-            log.info("  %s (%s): %d screenings", venue.name, venue.city, count)
+        yield from screenings
+        if screenings:
+            log.info("  %s (%s): %d screenings", venue.name, venue.city, len(screenings))
 
     # Entries of one film differ in completeness across cinemas.
     for film in films.values():

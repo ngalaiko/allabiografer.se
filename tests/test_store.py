@@ -223,17 +223,20 @@ def test_no_source_merges_without_deleting(db):
 
 @pytest.mark.parametrize(
     "alias",
-    ["Bromma", "Midsommarkransen", "Spånga"],
+    ["Bromma", "Midsommarkransen", "Spånga", "Kista"],
 )
 def test_city_alias_normalised(db, alias):
     write_screenings([screening(city=alias)], path=db, source="a")
     assert read_screenings(path=db)[0].city == "Stockholm"
 
 
-def test_city_alias_applied_to_covered_venues(db):
-    write_screenings([screening(city="Bromma", ticket_url="https://legacy/1")], path=db)
+@pytest.mark.parametrize("alias", ["Bromma", "Kista"])
+def test_city_alias_applied_to_covered_venues(db, alias):
+    write_screenings([screening(city=alias, ticket_url="https://legacy/1")], path=db)
+    write_venue(Venue(city=alias, name="Rio", address="Gatan 1"), path=db)
     write_screenings([screening(city="Stockholm", ticket_url="https://a/1")], path=db, source="a")
     assert [s.ticket_url for s in read_screenings(path=db)] == ["https://a/1"]
+    assert read_venues(path=db) == [Venue(city="Stockholm", name="Rio", address="Gatan 1")]
 
 
 def test_read_screenings_empty_db(db):

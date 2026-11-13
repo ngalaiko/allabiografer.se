@@ -125,9 +125,10 @@ assessment). No prices, seat availability or screening end times are inferred.
 Ticket links may target a cinema's general booking page rather than a specific show.
 
 Feeds contain regular programme data only, not the separate festival planner.
-They preserve individual source records, which can overlap; there is no 100-event
-JSON-LD cap. A city without a generated programme has no feed. Changes to the
-contract require updating this documentation and, for breaking changes, its version.
+Compatible observations of one screening across sources are combined; distinct
+or ambiguous variants can still overlap. There is no 100-event JSON-LD cap.
+A city without a generated programme has no feed. Changes to the contract require
+updating this documentation and, for breaking changes, its version.
 
 ### Sharing images
 

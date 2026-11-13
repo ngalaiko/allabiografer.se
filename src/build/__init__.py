@@ -52,10 +52,15 @@ from store import (
     title_key,
 )
 from store.version import (
+    Accessibility,
     AudioKind,
+    AudioVersion,
+    ContentVersion,
     Dimension,
     Language,
+    Presentation,
     ProjectionMedium,
+    SubtitleVersion,
     speech_label,
     subtitles_label,
 )
@@ -302,6 +307,57 @@ def _aggregate_movies(sd: SiteData) -> dict[int, int]:
     return aliases
 
 
+def _deduplicate_screenings(screenings: list[Screening]) -> list[Screening]:
+    """Combine compatible observations of one show across sources, never within a source."""
+    slots: dict[tuple, list[Screening]] = defaultdict(list)
+    for s in screenings:
+        slots[(s.city, s.cinema_name, s.tmdb_id, s.date, s.time)].append(s)
+    result = []
+    for slot in slots.values():
+        if len(slot) == 1:
+            result.extend(slot)
+            continue
+        for members, profile in _group_variant_profiles(slot):
+            sources = {s.source for s in members}
+            halls = {s.screen for s in members if s.screen}
+            # Multiple halls or observations from one source are not a proven duplicate.
+            if "" in sources or len(sources) != len(members) or len(halls) > 1:
+                result.extend(members)
+                continue
+            # Prefer a booking link over bio.se's general cinema-page fallback.
+            primary = min(
+                members,
+                key=lambda s: (
+                    not s.ticket_url,
+                    s.ticket_url.startswith("https://bio.se/biografer/"),
+                    s.source,
+                    s.ticket_url,
+                ),
+            )
+            result.append(
+                replace(
+                    primary,
+                    screen=next(iter(halls), ""),
+                    version=ContentVersion(
+                        audio=AudioVersion(profile[0] or AudioKind.UNKNOWN, profile[1] or frozenset()),
+                        subtitles=SubtitleVersion(profile[2]),
+                        edition=profile[3],
+                    ),
+                    presentation=Presentation(
+                        experiences=profile[4],
+                        dimension=profile[5] or Dimension.UNKNOWN,
+                        medium=profile[6],
+                        projection=profile[7],
+                        sound=profile[8],
+                        auditorium=profile[9],
+                    ),
+                    accessibility=Accessibility(profile[10]),
+                    raw_attributes=tuple(sorted({a for s in members for a in s.raw_attributes})),
+                )
+            )
+    return result
+
+
 def _load_data(out_dir: Path) -> SiteData:
     sd = SiteData(out_dir=out_dir)
     sd.today = sd.generated_at.date()
@@ -365,7 +421,6 @@ def _load_data(out_dir: Path) -> SiteData:
     tmdb_ids: set[int] = set()
     for s in sd.screenings:
         tmdb_ids.add(s.tmdb_id)
-        sd.cities[s.city] = sd.cities.get(s.city, 0) + 1
 
     print("Reading movie metadata…")
     # Synthetic ids are negative and absent from storage; they also exceed SQLite's integer range.
@@ -398,6 +453,10 @@ def _load_data(out_dir: Path) -> SiteData:
     for v in read_venues(path=DB_FILE):
         sd.venues[(v.city, v.name)] = v
     print(f"  {len(sd.venues)} venues")
+
+    sd.screenings = _deduplicate_screenings(sd.screenings)
+    for s in sd.screenings:
+        sd.cities[s.city] = sd.cities.get(s.city, 0) + 1
 
     # Pre-compute slugs
     for city in sd.cities:

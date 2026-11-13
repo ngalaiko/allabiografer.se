@@ -1,6 +1,7 @@
 server {
     listen 8080;
     server_name allabiografer.se;
+    include /etc/nginx/rewrites.conf;
 
     root /var/www/allabiografer.se;
     index index.html;
@@ -63,7 +64,6 @@ server {
     }
 
     location @missing_city_page {
-        absolute_redirect off;
         # A missing programme may return later; the city is not its permanent replacement.
         if (-f $document_root$city_path/index.html) {
             return 302 $city_path/;
@@ -76,7 +76,6 @@ server {
     }
 
     location @missing_film_page {
-        absolute_redirect off;
         return 302 /;
     }
 

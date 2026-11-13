@@ -213,6 +213,33 @@ def test_genres_under_the_bio_label(live):
     assert _films(nortic_se._parse_payload(payload))["Monsterfabriken"].genres == []
 
 
+@pytest.mark.parametrize("cast_label", ["Skådespelare / Medverkande", "Skådespelare", "Medverkande"])
+def test_cast_is_not_part_of_the_genre(cast_label):
+    event = _event(
+        "Samma sång - En resa till Peps Persson",
+        description=(
+            "Genre: Dokumentär "
+            f"{cast_label}: Peps Persson, Bosse Skoglund, Rolf Alm, "
+            "Jason ”Timbuktu” Diakité, Mats Edén, och SKA’N’SKA. Längd: ca 1 tim 30 min totalt"  # noqa: RUF001
+        ),
+    )
+    film = _films(nortic_se._parse_payload({"events": [event]}))[event["title"]]
+    assert film.genres == ["Dokumentär"]
+
+
+def test_hassleholm_culture_house_uses_the_same_city_as_other_shows():
+    events = []
+    for i, city in enumerate(["Hässleholm Kulturhus", "Hässleholm", "HÄSSLEHOLM KULTURHUS"]):
+        event = _event("Samma sång", show_id=i + 1)
+        event["shows"][0].update(arenaCity=city, arenaName="Blå Salongen")
+        events.append(event)
+    items = list(nortic_se._parse_payload({"events": events}))
+    screenings = [s for s in items if isinstance(s, Screening)]
+    assert len(screenings) == 3
+    assert {s.city for s in screenings} == {"Hässleholm"}
+    assert [(v.city, v.name) for v in items if isinstance(v, Venue)] == [("Hässleholm", "Blå Salongen")]
+
+
 def _event(
     title: str,
     *,
