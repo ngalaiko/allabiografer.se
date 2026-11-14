@@ -267,25 +267,27 @@ def write_screenings(
     today = datetime.now(ZoneInfo("Europe/Stockholm")).date().isoformat()
     covered = {(_normalize_city(v.city), v.name) for v in venues}
     covered.update((_normalize_city(s.city), s.cinema_name) for s in screenings)
-    rows = [
-        (
-            _normalize_city(s.city),
-            s.cinema_name,
-            s.date.isoformat(),
-            s.time.strftime("%H:%M"),
-            s.screen,
-            s.tmdb_id,
-            s.ticket_url,
-            s.title,
-            source or s.source,
-            s.film_key,
-            json.dumps(s.to_dict()["version"], ensure_ascii=False),
-            json.dumps(s.to_dict()["presentation"], ensure_ascii=False),
-            json.dumps(s.to_dict()["accessibility"], ensure_ascii=False),
-            json.dumps(s.to_dict()["raw_attributes"], ensure_ascii=False),
+    rows = []
+    for s in screenings:
+        facts = s.to_dict()
+        rows.append(
+            (
+                _normalize_city(s.city),
+                s.cinema_name,
+                s.date.isoformat(),
+                s.time.strftime("%H:%M"),
+                s.screen,
+                s.tmdb_id,
+                s.ticket_url,
+                s.title,
+                source or s.source,
+                s.film_key,
+                json.dumps(facts["version"], ensure_ascii=False),
+                json.dumps(facts["presentation"], ensure_ascii=False),
+                json.dumps(facts["accessibility"], ensure_ascii=False),
+                json.dumps(facts["raw_attributes"], ensure_ascii=False),
+            )
         )
-        for s in screenings
-    ]
     conn = connect(path)
     try:
         # One immediate transaction so parallel parsers serialise.

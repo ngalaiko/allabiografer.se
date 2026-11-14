@@ -247,7 +247,6 @@ class SiteData:
     cities: dict[str, int] = field(default_factory=dict)
     generated_at: datetime = field(default_factory=lambda: datetime.now(tz=SWEDEN_TZ))
     today: date = field(default_factory=lambda: datetime.now(tz=SWEDEN_TZ).date())
-    days: list[date] = field(default_factory=list)
     venues: dict[tuple[str, str], Venue] = field(default_factory=dict)  # (city, name) → Venue
     city_slugs: dict[str, str] = field(default_factory=dict)
     cinema_slugs: dict[tuple[str, str], str] = field(default_factory=dict)
@@ -380,10 +379,6 @@ def _load_data(out_dir: Path) -> SiteData:
             films_of[screening.tmdb_id][film.key] = film
         sd.screenings.append(screening)
     print(f"  {len(sd.screenings)} screenings ({len(all_screenings) - len(sd.screenings)} past, skipped)")
-
-    # Days are computed per-page from screening dates; keep a global
-    # reference only for today.
-    sd.days = []
 
     tmdb_ids: set[int] = set()
     for s in sd.screenings:
@@ -1118,16 +1113,11 @@ def _variants(screenings: list[Screening]) -> dict[Screening, tuple[str, str]]:
         for members, profile in film_groups:
             labels = []
             for index in sorted(split_axes):
-                value = profile[index]
-                if value is None:
-                    if index != 5 or len(known_dimensions) > 1:
-                        text = _profile_component_label(index, profile)
-                        if text:
-                            labels.append(text)
-                else:
-                    text = _profile_component_label(index, profile)
-                    if text:
-                        labels.append(text)
+                if index == 5 and profile[index] is None and len(known_dimensions) <= 1:
+                    continue
+                text = _profile_component_label(index, profile)
+                if text:
+                    labels.append(text)
             label = " · ".join(dict.fromkeys(labels))
             identity = hashlib.sha256(_profile_sort_key(profile).encode()).hexdigest()[:12]
             for screening in members:
@@ -1145,8 +1135,8 @@ def _prepare_programme_blocks(
     """Prepare template-ready block dicts for a programme page."""
 
     now = datetime.now(tz=SWEDEN_TZ)
-    day_set = set(days)
-    filtered = [s for s in screenings if s.date in day_set]
+    day_indices = {day: index for index, day in enumerate(days)}
+    filtered = [s for s in screenings if s.date in day_indices]
     variants = _variants(filtered)
 
     # (movie, variant, runtime) → (city, cinema) → day → [(time, url)]
@@ -1160,10 +1150,7 @@ def _prepare_programme_blocks(
     movie_earliest: dict[tuple[int, str, str, int | None], tuple[date, time]] = {}
     block_profiles: dict[tuple[int, str, str, int | None], tuple] = {}
     for s in filtered:
-        try:
-            day_idx = days.index(s.date)
-        except ValueError:
-            continue
+        day_idx = day_indices[s.date]
         block_key = (s.tmdb_id, *variants[id(s)], _screening_runtime(sd, s))
         profile = _variant_profile(s)
         block_profiles[block_key] = (
