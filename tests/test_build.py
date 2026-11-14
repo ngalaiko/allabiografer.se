@@ -218,6 +218,59 @@ def test_tmdb_metadata_wins_over_pooled_films(db, tmp_path):
     assert sd.poster_keys[42] == "42"
 
 
+@pytest.mark.parametrize(
+    ("source_runtime", "expected_runtime"),
+    [(None, 180), (175, 175), (326, 326)],
+)
+def test_programme_preserves_source_runtimes_without_changing_film_identity(
+    db, tmp_path, source_runtime, expected_runtime
+):
+    day = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
+    extended = film("Fanny och Alexander", runtime=source_runtime)
+    theatrical = other_film("Fanny och Alexander", runtime=180)
+    write_films([extended, theatrical], path=db)
+    write_movie(Movie.from_dict({"tmdb_id": 5961, "title_sv": extended.title, "runtime": 180}), path=db)
+    write_screenings(
+        [
+            screening(tmdb_id=5961, title=f.title, film_key=f.key, date=day, ticket_url=f"https://example.com/{i}")
+            for i, f in enumerate([extended, theatrical])
+        ],
+        path=db,
+    )
+    out = tmp_path / "out"
+    build._build_programme_pages(build._make_env(), build._load_data(out))
+    rows = json.loads((out / "stad/stockholm/index.json").read_text())["screenings"]
+    by_url = {row["ticket_url"]: row["film"] for row in rows}
+    source = by_url["https://example.com/0"]
+    standard = by_url["https://example.com/1"]
+    assert source["runtime_minutes"] == expected_runtime
+    assert source["tmdb_id"] == 5961
+    assert standard["runtime_minutes"] == 180
+    assert standard["tmdb_id"] == 5961
+    assert source["url"] == standard["url"]
+    page = out / source["url"].removeprefix(build.BASE_URL).strip("/")
+    html = BeautifulSoup((page / "index.html").read_text(), "html.parser")
+    assert len(html.select(".schedule-cell time")) == 2
+    ids = [element["id"] for element in html.select("[id]")]
+    assert len(ids) == len(set(ids))
+    graph = next(
+        json.loads(script.string)["@graph"]
+        for script in html.select('script[type="application/ld+json"]')
+        if '"@graph"' in script.string
+    )
+    events = {node["offers"]["url"]: node for node in graph if node["@type"] == "ScreeningEvent"}
+    assert events["https://example.com/0"]["endDate"][11:16] == (
+        "21:30" if source_runtime is None else "21:25" if source_runtime == 175 else "23:56"
+    )
+    assert events["https://example.com/1"]["endDate"][11:16] == "21:30"
+    if source_runtime == 326:
+        assert "5 tim. 26 min." in (page / "index.md").read_text()
+        assert "5 tim. 26 min." in html.get_text()
+        assert "3 tim. 0 min." in html.get_text()
+        assert "duration" not in graph[0]
+    assert all(s.tmdb_id == 5961 for s in read_screenings(path=db))
+
+
 def test_title_only_screening_without_film_key_does_not_guess_metadata(db, tmp_path):
     f = film(UNTITLED)
     write_films([f], path=db)

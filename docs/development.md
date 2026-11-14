@@ -249,6 +249,12 @@ keeps the plain title slug and the others receive identity suffixes. Bio.se and
 Osby Borgen supply source runtimes to TMDB matching, so an incompatible runtime
 does not fall back to a cached title-only match.
 
+Programme durations use the cinema's source runtime when available, falling back
+to movie metadata. Different durations remain separate programme blocks without
+changing film identity or URLs. HTML, Markdown, city JSON and structured event end
+times use the same screening-specific duration; a film with multiple listed
+durations has no single duration in its structured Movie node.
+
 Programme blocks group compatible content and presentation facts, including all
 screening modifiers. Atmos, 4K, Laser, VIP, XL, and audio description each define
 distinct variants. Overlapping spoken-language facts merge; disjoint facts and

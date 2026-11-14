@@ -240,6 +240,7 @@ class SiteData:
     out_dir: Path = field(default_factory=lambda: Path("build"))
     screenings: list[Screening] = field(default_factory=list)
     movies: dict[int, Movie] = field(default_factory=dict)
+    films: dict[str, Film] = field(default_factory=dict)
     poster_keys: dict[int, str] = field(default_factory=dict)  # movie id → poster key
     poster_urls: dict[str, str] = field(default_factory=dict)
     broken_posters: set[str] = field(default_factory=set)  # poster keys Pillow could not decode
@@ -278,11 +279,18 @@ def _merge_films(movie: Movie, films: list[Film]) -> Movie:
     )
 
 
-def _deduplicate_screenings(screenings: list[Screening]) -> list[Screening]:
+def _screening_runtime(sd: SiteData, screening: Screening) -> int | None:
+    """The cinema's listed duration for this version, falling back to movie metadata."""
+    film = sd.films.get(screening.film_key)
+    movie = sd.movies.get(screening.tmdb_id)
+    return (film.runtime if film else None) or (movie.runtime if movie else None)
+
+
+def _deduplicate_screenings(sd: SiteData) -> list[Screening]:
     """Combine compatible observations of one show across sources, never within a source."""
     slots: dict[tuple, list[Screening]] = defaultdict(list)
-    for s in screenings:
-        slots[(s.city, s.cinema_name, s.tmdb_id, s.date, s.time)].append(s)
+    for s in sd.screenings:
+        slots[(s.city, s.cinema_name, s.tmdb_id, s.date, s.time, _screening_runtime(sd, s))].append(s)
     result = []
     for slot in slots.values():
         if len(slot) == 1:
@@ -341,6 +349,7 @@ def _load_data(out_dir: Path) -> SiteData:
     # different adaptations, remakes, or recordings.
     all_films = read_all_films(path=DB_FILE)
     films_by_key = {f.key: f for f in all_films}
+    sd.films = films_by_key
 
     source_counts: dict[str, int] = defaultdict(int)
     for screening in upcoming:
@@ -405,7 +414,7 @@ def _load_data(out_dir: Path) -> SiteData:
         sd.venues[(v.city, v.name)] = v
     print(f"  {len(sd.venues)} venues")
 
-    sd.screenings = _deduplicate_screenings(sd.screenings)
+    sd.screenings = _deduplicate_screenings(sd)
     for s in sd.screenings:
         sd.cities[s.city] = sd.cities.get(s.city, 0) + 1
 
@@ -594,8 +603,9 @@ def _film_jsonld(sd: SiteData, movie: Movie, screenings: list[Screening], canoni
         movie_node["genre"] = movie.genres
     if movie.release_date:
         movie_node["datePublished"] = movie.release_date
-    if movie.runtime:
-        movie_node["duration"] = f"PT{movie.runtime}M"
+    runtimes = {_screening_runtime(sd, s) for s in screenings}
+    if len(runtimes) == 1 and (runtime := next(iter(runtimes))):
+        movie_node["duration"] = f"PT{runtime}M"
     if movie.age_rating:
         movie_node["contentRating"] = movie.age_rating
 
@@ -603,6 +613,7 @@ def _film_jsonld(sd: SiteData, movie: Movie, screenings: list[Screening], canoni
     ordered = sorted(_schedule_screenings(sd, screenings), key=lambda s: (s.date, s.time))[:MAX_JSONLD_EVENTS]
     for s in ordered:
         start = datetime.combine(s.date, s.time, tzinfo=SWEDEN_TZ).isoformat()
+        runtime = _screening_runtime(sd, s)
         address: dict = {"@type": "PostalAddress", "addressLocality": s.city, "addressCountry": "SE"}
         venue = sd.venues.get((s.city, s.cinema_name))
         if venue and venue.address:
@@ -614,10 +625,10 @@ def _film_jsonld(sd: SiteData, movie: Movie, screenings: list[Screening], canoni
             **(
                 {
                     "endDate": (
-                        datetime.combine(s.date, s.time, tzinfo=SWEDEN_TZ) + timedelta(minutes=movie.runtime)
+                        datetime.combine(s.date, s.time, tzinfo=SWEDEN_TZ) + timedelta(minutes=runtime)
                     ).isoformat()
                 }
-                if movie.runtime
+                if runtime
                 else {}
             ),
             "eventStatus": "https://schema.org/EventScheduled",
@@ -1138,22 +1149,22 @@ def _prepare_programme_blocks(
     filtered = [s for s in screenings if s.date in day_set]
     variants = _variants(filtered)
 
-    # (movie, variant) → (city, cinema) → day → [(time, url)]
-    movie_cinemas: dict[tuple[int, str, str], dict[tuple[str, str], dict[int, list[tuple[time, str]]]]] = defaultdict(
-        lambda: defaultdict(lambda: defaultdict(list))
+    # (movie, variant, runtime) → (city, cinema) → day → [(time, url)]
+    movie_cinemas: dict[tuple[int, str, str, int | None], dict[tuple[str, str], dict[int, list[tuple[time, str]]]]] = (
+        defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     )
     # Ranking score: each screening contributes more the sooner it is, so films
     # playing a lot in the near columns float to the top rather than films that
     # are blank for weeks and then burst with screenings far in the future.
-    movie_score: dict[tuple[int, str, str], float] = defaultdict(float)
-    movie_earliest: dict[tuple[int, str, str], tuple[date, time]] = {}
-    block_profiles: dict[tuple[int, str, str], tuple] = {}
+    movie_score: dict[tuple[int, str, str, int | None], float] = defaultdict(float)
+    movie_earliest: dict[tuple[int, str, str, int | None], tuple[date, time]] = {}
+    block_profiles: dict[tuple[int, str, str, int | None], tuple] = {}
     for s in filtered:
         try:
             day_idx = days.index(s.date)
         except ValueError:
             continue
-        block_key = (s.tmdb_id, *variants[id(s)])
+        block_key = (s.tmdb_id, *variants[id(s)], _screening_runtime(sd, s))
         profile = _variant_profile(s)
         block_profiles[block_key] = (
             _merge_profiles(block_profiles[block_key], profile) if block_key in block_profiles else profile
@@ -1172,9 +1183,17 @@ def _prepare_programme_blocks(
     for (tmdb_id, *_), earliest in movie_earliest.items():
         film_earliest[tmdb_id] = min(earliest, film_earliest.get(tmdb_id, earliest))
 
-    def _rank(bk: tuple[int, str, str]) -> tuple:
-        tmdb_id, identity, label = bk
-        return (-film_score[tmdb_id], film_earliest[tmdb_id], tmdb_id, bool(label), label.casefold(), identity)
+    def _rank(bk: tuple[int, str, str, int | None]) -> tuple:
+        tmdb_id, identity, label, runtime = bk
+        return (
+            -film_score[tmdb_id],
+            film_earliest[tmdb_id],
+            tmdb_id,
+            bool(label),
+            label.casefold(),
+            identity,
+            runtime or 0,
+        )
 
     blocks = []
     anchors_by_movie: dict[int, set[str]] = defaultdict(set)
@@ -1186,7 +1205,7 @@ def _prepare_programme_blocks(
     for block_key in movie_cinemas:
         label_counts[block_key[0]][block_key[2]] += 1
     for block_key in sorted(movie_cinemas, key=_rank):
-        tmdb_id, _, variant = block_key
+        tmdb_id, _, variant, runtime = block_key
         movie = sd.movies.get(tmdb_id)
         film_title = movie.title_sv if movie else f"Film {tmdb_id}"
         film_slug = sd.film_slugs.get(tmdb_id, _slugify_sv(film_title))
@@ -1202,8 +1221,8 @@ def _prepare_programme_blocks(
             year = movie.release_date[:4] if movie.release_date else ""
             if year:
                 mi_parts.append(year)
-            if movie.runtime:
-                h, m = divmod(movie.runtime, 60)
+            if runtime:
+                h, m = divmod(runtime, 60)
                 mi_parts.append(f"{h} tim. {m} min." if h else f"{m} min.")
             if movie.age_rating:
                 mi_parts.append(movie.age_rating)
@@ -1288,7 +1307,7 @@ def _prepare_programme_blocks(
                     [
                         film_slug,
                         _slugify_sv(variant) if variant else "",
-                        block_key[1] if label_counts[tmdb_id][variant] > 1 else "",
+                        f"{block_key[1]}-{runtime or 'unknown'}" if label_counts[tmdb_id][variant] > 1 else "",
                     ]
                 ).strip("-"),
                 "film_title": film_title,
@@ -1327,7 +1346,7 @@ def _write_city_feed(sd: SiteData, city: str, screenings: list[Screening], out_p
                     "source_key": screening.film_key or None,
                     "title": title,
                     "url": f"{BASE_URL}/stad/{city_slug}/film/{film_slug}/" if movie and movie.title_sv else None,
-                    "runtime_minutes": movie.runtime if movie else None,
+                    "runtime_minutes": _screening_runtime(sd, screening),
                 },
                 "cinema": {
                     "name": screening.cinema_name,
