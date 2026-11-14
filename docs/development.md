@@ -213,6 +213,39 @@ Folkets Hus och Parker includes Bio Roy in Göteborg, Spegeln in Malmö, and
 Röda Kvarn in Helsingborg. Cinemascenen includes Ystad, Katrineholm, Strängnäs,
 Söderhamn, and Hudiksvall. See [mise tasks](../mise.toml) for all parser commands.
 
+`bioguiden_se` imports 91 public Bioguiden programme records for 90 cinemas
+not currently supplied by our other sources. Coverage includes Lycksele,
+Leksand (Visir), Kristinehamn, Aspen in Stockholm, Saga in Höganäs, Scala in
+Ystad and smaller-town cinemas across Sweden. The explicit URLs, canonical
+venue names and addresses are in
+[`_SITES`](../src/parse/parsers/bioguiden_se.py).
+Run it with `mise run parse:bioguiden_se`; it is also included in `mise run parse`.
+Existing venue names and city groupings are reused where available; otherwise
+towns come from the cinema's address rather than Bioguiden's municipality selector.
+Varbergs Teater has two programme records, both imported under one venue name.
+
+The 2026-11-14 nationwide audit covered all 203 municipalities and 442 cinema
+records listed by Bioguiden: 297 had programmes, of which 91 are imported here,
+204 already have coverage through other sources, and two are held back.
+The other 145 records had no screenings. In particular, Odeon in Skövde is
+already supplied under Skövde Filmfestival, and Ersboda is covered by Tickster.
+Bollnäs Filmklubb remains excluded because membership restrictions are unclear.
+Biograf Fokus in Jönköping is also excluded: the operator mixes public screenings
+with membership-only Filmstudion screenings, and Bioguiden does not distinguish
+them. Varbergs Filmklubb is included: its operator explicitly sells individual
+public tickets. See [Fokus ticket policies](https://www.jonkoping.se/fritid-kultur--natur/kultur-konst-och-upplevelser/film/filmvisningar-i-biograf-fokus)
+and [Varbergs Filmklubb's ticket FAQ](https://varbergsfilmklubb.se/faq).
+
+Booking redirects are resolved to direct ticket links; screenings without
+online booking link to the cinema's Bioguiden programme instead. Cinema-name
+aliases are not treated as auditoriums. When the programme names distinct halls,
+all hall names are retained, including Aspen's eponymous hall and Lusoperan.
+Duplicate listings prefer the online booking link without merging simultaneous
+shows in different auditoriums. Placeholder posters are ignored. Language,
+presentation and screening accessibility remain unknown rather than inferred
+from film-level metadata. Failed requests, wrong-cinema pages and malformed
+screenings abort the import, preserving the previous programme.
+
 `capitolbio_se` imports Bio & Bistro Capitol in Stockholm for the next 14 days,
 using the public calendar's date filter to avoid its infinite-scroll limit.
 It is separate from Capitol Göteborg (`wp_theatre`) and Capitol Varberg
