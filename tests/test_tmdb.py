@@ -1,6 +1,9 @@
 """TMDB lookups served from the stored index."""
 
+from datetime import UTC, datetime
+
 import pytest
+import requests
 
 from parse import tmdb
 from store import Movie, read_movie, title_key, tmdb_index_set, write_movie
@@ -182,3 +185,153 @@ def test_stored_movie_without_spoken_languages_is_refetched(tmp_path):
     assert tmdb.lookup("Filmen", path=db, session=session) == 7
     assert read_movie(7, path=db).spoken_languages == []
     assert tmdb.by_id(7, path=db, session=_Session({})) == 7
+
+
+@pytest.fixture
+def tmdb_clock(monkeypatch):
+    class November(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 11, 15, 12, tzinfo=UTC).astimezone(tz)
+
+    monkeypatch.setattr(tmdb, "datetime", November, raising=False)
+
+
+@pytest.mark.parametrize(("minutes", "expected"), [(114, None), (115, 7), (125, 7), (126, None), (None, 7)])
+def test_cached_match_obeys_runtime_tolerance(tmp_path, minutes, expected):
+    db = tmp_path / "test.db"
+    write_movie(
+        Movie.from_dict(
+            {
+                "tmdb_id": 7,
+                "title_sv": "Filmen",
+                "runtime": minutes,
+                "original_language": "sv",
+                "spoken_languages": ["sv"],
+                "directors": [],
+            }
+        ),
+        path=db,
+    )
+    tmdb_index_set("filmen||120", 7, path=db)
+
+    assert tmdb.lookup("Filmen", runtime=120, path=db, session=_Session({"results": []})) == expected
+
+
+@pytest.mark.usefixtures("tmdb_clock")
+@pytest.mark.parametrize("lookup", [tmdb.lookup, tmdb.by_id])
+@pytest.mark.parametrize(
+    ("release", "swedish_release", "expected"),
+    [
+        ("2026-12-01", "", "Från 11 år"),
+        ("2026-10-16", "", "Från 11 år"),
+        ("2026-10-15", "", "Från 15 år"),
+        ("2020-01-01", "2026-11-18", "Från 11 år"),
+        ("", "", "Från 15 år"),
+    ],
+)
+def test_recent_movie_rating_refreshes_once_per_run(tmp_path, lookup, release, swedish_release, expected):
+    db = tmp_path / "test.db"
+    write_movie(
+        Movie.from_dict(
+            {
+                "tmdb_id": 7,
+                "title_sv": "Filmen",
+                "release_date": release,
+                "release_date_se": swedish_release,
+                "age_rating": "Från 15 år",
+                "original_language": "sv",
+                "spoken_languages": ["sv"],
+                "directors": [],
+            }
+        ),
+        path=db,
+    )
+    tmdb_index_set("filmen||", 7, path=db)
+    details = {
+        "id": 7,
+        "title": "Filmen",
+        "release_date": release,
+        "original_language": "sv",
+        "spoken_languages": [{"iso_639_1": "sv"}],
+        "release_dates": {
+            "results": [
+                {
+                    "iso_3166_1": "SE",
+                    "release_dates": [{"type": 3, "certification": "11", "release_date": swedish_release}],
+                }
+            ]
+        },
+    }
+    target = "Filmen" if lookup is tmdb.lookup else 7
+    assert lookup(target, path=db, session=_Session(details)) == 7
+    assert read_movie(7, path=db).age_rating == expected
+    # Another title/runtime lookup or an explicit source ID must not refetch the same movie.
+    assert tmdb.by_id(7, path=db, session=_Session({})) == 7
+    assert read_movie(7, path=db).age_rating == expected
+
+
+@pytest.mark.usefixtures("tmdb_clock")
+@pytest.mark.parametrize("cached", [True, False])
+@pytest.mark.parametrize(("old_runtime", "new_runtime", "expected"), [(120, 140, None), (140, 120, 7)])
+def test_matching_uses_refreshed_runtime(tmp_path, monkeypatch, cached, old_runtime, new_runtime, expected):
+    db = tmp_path / "test.db"
+    write_movie(
+        Movie.from_dict(
+            {
+                "tmdb_id": 7,
+                "title_sv": "Filmen",
+                "runtime": old_runtime,
+                "release_date": "2026-12-01",
+                "original_language": "sv",
+                "spoken_languages": ["sv"],
+                "directors": [],
+            }
+        ),
+        path=db,
+    )
+    if cached:
+        tmdb_index_set("filmen||120", 7, path=db)
+    details = {
+        "id": 7,
+        "title": "Filmen",
+        "runtime": new_runtime,
+        "release_date": "2026-12-01",
+        "original_language": "sv",
+        "spoken_languages": [{"iso_639_1": "sv"}],
+    }
+    monkeypatch.setattr(
+        tmdb,
+        "_get",
+        lambda session, url, **kwargs: {"results": [details]} if url.endswith("/search/movie") else details,
+    )
+
+    assert tmdb.lookup("Filmen", runtime=120, path=db, session=_Session({})) == expected
+    assert read_movie(7, path=db).runtime == new_runtime
+
+
+@pytest.mark.usefixtures("tmdb_clock")
+def test_failed_refresh_keeps_stored_metadata_and_does_not_retry_for_each_showing(tmp_path):
+    db = tmp_path / "test.db"
+    movie = Movie.from_dict(
+        {
+            "tmdb_id": 7,
+            "title_sv": "Filmen",
+            "runtime": 120,
+            "release_date": "2026-12-01",
+            "age_rating": "Från 15 år",
+            "original_language": "sv",
+            "spoken_languages": ["sv"],
+            "directors": [],
+        }
+    )
+    write_movie(movie, path=db)
+    tmdb_index_set("filmen||120", 7, path=db)
+
+    class Unavailable(_Session):
+        def get(self, *args, **kwargs):
+            raise requests.ConnectionError("offline")
+
+    assert tmdb.lookup("Filmen", runtime=120, path=db, session=Unavailable({})) == 7
+    assert tmdb.by_id(7, path=db, session=_Session({})) == 7
+    assert read_movie(7, path=db) == movie

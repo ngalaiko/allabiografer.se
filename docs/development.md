@@ -286,6 +286,13 @@ Osby Borgen supply source runtimes to TMDB matching, so an incompatible runtime
 does not fall back to a cached title-only match. BioSverige and Söderköpings Bio
 also retain supplied runtimes when trying either the listed or original title.
 
+TMDB title-index hits enforce the same five-minute runtime tolerance as search
+results, using refreshed metadata when available. Upcoming releases and films
+whose original or Swedish release was within the last 30 days refresh once per
+movie and database per parser process, including failed refresh attempts.
+Older complete metadata stays cached; missing language/director metadata is
+also fetched once per process. A failed refresh preserves the stored movie.
+
 Programme durations use the cinema's source runtime when available, falling back
 to movie metadata. Different durations remain separate programme blocks without
 changing film identity or URLs. HTML, Markdown, city JSON and structured event end

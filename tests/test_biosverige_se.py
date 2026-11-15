@@ -256,7 +256,12 @@ def test_runtime_conflict_keeps_the_source_film_unmatched(monkeypatch, tmp_path)
     db = tmp_path / "movies.db"
     write_movie(Movie.from_dict({"tmdb_id": 16367, "title_sv": "Kinky Boots", "runtime": 107}), path=db)
     tmdb_index_set("kinky boots||", 16367, path=db)
-    monkeypatch.setattr(tmdb, "_get", lambda *args, **kwargs: {"results": [{"id": 16367, "title": "Kinky Boots"}]})
+    details = {"id": 16367, "title": "Kinky Boots", "runtime": 107, "original_language": "en"}
+    monkeypatch.setattr(
+        tmdb,
+        "_get",
+        lambda session, url, **kwargs: {"results": [details]} if url.endswith("/search/movie") else details,
+    )
     schedule = [{**_row("Kinky Boots", "2026-10-04T18:00:00"), "movie": {"duration": 135}}]
     items = _parse(
         monkeypatch,

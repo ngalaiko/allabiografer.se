@@ -18,8 +18,10 @@ import logging
 import re
 import time
 from dataclasses import replace
+from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.parse import urljoin
+from zoneinfo import ZoneInfo
 
 import requests
 
@@ -48,6 +50,8 @@ _POSTER_SIZE = "w500"
 # Rate-limit: TMDB allows ~50 req/s, but be polite.
 _MIN_INTERVAL = 0.05  # 20 req/s max
 _last_request: float = 0.0
+# Refresh mutable release metadata once per process, including failed attempts.
+_refresh_attempts: set[tuple[Path, int]] = set()
 
 
 def _get(session: requests.Session, url: str, **params: str) -> dict:
@@ -122,10 +126,10 @@ def lookup(
 ) -> int | None:
     """Search TMDB for *title*, store metadata + poster. Returns TMDB ID or None.
 
-    Skips the network call when the title index already resolves to a stored
-    movie.  Every store call is its own short transaction, so no db lock is
-    held across network calls; concurrent lookups of the same title are
-    harmless because the writes are upserts.
+    Reuses compatible title-index entries, refreshing upcoming/recent releases
+    once per process. Every store call is its own short transaction, so no db
+    lock is held across network calls; concurrent lookups of the same title
+    are harmless because the writes are upserts.
     """
     own_session = session is None
     if own_session:
@@ -153,12 +157,14 @@ def _lookup(
     cached = tmdb_index_get(cache_key, path=path)
     stored = read_movie(cached, path=path) if cached is not None else None
     if stored is not None:
-        # Movies are fetched once; ratings stored before normalisation are fixed on read.
+        # Ratings stored before normalisation are fixed on read.
         if stored.age_rating != _age_rating(stored.age_rating):
             write_movie(replace(stored, age_rating=_age_rating(stored.age_rating)), path=path)
-        if _incomplete(stored):
+        if _needs_refresh(stored, path):
             _fetch(cached, path, session)
-        return cached
+            stored = read_movie(cached, path=path)
+        if not runtime or not stored.runtime or abs(stored.runtime - runtime) <= 5:
+            return cached
 
     # ------ search TMDB ------
     try:
@@ -185,6 +191,9 @@ def _lookup(
         compatible = {}
         for candidate_id, candidate in candidates.items():
             stored = read_movie(candidate_id, path=path)
+            if stored is not None and _needs_refresh(stored, path):
+                _fetch(candidate_id, path, session)
+                stored = read_movie(candidate_id, path=path)
             length = stored.runtime if stored else None
             if not length:
                 try:
@@ -198,7 +207,11 @@ def _lookup(
         log.info("ambiguous or inexact TMDB match for %r; keeping source title", title)
         return None
     tmdb_id: int = next(iter(candidates.values()))["id"]
-    if not _fetch(tmdb_id, path, session):
+    stored = read_movie(tmdb_id, path=path)
+    if (stored is None or _needs_refresh(stored, path)) and not _fetch(tmdb_id, path, session):
+        return None
+    stored = read_movie(tmdb_id, path=path)
+    if runtime and stored.runtime and abs(stored.runtime - runtime) > 5:
         return None
 
     # ------ update index ------
@@ -210,7 +223,7 @@ def _lookup(
 def by_id(tmdb_id: int, *, path: Path = DB_FILE, session: requests.Session | None = None) -> int | None:
     """Store metadata + poster for a TMDB id a site states. Returns the id, or None when the fetch fails."""
     stored = read_movie(tmdb_id, path=path)
-    if stored is not None and not _incomplete(stored):
+    if stored is not None and not _needs_refresh(stored, path):
         return tmdb_id
     own_session = session is None
     if own_session:
@@ -222,13 +235,22 @@ def by_id(tmdb_id: int, *, path: Path = DB_FILE, session: requests.Session | Non
             session.close()
 
 
-def _incomplete(movie: Movie) -> bool:
-    """Whether *movie* is missing fetched language or director metadata."""
-    return not movie.original_language or movie.spoken_languages is None or movie.directors is None
+def _needs_refresh(movie: Movie, path: Path) -> bool:
+    """Fill missing metadata, and refresh releases through 30 days after their latest premiere."""
+    if (path.resolve(), movie.tmdb_id) in _refresh_attempts:
+        return False
+    cutoff = (datetime.now(ZoneInfo("Europe/Stockholm")) - timedelta(days=30)).date().isoformat()
+    return (
+        not movie.original_language
+        or movie.spoken_languages is None
+        or movie.directors is None
+        or max(movie.release_date, movie.release_date_se) >= cutoff
+    )
 
 
 def _fetch(tmdb_id: int, path: Path, session: requests.Session) -> bool:
     """Fetch details for *tmdb_id*, store the movie and its poster.  False when the fetch fails."""
+    _refresh_attempts.add((path.resolve(), tmdb_id))
     # ------ fetch full details ------
     try:
         details = _get(
