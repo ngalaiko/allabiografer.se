@@ -7,8 +7,6 @@ Usage::
 Outputs to the given directory with this URL structure:
 
     /                                    - city A-O index
-    /premiarer/                          - upcoming premieres
-    /filmer/                             - all films currently showing
     /stad/{slug}/                        - programme for a city
     /stad/{slug}/{cinema-slug}/          - programme for a cinema
     /stad/{slug}/film/{film-slug}/       - film filtered to a city
@@ -34,7 +32,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from PIL import Image, UnidentifiedImageError
 
 from build.festivals import build_festivals
-from build.markdown import link, text, write_page, write_programme
+from build.markdown import link, write_page, write_programme
 from build.og import write_card
 from store import (
     DB_FILE,
@@ -507,8 +505,6 @@ def _sitemap_priority(url: str) -> str:
     path = url[len(BASE_URL) :]
     if path in ("/", ""):
         return "1.0"
-    if path in ("/premiarer/", "/filmer/"):
-        return "0.9"
     # Nationwide film pages and large-city pages
     if path.startswith("/film/"):
         return "0.8"
@@ -585,8 +581,11 @@ def _film_jsonld(sd: SiteData, movie: Movie, screenings: list[Screening], canoni
         "@id": f"{canonical}#movie",
         "name": title,
         "url": canonical,
-        "inLanguage": "sv",
     }
+    languages = movie.spoken_languages if movie.spoken_languages is not None else [movie.original_language]
+    languages = [code for code in languages if code and code != "xx"]
+    if languages:
+        movie_node["inLanguage"] = languages
     if movie.title_original and movie.title_original != title:
         movie_node["alternateName"] = movie.title_original
     poster = _abs(_poster_url(sd, movie.tmdb_id))
@@ -779,123 +778,6 @@ def _build_index(env: Environment, sd: SiteData, festivals: list[dict]) -> None:
         lines.append(f"## {letter}")
         lines.extend(f"- {link(c['name'], '/stad/' + c['slug'] + '/')}" for c in cities)
     write_page(out, "Alla biografer i Sverige – vad går på bio just nu?", lines)
-
-
-def _build_premiarer(env: Environment, sd: SiteData) -> None:
-    print("Building /premiarer/")
-
-    # Premiere date: prefer Swedish release date from TMDB, fall back to
-    # earliest screening date.
-    first_screening: dict[int, date] = {}
-    for s in sd.screenings:
-        if s.tmdb_id not in first_screening or s.date < first_screening[s.tmdb_id]:
-            first_screening[s.tmdb_id] = s.date
-
-    def _premiere_date(tmdb_id: int) -> date | None:
-        movie = sd.movies.get(tmdb_id)
-        if movie and movie.release_date_se:
-            try:
-                return date.fromisoformat(movie.release_date_se)
-            except ValueError:
-                pass
-        return first_screening.get(tmdb_id)
-
-    # Only films whose premiere is in the future
-    future: dict[date, list[Movie]] = defaultdict(list)
-    for tmdb_id in first_screening:
-        premiere = _premiere_date(tmdb_id)
-        if not premiere or premiere <= sd.today:
-            continue
-        movie = sd.movies.get(tmdb_id)
-        if movie:
-            future[premiere].append(movie)
-
-    date_groups = []
-    for d in sorted(future.keys()):
-        films = []
-        for m in sorted(future[d], key=lambda x: x.title_sv.lower()):
-            film_slug = sd.film_slugs.get(m.tmdb_id, _slugify_sv(m.title_sv))
-            films.append(
-                {
-                    "title": m.title_sv,
-                    "poster_url": _poster_url(sd, m.tmdb_id),
-                    "url": f"/film/{film_slug}/",
-                }
-            )
-        date_groups.append({"label": _format_day(d), "films": films})
-
-    out = sd.out_dir / "premiarer" / "index.html"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    canonical = _register(sd, out)
-    description = (
-        "Kommande biopremiärer i Sverige. Se vilka filmer som har premiär framöver "
-        "och var de visas — sorterat efter premiärdatum."
-    )
-    tmpl = env.get_template("premiarer.html")
-    html = tmpl.render(
-        title="Kommande biopremiärer i Sverige",
-        description=description,
-        canonical=canonical,
-        og_image=_abs(write_card(sd.out_dir, title="Kommande biopremiärer", subtitle="På bio i Sverige")),
-        jsonld=_collection_jsonld(
-            "Kommande biopremiärer i Sverige",
-            canonical,
-            [(SITE_NAME, f"{BASE_URL}/"), ("Kommande premiärer", canonical)],
-        ),
-        active="premiarer",
-        date_groups=date_groups,
-    )
-    out.write_text(html, encoding="utf-8")
-    lines = [description]
-    for group in date_groups:
-        lines.append(f"## {text(group['label'])}")
-        lines.extend(f"- {link(f['title'], f['url'])}" for f in group["films"])
-    write_page(out, "Kommande biopremiärer i Sverige", lines)
-
-
-def _build_filmer(env: Environment, sd: SiteData) -> None:
-    print("Building /filmer/")
-
-    screening_ids = {s.tmdb_id for s in sd.screenings}
-    movies = [m for m in sd.movies.values() if m.tmdb_id in screening_ids]
-    movies.sort(key=lambda m: m.title_sv.lower())
-
-    films = [
-        {
-            "title": m.title_sv,
-            "poster_url": _poster_url(sd, m.tmdb_id),
-            "url": f"/film/{sd.film_slugs.get(m.tmdb_id, _slugify_sv(m.title_sv))}/",
-        }
-        for m in movies
-    ]
-
-    out = sd.out_dir / "filmer" / "index.html"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    canonical = _register(sd, out)
-    description = (
-        f"Alla {len(films)} filmer som visas på bio i Sverige just nu, i bokstavsordning. "
-        "Klicka på en film för speltider och biografer."
-    )
-    tmpl = env.get_template("filmer.html")
-    html = tmpl.render(
-        title="Alla filmer som visas på bio i Sverige",
-        description=description,
-        canonical=canonical,
-        og_image=_abs(write_card(sd.out_dir, title="Filmer på bio", subtitle="Hitta filmer och speltider i Sverige")),
-        jsonld=_collection_jsonld(
-            "Alla filmer som visas på bio i Sverige",
-            canonical,
-            [(SITE_NAME, f"{BASE_URL}/"), ("Alla filmer", canonical)],
-        ),
-        active="filmer",
-        films=films,
-    )
-    out.write_text(html, encoding="utf-8")
-    write_page(
-        out,
-        "Alla filmer som visas på bio i Sverige",
-        [description, *(f"- {link(f['title'], f['url'])}" for f in films)],
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -1693,8 +1575,6 @@ def _write_llms(sd: SiteData) -> None:
         "## Programme indexes",
         "",
         f"- {link('Cities', BASE_URL + '/index.md')}: Links to generated city programmes.",
-        f"- {link('Films', BASE_URL + '/filmer/index.md')}: Films currently listed.",
-        f"- {link('Premieres', BASE_URL + '/premiarer/index.md')}: Upcoming cinema releases.",
         f"- {link('Festivals', BASE_URL + '/festival/index.md')}: Separate festival programmes and planners.",
         f"- {link('Sitemap', BASE_URL + '/sitemap.xml')}: Generated public HTML page URLs.",
         "",
@@ -1785,8 +1665,6 @@ def main() -> None:
 
     festivals = build_festivals(env, sd, _register, DB_FILE)
     _build_index(env, sd, festivals)
-    _build_premiarer(env, sd)
-    _build_filmer(env, sd)
     _build_programme_pages(env, sd)
     _build_newsletter_preferences(env, out_dir)
     _write_newsletter_cities(sd)

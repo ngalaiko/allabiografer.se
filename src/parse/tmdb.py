@@ -65,10 +65,11 @@ def _get(session: requests.Session, url: str, **params: str) -> dict:
 
 # Source titles that otherwise resolve to unrelated films or older adaptations.
 _TITLE_HINTS = {
-    "Flaggan": ("Flaggan", 2026),
-    "Främlingen": ("Främlingen", 2025),
-    "Sense and Sensibility": ("Sense and Sensibility", 2026),
-    "My Favorite Things": ("My Favorite Things: The Rodgers & Hammerstein 80th Anniversary Concert", 2024),
+    title_key("Flaggan"): ("Flaggan", 2026),
+    title_key("Främlingen"): ("Främlingen", 2025),
+    title_key("Sense and Sensibility"): ("Sense and Sensibility", 2026),
+    title_key("My Favorite Things"): ("My Favorite Things: The Rodgers & Hammerstein 80th Anniversary Concert", 2024),
+    title_key("My Favourite Things"): ("My Favorite Things: The Rodgers & Hammerstein 80th Anniversary Concert", 2024),
 }
 
 
@@ -144,8 +145,8 @@ def _lookup(
     runtime: int | None,
 ) -> int | None:
     clean = _clean_title(title)
-    if year is None and clean in _TITLE_HINTS:
-        clean, year = _TITLE_HINTS[clean]
+    if year is None and (hint := _TITLE_HINTS.get(title_key(clean))):
+        clean, year = hint
 
     # ------ index: title → tmdb_id (avoids re-searching) ------
     cache_key = f"{title_key(clean)}|{year or ''}|{runtime or ''}"

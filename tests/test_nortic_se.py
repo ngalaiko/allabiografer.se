@@ -156,6 +156,31 @@ def test_runtime_comes_from_the_description_not_the_slot_length(live):
     assert films["Monsterfabriken"].runtime is None
 
 
+@pytest.mark.parametrize(
+    ("duration", "minutes"),
+    [
+        ("1:40", 100),
+        ("0:45", 45),
+        ("2:05", 125),
+        ("1:75", None),
+        ("1:4", None),
+        ("100 ungefär", None),
+        ("115 minuter (1 timme och 55 minuter)", 115),
+        ("115 minuter Biopremiär i USA: 5 oktober 1961", 115),
+        ("1 timme och 55 minuter (115 minuter)", 115),
+        ("2h 30m", 150),
+        ("1:40 Biopremiär i USA: 5 oktober 1961", 100),
+        ("Cirka 4 timmar och 25 minuter inklusive två pauser", 265),
+        ("Cirka 4 timmar inklusive en paus", 240),
+    ],
+)
+def test_description_durations_do_not_accept_partial_numbers(duration, minutes):
+    event = _event("The Christophers", description=f"Längd: {duration} Åldersgräns: Ej bestämd")
+    film = _films(nortic_se._parse_payload({"events": [event]}))["The Christophers"]
+
+    assert film.runtime == minutes
+
+
 def test_labelled_metadata_in_the_description(live):
     films = _films(live)
     assert films["Kevlarsjäl"].age_rating == "Från 15 år"

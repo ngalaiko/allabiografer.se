@@ -1,10 +1,13 @@
 """Hypnos Theatre event listing extraction."""
 
-from datetime import date, time
+from datetime import date, datetime, time
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+from bs4 import BeautifulSoup
 
+from parse import _util
 from parse.parsers import hypnostheatre_com as parser
 from store.version import Language
 
@@ -47,6 +50,33 @@ def test_reads_showtime_and_credits():
 def test_series_label_becomes_a_raw_attribute():
     _, screening = next((f, s) for f, s in _rows() if f.title == "THE IMAGINARIUM OF DOCTOR PARNASSUS")
     assert screening.raw_attributes == ("TERRY GILLIAM RETROSPECTIVE",)
+
+
+def test_calendar_year_keeps_old_screenings_in_the_past(monkeypatch):
+    class December(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls.fromisoformat("2026-12-05T12:00:00+01:00").astimezone(tz)
+
+    monkeypatch.setattr(_util, "datetime", SimpleNamespace(datetime=December))
+
+    assert _rows()[0][1].date == date(2026, 10, 3)
+
+
+@pytest.mark.parametrize("calendar", ["20261004T151500Z/20261004T165600Z", "20261003T161500Z/20261003T175600Z", "bad"])
+def test_conflicting_or_invalid_calendar_does_not_invent_a_screening(calendar):
+    soup = BeautifulSoup(_HTML, "html.parser")
+    link = soup.select_one('.screening-row a[href*="google.com/calendar"]')
+    link["href"] = "https://www.google.com/calendar/render?dates=" + calendar
+
+    assert "JOHN WICK" not in [film.title for film, _ in parser._showtimes(str(soup))]
+
+
+def test_missing_calendar_retains_year_inference():
+    soup = BeautifulSoup(_HTML, "html.parser")
+    soup.select_one('.screening-row a[href*="google.com/calendar"]').decompose()
+
+    assert next(iter(parser._showtimes(str(soup))))[1].date == date(2026, 10, 3)
 
 
 def test_ticket_link_drops_tracking_query():

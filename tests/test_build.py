@@ -65,6 +65,36 @@ def movie(tmdb_id: int) -> Movie:
     return Movie.from_dict({"tmdb_id": tmdb_id, "title_sv": "Filmen"})
 
 
+@pytest.mark.parametrize(
+    ("original", "spoken", "expected"),
+    [
+        ("en", ["en"], ["en"]),
+        ("fr", ["fr", "en"], ["fr", "en"]),
+        ("en", None, ["en"]),
+        ("en", [], None),
+        ("xx", ["xx", ""], None),
+        ("", None, None),
+    ],
+)
+def test_film_page_uses_movie_languages_not_page_language(db, tmp_path, original, spoken, expected):
+    write_movie(
+        Movie.from_dict(
+            {"tmdb_id": 42, "title_sv": "Filmen", "original_language": original, "spoken_languages": spoken}
+        ),
+        path=db,
+    )
+    write_screenings([screening(tmdb_id=42)], path=db)
+    out = tmp_path / "out"
+    build._build_programme_pages(build._make_env(), build._load_data(out))
+    page = BeautifulSoup((out / "film/filmen/index.html").read_text(), "html.parser")
+    nodes = [json.loads(script.string) for script in page.select('script[type="application/ld+json"]')]
+    movie_node = next(node for data in nodes for node in data.get("@graph", []) if node["@type"] == "Movie")
+    if expected is None:
+        assert "inLanguage" not in movie_node
+    else:
+        assert movie_node["inLanguage"] == expected
+
+
 def test_robots_declares_content_signals_for_every_crawler(tmp_path):
     build._write_robots(tmp_path)
 
@@ -310,8 +340,6 @@ def test_same_title_works_keep_their_metadata_screenings_and_page_links(db, tmp_
     sd = build._load_data(out)
     env = build._make_env()
     build._build_programme_pages(env, sd)
-    build._build_filmer(env, sd)
-    build._build_premiarer(env, sd)
     feed = json.loads((out / "stad/stockholm/index.json").read_text())
     rows = {row["ticket_url"].rsplit("/", 1)[-1]: row for row in feed["screenings"]}
     expected = {
@@ -330,11 +358,6 @@ def test_same_title_works_keep_their_metadata_screenings_and_page_links(db, tmp_
             page = BeautifulSoup((out / page_path / "index.html").read_text(), "html.parser")
             assert [p.get_text() for p in page.select(".synopsis")] == [synopsis]
             assert {a["href"] for a in page.select("a[data-start]")} == {row["ticket_url"]}
-    for hub in ("filmer", "premiarer"):
-        page = BeautifulSoup((out / hub / "index.html").read_text(), "html.parser")
-        film_urls = {a["href"] for a in page.select('a[href^="/film/"]')}
-        assert len(film_urls) == 4
-        assert all((out / url.strip("/") / "index.html").exists() for url in film_urls)
 
 
 def test_source_with_more_showings_supplies_metadata(db, tmp_path):

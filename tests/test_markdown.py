@@ -85,5 +85,11 @@ def test_build_writes_markdown_from_database(tmp_path, monkeypatch):
     assert "<style" not in city
     assert "Prenumerera" not in city
     assert "[Göteborg](/stad/göteborg/)" in (out / "index.md").read_text()
-    for path in ("filmer/index.md", "premiarer/index.md"):
-        assert "[Filmen \\[ett\\]](/film/filmen-ett/)" in (out / path).read_text()
+    assert (out / "film/filmen-ett/index.html").is_file()
+    assert (out / "film/filmen-ett/index.md").is_file()
+    sitemap = (out / "sitemap.xml").read_text()
+    for hub in ("filmer", "premiarer"):
+        assert not (out / hub).exists()
+        assert f"/{hub}/" not in guide
+        assert f"/{hub}/" not in sitemap
+        assert all(f"/{hub}/" not in page.read_text() for page in pages)

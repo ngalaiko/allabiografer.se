@@ -391,9 +391,9 @@ def _parse(monkeypatch, films: dict, tmdb=lambda title, runtime=None, year=None:
     return list(bio_se.parse())
 
 
-def test_malformed_cinema_does_not_abort_the_others(monkeypatch):
-    items = _parse(monkeypatch, {1: {"movies": None}, 2: _payload({}, _session())})
-    assert [s.cinema_name for s in items if isinstance(s, Screening)] == ["Bio 2"]
+def test_malformed_cinema_aborts_a_partial_import(monkeypatch):
+    with pytest.raises(ValueError, match="Bio 2: malformed films payload"):
+        _parse(monkeypatch, {1: _payload({}, _session()), 2: {"movies": None}})
 
 
 def test_kino_address_does_not_point_to_sodran(monkeypatch):

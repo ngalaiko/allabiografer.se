@@ -80,17 +80,21 @@ def _field(text: str, labels: str) -> str:
 
 
 def _runtime(text: str) -> int | None:
-    """Minutes stated as "Speltid: 96 minuter", "Längd: 122 min" or "Speltid: 2h 30m".
+    """Minutes stated as "Speltid: 96 minuter", "Längd: 1:40" or "Speltid: 2h 30m".
 
     The API's playTimeInMinutes is the booked slot, rounded and padded, so it is not used.
     """
-    value = _field(text, "speltid|längd|runtime")
-    hours = re.search(r"(\d+)\s*(?:h\b|tim)", value)
-    minutes = re.search(r"(\d+)\s*m(?:in|\b)", value)
-    if not hours and not minutes:
-        minutes = re.match(r"(\d+)", value)
-    total = (int(hours.group(1)) * 60 if hours else 0) + (int(minutes.group(1)) if minutes else 0)
-    return total or None
+    value = re.sub(r"^(?:cirka|ca\.?)\s+", "", _field(text, "speltid|längd|runtime"), flags=re.IGNORECASE)
+    if re.match(r"\d+:", value):
+        clock = re.match(r"(\d+):([0-5]\d)(?=\s|[().]|$)", value)
+        if clock is None:
+            return None
+        return (int(clock[1]) * 60 + int(clock[2])) or None
+    hours = re.match(r"(\d+)\s*(?:h\b|tim\w*)(?:\s*(?:och\s*)?(\d+)\s*m(?:in\w*|\b))?", value)
+    if hours:
+        return (int(hours[1]) * 60 + int(hours[2] or 0)) or None
+    minutes = re.match(r"(\d+)\s*m(?:in\w*|\b)", value) or re.fullmatch(r"(\d+)", value)
+    return int(minutes[1]) or None if minutes else None
 
 
 def _genres(text: str) -> list[str]:

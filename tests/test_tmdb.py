@@ -47,6 +47,34 @@ class _Session:
         return _Resp()
 
 
+@pytest.mark.parametrize(
+    ("title", "year", "expected"),
+    [
+        ("My Favorite Things", None, 1239501),
+        ("My Favourite Things", None, 1239501),
+        ('- "My Favourite Things"', None, 1239501),
+        ('- "My Favourite Things"', 2009, 72798),
+    ],
+)
+def test_concert_title_hint_overrides_stale_cache_but_not_explicit_year(tmp_path, title, year, expected):
+    db = tmp_path / "test.db"
+    for identifier in (1239501, 72798):
+        write_movie(
+            Movie.from_dict(
+                {"tmdb_id": identifier, "original_language": "en", "spoken_languages": ["en"], "directors": []}
+            ),
+            path=db,
+        )
+    full_title = "My Favorite Things: The Rodgers & Hammerstein 80th Anniversary Concert"
+    tmdb_index_set(f"{title_key(full_title)}|2024|", 1239501, path=db)
+    tmdb_index_set(f"{title_key(title)}||", 72798, path=db)
+    tmdb_index_set(f"{title_key(title)}|2009|", 72798, path=db)
+    session = _Session({})
+
+    assert tmdb.lookup(title, year=year, path=db, session=session) == expected
+    assert session.urls == []
+
+
 def test_by_id_stores_details_for_a_known_id(tmp_path):
     db = tmp_path / "test.db"
     session = _Session({"id": 7, "title": "Filmen", "original_title": "The Film", "runtime": 99})

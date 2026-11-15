@@ -204,12 +204,11 @@ def parse() -> Iterator[Screening | Venue | Film]:
         resp.raise_for_status()
         payload = resp.json()
 
-        # Malformed data skips the cinema; HTTP failures above abort the run.
+        # A partial programme must not replace every cinema's stored listings.
         try:
             rows = list(_showtimes(payload, _cinema_url(cinema)))
         except (KeyError, TypeError, ValueError, AttributeError) as exc:
-            log.warning("bio.se: %s: malformed films payload: %s", venue.name, exc)
-            continue
+            raise ValueError(f"bio.se: {venue.name}: malformed films payload") from exc
 
         screenings: list[Screening] = []
         bookings: dict[Screening, int] = {}

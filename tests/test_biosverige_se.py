@@ -1,17 +1,32 @@
 """BioSverige (Cinecore) schedule API extraction across cinema sites."""
 
 import json
+import sys
+from dataclasses import replace
 from datetime import date, time
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
 import requests
 
+import parse
 from parse.parsers import _biosverige_api, biosverige_se
 from parse.parsers._biosverige_api import film_details as _film_details
 from parse.parsers._biosverige_api import parse_title as _parse_title
 from parse.parsers._biosverige_api import showtimes as _showtimes
-from store import Film, Language, Screening, Venue, film_key
+from store import (
+    Film,
+    Language,
+    Movie,
+    Screening,
+    Venue,
+    film_key,
+    read_screenings,
+    tmdb_index_set,
+    write_movie,
+    write_screenings,
+)
 
 _FIXTURES = Path(__file__).parent / "fixtures" / "biosverige_se"
 _SCHEDULE = json.loads((_FIXTURES / "eventschedules.json").read_text())
@@ -81,6 +96,8 @@ class _Session:
         if url not in self.pages:
             raise requests.ConnectionError(url)
         body = self.pages[url]
+        if isinstance(body, Exception):
+            raise body
         return SimpleNamespace(
             text=body if isinstance(body, str) else "",
             json=lambda: body,
@@ -94,6 +111,7 @@ _KARLSBORG, _FILIPSTAD, _JARPEN_SITE = (
 
 
 def _parse(monkeypatch, pages: dict[str, object], tmdb=lambda title, runtime=None: None) -> list:
+    pages = {**{site.url + "/api/eventschedules": [] for site in biosverige_se._SITES}, **pages}
     monkeypatch.setattr(biosverige_se._http, "session", lambda *a: _Session(pages))
     monkeypatch.setattr(biosverige_se._films, "register", lambda film, session=None: film)
     monkeypatch.setattr(_biosverige_api, "_tmdb", tmdb)
@@ -116,7 +134,7 @@ def test_parse_yields_venues_films_and_screenings(monkeypatch):
     assert {s.ticket_url for s in screenings} == {_KARLSBORG.tickets}
 
 
-def test_parse_shares_films_across_sites_and_survives_a_failing_site(monkeypatch):
+def test_parse_shares_films_across_sites(monkeypatch):
     items = _parse(
         monkeypatch,
         {_KARLSBORG.url + "/api/eventschedules": _SCHEDULE, _FILIPSTAD.url + "/api/eventschedules": _SCHEDULE[:1]},
@@ -129,16 +147,46 @@ def test_parse_shares_films_across_sites_and_survives_a_failing_site(monkeypatch
     assert len(screenings) == 5
 
 
-def test_parse_skips_a_site_answering_with_a_non_list(monkeypatch):
-    items = _parse(
-        monkeypatch,
-        {
-            _KARLSBORG.url + "/api/eventschedules": {"message": "error"},
-            _FILIPSTAD.url + "/api/eventschedules": _SCHEDULE[:1],
-        },
-    )
+@pytest.mark.usefixtures("store_clock")
+@pytest.mark.parametrize(
+    "failure",
+    [requests.ConnectionError("unreachable"), json.JSONDecodeError("invalid JSON", "", 0), {"message": "error"}],
+)
+def test_partial_import_failure_preserves_stored_programmes(monkeypatch, tmp_path, failure):
+    db = tmp_path / "screenings.db"
+    healthy, failed = biosverige_se._SITES[:2]
+    stored = [
+        Screening(
+            tmdb_id=None,
+            title="Stored film",
+            date=date(2026, 10, 4),
+            time=time(18),
+            city=site.city,
+            cinema_name=site.name,
+            ticket_url=site.url,
+            source="biosverige_se",
+        )
+        for site in (healthy, failed)
+    ]
+    write_screenings(stored, source="biosverige_se", path=db)
+    pages = {healthy.url + "/api/eventschedules": _SCHEDULE, failed.url + "/api/eventschedules": failure}
+    monkeypatch.setattr(biosverige_se, "_SITES", tuple(replace(s, programme="") for s in (healthy, failed)))
+    monkeypatch.setattr(biosverige_se._http, "session", lambda: _Session(pages))
+    monkeypatch.setattr(biosverige_se._films, "register", lambda film, **kwargs: film)
+    monkeypatch.setattr(_biosverige_api, "_tmdb", lambda *args, **kwargs: None)
+    monkeypatch.setattr(sys, "argv", ["parse", "biosverige_se", "--output", str(db)])
 
-    assert {s.city for s in items if isinstance(s, Screening)} == {"Filipstad"}
+    with pytest.raises((requests.RequestException, ValueError)):
+        parse.main()
+
+    assert read_screenings(path=db) == stored
+
+
+def test_parse_accepts_an_empty_programme(monkeypatch):
+    items = _parse(monkeypatch, {})
+
+    assert all(isinstance(item, Venue) for item in items)
+    assert len(items) == len(biosverige_se._SITES)
 
 
 def test_parse_takes_version_tickets_and_labels_from_tickster(monkeypatch):
@@ -191,18 +239,34 @@ def test_parse_reads_long_form_tickster_tags_and_keeps_schedule_subtitles_when_c
     )
 
 
-def test_parse_looks_up_tmdb_with_runtime_then_title_then_original_name(monkeypatch):
-    calls = []
-    known = {("Bortglömda ön", 109): 1, ("Resan till Piemonte", None): 2, ("Calle Malaga", 116): 3}
+def test_parse_matches_titles_and_original_names_with_runtime(monkeypatch):
+    known = {("Bortglömda ön", 109): 1, ("Resan till Piemonte", 111): 2, ("Calle Malaga", 116): 3}
 
     def tmdb(title, runtime=None):
-        calls.append((title, runtime))
         return known.get((title, runtime))
 
     items = _parse(monkeypatch, {_KARLSBORG.url + "/api/eventschedules": _SCHEDULE}, tmdb=tmdb)
 
     assert [s.tmdb_id for s in items if isinstance(s, Screening)] == [1, 2, 2, 3]
-    assert ("Kärlek över Tanger", 116) in calls
+
+
+def test_runtime_conflict_keeps_the_source_film_unmatched(monkeypatch, tmp_path):
+    from parse import tmdb
+
+    db = tmp_path / "movies.db"
+    write_movie(Movie.from_dict({"tmdb_id": 16367, "title_sv": "Kinky Boots", "runtime": 107}), path=db)
+    tmdb_index_set("kinky boots||", 16367, path=db)
+    monkeypatch.setattr(tmdb, "_get", lambda *args, **kwargs: {"results": [{"id": 16367, "title": "Kinky Boots"}]})
+    schedule = [{**_row("Kinky Boots", "2026-10-04T18:00:00"), "movie": {"duration": 135}}]
+    items = _parse(
+        monkeypatch,
+        {_KARLSBORG.url + "/api/eventschedules": schedule},
+        tmdb=lambda title, **kwargs: tmdb.lookup(title, path=db, session=object(), **kwargs),
+    )
+
+    [show] = [item for item in items if isinstance(item, Screening)]
+    assert show.title == "Kinky Boots"
+    assert show.tmdb_id is None
 
 
 def test_parse_trusts_a_long_tickster_title_that_ends_whole(monkeypatch):

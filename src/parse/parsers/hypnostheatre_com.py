@@ -4,8 +4,9 @@ import logging
 import re
 from collections.abc import Iterator
 from dataclasses import replace
-from datetime import date, time
-from urllib.parse import urlsplit, urlunsplit
+from datetime import UTC, date, datetime, time
+from urllib.parse import parse_qs, urlsplit, urlunsplit
+from zoneinfo import ZoneInfo
 
 from bs4 import BeautifulSoup, Tag
 
@@ -22,6 +23,7 @@ _URL = "https://hypnostheatre.com/"
 _CINEMA = "Hypnos Theatre"
 _CITY = "Malmö"
 _ADDRESS = "Norra Grängesbergsgatan 15"
+_TZ = ZoneInfo("Europe/Stockholm")
 
 # Filter labels of film events; "LIVE EVENT" alone is not a screening.
 _FILM_CATEGORIES = {"FILMKLUBB", "MOVIES"}
@@ -60,6 +62,23 @@ def _categories(soup: BeautifulSoup) -> dict[str, str]:
     return {b["data-filter"]: _text(b) for b in soup.select(".filter-pill[data-filter]")}
 
 
+def _screening_date(row: Tag, month: int, day: int, start: time) -> date | None:
+    """Use the calendar's explicit year only when its local date and time agree with the listing."""
+    calendar = row.select_one('a[href*="google.com/calendar"]')
+    if calendar is None:
+        return date(infer_year(month), month, day)
+    stamp = parse_qs(urlsplit(calendar["href"]).query).get("dates", [""])[0].split("/")[0]
+    try:
+        stated = datetime.strptime(stamp, "%Y%m%dT%H%M%SZ").replace(tzinfo=UTC).astimezone(_TZ)
+    except ValueError:
+        log.warning("hypnostheatre.com: invalid calendar date %r", stamp)
+        return None
+    if (stated.month, stated.day, stated.time()) != (month, day, start):
+        log.warning("hypnostheatre.com: calendar %s conflicts with listing %02d/%02d %s", stamp, day, month, start)
+        return None
+    return stated.date()
+
+
 def _showtimes(html: str) -> Iterator[tuple[Film, Screening]]:
     soup = BeautifulSoup(html, "html.parser")
     categories = _categories(soup)
@@ -81,6 +100,9 @@ def _showtimes(html: str) -> Iterator[tuple[Film, Screening]]:
             log.warning("hypnostheatre.com: unparseable time %r for %s", time_text, title)
             continue
         month = _MONTHS.index(m[1].lower()) + 1
+        screening_date = _screening_date(row, month, int(m[2]), t)
+        if screening_date is None:
+            continue
 
         year = runtime = None
         language = ""
@@ -106,7 +128,7 @@ def _showtimes(html: str) -> Iterator[tuple[Film, Screening]]:
                 tmdb_id=None,
                 title=film.title,
                 film_key=film.key,
-                date=date(infer_year(month), month, int(m[2])),
+                date=screening_date,
                 time=t,
                 ticket_url=_ticket_url(row),
                 cinema_name=_CINEMA,

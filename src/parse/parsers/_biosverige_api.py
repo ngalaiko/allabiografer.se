@@ -1,6 +1,5 @@
 """BioSverige (Videvox Cinecore) schedule API shared by its cinema sites."""
 
-import logging
 import re
 from collections.abc import Iterator
 from datetime import date, datetime, time
@@ -11,8 +10,6 @@ import requests
 from parse import _version
 from parse.parsers import _tickster
 from parse.parsers._tmdb_cache import lookup as _tmdb
-
-log = logging.getLogger(__name__)
 
 _TZ = ZoneInfo("Europe/Stockholm")
 
@@ -28,19 +25,14 @@ _CUT = 45
 
 
 def schedule(session: requests.Session, site: str) -> list[dict]:
-    """Upcoming showings at *site*; empty when the API fails."""
+    """Upcoming showings at *site*; failures abort the source-wide import."""
     # Without the range parameters the API returns only today's showings.
     params = {"StartDate": datetime.now(_TZ).date().isoformat(), "Limit": 500, "Months": 12, "Days": 365}
-    try:
-        resp = session.get(f"{site}/api/eventschedules", params=params, timeout=30)
-        resp.raise_for_status()
-        rows = resp.json()
-    except (requests.RequestException, ValueError) as exc:
-        log.warning("biosverige: %s failed: %s", site, exc)
-        return []
+    resp = session.get(f"{site}/api/eventschedules", params=params, timeout=30)
+    resp.raise_for_status()
+    rows = resp.json()
     if not isinstance(rows, list):
-        log.warning("biosverige: %s answered %.200r", site, rows)
-        return []
+        raise ValueError(f"biosverige: {site} returned a non-list schedule")
     return rows
 
 
@@ -106,13 +98,11 @@ def film_details(data: dict) -> dict:
 
 
 def tmdb_id(title: str, movie: dict) -> int | None:
-    """TMDB id by title and runtime, then title alone, then original title and runtime."""
+    """TMDB id by title, then original title, retaining any supplied runtime."""
     runtime = movie.get("duration") or None
     original = movie.get("originalName") or ""
-    return (
-        _tmdb(title, runtime=runtime)
-        or _tmdb(title)
-        or (_tmdb(original, runtime=runtime) if original and original != title else None)
+    return _tmdb(title, runtime=runtime) or (
+        _tmdb(original, runtime=runtime) if original and original != title else None
     )
 
 

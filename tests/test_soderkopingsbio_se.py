@@ -5,6 +5,7 @@ from datetime import date, time
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
 import requests
 
 from parse.parsers import _biosverige_api, soderkopingsbio_se
@@ -175,7 +176,7 @@ def test_tickster_version_overrides_the_schedule_tags(monkeypatch):
 
 def test_parse_looks_up_tmdb_with_the_api_runtime_first(monkeypatch):
     def tmdb(title, runtime=None):
-        return {("Tony", 106): 7, ("Resan till Piemonte", None): 8}.get((title, runtime))
+        return {("Tony", 106): 7, ("Resan till Piemonte", 111): 8}.get((title, runtime))
 
     items = _parse(monkeypatch, {_API: _SCHEDULE}, tmdb=tmdb)
 
@@ -189,13 +190,11 @@ def test_parse_skips_deleted_showings(monkeypatch):
     assert len([i for i in items if isinstance(i, Screening)]) == 3
 
 
-def test_parse_survives_a_non_list_schedule(monkeypatch):
-    items = _parse(monkeypatch, {_API: {"message": "error"}})
+def test_parse_aborts_a_non_list_schedule(monkeypatch):
+    with pytest.raises(ValueError, match="non-list schedule"):
+        _parse(monkeypatch, {_API: {"message": "error"}})
 
-    assert [i.name for i in items] == ["Söderköpings Bio"]
 
-
-def test_parse_survives_an_unreachable_schedule(monkeypatch):
-    items = _parse(monkeypatch, {})
-
-    assert [i.name for i in items] == ["Söderköpings Bio"]
+def test_parse_aborts_an_unreachable_schedule(monkeypatch):
+    with pytest.raises(requests.ConnectionError):
+        _parse(monkeypatch, {})

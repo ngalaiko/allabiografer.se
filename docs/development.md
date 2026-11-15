@@ -201,6 +201,9 @@ the output directory.
 Successful non-empty parses replace each source's screenings from today onward
 (Europe/Stockholm), removing cancelled or rescheduled listings. Screenings on
 past dates are retained. Failed or empty parses keep the previous programme.
+BioSverige schedule failures and malformed Bio.se cinema payloads abort the whole
+source import, even if another cinema succeeded, so partial results cannot erase
+the failed cinema's stored listings.
 
 Individual parsers can run separately:
 
@@ -280,7 +283,8 @@ work. Source metadata and posters stay with that identity. Same-title works have
 distinct programme pages and feed URLs; the preferred existing TMDB identity
 keeps the plain title slug and the others receive identity suffixes. Bio.se and
 Osby Borgen supply source runtimes to TMDB matching, so an incompatible runtime
-does not fall back to a cached title-only match.
+does not fall back to a cached title-only match. BioSverige and Söderköpings Bio
+also retain supplied runtimes when trying either the listed or original title.
 
 Programme durations use the cinema's source runtime when available, falling back
 to movie metadata. Different durations remain separate programme blocks without
