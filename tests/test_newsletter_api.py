@@ -54,7 +54,7 @@ def newsletter_api(tmp_path, request):
         },
         {"id": "cat-m", "key": "newsletter-city-malmo", "name": "Nytt på bio i Malmö", "category_type": "marketing"},
     ]
-    state = {"fail": False, "pending": [], "delay": 0, "fail_optin": False, "exceptions": []}
+    state = {"fail": False, "pending": [], "delay": 0, "fail_optin": False, "exceptions": [], "cohorts": []}
 
     class PostHogHandler(BaseHTTPRequestHandler):
         def log_message(self, *_):
@@ -85,6 +85,13 @@ def newsletter_api(tmp_path, request):
             self.apply_pending()
             url = urlsplit(self.path)
             query = parse_qs(url.query, keep_blank_values=True)
+            if url.path.endswith("/cohorts/"):
+                result = [c for c in state["cohorts"] if query["search"][0].casefold() in c["name"].casefold()]
+                offset = int(query["offset"][0])
+                # One hundred fuzzy matches per page, just like the real API.
+                return self.respond(
+                    {"results": result[offset : offset + 100], "next": "next" if len(result) > offset + 100 else None}
+                )
             if url.path.endswith("/persons/"):
                 if "email" in query:
                     result = [p for p in people.values() if p["properties"].get("email") == query["email"][0]]
@@ -138,6 +145,13 @@ def newsletter_api(tmp_path, request):
                 self.apply_pending()
                 return self.respond({"status": 1})
             assert self.headers["Authorization"] == "Bearer test-private-key"
+            if self.path.endswith("/cohorts/"):
+                writes.append((self.path, data))
+                if state.get("fail_cohort_create"):
+                    return self.respond({}, 500)
+                cohort = {"id": len(state["cohorts"]) + 1, **data}
+                state["cohorts"].append(cohort)
+                return self.respond(cohort, 500 if state.get("uncertain_cohort_create") else 201)
             assert self.path.endswith(("/add_opt_out/", "/remove_opt_out/"))
             writes.append((self.path, data))
             if state["fail"] or state["fail_optin"]:
@@ -235,6 +249,63 @@ def newsletter_api(tmp_path, request):
         process.wait(timeout=5)
         upstream.shutdown()
         thread.join(timeout=5)
+
+
+def test_city_cohort_callback_is_authenticated_and_idempotent_under_concurrent_signups(newsletter_api):
+    call, people, prefs, writes, state = newsletter_api
+    token = preferences_token(SECRET, "cohorts").split(".")[-1]
+    native_token = preferences_token(SECRET, "native-unsubscribe").split(".")[-1]
+    for bad in [None, "forged", native_token]:
+        assert call("cohorts", {"cities": ["Göteborg"]}, bad).status_code == 401
+    for cities in [["Stockholm", "Unknown"], {"city": "Göteborg"}, None]:
+        assert call("cohorts", {"cities": cities}, token).status_code == 400
+    assert state["cohorts"] == []
+    # Search results can contain many partial-name matches; neither substrings
+    # nor a truncated first page prove that the exact city cohort exists.
+    state["cohorts"] = [{"name": f"Göteborg extra {i}"} for i in range(101)]
+    body = {"cities": ["Stockholm", "Göteborg", "Göteborg"]}
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        responses = list(pool.map(lambda _: call("cohorts", body, token), range(4)))
+    assert all(r.status_code == 200 and r.json() == {"success": True} for r in responses)
+    created = state["cohorts"][101:]
+    assert sorted(c["name"] for c in created) == ["Göteborg", "Stockholm"]
+    for cohort in created:
+        assert cohort["description"] == ""
+        assert cohort["is_static"] is False
+        assert cohort["filters"] == {
+            "properties": {
+                "type": "AND",
+                "values": [
+                    {
+                        "type": "person",
+                        "key": "newsletter_cities",
+                        "operator": "icontains",
+                        "value": json.dumps(cohort["name"], ensure_ascii=False),
+                    }
+                ],
+            }
+        }
+    assert len(writes) == 2
+    assert people == prefs == {}
+    # A colliding cohort with unrelated criteria is not overwritten or reused.
+    created[0]["filters"]["properties"]["values"][0]["value"] = "wrong city"
+    assert call("cohorts", body, token).status_code == 409
+    assert len(writes) == 2
+
+
+@pytest.mark.parametrize("committed", [False, True])
+def test_city_cohort_callback_reconciles_uncertain_creates_without_resending(newsletter_api, committed):
+    call, people, prefs, writes, state = newsletter_api
+    token = preferences_token(SECRET, "cohorts").split(".")[-1]
+    state["uncertain_cohort_create" if committed else "fail_cohort_create"] = True
+    body = {"cities": ["Göteborg"]}
+    assert call("cohorts", body, token).status_code == 502
+    state["uncertain_cohort_create"] = state["fail_cohort_create"] = False
+    response = call("cohorts", body, token)
+    assert response.status_code == (200 if committed else 503)
+    assert len(writes) == 1
+    assert len(state["cohorts"]) == int(committed)
+    assert people == prefs == {}
 
 
 def test_signup_and_property_unsubscribe_end_to_end(newsletter_api):

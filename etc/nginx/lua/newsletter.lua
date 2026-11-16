@@ -68,6 +68,16 @@ local function encode(data)
     return (assert(json.encode(data)):gsub('"newsletter_cities":{}', '"newsletter_cities":[]'))
 end
 
+local function allowed_cities()
+    local file = io.open(os.getenv("NEWSLETTER_CITIES_FILE") or
+        "/var/www/allabiografer.se/i/newsletter-cities.json", "r")
+    if not file then fail(503) end
+    local allowed = json.decode(file:read("*a"))
+    file:close()
+    if not allowed then fail(503) end
+    return allowed
+end
+
 local function report_error(premature, properties, timestamp)
     if premature then return end
     local key = os.getenv("POSTHOG_PROJECT_TOKEN") or ""
@@ -239,9 +249,63 @@ local function run(context)
     ngx.req.read_body()
     local body = json.decode(ngx.req.get_body_data() or "")
     if type(body) ~= "table" then fail(400) end
-    if ngx.var.uri == "/api/newsletter/native-unsubscribe" then
+    if ngx.var.uri == "/api/newsletter/native-unsubscribe" or ngx.var.uri == "/api/newsletter/cohorts" then
+        local purpose = ngx.var.uri == "/api/newsletter/cohorts" and "cohorts" or "native-unsubscribe"
         local bearer = (ngx.var.http_authorization or ""):match("^Bearer (.+)$")
-        if not equal(bearer, signature(secret, "native-unsubscribe")) then fail(401) end
+        if not equal(bearer, signature(secret, purpose)) then fail(401) end
+    end
+    if ngx.var.uri == "/api/newsletter/cohorts" then
+        if type(body.cities) ~= "table" or body.cities == json.null then fail(400) end
+        local allowed = allowed_cities()
+        for key, city in pairs(body.cities) do
+            if type(key) ~= "number" or type(city) ~= "string" or not allowed[city] then fail(400) end
+        end
+        -- Validate the entire payload before creating anything. Replayed events
+        -- and simultaneous signups share a per-city lock, not a per-person lock.
+        for _, city in ipairs(cities({newsletter_cities = body.cities})) do
+            local identity = "cohort:" .. city
+            context.stage = "acquire_cohort_lock"
+            local mutex = assert(lock:new("newsletter_locks", {timeout = 5, exptime = 300}))
+            if not mutex:lock(identity) then fail(503) end
+            local ok, err = pcall(function()
+                context.stage = "lookup_cohort"
+                local found, offset = nil, 0
+                repeat
+                    local page = request("GET", "cohorts/?limit=100&offset=" .. offset .. "&search=" .. ngx.escape_uri(city))
+                    for _, cohort in ipairs(page.results) do
+                        if cohort.name == city then
+                            if found then fail(409) end
+                            found = cohort
+                        end
+                    end
+                    offset = page.next ~= nil and page.next ~= json.null and offset + 100 or nil
+                until not offset
+                if found then
+                    local group = found.filters and found.filters.properties
+                    local rules = group and group.values
+                    local rule = rules and rules[1]
+                    if found.is_static or not group or group.type ~= "AND" or not rules or #rules ~= 1
+                        or rule.type ~= "person" or rule.key ~= "newsletter_cities"
+                        or rule.operator ~= "icontains" or rule.value ~= json.encode(city) or rule.negation then
+                        fail(409)
+                    end
+                    ngx.shared.newsletter_pending:delete(identity)
+                    return
+                end
+                -- A timed-out create may still commit. Reconcile by lookup on
+                -- the next call; never blindly repeat an uncertain POST.
+                if ngx.shared.newsletter_pending:get(identity) then fail(503) end
+                if not ngx.shared.newsletter_pending:safe_set(identity, true) then fail(503) end
+                context.stage = "create_cohort"
+                request("POST", "cohorts/", {name = city, description = "", is_static = false,
+                    filters = {properties = {type = "AND", values = {{type = "person",
+                        key = "newsletter_cities", operator = "icontains", value = json.encode(city)}}}}})
+                ngx.shared.newsletter_pending:delete(identity)
+            end)
+            mutex:unlock()
+            if not ok then error(err, 0) end
+        end
+        return {success = true}
     end
     if ngx.var.uri == "/api/newsletter/signup" or ngx.var.uri == "/api/newsletter/native-unsubscribe" then
         local email = type(body.email) == "string" and body.email:match("^%s*(.-)%s*$"):lower()
@@ -255,12 +319,7 @@ local function run(context)
             return {success = true}
         end
         if type(body.city) ~= "string" then fail(400) end
-        local file = io.open(os.getenv("NEWSLETTER_CITIES_FILE") or
-            "/var/www/allabiografer.se/i/newsletter-cities.json", "r")
-        if not file then fail(503) end
-        local allowed = json.decode(file:read("*a"))
-        file:close()
-        if not allowed or not allowed[body.city] then fail(400) end
+        if not allowed_cities()[body.city] then fail(400) end
         edit(email, function(properties, id, blocked)
             -- Never resurrect old cities when rejoining after a native opt-out.
             local memberships, seen = blocked and {} or cities(properties), false

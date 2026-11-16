@@ -107,6 +107,49 @@ identity is not used for signup. Signup is
 single opt-in: there is no confirmation email or confirmation-state transition.
 It does not create a delivery workflow or immediately send an edition.
 
+## Analysis cohorts on signup
+
+The PostHog workflow **Ensure newsletter city cohorts**
+(`01a1e355-e83f-0000-ef04-092bc433ca6a`, project `273892`) is prepared as a
+**draft**, not enabled. It triggers only on `newsletter_signup` and sends
+`{"cities": "{event.properties['$set'].newsletter_cities}"}` through the HTTP
+Webhook action to `https://allabiografer.se/api/newsletter/cohorts`. The expression
+evaluates to an array, not a JSON string. Only city names are sent, never email,
+person identifiers or preferences tokens. The action aborts the run on failure;
+it does not send email or update person properties.
+
+Before enabling, deploy the backend route and configure the webhook's encrypted
+`secret_headers` with `Authorization: Bearer <token>`. The token is lowercase hex
+HMAC-SHA256 using the existing `NEWSLETTER_SIGNING_SECRET` over the exact UTF-8
+string `newsletter-preferences:v1:cohorts`. Generate and install it through the
+existing private credential mechanism, never logs or ordinary workflow headers.
+The backend's existing PostHog key also needs `cohort:read` and `cohort:write`.
+No new signing secret is needed. Do not enable the draft without deployment,
+credential configuration and an authorized live acceptance check.
+
+The endpoint accepts authenticated POST JSON with a `cities` array. It validates
+every city against the same generated allowlist as signup, then looks up each
+exact cohort name, paginating fuzzy search results. Missing cohorts are created
+as dynamic person-property cohorts: city-only name, empty description,
+`newsletter_cities` **contains** the double-quoted city name (`icontains`, for
+example `"Göteborg"`). Existing cohorts with different criteria or duplicate names
+cause HTTP 409 rather than being overwritten or silently reused. Names are not
+unique in PostHog, so blindly repeating a create is unsafe.
+
+Per-city locks serialize concurrent callbacks on the single backend instance.
+An uncertain create remains pending: a later callback first looks for the
+committed cohort and never automatically repeats a POST whose outcome is unknown.
+If it still cannot find the cohort, it returns 503 for investigation. Like signup's
+pending writes, these guards are in memory and do not survive a restart. Inspect
+uncertain creates before recovery; do not scale to multiple backend instances
+without shared coordination.
+
+Cohorts are analysis-only. `newsletter_cities` remains the subscription authority
+and delivery still uses its existing direct filters. Existing empty city cohorts
+were soft-deleted (`deleted: true`); a future signup can create a new cohort for
+that city. This workflow does not continuously remove cohorts that become empty
+after later unsubscribes, and it does not process historical signups on enable.
+
 ## Weekly run and workflow lifecycle
 
 Python discovers cities from `newsletter_cities` among people with a nonempty email.
@@ -279,7 +322,7 @@ response is derived from the current native global opt-out, not a stored person 
 
 ## Backend API, credentials and concurrency
 
-All three endpoints require POST with `Content-Type: application/json`. The
+All four endpoints require POST with `Content-Type: application/json`. The
 backend rejects a supplied foreign `Origin`; there is no cross-origin browser API.
 
 | Endpoint | Authorization | JSON request | Successful response/effect |
@@ -289,6 +332,7 @@ backend rejects a supplied foreign `Origin`; there is no cross-origin browser AP
 | Same preferences endpoint | Same person token | `{ "city": "Göteborg", "unsubscribe": true }` | Updated city list; removing a city that is not subscribed returns 400 |
 | Same preferences endpoint | Same person token | `{ "unsubscribe": true }` | Empty city list |
 | `/api/newsletter/native-unsubscribe` | Separate server-to-server bearer credential | `{ "email": "reader@example.org" }` | `{ "success": true }`; clears cities only for an existing, currently natively opted-out profile |
+| `/api/newsletter/cohorts` | Separately scoped server-to-server bearer credential | `{ "cities": ["Göteborg"] }` | `{ "success": true }`; creates missing analysis cohorts without changing subscriptions |
 
 The browser reloads canonical preferences after a successful removal and disables
 controls while a request is in flight. A failed/uncertain save offers a read retry,
@@ -302,7 +346,8 @@ The Alpine image installs nginx's Lua/NDK modules plus cjson, resty HTTP, lock,
 OpenSSL and string libraries. Runtime environment needs `POSTHOG_PROJECT_ID`,
 `POSTHOG_PROJECT_TOKEN`, `POSTHOG_PERSONAL_API_KEY` (Person Read and Hog flow Read/Write),
 and `NEWSLETTER_SIGNING_SECRET` (at least 32 random ASCII characters). Keep the
-secret stable so issued links remain valid.
+secret stable so issued links remain valid. The analysis-cohort callback additionally
+requires Cohort Read/Write on that API key.
 Provision secrets through the existing deployment secret mechanism, never build args.
 The public project token may be provided at build time; it is retained for runtime.
 `POSTHOG_API_HOST` defaults to EU Cloud; `POSTHOG_CAPTURE_HOST` defaults to EU ingestion.
