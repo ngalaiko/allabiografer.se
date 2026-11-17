@@ -15,8 +15,17 @@ run = "uv run --group dev --group parse --group build pytest"
 
 
 [tasks.parse]
-description = "Parse all cinema websites"
+description = "Fetch sources, reconcile films and publish the final schedule"
+depends = ["fetch"]
+run = "uv run --group parse reconcile --enrich"
+
+[tasks.fetch]
+description = "Fetch cinema sources independently, without TMDB"
 depends = ["parse:*"]
+
+[tasks.reconcile]
+description = "Reconcile stored source films, enrich from TMDB, and save the final schedule"
+run = "uv run --group parse reconcile --enrich"
 
 [tasks."parse:filmstaden_se"]
 run = "uv run --group parse parse filmstaden_se"

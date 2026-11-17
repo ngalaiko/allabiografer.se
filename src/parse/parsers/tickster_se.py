@@ -49,6 +49,23 @@ _NOT_A_SHOWING = re.compile(r"presentkort|medlemskort|säsongskort|abonnemang|\b
 _PREFIX = re.compile(r"^(Knattebio|Barnbio|Familjebio|Dagbio|Bio)\s*[:-]\s*", re.IGNORECASE)
 _SUFFIX = re.compile(r"\s+-\s+(Lunchbio|Dagbio)$", re.IGNORECASE)
 _SCREEN = re.compile(r"\s+sal\s*(\d+)$", re.IGNORECASE)
+# Explicit film lengths, not durations mentioned in a synopsis or the event slot.
+_RUNTIME = re.compile(
+    r"\b(?:(?P<label>speltid|längd)\s*:\s*|(?:filmen|den)\s+är\s+)"
+    r"(?:(?P<hours>\d+)\s*tim(?:me|mar)?\b\s*(?:och\s+)?)?"
+    r"(?:(?P<minutes>\d+)\s*min(?:uter)?\b)?(?P<long>\s*lång\b)?",
+    re.IGNORECASE,
+)
+
+
+def _runtime(overview: str) -> int | None:
+    for match in _RUNTIME.finditer(overview):
+        if not (match.group("label") or match.group("long")):
+            continue
+        minutes = int(match.group("hours") or 0) * 60 + int(match.group("minutes") or 0)
+        if minutes:
+            return minutes
+    return None
 
 
 def parse() -> Iterator[Screening | Venue | Film]:
@@ -118,13 +135,15 @@ def parse() -> Iterator[Screening | Venue | Film]:
                 if description:
                     for credits in description.select("[itemprop=description]"):
                         credits.decompose()
+                overview = description.get_text(" ", strip=True) if description else ""
                 film = _films.make(
                     _SOURCE,
                     title,
                     url=event.url,
-                    overview=description.get_text(" ", strip=True) if description else "",
+                    overview=overview,
+                    runtime=_runtime(overview),
                 )
-                # Tickster supplies landscape banners and event slots, not film posters or runtimes.
+                # Tickster's landscape banners and event endDate are not film posters or runtimes.
                 if film.key not in films:
                     films.add(film.key)
                     yield film

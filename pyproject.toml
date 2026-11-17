@@ -9,6 +9,7 @@ dependencies = [
 
 [project.scripts]
 parse = "parse:main"
+reconcile = "build.catalogue:main"
 build = "build:main"
 newsletter = "newsletter:main"
 

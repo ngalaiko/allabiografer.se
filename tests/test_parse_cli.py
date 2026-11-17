@@ -8,7 +8,8 @@ from datetime import date, time
 import pytest
 
 import parse
-from parse import mark_dubbed, tmdb_languages
+from parse import mark_dubbed, queries, tmdb, tmdb_languages
+from parse.parsers import _tmdb_cache
 from store import Film, Movie, Screening, read_screenings, write_movie, write_screenings
 from store.version import AudioKind, AudioVersion, ContentVersion, Language
 
@@ -123,3 +124,115 @@ def test_parse_replaces_stored_screenings(monkeypatch, tmp_path):
     _run(monkeypatch, db, [dataclasses.replace(_screening("s:b", AudioKind.UNKNOWN), time=time(20, 0))])
 
     assert [s.time for s in read_screenings(path=db)] == [time(20, 0)]
+
+
+def test_cli_defers_tmdb_with_exact_ordered_constraints(monkeypatch, tmp_path):
+    db = tmp_path / "test.db"
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("source fetching must not call TMDB")
+
+    monkeypatch.setattr(tmdb, "lookup", forbidden)
+    monkeypatch.setattr(tmdb, "by_id", forbidden)
+    # A live-lookup cache hit must not override captured query constraints.
+    monkeypatch.setattr(_tmdb_cache, "_cache", {("Film", 120, 2026): 123})
+
+    def items():
+        for year in (2026, 2027, 2026):
+            token = _tmdb_cache.lookup("Film", runtime=120, year=year) or _tmdb_cache.lookup("Film")
+            yield dataclasses.replace(_screening("s:a", AudioKind.UNKNOWN), tmdb_id=token)
+        yield dataclasses.replace(_screening("s:b", AudioKind.UNKNOWN), tmdb_id=_tmdb_cache.by_id(42))
+        yield dataclasses.replace(_screening("s:c", AudioKind.UNKNOWN), tmdb_id=43)
+
+    _run(monkeypatch, db, items())
+
+    assert queries.read_requests(path=db) == {
+        "s:a": [
+            {"title": "Film", "runtime": 120, "year": 2026},
+            {"title": "Film", "runtime": 120, "year": 2027},
+        ],
+    }
+    assert {s.film_key: s.tmdb_id for s in read_screenings(path=db)} == {"s:a": None, "s:b": 42, "s:c": 43}
+    assert _tmdb_cache._cache == {("Film", 120, 2026): 123}
+
+
+def test_cli_keeps_hints_on_empty_or_failed_fetch_and_replaces_only_own_source(monkeypatch, tmp_path):
+    db = tmp_path / "test.db"
+    own = {"s:old": [{"title": "Old", "runtime": 99, "year": None}]}
+    other = {"other:a": [{"title": "Other", "runtime": None, "year": 2020}]}
+    queries.write_requests(own, source="bio_se", path=db)
+    queries.write_requests(other, source="other", path=db)
+
+    _run(monkeypatch, db, [])
+    assert queries.read_requests(path=db) == own | other
+
+    def failed():
+        yield dataclasses.replace(_screening("s:new", AudioKind.UNKNOWN), tmdb_id=_tmdb_cache.lookup("New", runtime=80))
+        raise RuntimeError("incomplete fetch")
+
+    with pytest.raises(RuntimeError, match="incomplete fetch"):
+        _run(monkeypatch, db, failed())
+    assert queries.read_requests(path=db) == own | other
+
+    def success():
+        yield dataclasses.replace(_screening("s:new", AudioKind.UNKNOWN), tmdb_id=_tmdb_cache.lookup("New", runtime=80))
+
+    _run(monkeypatch, db, success())
+    assert queries.read_requests(path=db) == other | {"s:new": [{"title": "New", "runtime": 80, "year": None}]}
+    # A nonempty explicit-ID-only programme clears obsolete hints.
+    _run(monkeypatch, db, [dataclasses.replace(_screening("s:new", AudioKind.UNKNOWN), tmdb_id=42)])
+    assert queries.read_requests(path=db) == other
+
+
+def test_direct_tmdb_calls_work_after_capture_exception(monkeypatch):
+    monkeypatch.setattr(_tmdb_cache, "_cache", {})
+    monkeypatch.setattr(tmdb, "lookup", lambda *args, **kwargs: 123)
+    monkeypatch.setattr(tmdb, "by_id", lambda *args, **kwargs: 456)
+
+    def fail():
+        with _tmdb_cache.capture_requests():
+            assert _tmdb_cache.lookup("Film") < 0
+            assert _tmdb_cache.by_id(42) == 42
+            raise RuntimeError("failed")
+
+    with pytest.raises(RuntimeError, match="failed"):
+        fail()
+    assert _tmdb_cache.lookup("Film") == 123
+    assert _tmdb_cache.by_id(42) == 456
+
+
+def test_cli_preserves_real_parser_fallback_constraints_and_explicit_ids(monkeypatch, tmp_path):
+    from parse.parsers import _biosverige_api, biorio_se, hypnostheatre_com, kiviksbio_se
+
+    db = tmp_path / "test.db"
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("source fetching must not call TMDB")
+
+    monkeypatch.setattr(tmdb, "lookup", forbidden)
+    monkeypatch.setattr(tmdb, "by_id", forbidden)
+    film = Film(key="s:a", source="s", title="Film", runtime=120, release_date="2026")
+
+    def items():
+        for key, tmdb_id in [
+            ("s:a", kiviksbio_se._tmdb_id(film, date(2026, 10, 4), ())),
+            ("s:b", hypnostheatre_com._tmdb_id(film)),
+            ("s:c", _biosverige_api.tmdb_id("Film", {"duration": 120, "originalName": "Original"})),
+            ("s:d", biorio_se._tmdb_id({"title": "Film", "tmdbId": "42"})),
+        ]:
+            yield dataclasses.replace(
+                _screening(key, AudioKind.UNKNOWN), tmdb_id=tmdb_id, ticket_url=f"https://example.se/{key}"
+            )
+
+    _run(monkeypatch, db, items())
+    assert queries.read_requests(path=db) == {
+        "s:a": [{"title": "Film", "runtime": 120, "year": None}],
+        "s:b": [{"title": "Film", "runtime": 120, "year": 2026}],
+        "s:c": [{"title": "Film", "runtime": 120, "year": None}],
+    }
+    assert {s.film_key: s.tmdb_id for s in read_screenings(path=db)} == {
+        "s:a": None,
+        "s:b": None,
+        "s:c": None,
+        "s:d": 42,
+    }

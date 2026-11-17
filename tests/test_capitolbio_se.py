@@ -85,6 +85,19 @@ def test_film_details_read_runtime_and_synopsis_not_landscape_poster():
     assert detailed.overview.startswith("Jane Austens ikoniska Sense and Sensibility")
     assert "Visa alla detaljer" not in detailed.overview
     assert detailed.poster_url == ""
+    assert detailed.directors == ["Georgia Oakley"]
+
+
+def test_movie_production_year_not_the_screening_year_fills_missing_release_year():
+    film = parser._films.make("capitolbio_se", "Classic film")
+    html = """<script type="application/ld+json">{"@graph":[
+      {"@type":"ScreeningEvent","copyrightYear":2026},
+      {"@type":"Movie","copyrightYear":1995,"dateCreated":"2026-11-27"}
+    ]}</script>"""
+    assert parser._details(html, film).release_date == "1995"
+    dated = parser._films.make("capitolbio_se", "Classic film", release_date="1994")
+    assert parser._details(html, dated).release_date == "1994"
+    assert parser._details('<script type="application/ld+json">broken</script>', film).release_date == ""
 
 
 @pytest.mark.parametrize(

@@ -78,10 +78,14 @@ def _film(movie: dict, title: str) -> Film:
     # The language field names the listed version: "Svenska (dubbad)" is no original.
     # Swedish behind a "sv. tal" title tag stays: Swedish originals list so too, and _merge prefers other languages.
     dubbed = "dubb" in language.casefold()
+    overview = _text(movie.get("synopsis", ""))
+    # An introductory identification states the original year, unlike plot or screening dates.
+    year = re.match(r"^[^.?!]{1,120}\bär en (?:[\w-]+\s+){0,3}[\w-]*film från ((?:19|20)\d{2})\b", overview)
     return _films.make(
         _SOURCE,
         title,
-        overview=_text(movie.get("synopsis", "")),
+        overview=overview,
+        release_date=year.group(1) if year else "",
         runtime=_runtime(movie.get("run_time", "")),
         genres=genres,
         age_rating=_clean(movie.get("rating", "")),

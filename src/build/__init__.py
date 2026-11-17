@@ -236,6 +236,7 @@ def _cell_min_height(positions: list[dict]) -> float:
 @dataclass(kw_only=True)
 class SiteData:
     out_dir: Path = field(default_factory=lambda: Path("build"))
+    db_path: Path | None = None
     screenings: list[Screening] = field(default_factory=list)
     movies: dict[int, Movie] = field(default_factory=dict)
     films: dict[str, Film] = field(default_factory=dict)
@@ -249,6 +250,9 @@ class SiteData:
     city_slugs: dict[str, str] = field(default_factory=dict)
     cinema_slugs: dict[tuple[str, str], str] = field(default_factory=dict)
     film_slugs: dict[int, str] = field(default_factory=dict)
+    # Build-time movie keys are catalogue identities, not necessarily TMDB IDs.
+    tmdb_ids: dict[int, int | None] = field(default_factory=dict)
+    film_aliases: dict[str, str] = field(default_factory=dict)
     sitemap_urls: list[str] = field(default_factory=list)
 
 
@@ -334,24 +338,36 @@ def _deduplicate_screenings(sd: SiteData) -> list[Screening]:
     return result
 
 
-def _load_data(out_dir: Path) -> SiteData:
+def _load_data(
+    out_dir: Path,
+    *,
+    screenings: list[Screening] | None = None,
+    identities: dict[str, int] | None = None,
+    today: date | None = None,
+    path: Path | None = None,
+    source: SiteData | None = None,
+    resolved_ids: dict[int, int | None] | None = None,
+) -> SiteData:
+    """Prepare source metadata and schedule during catalogue reconciliation."""
+    path = path or DB_FILE
     sd = SiteData(out_dir=out_dir)
-    sd.today = sd.generated_at.date()
+    sd.db_path = path
+    sd.today = today or sd.generated_at.date()
 
     print("Reading screenings…")
-    all_screenings = read_screenings(path=DB_FILE)
+    all_screenings = read_screenings(path=path) if screenings is None else screenings
     upcoming = [s for s in all_screenings if s.date >= sd.today]
 
     # Only pool metadata attached to the same identity. Equal titles can name
     # different adaptations, remakes, or recordings.
-    all_films = read_all_films(path=DB_FILE)
+    all_films = source.films.values() if source else read_all_films(path=path)
     films_by_key = {f.key: f for f in all_films}
     sd.films = films_by_key
 
     source_counts: dict[str, int] = defaultdict(int)
     for screening in upcoming:
-        source = screening.film_key.partition(":")[0] if screening.film_key else screening.source
-        source_counts[source] += 1
+        source_name = screening.film_key.partition(":")[0] if screening.film_key else screening.source
+        source_counts[source_name] += 1
 
     def _film_rank(film: Film) -> tuple[int, str]:
         return (-source_counts[film.source], film.source)
@@ -361,7 +377,21 @@ def _load_data(out_dir: Path) -> SiteData:
     sd.screenings = []
     for screening in upcoming:
         film = films_by_key.get(screening.film_key) if screening.film_key else None
-        if screening.tmdb_id is None:
+        real_id = screening.tmdb_id
+        if identities is not None:
+            from build.catalogue import observation_key
+
+            identifier = identities[observation_key(screening)]
+            real_id = resolved_ids.get(identifier) if resolved_ids is not None else real_id
+            if identifier not in sd.movies:
+                metadata = source.movies.get(real_id) if source and real_id else None
+                sd.movies[identifier] = (
+                    replace(metadata, tmdb_id=identifier)
+                    if metadata
+                    else Movie.from_dict({"tmdb_id": identifier, "title_sv": film.title if film else screening.title})
+                )
+            screening = replace(screening, tmdb_id=identifier)
+        elif screening.tmdb_id is None:
             # Negative identifiers exist only inside the build, never in TMDB or storage.
             title = screening.title
             if not title:
@@ -373,6 +403,7 @@ def _load_data(out_dir: Path) -> SiteData:
                     {"tmdb_id": identifier, "title_sv": film.title if film else title}
                 )
             screening = replace(screening, tmdb_id=identifier)
+        sd.tmdb_ids[screening.tmdb_id] = real_id or sd.tmdb_ids.get(screening.tmdb_id)
         if film:
             films_of[screening.tmdb_id][film.key] = film
         sd.screenings.append(screening)
@@ -384,12 +415,14 @@ def _load_data(out_dir: Path) -> SiteData:
 
     print("Reading movie metadata…")
     # Synthetic ids are negative and absent from storage; they also exceed SQLite's integer range.
-    sd.movies.update(read_movies({i for i in tmdb_ids if i > 0}, path=DB_FILE))
+    if identities is None:
+        sd.movies.update(read_movies({i for i in tmdb_ids if i > 0}, path=path))
 
-    stored = poster_keys(path=DB_FILE)
+    stored = poster_keys(path=path)
     for movie_id in tmdb_ids:
-        if movie_id > 0 and str(movie_id) in stored:
-            sd.poster_keys[movie_id] = str(movie_id)
+        real_id = sd.tmdb_ids.get(movie_id)
+        if real_id and str(real_id) in stored:
+            sd.poster_keys[movie_id] = str(real_id)
 
     for movie_id, movie in sd.movies.items():
         candidates = sorted(films_of[movie_id].values(), key=_film_rank)
@@ -403,7 +436,7 @@ def _load_data(out_dir: Path) -> SiteData:
     print(f"  {len(sd.movies)} movies, {len(sd.poster_keys)} posters")
 
     print("Reading venues…")
-    for v in read_venues(path=DB_FILE):
+    for v in source.venues.values() if source else read_venues(path=path):
         sd.venues[(v.city, v.name)] = v
     print(f"  {len(sd.venues)} venues")
 
@@ -474,7 +507,7 @@ def _poster_url(sd: SiteData, movie_id: int) -> str | None:
         return None
     if key in sd.poster_urls:
         return sd.poster_urls[key]
-    src = poster_path(key, path=DB_FILE)
+    src = poster_path(key, path=sd.db_path or DB_FILE)
     if src is None:
         return None
     settings = f"{POSTER_WIDTHS}:{POSTER_H}:{POSTER_QUALITY}".encode()
@@ -1211,7 +1244,9 @@ def _write_city_feed(sd: SiteData, city: str, screenings: list[Screening], out_p
             {
                 "start": datetime.combine(screening.date, screening.time, tzinfo=SWEDEN_TZ).isoformat(),
                 "film": {
-                    "tmdb_id": screening.tmdb_id if screening.tmdb_id and screening.tmdb_id > 0 else None,
+                    "tmdb_id": sd.tmdb_ids.get(
+                        screening.tmdb_id, screening.tmdb_id if screening.tmdb_id and screening.tmdb_id > 0 else None
+                    ),
                     "source_key": screening.film_key or None,
                     "title": title,
                     "url": f"{BASE_URL}/stad/{city_slug}/film/{film_slug}/" if movie and movie.title_sv else None,
@@ -1652,18 +1687,22 @@ def _copy_static(out_dir: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build the static site.")
     parser.add_argument("output", type=Path, help="Output directory")
+    parser.add_argument("--db", type=Path, default=DB_FILE, help="Reconciled SQLite database")
     args = parser.parse_args()
 
     out_dir: Path = args.output
+    from build.catalogue import read_catalogue
+
+    # Read the last complete snapshot before touching an existing site.
+    sd = read_catalogue(out_dir, path=args.db)
     if out_dir.exists():
         shutil.rmtree(out_dir)
     out_dir.mkdir(parents=True)
 
     _copy_static(out_dir)
-    sd = _load_data(out_dir)
     env = _make_env()
 
-    festivals = build_festivals(env, sd, _register, DB_FILE)
+    festivals = build_festivals(env, sd, _register, args.db)
     _build_index(env, sd, festivals)
     _build_programme_pages(env, sd)
     _build_newsletter_preferences(env, out_dir)
@@ -1672,5 +1711,22 @@ def main() -> None:
     _write_robots(out_dir)
     _write_llms(sd)
     _write_sitemap(sd)
+    _write_film_redirects(sd)
 
     print(f"\nDone. Output in {out_dir}/")
+
+
+def _write_film_redirects(sd: SiteData) -> None:
+    """Static nginx map entries; aliases never enter internal links or sitemaps."""
+    targets: dict[str, set[str]] = defaultdict(set)
+    for page in (sd.out_dir / "film").glob("*/index.html"):
+        targets[page.parent.name].add("/film")
+    for page in (sd.out_dir / "stad").glob("*/film/*/index.html"):
+        targets[page.parent.name].add("/" + page.parent.parent.relative_to(sd.out_dir).as_posix())
+    lines = []
+    for old, current in sorted(sd.film_aliases.items()):
+        # Redirect only to pages actually rendered. A city with no remaining
+        # screenings must not acquire an alias-to-missing-page redirect chain.
+        for prefix in sorted(targets[current]):
+            lines.extend(f'"{prefix}/{old}{ending}" "{prefix}/{current}/";' for ending in ("", "/"))
+    (sd.out_dir / "film-redirects.map").write_text("\n".join(lines) + "\n", encoding="utf-8")

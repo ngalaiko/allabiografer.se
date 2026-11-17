@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS films (
   title_original TEXT NOT NULL DEFAULT '', overview TEXT NOT NULL DEFAULT '', runtime INTEGER,
   genres TEXT NOT NULL DEFAULT '[]', release_date TEXT NOT NULL DEFAULT '',
   age_rating TEXT NOT NULL DEFAULT '', poster_url TEXT NOT NULL DEFAULT '', url TEXT NOT NULL DEFAULT '',
-  original_languages TEXT NOT NULL DEFAULT '[]'
+  original_languages TEXT NOT NULL DEFAULT '[]', directors TEXT NOT NULL DEFAULT '[]'
 );
 CREATE TABLE IF NOT EXISTS venues (
   city TEXT NOT NULL, name TEXT NOT NULL, address TEXT NOT NULL DEFAULT '', PRIMARY KEY (city, name)
@@ -215,6 +215,10 @@ def connect(path: Path = DB_FILE) -> sqlite3.Connection:
         if "directors" not in movie_columns:
             with contextlib.suppress(sqlite3.OperationalError):
                 conn.execute("ALTER TABLE movies ADD COLUMN directors TEXT")
+        film_columns = {row[1] for row in conn.execute("PRAGMA table_info(films)")}
+        if "directors" not in film_columns:
+            with contextlib.suppress(sqlite3.OperationalError):
+                conn.execute("ALTER TABLE films ADD COLUMN directors TEXT NOT NULL DEFAULT '[]'")
     except BaseException:
         if conn.in_transaction:
             conn.execute("ROLLBACK")
@@ -504,6 +508,7 @@ _FILM_COLUMNS = (
     "poster_url",
     "url",
     "original_languages",
+    "directors",
 )
 
 
@@ -511,6 +516,7 @@ def _film_from_row(row: tuple) -> Film:
     d = dict(zip(_FILM_COLUMNS, row, strict=True))
     d["genres"] = json.loads(d["genres"])
     d["original_languages"] = json.loads(d["original_languages"])
+    d["directors"] = json.loads(d["directors"])
     return Film.from_dict(d)
 
 
@@ -568,15 +574,15 @@ def write_films(films: list[Film], *, path: Path = DB_FILE) -> int:
         conn.executemany(
             "INSERT INTO films"
             " (key, source, title, title_original, overview, runtime, genres,"
-            "  release_date, age_rating, poster_url, url, original_languages)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "  release_date, age_rating, poster_url, url, original_languages, directors)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             " ON CONFLICT (key) DO UPDATE SET"
             "  source = excluded.source, title = excluded.title,"
             "  title_original = excluded.title_original, overview = excluded.overview,"
             "  runtime = excluded.runtime, genres = excluded.genres,"
             "  release_date = excluded.release_date, age_rating = excluded.age_rating,"
             "  poster_url = excluded.poster_url, url = excluded.url,"
-            "  original_languages = excluded.original_languages",
+            "  original_languages = excluded.original_languages, directors = excluded.directors",
             [
                 (
                     f.key,
@@ -591,6 +597,7 @@ def write_films(films: list[Film], *, path: Path = DB_FILE) -> int:
                     f.poster_url,
                     f.url,
                     json.dumps(sorted(language.value for language in f.original_languages), ensure_ascii=False),
+                    json.dumps(f.directors, ensure_ascii=False),
                 )
                 for f in films
             ],

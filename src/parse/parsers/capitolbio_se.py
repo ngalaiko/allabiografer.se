@@ -1,5 +1,6 @@
 """capitolbio.se — Bio & Bistro Capitol in Stockholm, dated public calendar."""
 
+import json
 import logging
 import re
 from collections.abc import Iterator
@@ -108,11 +109,22 @@ def _details(html: str, film: Film) -> Film:
     }
     runtime = re.search(r"\d+", fields.get("Längd", ""))
     synopsis = soup.select_one(".mcc-content")
+    year = film.release_date
+    for script in soup.select('script[type="application/ld+json"]'):
+        try:
+            data = json.loads(script.string or "")
+        except json.JSONDecodeError:
+            continue
+        for item in data.get("@graph", [data]):
+            if item.get("@type") == "Movie" and re.fullmatch(r"\d{4}", str(item.get("copyrightYear", ""))):
+                year = year or str(item["copyrightYear"])
     # The site's og:image is a landscape still, not a poster. Leave poster fallback to TMDB.
     return replace(
         film,
+        release_date=year,
         runtime=int(runtime.group()) if runtime else None,
         overview=synopsis.get_text(" ", strip=True) if synopsis else "",
+        directors=[name.strip() for name in fields.get("Regi", "").split(",") if name.strip()],
     )
 
 

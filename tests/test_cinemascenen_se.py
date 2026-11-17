@@ -67,6 +67,7 @@ def test_film_details_exclude_credits_and_trailer():
     assert detailed.poster_url.endswith("bortglomdaposter-717x1024.jpg")
     assert detailed.key == film.key
     assert detailed.title == "Bortglömda ön"
+    assert detailed.directors == ["Joel Crawford", "Januel Mercado"]
 
 
 def test_programme_text_is_uppercased_beyond_ascii():
@@ -99,6 +100,19 @@ def test_film_details_without_synopsis():
     detailed = parser._details(_html("film_upcoming"), film)
     assert detailed.overview == ""
     assert detailed.poster_url.endswith("dune3poster-717x1024.jpg")
+
+
+def test_film_details_synopsis_before_expandable_credits():
+    film = parser._films.make("cinemascenen_se", "SHEEP IN THE BOX", runtime=126)
+    detailed = parser._details(_html("film_arthouse"), film)
+    assert detailed.overview.startswith("Arthouse Onsdag 18 november 17:00 Förhandsvisning I en nära framtid")
+    assert detailed.overview.endswith("uppfostra den som sin egen son.")
+    assert "Hirokazu" not in detailed.overview
+    assert "130 kr" not in detailed.overview
+    assert detailed.runtime == 126
+    assert detailed.title == "Sheep in the Box"
+    assert detailed.key == film.key
+    assert detailed.directors == ["Hirokazu Kore-eda"]
 
 
 @pytest.mark.parametrize(("old", "new"), [("2026-10-07", "2026-02-30"), ("18:00", "25:00")])

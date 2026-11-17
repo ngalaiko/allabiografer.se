@@ -108,19 +108,30 @@ def _details(html: str, film: Film) -> Film:
     section = heading.find_parent(class_="e-parent") if heading else None
     if section is None:
         return film
-    # The synopsis, when present, is the text widget directly before the "Premiär" label.
+    # Standard pages put the synopsis before "Premiär"; event pages put it
+    # after the runtime/price line, immediately before the credits accordion.
     overview = ""
     for prev, widget in pairwise(section.select(".elementor-widget")):
-        if widget.get_text(strip=True) == "Premiär":
-            if "elementor-widget-text-editor" in prev.get("class", []):
-                overview = " ".join(prev.get_text(" ", strip=True).split())
+        if (
+            widget.get_text(strip=True) == "Premiär" or "elementor-widget-n-accordion" in widget.get("class", [])
+        ) and "elementor-widget-text-editor" in prev.get("class", []):
+            overview = " ".join(prev.get_text(" ", strip=True).split())
             break
+    directors = next(
+        (
+            widget.get_text(" ", strip=True)
+            for label, widget in pairwise(section.select(".elementor-widget"))
+            if label.get_text(strip=True) == "Regi" and "elementor-widget-text-editor" in widget.get("class", [])
+        ),
+        "",
+    )
     poster = section.select_one(".elementor-widget-image img[src]")
     return replace(
         film,
         title=" ".join(heading.get_text(" ", strip=True).split()) or film.title,
         overview=overview,
         poster_url=urljoin(_URL, poster["src"]) if poster else "",
+        directors=[name.strip() for name in directors.split(",") if name.strip()],
     )
 
 

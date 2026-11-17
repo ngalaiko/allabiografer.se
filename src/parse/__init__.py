@@ -5,9 +5,9 @@ Usage::
     uv run parse --output data/allabiografer.db filmstaden_se
     uv run parse --output data/allabiografer.db bio_se
 
-``--output`` is the SQLite database screenings, venues, movies, films and the
-TMDB title index are written to.  Posters go to a ``posters/`` directory beside
-it.
+``--output`` stores screenings, venues, source films and deferred TMDB query
+hints. Source fetching makes no TMDB requests. Source posters go to a
+``posters/`` directory beside it.
 """
 
 import argparse
@@ -19,7 +19,7 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 
 import store
-from parse import parsers, tmdb
+from parse import parsers, queries, tmdb
 from parse.parsers import _films, _tmdb_cache
 from store import Film, Screening, Venue
 from store.version import AudioKind, AudioVersion, Language
@@ -96,13 +96,24 @@ def main() -> None:
     screenings: list[Screening] = []
     venues: list[Venue] = []
     films: list[Film] = []
-    for item in mod.parse():
-        if isinstance(item, Venue):
-            venues.append(item)
-        elif isinstance(item, Film):
-            films.append(item)
-        else:
-            screenings.append(item)
+    requests: dict[str, list[dict]] = {}
+    with _tmdb_cache.capture_requests() as captured:
+        for item in mod.parse():
+            if isinstance(item, Venue):
+                venues.append(item)
+            elif isinstance(item, Film):
+                films.append(item)
+            else:
+                if item.tmdb_id in captured:
+                    query = captured[item.tmdb_id]
+                    if item.film_key:
+                        hints = requests.setdefault(item.film_key, [])
+                        if query not in hints:
+                            hints.append(query)
+                    else:
+                        log.warning("parser=%s missing film key for TMDB query %r", args.parser, query)
+                    item = dataclasses.replace(item, tmdb_id=None)
+                screenings.append(item)
 
     # An empty parse more likely means a changed site than an empty programme.
     if not screenings:
@@ -119,6 +130,7 @@ def main() -> None:
     )
     nv = store.write_venues(venues, path=args.output)
     nf = store.write_films(films, path=args.output)
+    queries.write_requests(requests, source=args.parser, path=args.output)
     cities = len({s.city for s in screenings})
     cinemas = len({(s.city, s.cinema_name) for s in screenings})
     dates = len({s.date for s in screenings})

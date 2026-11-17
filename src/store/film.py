@@ -3,6 +3,8 @@
 import re
 import unicodedata
 from dataclasses import dataclass, field
+from difflib import SequenceMatcher
+from functools import lru_cache
 from typing import Self
 
 from store.version import Language
@@ -24,6 +26,7 @@ class Film:
     poster_url: str = ""
     url: str = ""
     original_languages: frozenset[Language] = frozenset()
+    directors: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -39,6 +42,7 @@ class Film:
             "poster_url": self.poster_url,
             "url": self.url,
             "original_languages": sorted(language.value for language in self.original_languages),
+            "directors": list(self.directors),
         }
 
     @classmethod
@@ -56,12 +60,31 @@ class Film:
             poster_url=d.get("poster_url") or "",
             url=d.get("url") or "",
             original_languages=frozenset(Language(v) for v in d.get("original_languages", ())),
+            directors=d.get("directors") or [],
         )
 
 
+@lru_cache(maxsize=65536)
 def title_key(title: str) -> str:
     """Normalised title: NFKC, casefolded, word tokens joined by single spaces."""
     return " ".join(re.findall(r"\w+", unicodedata.normalize("NFKC", title).casefold()))
+
+
+def shared_synopsis(left: str, right: str, *, corroborated: bool = False) -> bool:
+    """Substantial literal plot overlap, not fuzzy titles or generic blurbs."""
+    shorter, longer = sorted((title_key(left), title_key(right)), key=len)
+    words, other_words = shorter.split(), longer.split()
+    alignment = SequenceMatcher(None, words, other_words, autojunk=False)
+    common = alignment.find_longest_match()
+    return (
+        common.size >= 20
+        and len(" ".join(words[common.a : common.a + common.size])) >= 100
+        and (
+            common.size * 2 >= len(words)
+            or sum(block.size for block in alignment.get_matching_blocks()) * 10 >= len(words) * 9
+            or corroborated
+        )
+    )
 
 
 def film_key(source: str, title: str) -> str:

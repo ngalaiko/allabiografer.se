@@ -6,7 +6,7 @@ import pytest
 import requests
 
 from parse import tmdb
-from store import Movie, read_movie, title_key, tmdb_index_set, write_movie
+from store import Film, Movie, read_movie, title_key, tmdb_index_set, write_movie
 from store.version import Language
 
 
@@ -335,3 +335,233 @@ def test_failed_refresh_keeps_stored_metadata_and_does_not_retry_for_each_showin
     assert tmdb.lookup("Filmen", runtime=120, path=db, session=Unavailable({})) == 7
     assert tmdb.by_id(7, path=db, session=_Session({})) == 7
     assert read_movie(7, path=db) == movie
+
+
+@pytest.mark.parametrize(
+    ("facts", "expected"),
+    [
+        ({"runtime": 100}, 7),
+        ({"runtime": 105}, 7),
+        ({"runtime": 106}, None),
+        ({"release_date": "2020"}, 7),
+        ({"release_date": "2021", "runtime": 100}, None),
+        ({"release_date": "2026-11-17", "runtime": 100}, 7),  # local premiere, not original year
+        ({"overview": "Regissör: Robin Smith"}, 7),
+        ({"overview": "Regissör: Taylor Jones", "runtime": 100}, None),
+        ({"release_date": "2020", "runtime": 180, "overview": "Director's Cut."}, 7),
+        ({"release_date": "2020", "runtime": 180}, None),
+        ({}, None),  # unique title alone does not prove identity
+    ],
+)
+def test_group_matching_checks_independent_facts_and_contradictions(tmp_path, facts, expected):
+    movie = Movie.from_dict(
+        {
+            "tmdb_id": 7,
+            "title_sv": "Reunion",
+            "release_date": "2020-01-01",
+            "runtime": 100,
+            "directors": ["Robin Smith"],
+        }
+    )
+    film = Film(key="a:reunion", source="a", title="Reunion", **facts)
+    result = tmdb.match_group([film], {7: movie}, identifiers={7}, queries=[], path=tmp_path / "test.db")
+    assert result["tmdb_id"] == expected
+    assert result["reason"] == ("accepted" if expected else "unmatched")
+
+
+def test_group_matching_collects_all_alias_candidates_instead_of_first_match(tmp_path):
+    film = Film(key="a:reunion", source="a", title="Reunion", title_original="Homecoming", runtime=100)
+    movies = {
+        i: Movie.from_dict({"tmdb_id": i, "title_sv": title, "runtime": 100})
+        for i, title in ((7, "Reunion"), (8, "Homecoming"))
+    }
+    result = tmdb.match_group([film], movies, identifiers={7}, queries=[], path=tmp_path / "test.db")
+    assert result["tmdb_id"] is None
+    assert result["reason"] == "ambiguous"
+    assert {c["tmdb_id"] for c in result["candidates"] if not c["rejected"]} == {7, 8}
+
+
+@pytest.mark.parametrize(
+    ("duration", "tmdb_duration", "expected"),
+    [(9, 10, 7), (95, 90, 7), (96, 90, None), (178, 170, None)],
+)
+def test_group_runtime_tolerance_stays_five_minutes_without_stronger_evidence(
+    tmp_path, duration, tmdb_duration, expected
+):
+    film = Film(key="a:reunion", source="a", title="Reunion", runtime=duration)
+    movie = Movie.from_dict({"tmdb_id": 7, "title_sv": "Reunion", "runtime": tmdb_duration})
+    result = tmdb.match_group([film], {7: movie}, identifiers=set(), queries=[], path=tmp_path / "test.db")
+    assert result["tmdb_id"] == expected
+
+
+@pytest.mark.parametrize(
+    ("facts", "other_directors", "expected"),
+    [
+        ({"overview": "Regisserad av Robin Smith.", "runtime": 110}, [], 7),
+        ({"directors": ["Robin Smith"], "runtime": 110}, [], 7),
+        ({"directors": ["Taylor Jones"], "overview": "Regisserad av Robin Smith.", "runtime": 110}, [], 8),
+        ({"overview": "Regisserad av Robin Smith.", "runtime": 110}, ["Robin Smith"], None),
+        ({"runtime": 110}, [], None),
+        ({"overview": "Regisserad av Robin Smith.", "release_date": "2021-11-17"}, [], None),
+        ({"overview": "Regisserad av Robin Smith.", "runtime": 110, "release_date": "2021"}, [], 8),
+        ({"overview": "Regissör: Taylor Jones", "runtime": 110}, [], 8),
+    ],
+)
+def test_group_prefers_unique_director_and_runtime_without_overriding_conflicts(
+    tmp_path, facts, other_directors, expected
+):
+    film = Film(key="a:reunion", source="a", title="Reunion", **facts)
+    movies = {
+        7: Movie.from_dict(
+            {
+                "tmdb_id": 7,
+                "title_sv": "Reunion",
+                "runtime": 105,
+                "release_date": "2020-01-01",
+                "directors": ["Robin Smith"],
+            }
+        ),
+        8: Movie.from_dict(
+            {
+                "tmdb_id": 8,
+                "title_sv": "Reunion",
+                "runtime": 110,
+                "release_date": "2021-01-01",
+                "directors": other_directors,
+            }
+        ),
+    }
+    result = tmdb.match_group([film], movies, identifiers=set(), queries=[], path=tmp_path / "test.db")
+    assert result["tmdb_id"] == expected
+
+
+@pytest.mark.parametrize(
+    ("overview", "expected"),
+    [
+        ("Från Oscar- och BAFTA-belönade regissören Robin Smith kommer filmen.", 7),
+        ("Ett nytt filmpaket regisserat av Robin Smith. En berättelse för barn.", 7),
+        ("Inspirerad av regissören Robin Smiths tidigare filmer.", None),
+        ("I rollerna Robin Smith och Taylor Jones.", None),
+    ],
+)
+def test_explicit_director_phrases_not_actor_or_comparison_mentions(tmp_path, overview, expected):
+    film = Film(key="a:reunion", source="a", title="Reunion", overview=overview)
+    movie = Movie.from_dict({"tmdb_id": 7, "title_sv": "Reunion", "directors": ["Robin Smith"]})
+    result = tmdb.match_group([film], {7: movie}, identifiers=set(), queries=[], path=tmp_path / "test.db")
+    assert result["tmdb_id"] == expected
+
+
+@pytest.mark.parametrize(("other", "expected"), [(["Robin Smith"], 7), (["Taylor Jones"], None)])
+def test_partial_director_lists_must_agree_for_every_source(tmp_path, other, expected):
+    films = [
+        Film(key="a:reunion", source="a", title="Reunion", runtime=100, directors=["Robin Smith", "Taylor Jones"]),
+        Film(key="b:reunion", source="b", title="Reunion", runtime=100, directors=other),
+    ]
+    movie = Movie.from_dict({"tmdb_id": 7, "title_sv": "Reunion", "directors": ["Robin Smith"]})
+    result = tmdb.match_group(films, {7: movie}, identifiers=set(), queries=[], path=tmp_path / "test.db")
+    assert result["tmdb_id"] == expected
+
+
+def test_verified_director_aliases_survive_offline_without_accepting_other_crew(tmp_path, monkeypatch):
+    def get(session, url, **params):
+        if url.endswith("/search/movie"):
+            return {"results": [{"id": 7}], "total_pages": 1}
+        if url.endswith("/movie/7/credits"):
+            return {
+                "crew": [
+                    {"job": "Director", "id": 42, "name": "Robin Smythe"},
+                    {"job": "Producer", "id": 43, "name": "Taylor Jones"},
+                ]
+            }
+        if url.endswith("/person/42"):
+            return {"name": "Robin Smythe", "also_known_as": ["Robin Smith", "監督名"]}
+        assert url.endswith("/movie/7")
+        return {
+            "id": 7,
+            "title": "Reunion",
+            "runtime": 100,
+            "credits": {"crew": [{"job": "Director", "name": "監督名"}]},
+        }
+
+    monkeypatch.setattr(tmdb, "_get", get)
+    path = tmp_path / "test.db"
+    movies = {}
+    film = Film(key="a:reunion", source="a", title="Reunion", runtime=100, directors=["Róbin Smíth"])
+    assert tmdb.match_group([film], movies, identifiers=set(), queries=[], path=path, online=True)["tmdb_id"] == 7
+    assert tmdb.match_group([film], movies, identifiers=set(), queries=[], path=path)["tmdb_id"] == 7
+    producer = Film(key="a:reunion", source="a", title="Reunion", runtime=100, directors=["Taylor Jones"])
+    assert tmdb.match_group([producer], movies, identifiers=set(), queries=[], path=path)["tmdb_id"] is None
+
+
+@pytest.mark.parametrize(("year", "expected"), [("", None), ("1984", 8)])
+@pytest.mark.parametrize("alias_field", ["alternative_titles", "translations"])
+def test_online_group_matching_checks_alternative_titles_before_claiming_uniqueness(
+    tmp_path, monkeypatch, year, expected, alias_field
+):
+    class Session(_Session):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def get(self, url, params=None, timeout=None):
+            self.payload = (
+                {"results": [{"id": 7, "title": "Reunion"}, {"id": 8, "title": "Återkomsten"}]}
+                if url.endswith("/search/movie")
+                else {
+                    "id": int(url.rsplit("/", 1)[1]),
+                    "title": "Reunion" if url.endswith("/7") else "Återkomsten",
+                    "release_date": "2026-01-01" if url.endswith("/7") else "1984-01-01",
+                    "runtime": 100,
+                    alias_field: {"titles": [{"title": "Reunion"}]}
+                    if alias_field == "alternative_titles"
+                    else {"translations": [{"data": {"title": "Reunion"}}]},
+                }
+            )
+            return super().get(url, params, timeout)
+
+    monkeypatch.setattr(tmdb._http, "session", lambda: Session({}))
+    film = Film(key="a:reunion", source="a", title="Reunion", release_date=year, runtime=100)
+    result = tmdb.match_group([film], {}, identifiers=set(), queries=[], path=tmp_path / "test.db", online=True)
+    assert result["tmdb_id"] == expected
+    assert result["reason"] == ("accepted" if expected else "ambiguous")
+
+
+@pytest.mark.parametrize(("duration", "expected"), [(125, 7), (126, None)])
+def test_substantial_tmdb_plot_evidence_bounds_programme_duration_variation(tmp_path, duration, expected):
+    story = (
+        "A young architect returns to her childhood home with her family and discovers a hidden world "
+        "behind the familiar rooms, forcing them to confront an extraordinary secret together."
+    )
+    film = Film(key="a:reunion", source="a", title="Reunion", runtime=duration, overview=story)
+    movie = Movie.from_dict({"tmdb_id": 7, "title_sv": "Reunion", "runtime": 100, "overview_sv": story})
+    assert (
+        tmdb.match_group([film], {7: movie}, identifiers=set(), queries=[], path=tmp_path / "test.db")["tmdb_id"]
+        == expected
+    )
+
+
+@pytest.mark.parametrize(("status", "expected"), [(404, 7), (503, None)])
+def test_deleted_tmdb_claim_is_rejected_but_outages_do_not_eliminate_competing_candidates(
+    tmp_path, monkeypatch, status, expected
+):
+    path = tmp_path / "test.db"
+    film = Film(key="a:reunion", source="a", title="Reunion", runtime=100)
+    movies = {i: Movie.from_dict({"tmdb_id": i, "title_sv": "Reunion", "runtime": 100}) for i in (7, 8)}
+
+    def get(session, url, **params):
+        if url.endswith("/search/movie"):
+            return {"results": []}
+        if url.endswith("/8"):
+            response = requests.Response()
+            response.status_code = status
+            raise requests.HTTPError(response=response)
+        return {"id": 7, "title": "Reunion", "runtime": 100}
+
+    monkeypatch.setattr(tmdb, "_get", get)
+    result = tmdb.match_group([film], movies, identifiers={8}, queries=[], path=path, online=True)
+    assert result["tmdb_id"] == expected
+    assert tmdb.match_group([film], movies, identifiers={8}, queries=[], path=path)["tmdb_id"] == expected
+    if status == 404:
+        assert {c["tmdb_id"]: c["rejected"] for c in result["candidates"]}[8] == ["tmdb_not_found"]

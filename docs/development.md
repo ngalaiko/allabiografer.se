@@ -92,6 +92,117 @@ mise run serve
 The static preview serves the built site on port 8000; it does not run the
 newsletter's nginx/Lua API. See [newsletter operations](newsletter.md) for that backend.
 
+### Film consolidation and stable URLs
+
+`mise run parse` first runs independent source fetches (`mise run fetch`), then
+`mise run reconcile`. Fetches save source films, screenings and constrained TMDB
+query hints without contacting TMDB. Reconciliation first groups source films,
+then optionally matches those groups to TMDB, combines compatible observations of the same
+screening, and atomically saves the final catalogue and schedule. The static
+`build` command reads that saved snapshot; it does not match films or allocate URLs.
+
+`catalogue_films` reserves a permanent identity and title-based slug. Collisions
+receive numeric suffixes, never source names or source hashes. Adding a TMDB
+match, changing a title, or losing a competing film's screenings does not rename
+an existing identity. Confirmed later merges retain the oldest identity; old
+slugs point directly to its slug through the generated nginx map. Initial import
+also records the current legacy slugs as aliases. Only canonical URLs enter links
+and sitemaps. Expiring film pages without upcoming screenings retain the existing
+site policy; this change does not make those pages permanent archives.
+
+Matching rules:
+
+- Initial grouping uses source facts only, never metadata inferred from TMDB.
+  Existing TMDB IDs are claims to validate, not proof that two source films match.
+- The same source film key and exact nonempty film URL preserve identity across
+  partial TMDB enrichment.
+- Otherwise, normalized titles or confirmed group aliases must overlap. Evidence
+  is a shared venue/date/time with compatible halls, the same release year with
+  runtimes within two minutes, or substantial shared synopsis text.
+- Shared synopsis evidence requires at least 20 consecutive words and 100
+  characters, plus half the shorter synopsis, 90% total word alignment, or a
+  corroborating known director credit where available. Only this stronger evidence allows
+  programme-duration differences up to 25% of the shorter runtime.
+- Strong matches precede weaker year/runtime matches; confirmed groups share
+  aliases and evidence until no further joins are possible. All group members
+  are checked to prevent weak runtime chains or bridges between different works.
+  Source years differing by more than one remain barriers.
+- Each established source group pools its titles, original titles, runtime/year
+  hints and explicit credits before validating TMDB candidates. Search results
+  include alternative and translated titles; exact normalized title overlap is
+  required, alongside independent year, runtime, director or substantial synopsis
+  evidence. The first search result and bare historical IDs never win by default.
+- Explicit four-digit original years and query/title years constrain candidates;
+  complete source premiere dates provide positive year evidence but do not veto
+  an earlier original release. Ordinary runtime tolerance is five minutes,
+  inclusive, and every known source/query duration must fit that tolerance.
+  Substantial shared synopsis permits differences up to 25% of the shorter runtime;
+  explicitly documented cuts permit edition differences with other corroboration.
+  Conflicting explicit director credits reject a candidate.
+- Source director lists are stored independently of TMDB. Capitol Stockholm and
+  Cinemascenen read their labelled `Regi` fields without mixing credits into the
+  synopsis. Explicit synopsis credit phrases remain a fallback, including Swedish
+  `regisserat av` and introductions from a named director; actor names, possessive
+  names and comparison mentions alone supply no director evidence. bio.se accepts
+  explicit introductory original years with multiple descriptive adjectives, but
+  never plot-setting, screening or comparison-film years.
+- Each source's director list needs at least one verified name in common with the
+  candidate; lists need not be exhaustive or identical. Disjoint claims from separate
+  sources remain a conflict. When needed, enrichment caches English credits and
+  person aliases only for people credited as `Director`, handling different scripts
+  without guessed transliterations. Director comparison folds Latin diacritics
+  without changing film-title normalization or other scripts. The
+  `tmdb_director_aliases` cache is reused offline and invalidated when the movie's
+  metadata is refreshed; retrieval errors cannot silently eliminate a competing
+  candidate.
+- A unique candidate with both an explicit matching director credit and runtime
+  corroboration takes precedence over weaker qualifying candidates. Contradictions
+  still reject it. Otherwise exactly one candidate must satisfy the evidence without
+  contradictions; multiple qualifying candidates leave the group unenriched.
+  Groups independently validated to the same TMDB ID then join, including translated
+  titles and documented editions.
+  The whole discovered inventory is checked before final decisions, so later alias
+  searches cannot leave earlier false-unique matches. During an outage only an
+  unchanged, still-valid previously validated association can be retained.
+- A confirmed TMDB detail 404 rejects that ID rather than treating its stale
+  cached metadata as a competing film. Transient failures do not eliminate
+  candidates. `tmdb_fetches` records successful alias-complete detail fetches
+  and confirmed 404s; a later successful fetch clears the missing-ID status.
+  Mature, already fetched unrelated candidates reuse their metadata instead
+  of being downloaded again for every broad title search.
+- Uncertain records stay separate and publication continues. Equal titles alone
+  never prove identity. `reconciliation_candidates` saves unresolved pairs and
+  reasons, excluding pairs already joined; `catalogue_members.data` saves source
+  facts and match reasons.
+  `catalogue_tmdb_matches.data` records group members, independent source facts,
+  candidate IDs, corroborating evidence, rejection reasons and the selected ID.
+  Evidence is reevaluated on every run so corrected metadata or rules can split
+  an incorrect previous join. A correction may necessarily create a new identity.
+  Current source film rows supersede historical copies of their metadata; past
+  screening evidence and URL ownership remain. Inputs are canonically ordered
+  so parser completion order cannot select fallback titles or change the saved
+  schedule.
+
+Deferred TMDB hints retain the first lookup's runtime/year constraints. Fetching
+does not execute a parser's relaxed fallback branches without a matching result;
+reconciliation never silently drops those constraints.
+
+For a reproducible offline backtest, copy the database, keep its poster directory
+beside it (or symlink the existing directory), and run:
+
+```sh
+uv run reconcile --db /path/to/copy.db --today 2026-11-17
+uv run --group build build /path/to/site --db /path/to/copy.db
+```
+
+Add `--enrich` with the parse dependency group to resolve saved query hints against
+TMDB. The offline command validates source groups against stored candidate
+metadata and aliases, without requests or blind reuse of historical IDs.
+Inspect unresolved cases with `SELECT * FROM reconciliation_candidates` and
+confirmed groups by joining `catalogue_members.film_id` to `catalogue_films.id`.
+Keep these identity and slug tables when refreshing sources; rebuilding them
+from scratch discards URL history.
+
 Film pages normally show the same 14-day timetable as city programmes. When a
 national or city-specific film page has only later bookings, it shows the next
 booked day instead, with film details, ticket links and an explicit notice giving

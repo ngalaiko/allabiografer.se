@@ -25,7 +25,11 @@ jobs:
       # Each parser replaces only its own source; failed ones keep previous data.
       - id: parse
         continue-on-error: true
-        run: mise run --continue-on-error parse
+        run: mise run --continue-on-error fetch
+      # Reconcile even when one source retained its previous observations.
+      # Uncertain film matches are recorded, not publication failures.
+      - name: Reconcile films and save schedule
+        run: mise run reconcile
       - name: Create PR with changes
         env:
           GH_TOKEN: ${{ secrets.PAT }}

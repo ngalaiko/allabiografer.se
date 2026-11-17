@@ -60,6 +60,18 @@ def nginx_server(tmp_path):
     for suffix in ("js", "json", "md", "xml"):
         (root / f"i/compression.{suffix}").write_text("compressible content\n" * 100)
 
+    from build import SiteData, _write_film_redirects
+
+    _write_film_redirects(
+        SiteData(
+            out_dir=root,
+            film_aliases={
+                "previous-slug": "current",
+                "andré-rieus-2026-christmas-concert-let-it-snow-source-23eb599fb37cc7c0": "current",
+            },
+        )
+    )
+
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]
@@ -77,22 +89,23 @@ def nginx_server(tmp_path):
         "proxy_pass https://$posthog_upstream;",
         'content_by_lua_block { ngx.header["Cache-Control"] = "private, max-age=60"; ngx.say(ngx.var.uri) }',
     )
-    # Exercise production gzip settings; OpenResty does not include the Brotli module.
-    compression = "\n".join(
+    # Exercise production gzip and map hashing; OpenResty lacks the Brotli module.
+    http_settings = "\n".join(
         line
         for line in (Path(__file__).resolve().parents[1] / "etc/nginx/nginx.conf").read_text().splitlines()
-        if line.strip().startswith("gzip")
+        if line.strip().startswith(("gzip", "map_hash_"))
     )
     config = tmp_path / "nginx.conf"
     config.write_text(
         f"pid {tmp_path}/nginx.pid;\nerror_log {tmp_path}/error.log;\n"
         "events {}\nhttp {\naccess_log off;\n"
+        f"{http_settings}\n"
         f"lua_package_path '{Path(__file__).resolve().parents[1]}/etc/nginx/lua/?.lua;;';\n"
         "types { text/html html; text/css css; application/json json; text/plain txt; "
         "application/javascript js; application/xml xml; }\n"
         f"include {Path(__file__).resolve().parents[1]}/etc/nginx/markdown.conf;\n"
         f"include {Path(__file__).resolve().parents[1]}/etc/nginx/cache.conf;\n"
-        f"{compression}\n"
+        f'map $uri $film_redirect {{ default ""; include {root}/film-redirects.map; }}\n'
         "limit_req_zone $binary_remote_addr zone=newsletter_signup:1m rate=5r/m;\n"
         "limit_req_zone $binary_remote_addr zone=newsletter_preferences:1m rate=30r/m;\n"
         "map $request_uri $posthog_upstream { default eu.i.posthog.com; }\n"
@@ -136,6 +149,15 @@ def nginx_server(tmp_path):
         ("/stad/stockholm/stockholm-biocaf%C3%A9-tellus-midsommarkransen-extra/", 302, "/stad/stockholm/"),
         ("/stad/h%C3%A4ssleholm/genre/bosse-skoglund/", 302, "/stad/hässleholm/"),
         ("/film/current/", 200, None),
+        ("/film/previous-slug/", 301, "/film/current/"),
+        ("/film/previous-slug?selection=1", 301, "/film/current/?selection=1"),
+        ("/stad/stockholm/film/previous-slug/", 301, "/stad/stockholm/film/current/"),
+        (
+            "/stad/stockholm/film/andr%C3%A9-rieus-2026-christmas-concert-let-it-snow-source-23eb599fb37cc7c0/",
+            301,
+            "/stad/stockholm/film/current/",
+        ),
+        ("/stad/g%C3%B6teborg/film/previous-slug/", 302, "/stad/göteborg/"),
         ("/film/expired/", 302, "/"),
         ("/film/expired?selection=1", 302, "/"),
         ("/film/", 403, None),

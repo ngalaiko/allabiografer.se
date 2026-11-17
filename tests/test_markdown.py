@@ -8,7 +8,8 @@ from urllib.parse import unquote, urlsplit
 from bs4 import BeautifulSoup
 
 import build
-from store import Movie, Screening, write_movie, write_screenings
+from build.catalogue import reconcile
+from store import Film, Movie, Screening, write_films, write_movie, write_screenings
 
 
 def test_build_writes_markdown_from_database(tmp_path, monkeypatch):
@@ -25,15 +26,19 @@ def test_build_writes_markdown_from_database(tmp_path, monkeypatch):
                 "overview_sv": "Kärlek & hopp",
                 "genres": ["Drama"],
                 "directors": ["A & B"],
+                "runtime": 100,
                 "release_date_se": tomorrow.isoformat(),
             }
         ),
         path=db,
     )
+    write_films([Film(key="test:film", source="test", title="Filmen [ett]", runtime=100)], path=db)
     write_screenings(
         [
             Screening(
                 tmdb_id=42,
+                film_key="test:film",
+                title="Filmen [ett]",
                 date=tomorrow + timedelta(days=offset),
                 time=time(hour, 30),
                 ticket_url=f"https://tickets.example/{offset}",
@@ -45,6 +50,7 @@ def test_build_writes_markdown_from_database(tmp_path, monkeypatch):
         path=db,
     )
 
+    reconcile(path=db)
     build.main()
 
     pages = list(out.rglob("*.html"))

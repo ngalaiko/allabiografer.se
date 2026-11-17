@@ -87,6 +87,29 @@ def test_mixed_programme_follows_pages_and_uses_start_not_doors(monkeypatch):
 
 
 @pytest.mark.parametrize(
+    ("description", "runtime"),
+    [
+        # Public Paper Tiger description, fetched 2026-11-17:
+        # https://www.tickster.com/se/sv/events/g29ggg43vf6jeyc/2026-11-27/paper-tiger-tal-engelska-text-svenska
+        ("Den är 1 timme och 55 minuter lång och passar från 15 år.", 115),
+        ("Filmen är 2 timmar lång.", 120),
+        ("Speltid: 95 minuter", 95),
+        ("Längd: 1 tim 40 min", 100),
+        ("De har 55 minuter på sig att rädda världen.", None),
+        ("Entrén öppnar 1 timme och 55 minuter före filmen.", None),
+        ("New York på 1980-talet. Premiär 2026-11-27.", None),
+    ],
+)
+def test_only_explicit_film_durations_become_runtime(monkeypatch, description, runtime):
+    page = _FINSPANG.replace('<div id="event-description">', f'<div id="event-description"><p>{description}</p>')
+    _setup(monkeypatch, _card(_URL), pages={_URL: page})
+    film = next(item for item in parser.parse() if isinstance(item, Film))
+    assert film.runtime == runtime
+    assert film.release_date == ""
+    assert description in film.overview
+
+
+@pytest.mark.parametrize(
     ("site_index", "page", "title", "screen", "language", "subtitles"),
     [
         (1, _EMMABODA, "The Hunger Games: Sunrise on the reaping", "", {Language.ENGLISH}, None),

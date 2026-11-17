@@ -5,6 +5,9 @@ server {
 
     root /var/www/allabiografer.se;
     index index.html;
+    if ($film_redirect) {
+        return 301 $film_redirect$is_args$args;
+    }
     charset utf-8;
     charset_types text/markdown;
     add_header Vary Accept always;

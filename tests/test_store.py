@@ -459,14 +459,26 @@ def film(**kwargs) -> Film:
 
 
 def test_film_round_trip(db):
-    f = film(original_languages=frozenset({Language.ARABIC, Language.SPANISH}))
+    f = film(
+        original_languages=frozenset({Language.ARABIC, Language.SPANISH}), directors=["Robin Smith", "Taylor Jones"]
+    )
     assert write_films([f], path=db) == 1
     assert read_film("bio_se:filmen", path=db) == f
 
 
 def test_film_to_dict_inverse_of_from_dict():
-    f = film(original_languages=frozenset({Language.ARABIC, Language.SPANISH}))
+    f = film(original_languages=frozenset({Language.ARABIC, Language.SPANISH}), directors=["Robin Smith"])
     assert Film.from_dict(f.to_dict()) == f
+
+
+def test_source_directors_upgrade_preserves_existing_films(db):
+    write_films([film()], path=db)
+    with sqlite3.connect(db) as conn:
+        conn.execute("ALTER TABLE films DROP COLUMN directors")
+    assert read_film("bio_se:filmen", path=db) == film()
+    updated = film(directors=["Robin Smith"])
+    write_films([updated], path=db)
+    assert read_film("bio_se:filmen", path=db) == updated
 
 
 def test_film_defaults(db):

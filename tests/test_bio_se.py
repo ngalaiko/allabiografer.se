@@ -134,6 +134,24 @@ def test_film_leaves_unstated_fields_empty():
     assert (film.overview, film.runtime, film.genres, film.age_rating, film.poster_url) == ("", None, [], "", "")
 
 
+@pytest.mark.parametrize(
+    ("synopsis", "year"),
+    [
+        ("Den oändliga historien är en fantasyfilm från 1984 i regi av Wolfgang Petersen.", "1984"),
+        ("Exempelfilmen är en svensk film från 1995. En resa genom Stockholm.", "1995"),
+        ("Exempelfilmen är en amerikansk romantisk dramafilm från 1995. En resa.", "1995"),
+        ("En resa genom Stockholm 1995. Premiär på bio den 17 november 2026.", ""),
+        ("En hyllning till en film från 1984. En ny generation tar över.", ""),
+    ],
+)
+def test_explicit_introductory_film_year_not_plot_or_screening_dates(synopsis, year):
+    payload = _films("falkoping-cosmorama")
+    payload["movies"][0]["movie"]["synopsis"] = synopsis
+    film, *_ = next(_showtimes(payload))
+    assert film.release_date == year
+    assert film.overview == synopsis
+
+
 def test_film_normalises_abbreviated_ratings():
     film, *_ = next(iter(_showtimes(_films("stockholm-bio-aspen"))))
     assert film.age_rating == "Barntillåten"
