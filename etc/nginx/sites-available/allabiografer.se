@@ -68,27 +68,9 @@ server {
         try_files $uri =404;
     }
 
-    location ~ ^(?<city_path>/stad/[^/]+)/.+$ {
-        try_files $markdown_candidate $uri $uri/ @missing_city_page;
-    }
-
-    location @missing_city_page {
-        # A missing programme may return later; the city is not its permanent replacement.
-        if (-f $document_root$city_path/index.html) {
-            return 302 $city_path/;
-        }
-        return 404;
-    }
-
-    location ~ ^/film/[^/]+/?$ {
-        try_files $markdown_candidate $uri $uri/ @missing_film_page;
-    }
-
-    location @missing_film_page {
-        return 302 /;
-    }
-
     location / {
+        # Known programmes are retained as static pages even without showtimes.
+        # Unknown URLs are not equivalent to the homepage or city programme.
         try_files $markdown_candidate $uri $uri/ =404;
     }
 }

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block page %}<div class="schedule-scroll" role="region" tabindex="0" aria-label="Bioprogram">{{ super() }}</div>{% endblock %}
+{% block page %}<div class="schedule-scroll{% if not days %} programme-empty{% endif %}" role="region" tabindex="0" aria-label="Bioprogram">{{ super() }}</div>{% endblock %}
 {% block body %}
 {% macro newsletter() %}
 <section class="newsletter-row" aria-labelledby="newsletter-title">
@@ -22,26 +22,30 @@
 </div>
 </section>
 {% endmacro %}
-<main class="program" aria-label="Bioprogram, rulla i sidled för fler datum" tabindex="0" style="--day-count: {{ num_days }};">
+<main class="program" aria-label="{{ 'Bioprogram, rulla i sidled för fler datum' if days else 'Bioprogram' }}" tabindex="0" style="--day-count: {{ num_days }};">
 {% if city == "Stockholm" %}
 <aside class="festival-banner" data-festival="stockholms-filmfestival-2026" aria-label="Filmfestival"><a href="/festival/stockholms-filmfestival/2026/"><strong>Stockholm Film Festival 2026</strong> <span>· Se programmet</span></a><button type="button" aria-label="Stäng festivalbanner" hidden><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.5 4.5L11.5 11.5M11.5 4.5L4.5 11.5" stroke="currentColor" stroke-width="1.5"/></svg></button></aside>
 {% endif %}
-{% if programme_note %}<p class="programme-note">{{ programme_note }}</p>{% endif %}
-<header class="schedule-header">
+{% if programme_note and days %}<p class="programme-note">{{ programme_note }}</p>{% endif %}
+<header{% if days %} class="schedule-header"{% endif %}>
 <nav class="schedule-breadcrumbs" aria-label="Brödsmulor"><a class="home" href="/" aria-label="Alla städer">{% include "home_icon.html" %}</a><div class="breadcrumb-label">{{ breadcrumbs|safe }}{% if clear_filter_url %} <a class="filter-close" href="{{ clear_filter_url }}" aria-label="Ta bort filter"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4.5 4.5L11.5 11.5M11.5 4.5L4.5 11.5" stroke="currentColor" stroke-width="1.5"/></svg></a>{% endif %}</div></nav>
+{% if days %}
 <div class="schedule-dates">
 {% for day in days %}<time datetime="{{ day.date }}">{{ day.label }}</time>{% endfor %}
 </div>
+{% endif %}
 </header>
 {% for block in blocks %}
-<article class="schedule-film" style="--film-rows: {{ block.cinemas|length + 2 }};">
+<article{% if days %} class="schedule-film" style="--film-rows: {{ block.cinemas|length + 2 }};"{% else %} class="empty-film"{% endif %}>
 <div class="film-title">
 <h2>{% for anchor in block.anchors %}<span id="{{ anchor }}" style="scroll-margin-top:120px"></span>{% endfor %}{% if canonical and canonical.endswith(block.film_url) %}{{ block.film_title }}{% else %}<a href="{{ block.film_url }}" title="{{ block.film_title }}">{{ block.film_title }}</a>{% endif %}{% if block.variant %} <span class="film-variant">({{ block.variant }})</span>{% endif %}</h2>
 </div>
 <div class="film-overview">
+{% if days or block.poster_url %}
 <div class="film-poster">{% if block.poster_url %}<img src="{{ block.poster_url }}" alt="" width="125" height="177"
   srcset="{{ block.poster_url|replace('.webp', '-104.webp') }} 104w, {{ block.poster_url|replace('.webp', '-125.webp') }} 125w, {{ block.poster_url }} 250w"
   sizes="(max-width: 700px) 52px, 125px" loading="{{ 'eager' if loop.first else 'lazy' }}"{% if loop.first %} fetchpriority="high"{% endif %}>{% else %}<div class="poster-placeholder"></div>{% endif %}</div>
+{% endif %}
 <div class="film-description">
 {% if block.mi %}<div class="film-meta">{{ block.mi|safe }}</div>{% endif %}
 {% if block.full_desc %}<p class="synopsis" id="synopsis-{{ block.film_id }}">{{ block.full_desc }}</p>
@@ -66,10 +70,15 @@
 </div>
 </section>
 {% endfor %}
+{% if not days and programme_note %}<p class="no-screenings">{{ programme_note }}</p>{% endif %}
 </article>
 {% if city and (loop.index == 2 or (loop.last and loop.index < 2)) %}{{ newsletter() }}{% endif %}
 {% endfor %}
-{% if not blocks %}<p class="no-screenings">Inga visningar de närmaste två veckorna.</p>{% endif %}
+{% if not blocks %}<section class="no-screenings">
+<h1>{{ title }}</h1>
+<p>Inga visningar de närmaste två veckorna.</p>
+{% if empty_context %}<ul>{% for item in empty_context %}<li><a href="{{ item.url }}">{{ item.name }}</a>{% if item.address %} · {{ item.address }}{% endif %}</li>{% endfor %}</ul>{% endif %}
+</section>{% endif %}
 {% if city and not blocks %}{{ newsletter() }}{% endif %}
 </main>
 <script src="/i/synopsis.js?v={{ synopsis_version }}" defer></script>

@@ -8,6 +8,7 @@ from datetime import datetime, time, timedelta
 from pathlib import Path
 
 import pytest
+from bs4 import BeautifulSoup
 
 import build
 from build import SWEDEN_TZ
@@ -53,6 +54,51 @@ def add(db, source, *, title="Same film", runtime=None, year="", identifier=None
 
 def catalogue(db):
     return read_catalogue(Path("unused"), path=db)
+
+
+@pytest.mark.parametrize("refresh", [False, True])
+def test_known_pages_survive_last_screening_without_publishing_old_tickets(db, tmp_path, refresh):
+    film = add(db, "a", runtime=103, year="2026", overview="A preserved film synopsis.")
+    # Old raw imports may contain superseded place names that were never in the
+    # catalogue. Retention is not permission to recreate arbitrary raw URLs.
+    original = read_screenings(path=db)[0]
+    write_screenings([replace(original, city="Legacy city", date=original.date - timedelta(days=10))], path=db)
+    reconcile(path=db)
+    before = catalogue(db)
+    slug = next(iter(before.film_slugs.values()))
+    later = before.today + timedelta(days=3)
+    if refresh:
+        # Source refreshes can remove screenings entirely, not just expire them.
+        with sqlite3.connect(db) as conn:
+            conn.execute("DELETE FROM screenings")
+        reconcile(path=db, today=later)
+    sd = read_catalogue(tmp_path / "site", path=db, today=later)
+    assert not sd.screenings
+    build._build_programme_pages(build._make_env(), sd)
+    build._write_sitemap(sd)
+    for prefix in ("film", "stad/stockholm/film"):
+        path = sd.out_dir / prefix / slug / "index.html"
+        page = BeautifulSoup(path.read_text(), "html.parser")
+        assert page.select_one(".film-title").get_text(strip=True) == film.title
+        assert film.overview in page.get_text()
+        assert "Inga kommande visningar publicerade." in page.get_text()
+        assert not page.select(".schedule-header, .schedule-dates, .schedule-cell, .schedule-film, .poster-placeholder")
+        assert not page.select("a[data-start]")
+        assert not page.select('meta[name="robots"][content*="noindex"]')
+        assert page.select_one('link[rel="canonical"]')["href"] == f"https://allabiografer.se/{prefix}/{slug}/"
+        graphs = [json.loads(node.string) for node in page.select('script[type="application/ld+json"]')]
+        assert not any(node["@type"] == "ScreeningEvent" for graph in graphs for node in graph.get("@graph", []))
+        assert film.overview in path.with_suffix(".md").read_text()
+        assert f"/{prefix}/{slug}/" in (sd.out_dir / "sitemap.xml").read_text()
+    assert (sd.out_dir / "stad/stockholm/index.html").is_file()
+    assert (sd.out_dir / "stad/stockholm/bio/index.html").is_file()
+    for path in ("stad/stockholm/index.html", "stad/stockholm/bio/index.html"):
+        page = BeautifulSoup((sd.out_dir / path).read_text(), "html.parser")
+        assert page.h1 is not None
+        assert not page.select(".schedule-header, .schedule-dates, .schedule-cell")
+    assert json.loads((sd.out_dir / "stad/stockholm/index.json").read_text())["screenings"] == []
+    assert not (sd.out_dir / "film/unknown/index.html").exists()
+    assert not (sd.out_dir / "stad/legacy-city/index.html").exists()
 
 
 def test_unmatched_sources_join_with_year_and_runtime_but_not_title_alone(db):
@@ -350,7 +396,7 @@ def test_slug_survives_title_changes_tmdb_enrichment_and_competitor_expiry(db):
     assert catalogue(db).film_slugs[identity] == original_slug
 
 
-def test_later_merge_keeps_first_slug_and_records_direct_alias(db):
+def test_later_merge_keeps_first_slug_and_records_direct_alias(db, tmp_path):
     a = add(db, "a", day=1)
     b = add(db, "b", day=2)
     reconcile(path=db)
@@ -364,6 +410,16 @@ def test_later_merge_keeps_first_slug_and_records_direct_alias(db):
     assert sd.film_aliases["same-film-2"] == "same-film"
     reconcile(path=db)
     assert catalogue(db).film_aliases == sd.film_aliases
+
+    later = sd.today + timedelta(days=3)
+    reconcile(path=db, today=later)
+    expired = read_catalogue(tmp_path / "site", path=db, today=later)
+    assert expired.film_aliases == sd.film_aliases
+    build._build_programme_pages(build._make_env(), expired)
+    build._write_film_redirects(expired)
+    redirects = (expired.out_dir / "film-redirects.map").read_text()
+    assert '"/film/same-film-2/" "/film/same-film/";' in redirects
+    assert '"/stad/stockholm/film/same-film-2/" "/stad/stockholm/film/same-film/";' in redirects
 
     # Evidence is reevaluated: a later correction can undo an incorrect join.
     write_films([replace(b, runtime=10, release_date="1995")], path=db)

@@ -107,8 +107,15 @@ match, changing a title, or losing a competing film's screenings does not rename
 an existing identity. Confirmed later merges retain the oldest identity; old
 slugs point directly to its slug through the generated nginx map. Initial import
 also records the current legacy slugs as aliases. Only canonical URLs enter links
-and sitemaps. Expiring film pages without upcoming screenings retain the existing
-site policy; this change does not make those pages permanent archives.
+and sitemaps. Known film, city-film, city, cinema and city-genre pages remain static
+pages when their screenings expire. Film pages retain metadata and explicitly say
+that no upcoming screenings are published; expired tickets and structured-data
+events are removed. The snapshot retains film/location associations independently
+of its current schedule, including after a source removes its listings. Raw historical
+place names outside the catalogue are not imported as page URLs. Confirmed aliases
+still redirect permanently, while unknown URLs return 404 rather than redirecting
+to unrelated city or home pages. Retention makes pages eligible for indexing; it
+does not guarantee that a search engine will index sparse pages.
 
 Matching rules:
 

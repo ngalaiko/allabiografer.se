@@ -196,6 +196,23 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
   body > .site-footer { padding: 24px 12px 12px; }
 }
 
+/* Without showtimes, render ordinary titles and content rather than a timetable. */
+.programme-empty { width: 100%; }
+.programme-empty .program { --frame: 0px; --sheet-width: 100%; width: 100%; max-width: 760px; padding: 20px; }
+.programme-empty .program::before, .programme-empty .program::after { display: none; }
+.programme-empty .schedule-breadcrumbs { position: static; width: auto; height: auto; padding: 0; border: 0; background: none; margin-bottom: 20px; }
+.programme-empty .breadcrumb-label { white-space: normal; overflow: visible; }
+.programme-empty .no-screenings { padding: 0; margin: 16px 0; }
+.programme-empty h1 { font-size: var(--cap-height-13); line-height: 1.4; margin-bottom: 12px; }
+.programme-empty .no-screenings ul { padding-left: 18px; margin-top: 12px; }
+.programme-empty .newsletter-content { position: relative; width: 100%; }
+.empty-film .film-title { display: block; position: static; width: auto; height: auto; padding: 0; border: 0; background: none; margin-bottom: 12px; }
+.empty-film .film-title h2 { display: block; overflow: visible; }
+.empty-film .film-overview { display: flex; position: static; width: auto; padding: 0; gap: 16px; border: 0; }
+.empty-film .film-poster { flex: 0 0 auto; padding: 0; border: 0; }
+.empty-film .film-poster img { position: static; }
+.empty-film .film-description { flex: 1; min-width: 0; position: static; padding: 0; border: 0; background: none; }
+
 .site-footer { padding: 2em 20px 1em; margin-top: auto; color: var(--muted); font-size: var(--cap-height-10); text-align: center; line-height: 2; }
 .site-footer a { color: var(--muted); text-decoration: none; }
 .site-footer a:hover { color: var(--hover); }

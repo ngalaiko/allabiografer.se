@@ -88,7 +88,7 @@ def test_newsletter_stays_in_view_when_dates_scroll(browser, width, film_count, 
         .render(
             city="Göteborg",
             num_days=num_days,
-            days=[],
+            days=[{"date": f"2026-09-{i + 1:02d}", "label": str(i + 1)} for i in range(num_days)],
             blocks=[{"film_title": f"Film {i}", "cinemas": []} for i in range(film_count)],
         )
     )
@@ -287,7 +287,13 @@ def test_festival_banner_stays_visible_and_remembers_dismissal(browser, width, b
     html = (
         _make_env()
         .get_template("program.html")
-        .render(city="Stockholm", num_days=10, blocks=[], breadcrumbs=" / Stockholm")
+        .render(
+            city="Stockholm",
+            num_days=10,
+            days=[{"date": f"2026-09-{i + 1:02d}", "label": str(i + 1)} for i in range(10)],
+            blocks=[],
+            breadcrumbs=" / Stockholm",
+        )
     )
     context = browser.new_context(viewport={"width": width, "height": 800})
     if blocked_storage:

@@ -22,6 +22,8 @@ from store import (
     Venue,
     connect,
     film_key,
+    poster_key_for_film,
+    poster_keys,
     read_all_films,
     read_movies,
     read_screenings,
@@ -383,6 +385,8 @@ def reconcile(*, path: Path = DB_FILE, today: date | None = None, enrich: bool =
             key=lambda group: (min((nodes[k].tmdb_id for k in group if nodes[k].tmdb_id), default=float("inf")), group)
         )
         aliases = dict(conn.execute("SELECT slug, film_id FROM catalogue_slugs"))
+        previous_snapshot = conn.execute("SELECT data FROM catalogue_snapshot WHERE id = 1").fetchone()
+        previous_cinemas = json.loads(previous_snapshot[0]).get("cinemas", []) if previous_snapshot else []
         identities = {}
         resolved_ids = {}
         claimed = set()
@@ -450,6 +454,27 @@ def reconcile(*, path: Path = DB_FILE, today: date | None = None, enrich: bool =
             source=source,
             resolved_ids=resolved_ids,
         )
+        # A catalogue page outlives its last showtime. Keep historical identities
+        # and metadata, without reintroducing expired tickets into the schedule.
+        stored_posters = poster_keys(path=path)
+        for group in groups:
+            key = identities[group[0]]
+            if key in prepared.movies:
+                continue
+            members = sorted({nodes[k].film.key: nodes[k].film for k in group}.values(), key=lambda f: f.key)
+            real_id = resolved_ids[key]
+            metadata = movies.get(real_id) or Movie.from_dict({"tmdb_id": key, "title_sv": members[0].title})
+            prepared.movies[key] = build._merge_films(replace(metadata, tmdb_id=key), members)
+            prepared.tmdb_ids[key] = real_id
+            for poster in [str(real_id), *(poster_key_for_film(f.key) for f in members)]:
+                if poster in stored_posters:
+                    prepared.poster_keys[key] = poster
+                    break
+        prepared.city_films = {(slot[0], identities[key]) for key, node in nodes.items() for slot in node.slots}
+        prepared.cinema_slugs.update({(city, cinema): build._slugify_sv(cinema) for city, cinema in previous_cinemas})
+        prepared.cinema_slugs.update(
+            {(slot[0], slot[1]): build._slugify_sv(slot[1]) for node in nodes.values() for slot in node.slots}
+        )
         prepared.film_slugs = {key: records[-key]["slug"] for key in prepared.movies}
         if bootstrap:
             import hashlib
@@ -500,6 +525,8 @@ def reconcile(*, path: Path = DB_FILE, today: date | None = None, enrich: bool =
             "tmdb_ids": {-key: value for key, value in prepared.tmdb_ids.items()},
             "film_slugs": {-key: value for key, value in prepared.film_slugs.items()},
             "film_aliases": prepared.film_aliases,
+            "city_films": sorted((city, -key) for city, key in prepared.city_films),
+            "cinemas": sorted(prepared.cinema_slugs),
         }
         conn.execute(
             "INSERT OR REPLACE INTO catalogue_snapshot VALUES (1, ?)", (json.dumps(snapshot, ensure_ascii=False),)
@@ -520,7 +547,7 @@ def reconcile(*, path: Path = DB_FILE, today: date | None = None, enrich: bool =
     }
 
 
-def read_catalogue(out_dir: Path, *, path: Path = DB_FILE):
+def read_catalogue(out_dir: Path, *, path: Path = DB_FILE, today: date | None = None):
     """Read the last published schedule, never reconciling during static rendering."""
     from build import SiteData, _slugify_sv
 
@@ -536,6 +563,8 @@ def read_catalogue(out_dir: Path, *, path: Path = DB_FILE):
     finally:
         conn.close()
     sd = SiteData(out_dir=out_dir, db_path=path)
+    if today is not None:
+        sd.today = today
     # The renderer historically uses negative movie keys for non-TMDB identities.
     # Keep that detail at this boundary; stored film_id and tmdb_id remain distinct.
     sd.movies = {-int(key): Movie.from_dict(value | {"tmdb_id": -int(key)}) for key, value in data["movies"].items()}
@@ -549,6 +578,15 @@ def read_catalogue(out_dir: Path, *, path: Path = DB_FILE):
     for name in ("poster_keys", "tmdb_ids", "film_slugs"):
         setattr(sd, name, {-int(key): value for key, value in data[name].items()})
     sd.film_aliases = data["film_aliases"]
+    # Older snapshots can still retain their pages when read after expiry.
+    sd.city_films = {(city, -key) for city, key in data.get("city_films", [])}
+    sd.city_films.update((s["city"], -s["film_id"]) for s in data["screenings"])
+    cinemas = {tuple(pair) for pair in data.get("cinemas", [])}
+    cinemas.update((s["city"], s["cinema_name"]) for s in data["screenings"])
+    for city, cinema in sorted(cinemas):
+        sd.cities.setdefault(city, 0)
+        sd.city_slugs[city] = _slugify_sv(city)
+        sd.cinema_slugs[(city, cinema)] = _slugify_sv(cinema)
     for screening in sd.screenings:
         sd.cities[screening.city] = sd.cities.get(screening.city, 0) + 1
         sd.city_slugs[screening.city] = _slugify_sv(screening.city)

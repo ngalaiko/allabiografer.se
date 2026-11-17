@@ -253,6 +253,7 @@ class SiteData:
     # Build-time movie keys are catalogue identities, not necessarily TMDB IDs.
     tmdb_ids: dict[int, int | None] = field(default_factory=dict)
     film_aliases: dict[str, str] = field(default_factory=dict)
+    city_films: set[tuple[str, int]] = field(default_factory=set)
     sitemap_urls: list[str] = field(default_factory=list)
 
 
@@ -630,7 +631,7 @@ def _film_jsonld(sd: SiteData, movie: Movie, screenings: list[Screening], canoni
         movie_node["genre"] = movie.genres
     if movie.release_date:
         movie_node["datePublished"] = movie.release_date
-    runtimes = {_screening_runtime(sd, s) for s in screenings}
+    runtimes = {_screening_runtime(sd, s) for s in screenings} if screenings else {movie.runtime}
     if len(runtimes) == 1 and (runtime := next(iter(runtimes))):
         movie_node["duration"] = f"PT{runtime}M"
     if movie.age_rating:
@@ -1046,6 +1047,7 @@ def _prepare_programme_blocks(
     days: list[date],
     *,
     city: str | None = None,
+    movie_id: int | None = None,
 ) -> list[dict]:
     """Prepare template-ready block dicts for a programme page."""
 
@@ -1077,6 +1079,11 @@ def _prepare_programme_blocks(
         if block_key not in movie_earliest or key < movie_earliest[block_key]:
             movie_earliest[block_key] = key
 
+    if not movie_cinemas and movie_id is not None:
+        # A film page still describes the work when no tickets are published.
+        block_key = (movie_id, "", "", sd.movies[movie_id].runtime)
+        movie_cinemas[block_key] = {}
+
     # Films rank by all their variants together; variants of one film stay adjacent.
     film_score: dict[int, float] = defaultdict(float)
     film_earliest: dict[int, tuple[date, time]] = {}
@@ -1089,7 +1096,7 @@ def _prepare_programme_blocks(
         tmdb_id, identity, label, runtime = bk
         return (
             -film_score[tmdb_id],
-            film_earliest[tmdb_id],
+            film_earliest.get(tmdb_id, (sd.today, time.min)),
             tmdb_id,
             bool(label),
             label.casefold(),
@@ -1128,10 +1135,10 @@ def _prepare_programme_blocks(
                 mi_parts.append(f"{h} tim. {m} min." if h else f"{m} min.")
             if movie.age_rating:
                 mi_parts.append(movie.age_rating)
-        profile = block_profiles[block_key]
-        if profile[1]:
+        profile = block_profiles.get(block_key)
+        if profile and profile[1]:
             mi_parts.append(speech_label(sorted(language.value for language in profile[1])))
-        if profile[2] is not None:
+        if profile and profile[2] is not None:
             mi_parts.append(
                 subtitles_label(sorted(language.value for language in profile[2])) if profile[2] else "Ej textad"
             )
@@ -1305,6 +1312,8 @@ def _write_programme(
     clear_filter_url: str | None = None,
     json_feed_url: str | None = None,
     show_next_screening: bool = False,
+    movie_id: int | None = None,
+    empty_context: list[dict] | None = None,
 ) -> None:
     programme_note = ""
     scheduled = _schedule_screenings(sd, screenings)
@@ -1317,7 +1326,9 @@ def _write_programme(
         )
     screenings = scheduled
     page_days = _compute_days(screenings)
-    blocks = _prepare_programme_blocks(sd, screenings, page_days, city=city)
+    blocks = _prepare_programme_blocks(sd, screenings, page_days, city=city, movie_id=movie_id)
+    if not screenings:
+        programme_note = "Inga kommande visningar publicerade." if show_next_screening else ""
     days = [{"label": _format_day(d), "date": d.isoformat()} for d in page_days]
 
     tmpl = env.get_template("program.html")
@@ -1336,10 +1347,11 @@ def _write_programme(
         num_days=max(1, len(page_days)),
         blocks=blocks,
         programme_note=programme_note,
+        empty_context=empty_context or [],
     )
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html, encoding="utf-8")
-    write_programme(out_path, title, blocks, days, note=programme_note)
+    write_programme(out_path, title, blocks, days, note=programme_note, empty_context=empty_context)
 
 
 def _build_programme_pages(env: Environment, sd: SiteData) -> None:
@@ -1350,6 +1362,17 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
     by_film: dict[int, list[Screening]] = defaultdict(list)
     by_city_genre: dict[tuple[str, str], list[Screening]] = defaultdict(list)
     by_city_film: dict[tuple[str, int], list[Screening]] = defaultdict(list)
+
+    for city_name in sd.city_slugs:
+        by_city[city_name] = []
+    for pair in sd.cinema_slugs:
+        by_city_cinema[pair] = []
+    for movie_id in sd.movies:
+        by_film[movie_id] = []
+    for city_name, movie_id in sd.city_films:
+        by_city_film[(city_name, movie_id)] = []
+        for genre in sd.movies[movie_id].genres:
+            by_city_genre[(city_name, genre)] = []
 
     for s in sd.screenings:
         by_city[s.city].append(s)
@@ -1395,6 +1418,17 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             breadcrumbs=f" / {city_name}",
             out_path=out_path,
             city=city_name,
+            empty_context=[
+                {
+                    "name": cinema_name,
+                    "url": f"/stad/{slug}/{cinema_slug}/",
+                    "address": sd.venues[(city_name, cinema_name)].address
+                    if (city_name, cinema_name) in sd.venues
+                    else "",
+                }
+                for (cinema_city, cinema_name), cinema_slug in sorted(sd.cinema_slugs.items())
+                if cinema_city == city_name
+            ],
         )
 
     # /stad/{slug}/{cinema-slug}/
@@ -1430,6 +1464,15 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             clear_filter_url=f"/stad/{city_slug}/",
             out_path=out_path,
             city=city_name,
+            empty_context=[
+                {
+                    "name": cinema_name,
+                    "url": f"/stad/{city_slug}/",
+                    "address": sd.venues[(city_name, cinema_name)].address
+                    if (city_name, cinema_name) in sd.venues
+                    else "",
+                }
+            ],
         )
 
     # /stad/{slug}/genre/{genre-slug}/
@@ -1450,7 +1493,11 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
                     subtitle=f"{city_name} · Program och speltider",
                 )
             ),
-            description=f"{genre}-filmer som visas på bio i {city_name} just nu, med speltider och biografer.",
+            description=(
+                f"{genre}-filmer som visas på bio i {city_name} just nu, med speltider och biografer."
+                if _schedule_screenings(sd, genre_screenings)
+                else f"{genre} på bio i {city_name}. Inga publicerade visningar de närmaste två veckorna."
+            ),
             canonical=canonical,
             jsonld=_collection_jsonld(
                 f"{genre} på bio i {city_name}",
@@ -1509,6 +1556,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             out_path=out_path,
             city=city_name,
             show_next_screening=True,
+            movie_id=movie_id,
         )
 
     # /film/{slug}/
@@ -1523,11 +1571,13 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             description = movie.overview_sv[:155].rstrip()
             if len(movie.overview_sv) > 155:
                 description += "…"
-        else:
+        elif film_screenings:
             description = (
                 f"Speltider för {film_title} på biografer i hela Sverige — "
                 f"visas i {n_cities} {'stad' if n_cities == 1 else 'städer'}."
             )
+        else:
+            description = f"{film_title}. Inga kommande visningar publicerade."
         jsonld = _film_jsonld(sd, movie, film_screenings, canonical) if movie else None
         poster_key = sd.poster_keys.get(movie.tmdb_id) if movie else None
         og_image = _abs(
@@ -1552,6 +1602,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             clear_filter_url="/",
             out_path=out_path,
             show_next_screening=True,
+            movie_id=movie_id,
         )
 
 
