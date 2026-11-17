@@ -282,19 +282,30 @@ def _merge_films(movie: Movie, films: list[Film]) -> Movie:
 
 
 def _screening_runtime(sd: SiteData, screening: Screening) -> int | None:
-    """The cinema's listed duration for this version, falling back to movie metadata."""
+    """The cinema's listed duration; missing source data stays unknown."""
     film = sd.films.get(screening.film_key)
     movie = sd.movies.get(screening.tmdb_id)
-    return (film.runtime if film else None) or (movie.runtime if movie else None)
+    return (film.runtime if film else movie.runtime if movie else None) or None
 
 
 def _deduplicate_screenings(sd: SiteData) -> list[Screening]:
     """Combine compatible observations of one show across sources, never within a source."""
     slots: dict[tuple, list[Screening]] = defaultdict(list)
     for s in sd.screenings:
-        slots[(s.city, s.cinema_name, s.tmdb_id, s.date, s.time, _screening_runtime(sd, s))].append(s)
-    result = []
+        slots[(s.city, s.cinema_name, s.tmdb_id, s.date, s.time)].append(s)
+    runtime_slots = []
     for slot in slots.values():
+        by_runtime = defaultdict(list)
+        for s in slot:
+            by_runtime[_screening_runtime(sd, s)].append(s)
+        known = set(by_runtime) - {None}
+        # A missing duration is compatible with one known cut, not a bridge
+        # between competing cuts. The selected source's runtime stays intact.
+        if len(known) == 1:
+            by_runtime[next(iter(known))].extend(by_runtime.pop(None, []))
+        runtime_slots.extend(by_runtime.values())
+    result = []
+    for slot in runtime_slots:
         if len(slot) == 1:
             result.extend(slot)
             continue
@@ -1056,6 +1067,22 @@ def _prepare_programme_blocks(
     filtered = [s for s in screenings if s.date in day_indices]
     variants = _variants(filtered)
 
+    runtimes: dict[tuple[int, str, str], set[int]] = defaultdict(set)
+    for s in filtered:
+        if runtime := _screening_runtime(sd, s):
+            runtimes[(s.tmdb_id, *variants[id(s)])].add(runtime)
+    runtime_groups = {}
+    for variant, lengths in runtimes.items():
+        # Unknown durations share the shortest known block for this variant;
+        # they neither bridge known cuts nor acquire a duration in the feed.
+        runtime_groups[(*variant, None)] = min(lengths)
+        representative = None
+        for runtime in sorted(lengths):
+            # Bound the whole group's span, not just adjacent differences.
+            if representative is None or runtime - representative > 5:
+                representative = runtime
+            runtime_groups[(*variant, runtime)] = representative
+
     # (movie, variant, runtime) → (city, cinema) → day → [(time, url)]
     movie_cinemas: dict[tuple[int, str, str, int | None], dict[tuple[str, str], dict[int, list[tuple[time, str]]]]] = (
         defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
@@ -1069,6 +1096,7 @@ def _prepare_programme_blocks(
     for s in filtered:
         day_idx = day_indices[s.date]
         block_key = (s.tmdb_id, *variants[id(s)], _screening_runtime(sd, s))
+        block_key = (*block_key[:3], runtime_groups.get(block_key))
         profile = _variant_profile(s)
         block_profiles[block_key] = (
             _merge_profiles(block_profiles[block_key], profile) if block_key in block_profiles else profile
@@ -1132,7 +1160,7 @@ def _prepare_programme_blocks(
                 mi_parts.append(year)
             if runtime:
                 h, m = divmod(runtime, 60)
-                mi_parts.append(f"{h} tim. {m} min." if h else f"{m} min.")
+                mi_parts.append(f"{h} tim. {m} min." if h and m else f"{h} tim." if h else f"{m} min.")
             if movie.age_rating:
                 mi_parts.append(movie.age_rating)
         profile = block_profiles.get(block_key)

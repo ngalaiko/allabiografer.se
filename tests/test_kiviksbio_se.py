@@ -9,7 +9,7 @@ import requests
 
 from parse.parsers import kiviksbio_se
 from parse.parsers.kiviksbio_se import _overview, _runtime, _showtimes, _subtitles
-from store import Screening
+from store import Film, Screening
 from store.version import Language
 
 pytestmark = pytest.mark.usefixtures("parser_clock")
@@ -188,6 +188,38 @@ def test_a_failed_detail_page_keeps_the_screenings(monkeypatch, caplog):
     items = _parse(monkeypatch, {kiviksbio_se._URL: _HTML})
     assert len([i for i in items if isinstance(i, Screening)]) == 3
     assert "autofiktion" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("body", "directors"),
+    [
+        ((_FIXTURES / "autofiktion.html").read_text(), ["Pedro Almodóvar"]),
+        ((_FIXTURES / "smugglaren.html").read_text(), ["Sylvelin Måkestad"]),
+        ((_FIXTURES / "macbeth.html").read_text(), ["Louisa Proske"]),
+        (
+            '<section class="em-event-content"><p>Handling.</p><p>Regi: Eddie Åhgren '
+            "(<em>Solsidan</em>)<br>Land: Sverige</p></section>",
+            ["Eddie Åhgren"],
+        ),
+        (
+            '<section class="em-event-content"><p>Handling.</p><p>Regi: Robin Smith och '
+            "Taylor Jones<br>Land: Sverige</p></section>",
+            ["Robin Smith", "Taylor Jones"],
+        ),
+        (
+            '<section class="em-event-content"><p>Skådespelaren Robin Smith.</p>'
+            "<p>Dirigent: Taylor Jones</p></section>",
+            [],
+        ),
+    ],
+)
+def test_parser_keeps_labelled_directors_separate_from_synopsis_and_other_credits(monkeypatch, body, directors):
+    url = next(f.url for f, *_ in _showtimes(_HTML))
+    items = _parse(monkeypatch, {kiviksbio_se._URL: _HTML, url: body})
+    parsed = next(item for item in items if isinstance(item, Film))
+    assert parsed.directors == directors
+    assert "Regi:" not in parsed.overview
+    assert "Dirigent:" not in parsed.overview
 
 
 def _item(date_text: str) -> str:

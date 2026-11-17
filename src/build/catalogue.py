@@ -133,6 +133,10 @@ def _evidence(
         left.film, right.film, programme=True
     ):
         return True, "shared_synopsis"
+    # A complete short synopsis can identify sources, but cannot justify
+    # programme-length differences or relax TMDB's runtime validation.
+    if shared_synopsis(a.overview, b.overview, allow_short=True) and _runtime_compatible(left.film, right.film):
+        return True, "complete_synopsis"
     # Missing source runtimes may use TMDB as positive corroboration, but an
     # inferred duration must not contradict agreeing first-hand source facts.
     if left.film.runtime and right.film.runtime and abs(left.film.runtime - right.film.runtime) > 5:
@@ -344,6 +348,20 @@ def reconcile(*, path: Path = DB_FILE, today: date | None = None, enrich: bool =
                     path=path,
                     online=True,
                 )
+        # Independently validated source titles can discover candidates whose
+        # TMDB titles use another language. They are not identity evidence:
+        # every group is revalidated against the complete expanded inventory.
+        source_titles = defaultdict(set)
+        for group in groups:
+            decision = tmdb.match_group(
+                list({nodes[k].film.key: nodes[k].film for k in group}.values()),
+                movies,
+                identifiers={json.loads(k)[1] for k in group if json.loads(k)[1]},
+                queries=[q for k in group for q in requests.get(nodes[k].film.key, [])],
+                path=path,
+            )
+            if identifier := decision["tmdb_id"]:
+                source_titles[identifier].update(decision["titles"])
         joined = defaultdict(list)
         for group in groups:
             group_films = list({nodes[k].film.key: nodes[k].film for k in group}.values())
@@ -352,6 +370,7 @@ def reconcile(*, path: Path = DB_FILE, today: date | None = None, enrich: bool =
                 movies,
                 identifiers={json.loads(k)[1] for k in group if json.loads(k)[1]},
                 queries=[q for k in group for q in requests.get(nodes[k].film.key, [])],
+                source_titles=source_titles,
                 path=path,
             )
             decision["source_films"] = [f.to_dict() for f in group_films]

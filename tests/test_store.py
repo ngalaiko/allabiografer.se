@@ -285,6 +285,14 @@ def test_movie_nullable_fields(db):
     assert stored.genres == []
 
 
+@pytest.mark.parametrize(
+    ("model", "payload"),
+    [(Film, {"key": "a:film", "source": "a", "title": "Film"}), (Movie, {"tmdb_id": 42})],
+)
+def test_zero_runtime_is_serialized_as_unknown(model, payload):
+    assert model.from_dict(payload | {"runtime": 0}).to_dict()["runtime"] is None
+
+
 def test_movie_upsert(db):
     write_movie(movie(), path=db)
     write_movie(movie(title_sv="Ny titel"), path=db)

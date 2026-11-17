@@ -134,6 +134,15 @@ def _overview(page: str) -> str:
     return text[: m.start()].strip() if m else text
 
 
+def _directors(page: str) -> list[str]:
+    """Labelled directors, excluding filmography, country and conductor credits."""
+    match = re.search(r"^Regi\s*:\s*([^\n]+)", _content(page), re.IGNORECASE | re.MULTILINE)
+    if not match:
+        return []
+    credit = re.split(r"\(|" + _TRAILER.pattern, match.group(1), maxsplit=1, flags=re.IGNORECASE)[0]
+    return [name.strip() for name in re.split(r",|\s+och\s+|\s*&\s*", credit) if name.strip()]
+
+
 def _subtitles(page: str) -> dict[str, object]:
     """Screening version fields from an event page's subtitle note."""
     for m in _SUBTITLES.finditer(_content(page)):
@@ -203,7 +212,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
             ok = detail is not None and detail.ok
             facts[film.key] = _subtitles(detail.text) if ok else _version.screening_facts()
             if ok:
-                film = replace(film, overview=_overview(detail.text))
+                film = replace(film, overview=_overview(detail.text), directors=_directors(detail.text))
             yield _films.register(film, session=session)
 
         yield Screening(

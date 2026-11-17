@@ -54,7 +54,7 @@ class Movie:
             genres=d.get("genres") or [],
             release_date=d.get("release_date") or "",
             release_date_se=d.get("release_date_se") or "",
-            runtime=d.get("runtime"),
+            runtime=d.get("runtime") or None,
             poster_path=d.get("poster_path") or "",
             vote_average=d.get("vote_average"),
             age_rating=d.get("age_rating") or "",

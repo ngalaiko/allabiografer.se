@@ -53,7 +53,7 @@ class Film:
             title=d.get("title") or "",
             title_original=d.get("title_original") or "",
             overview=d.get("overview") or "",
-            runtime=d.get("runtime"),
+            runtime=d.get("runtime") or None,
             genres=d.get("genres") or [],
             release_date=d.get("release_date") or "",
             age_rating=d.get("age_rating") or "",
@@ -70,14 +70,14 @@ def title_key(title: str) -> str:
     return " ".join(re.findall(r"\w+", unicodedata.normalize("NFKC", title).casefold()))
 
 
-def shared_synopsis(left: str, right: str, *, corroborated: bool = False) -> bool:
+def shared_synopsis(left: str, right: str, *, corroborated: bool = False, allow_short: bool = False) -> bool:
     """Substantial literal plot overlap, not fuzzy titles or generic blurbs."""
     shorter, longer = sorted((title_key(left), title_key(right)), key=len)
     words, other_words = shorter.split(), longer.split()
     alignment = SequenceMatcher(None, words, other_words, autojunk=False)
     common = alignment.find_longest_match()
     return (
-        common.size >= 20
+        (common.size >= 20 or (allow_short and common.size >= 15 and common.size == len(words)))
         and len(" ".join(words[common.a : common.a + common.size])) >= 100
         and (
             common.size * 2 >= len(words)

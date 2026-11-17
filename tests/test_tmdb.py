@@ -440,6 +440,13 @@ def test_group_prefers_unique_director_and_runtime_without_overriding_conflicts(
     [
         ("Från Oscar- och BAFTA-belönade regissören Robin Smith kommer filmen.", 7),
         ("Ett nytt filmpaket regisserat av Robin Smith. En berättelse för barn.", 7),
+        ("Robin Smith har regisserat och skrivit manus.", 7),
+        ("Robin Smith har regisserat filmen.", 7),
+        ("Robin Smith har skrivit manus. Taylor Jones har regisserat filmen.", None),
+        ("Robin Smith har inte regisserat filmen.", None),
+        ("Robin Smithson har regisserat filmen.", None),
+        ("Robin Smith har regisserat andra filmer.", None),
+        ("Inspirerad av filmer som Robin Smith har regisserat.", None),
         ("Inspirerad av regissören Robin Smiths tidigare filmer.", None),
         ("I rollerna Robin Smith och Taylor Jones.", None),
     ],
@@ -540,6 +547,18 @@ def test_substantial_tmdb_plot_evidence_bounds_programme_duration_variation(tmp_
         tmdb.match_group([film], {7: movie}, identifiers=set(), queries=[], path=tmp_path / "test.db")["tmdb_id"]
         == expected
     )
+
+
+def test_complete_short_synopsis_does_not_override_tmdb_runtime_conflict(tmp_path):
+    story = (
+        "Folkkära hjältar från tre olika världar hamnar på en dödlig kollisionskurs "
+        "inför ett existentiellt hot utan motstycke."
+    )
+    film = Film(key="a:reunion", source="a", title="Reunion", runtime=150, overview=story)
+    movie = Movie.from_dict({"tmdb_id": 7, "title_sv": "Reunion", "runtime": 165, "overview_sv": story})
+    result = tmdb.match_group([film], {7: movie}, identifiers=set(), queries=[], path=tmp_path / "test.db")
+    assert result["tmdb_id"] is None
+    assert "runtime_conflict" in result["candidates"][0]["rejected"]
 
 
 @pytest.mark.parametrize(("status", "expected"), [(404, 7), (503, None)])

@@ -250,7 +250,7 @@ def test_tmdb_metadata_wins_over_pooled_films(db, tmp_path):
 
 @pytest.mark.parametrize(
     ("source_runtime", "expected_runtime"),
-    [(None, 180), (175, 175), (326, 326)],
+    [(None, None), (0, None), (174, 174), (175, 175), (179, 179), (185, 185), (186, 186), (326, 326)],
 )
 def test_programme_preserves_source_runtimes_without_changing_film_identity(
     db, tmp_path, source_runtime, expected_runtime
@@ -281,6 +281,10 @@ def test_programme_preserves_source_runtimes_without_changing_film_identity(
     page = out / source["url"].removeprefix(build.BASE_URL).strip("/")
     html = BeautifulSoup((page / "index.html").read_text(), "html.parser")
     assert len(html.select(".schedule-cell time")) == 2
+    expected_blocks = 1 if expected_runtime is None or abs(expected_runtime - 180) <= 5 else 2
+    assert len(html.select("article.schedule-film")) == expected_blocks
+    city_html = BeautifulSoup((out / "stad/stockholm/index.html").read_text(), "html.parser")
+    assert len(city_html.select("article.schedule-film")) == expected_blocks
     ids = [element["id"] for element in html.select("[id]")]
     assert len(ids) == len(set(ids))
     graph = next(
@@ -289,16 +293,53 @@ def test_programme_preserves_source_runtimes_without_changing_film_identity(
         if '"@graph"' in script.string
     )
     events = {node["offers"]["url"]: node for node in graph if node["@type"] == "ScreeningEvent"}
-    assert events["https://example.com/0"]["endDate"][11:16] == (
-        "21:30" if source_runtime is None else "21:25" if source_runtime == 175 else "23:56"
-    )
+    if expected_runtime is None:
+        assert "endDate" not in events["https://example.com/0"]
+        assert "duration" not in graph[0]
+    else:
+        assert (
+            events["https://example.com/0"]["endDate"][11:16]
+            == {174: "21:24", 175: "21:25", 179: "21:29", 185: "21:35", 186: "21:36", 326: "23:56"}[source_runtime]
+        )
     assert events["https://example.com/1"]["endDate"][11:16] == "21:30"
     if source_runtime == 326:
         assert "5 tim. 26 min." in (page / "index.md").read_text()
         assert "5 tim. 26 min." in html.get_text()
-        assert "3 tim. 0 min." in html.get_text()
+        assert "3 tim." in html.get_text()
+        assert "0 min." not in html.get_text()
         assert "duration" not in graph[0]
     assert all(s.tmdb_id == 5961 for s in read_screenings(path=db))
+
+
+@pytest.mark.parametrize("runtimes", [(None, 108, 113, 118), (118, 113, 108, None)])
+def test_programme_runtime_tolerance_does_not_chain(db, tmp_path, runtimes):
+    day = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
+    films = [
+        Film(key=f"source{i}:filmen", source=f"source{i}", title="Filmen", runtime=r) for i, r in enumerate(runtimes)
+    ]
+    write_films(films, path=db)
+    write_movie(Movie.from_dict({"tmdb_id": 42, "title_sv": "Filmen", "runtime": 113}), path=db)
+    write_screenings(
+        [
+            screening(
+                tmdb_id=42,
+                title=f.title,
+                film_key=f.key,
+                date=day,
+                cinema_name=f"Bio {f.runtime}",
+                ticket_url=f"https://example.com/{f.runtime}",
+            )
+            for f in films
+        ],
+        path=db,
+    )
+    out = tmp_path / "out"
+    build._build_programme_pages(build._make_env(), build._load_data(out))
+    html = BeautifulSoup((out / "stad/stockholm/index.html").read_text(), "html.parser")
+    blocks = html.select("article.schedule-film")
+    assert len(blocks) == 2
+    assert [a.get_text() for a in blocks[0].select(".cinema-name > a")] == ["Bio 108", "Bio 113", "Bio None"]
+    assert [a.get_text() for a in blocks[1].select(".cinema-name > a")] == ["Bio 118"]
 
 
 def test_title_only_screening_without_film_key_does_not_guess_metadata(db, tmp_path):
@@ -853,6 +894,13 @@ def test_cross_source_screenings_share_a_programme_without_duplicate_showtimes(
         "presentation": Presentation(dimension=Dimension.TWO_D),
         "screen": "Salongen",
     }
+    write_films(
+        [
+            Film(key="bio_se:filmen", source="bio_se", title="Filmen", runtime=97),
+            Film(key=f"{other_source}:filmen", source=other_source, title="Filmen"),
+        ],
+        path=db,
+    )
     write_movie(movie(42), path=db)
     write_venue(Venue(city=city, name=cinema, address="Gatan 1"), path=db)
     write_screenings(
@@ -863,6 +911,7 @@ def test_cross_source_screenings_share_a_programme_without_duplicate_showtimes(
                 cinema_name=cinema,
                 date=day,
                 source="bio_se",
+                film_key="bio_se:filmen",
                 ticket_url="https://bio.se/biografer/cinema",
                 **known,
             ),
@@ -872,6 +921,7 @@ def test_cross_source_screenings_share_a_programme_without_duplicate_showtimes(
                 cinema_name=cinema,
                 date=day,
                 source=other_source,
+                film_key=f"{other_source}:filmen",
                 ticket_url="https://tickets.nortic.se/ticket/show/1",
             ),
             screening(
@@ -881,6 +931,7 @@ def test_cross_source_screenings_share_a_programme_without_duplicate_showtimes(
                 date=day,
                 time=time(19, 30),
                 source="bio_se",
+                film_key="bio_se:filmen",
                 ticket_url="https://bio.se/bokning/2",
             ),
             screening(
@@ -890,6 +941,7 @@ def test_cross_source_screenings_share_a_programme_without_duplicate_showtimes(
                 date=day,
                 time=time(20, 30),
                 source=other_source,
+                film_key=f"{other_source}:filmen",
                 ticket_url="https://tickets.nortic.se/ticket/show/3",
             ),
         ],
@@ -905,6 +957,7 @@ def test_cross_source_screenings_share_a_programme_without_duplicate_showtimes(
     assert [row["start"][11:16] for row in feed["screenings"]] == ["18:30", "19:30", "20:30"]
     first = feed["screenings"][0]
     assert first["ticket_url"] == "https://tickets.nortic.se/ticket/show/1"
+    assert first["film"]["runtime_minutes"] is None
     assert first["version"]["audio"] == {"kind": "original", "languages": ["Engelska"]}
     assert first["version"]["subtitles"] == ["Svenska"]
     assert first["presentation"]["dimension"] == "2D"
@@ -915,7 +968,8 @@ def test_cross_source_screenings_share_a_programme_without_duplicate_showtimes(
 
 
 @pytest.mark.parametrize(
-    "difference", ["source", "hall", "language", "dimension", "ambiguous_hall", "ambiguous_language"]
+    "difference",
+    ["source", "hall", "language", "dimension", "runtime", "ambiguous_hall", "ambiguous_language", "ambiguous_runtime"],
 )
 def test_cross_source_deduplication_keeps_distinct_screenings(db, tmp_path, difference):
     first = {"source": "bio_se", "screen": "1"}
@@ -927,12 +981,24 @@ def test_cross_source_deduplication_keeps_distinct_screenings(db, tmp_path, diff
     elif difference.endswith("language"):
         first["version"] = ContentVersion(audio=AudioVersion(languages=frozenset({Language.ENGLISH})))
         second["version"] = ContentVersion(audio=AudioVersion(languages=frozenset({Language.SWEDISH})))
+    elif difference.endswith("runtime"):
+        first["film_key"], second["film_key"] = "bio_se:filmen", "nortic_se:filmen"
+        write_films(
+            [
+                Film(key=key, source=source, title="Filmen", runtime=length)
+                for key, source, length in [(first["film_key"], "bio_se", 97), (second["film_key"], "nortic_se", 143)]
+            ],
+            path=db,
+        )
     else:
         first["presentation"] = Presentation(dimension=Dimension.TWO_D)
         second["presentation"] = Presentation(dimension=Dimension.THREE_D)
     observations = [first, second]
     if difference.startswith("ambiguous"):
         observations.append({"source": "local"})
+    if difference == "ambiguous_runtime":
+        observations[-1]["film_key"] = "local:filmen"
+        write_films([Film(key="local:filmen", source="local", title="Filmen")], path=db)
     write_movie(movie(42), path=db)
     write_screenings(
         [screening(tmdb_id=42, ticket_url=f"https://example.com/{i}", **facts) for i, facts in enumerate(observations)],

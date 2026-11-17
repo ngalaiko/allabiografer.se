@@ -130,6 +130,12 @@ Matching rules:
   characters, plus half the shorter synopsis, 90% total word alignment, or a
   corroborating known director credit where available. Only this stronger evidence allows
   programme-duration differences up to 25% of the shorter runtime.
+- Source groups also accept a complete shorter synopsis of at least 15 words and
+  100 characters contained verbatim in the other description after normalization.
+  This still requires overlapping titles and source runtimes within two minutes
+  when both are known. Short fragments, descriptions below these length limits
+  and conflicting years do not qualify. This rule does not relax TMDB's synopsis
+  or runtime requirements.
 - Strong matches precede weaker year/runtime matches; confirmed groups share
   aliases and evidence until no further joins are possible. All group members
   are checked to prevent weak runtime chains or bridges between different works.
@@ -139,6 +145,12 @@ Matching rules:
   include alternative and translated titles; exact normalized title overlap is
   required, alongside independent year, runtime, director or substantial synopsis
   evidence. The first search result and bare historical IDs never win by default.
+- After checking the complete inventory, independently validated source titles
+  also discover candidates for other groups. These aliases supply no year,
+  duration, director or synopsis evidence: every group must still qualify on its
+  own facts. All groups are rechecked against the expanded inventory, including
+  competing candidates. Inferred aliases are rebuilt on every reconciliation,
+  not saved as authoritative TMDB titles or used to bootstrap further aliases.
 - Explicit four-digit original years and query/title years constrain candidates;
   complete source premiere dates provide positive year evidence but do not veto
   an earlier original release. Ordinary runtime tolerance is five minutes,
@@ -146,11 +158,12 @@ Matching rules:
   Substantial shared synopsis permits differences up to 25% of the shorter runtime;
   explicitly documented cuts permit edition differences with other corroboration.
   Conflicting explicit director credits reject a candidate.
-- Source director lists are stored independently of TMDB. Capitol Stockholm and
-  Cinemascenen read their labelled `Regi` fields without mixing credits into the
-  synopsis. Explicit synopsis credit phrases remain a fallback, including Swedish
-  `regisserat av` and introductions from a named director; actor names, possessive
-  names and comparison mentions alone supply no director evidence. bio.se accepts
+- Source director lists are stored independently of TMDB. Capitol Stockholm,
+  Cinemascenen and Kiviks Bio read their labelled `Regi` fields without mixing
+  credits into the synopsis. Filmography, country and conductor fields are not
+  part of a director's name. Explicit synopsis credit phrases remain a fallback, including Swedish
+  `regisserat av`, `[director] har regisserat` and introductions from a named director;
+  actor names, possessive names and comparison mentions alone supply no director evidence. bio.se accepts
   explicit introductory original years with multiple descriptive adjectives, but
   never plot-setting, screening or comparison-film years.
 - Each source's director list needs at least one verified name in common with the
@@ -411,11 +424,20 @@ movie and database per parser process, including failed refresh attempts.
 Older complete metadata stays cached; missing language/director metadata is
 also fetched once per process. A failed refresh preserves the stored movie.
 
-Programme durations use the cinema's source runtime when available, falling back
-to movie metadata. Different durations remain separate programme blocks without
-changing film identity or URLs. HTML, Markdown, city JSON and structured event end
-times use the same screening-specific duration; a film with multiple listed
-durations has no single duration in its structured Movie node.
+Programme durations use the cinema's source runtime; a missing source duration
+stays null rather than borrowing TMDB's or another cinema's duration. Movie metadata
+is used only when no source film record exists. Zero means unknown, not a zero-length
+film. Whole-hour durations display without a redundant zero-minute suffix.
+Within the same film and screening variant, programme blocks
+combine durations spanning at most five minutes, using the shortest duration in
+the block's heading. Groups are formed in ascending duration order, so chains of
+small differences cannot merge cuts more than five minutes apart. Unknown durations
+share the shortest known block of that same variant (or one duration-free block
+when all are unknown), never bridging distinct known cuts. This display placement
+does not assign a duration to an unknown screening. Film identity and URLs do not
+change. City JSON retains exact durations or null; structured events omit end times
+when duration is unknown. A film with multiple or unknown listed durations has no
+single duration in its structured Movie node.
 
 Programme blocks group compatible content and presentation facts, including all
 screening modifiers. Atmos, 4K, Laser, VIP, XL, and audio description each define

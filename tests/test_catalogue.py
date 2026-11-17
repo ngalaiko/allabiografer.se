@@ -264,6 +264,31 @@ def test_short_generic_synopsis_is_not_identity_evidence(db):
     assert reconcile(path=db)["films"] == 2
 
 
+@pytest.mark.parametrize(
+    ("first_suffix", "second_suffix", "runtime", "films"),
+    [
+        ("", "", None, 1),
+        ("", " Book tickets at the cinema.", None, 1),
+        ("", "", 102, 1),
+        ("", "", 103, 2),
+        (" The expedition reaches a remote island.", " A contradictory ending changes the story.", None, 2),
+    ],
+)
+def test_complete_short_synopsis_but_not_a_shared_short_fragment_identifies_film(
+    db, first_suffix, second_suffix, runtime, films
+):
+    # Nineteen words, over 100 characters: specific enough as a complete synopsis,
+    # but not enough as a fragment in two otherwise different descriptions.
+    story = (
+        "Den här julen ställs en arg fågel inför sin största utmaning hittills "
+        "att överleva faderskapet och samtidigt rädda världen"
+    )
+    add(db, "a", runtime=100, overview=story + first_suffix, day=1)
+    add(db, "b", runtime=runtime, overview=story + second_suffix, day=2)
+
+    assert reconcile(path=db)["films"] == films
+
+
 def test_source_introductions_and_trailing_credits_do_not_hide_shared_synopsis(db):
     story = (
         "A young architect returns to her childhood home with her family and discovers a hidden world "
@@ -594,6 +619,42 @@ def test_later_alias_discovery_cannot_leave_an_earlier_false_unique_match(db, mo
     sd = catalogue(db)
     identifiers = {s.source: sd.tmdb_ids[s.tmdb_id] for s in sd.screenings}
     assert identifiers == {"a": None, "b": 8}
+
+
+@pytest.mark.parametrize(
+    ("runtime", "year", "competitor", "expected"),
+    [
+        (105, "", False, 77),
+        (None, "", False, None),
+        (106, "", False, None),
+        (105, "1984", False, None),
+        (105, "", True, None),
+    ],
+)
+def test_validated_source_titles_discover_candidates_but_still_need_independent_evidence(
+    db, runtime, year, competitor, expected
+):
+    add(db, "a", title="Local title", runtime=runtime, year=year, day=1)
+    known = add(db, "z", title="Local title", runtime=100, year="2026", day=2)
+    write_films([replace(known, title_original="International title")], path=db)
+    write_movie(
+        Movie.from_dict(
+            {"tmdb_id": 77, "title_sv": "International title", "runtime": 100, "release_date": "2026-01-01"}
+        ),
+        path=db,
+    )
+    if competitor:
+        write_movie(
+            Movie.from_dict({"tmdb_id": 88, "title_sv": "Local title", "runtime": 105, "release_date": "1984-01-01"}),
+            path=db,
+        )
+
+    reconcile(path=db)
+    sd = catalogue(db)
+    assert {s.source: sd.tmdb_ids[s.tmdb_id] for s in sd.screenings} == {"a": expected, "z": 77}
+    assert len(sd.movies) == (1 if expected else 2)
+    reconcile(path=db)
+    assert catalogue(db).film_slugs == sd.film_slugs
 
 
 def test_outage_retains_only_an_unchanged_still_validated_association(db, monkeypatch):

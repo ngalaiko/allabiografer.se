@@ -267,6 +267,7 @@ def match_group(
     *,
     identifiers: set[int],
     queries: list[dict],
+    source_titles: dict[int, set[str]] | None = None,
     path: Path = DB_FILE,
     online: bool = False,
 ) -> dict:
@@ -310,6 +311,7 @@ def match_group(
             aliases[identifier].add(title)
     for identifier, movie in movies.items():
         aliases[identifier].update((title_key(movie.title_sv), title_key(movie.title_original)))
+        aliases[identifier].update((source_titles or {}).get(identifier, ()))
     candidates = set(identifiers)
     candidates.update(identifier for identifier, movie in movies.items() if titles & aliases[identifier])
     unavailable = False
@@ -355,6 +357,8 @@ def match_group(
                 aliases.clear()
                 for identifier, title in conn.execute(alias_query, list(titles)):
                     aliases[identifier].add(title)
+                for identifier, names in (source_titles or {}).items():
+                    aliases[identifier].update(names)
                 missing = {row[0] for row in conn.execute("SELECT tmdb_id FROM tmdb_fetches WHERE status=404")}
             for identifier in sorted(candidates - missing):
                 movie = movies.get(identifier)
@@ -421,7 +425,8 @@ def match_group(
             if credited_directors & movie_directors or any(
                 re.search(
                     rf"\b(?:regi(?: av)?|regissor|regissera[dt] av|directed by|director|"
-                    rf"fran (?:\w+ ){{0,6}}regissoren) {re.escape(director)}\b",
+                    rf"fran (?:\w+ ){{0,6}}regissoren) {re.escape(director)}\b"
+                    rf"|\b{re.escape(director)} har regisserat (?:filmen|och skrivit manus)\b",
                     _credit_key(f.overview),
                 )
                 for f in films
@@ -535,7 +540,7 @@ def _fetch(tmdb_id: int, path: Path, session: requests.Session, *, poster: bool 
         genres=[g["name"] for g in details.get("genres", [])],
         release_date=details.get("release_date", ""),
         release_date_se=release_date_se,
-        runtime=details.get("runtime"),
+        runtime=details.get("runtime") or None,
         poster_path=details.get("poster_path") or "",
         vote_average=details.get("vote_average"),
         age_rating=age_rating,
