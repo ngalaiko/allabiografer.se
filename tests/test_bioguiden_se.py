@@ -86,6 +86,38 @@ def test_imports_both_programmes_with_metadata_and_booking_fallbacks(pages):
     assert all(s.screen == "" for s in screenings)
 
 
+def test_sankt_jorgen_uses_direct_tickster_checkout(pages, monkeypatch):
+    url = next(url for url, venue in _SITES.items() if venue.name == "Sankt Jörgen Park Biografen")
+    programme = BeautifulSoup(pages[_LYCKSELE], "html.parser")
+    programme.select_one("#SearchTheatreDropDown option[selected]")["value"] = (
+        "227|c12ff623-32f1-41a8-9288-c215cc1de994"
+    )
+    programme.select_one("#biografinfo h2").string = "Sankt Jörgen Park Biografen"
+    block = programme.select_one("#SearchResultDetails .resultat")
+    for other_block in programme.select("#SearchResultDetails .resultat")[1:]:
+        other_block.decompose()
+    block.select_one("h3").string = "Jävla karlar"
+    block.select_one("[id=biografrepertoire] > ul").clear()
+    rows = block.select_one("[id=biografrepertoire] > ul")
+    rows.append(
+        BeautifulSoup(
+            "<li>2026-11-20 19:00 Sankt Jörgen Park Biografen "
+            '<a href="/redirect.aspx?url=https%3A%2F%2Fwww.tickster.com%2Fsv%2Fevents%2FL7RBGCF7G54A45X">Boka</a></li>'
+            "<li>2026-11-27 19:00 Sankt Jörgen Park Biografen "
+            '<a href="https://example.com/checkout">Boka</a></li>',
+            "html.parser",
+        )
+    )
+    pages[url] = programme.encode()
+    monkeypatch.setattr(bioguiden_se, "_SITES", {url: _SITES[url]})
+
+    screenings = [item for item in bioguiden_se.parse() if isinstance(item, Screening)]
+    assert [(s.date, s.time, s.ticket_url) for s in screenings] == [
+        (date(2026, 11, 20), time(19), "https://secure.tickster.com/l7rbgcf7g54a45x"),
+        (date(2026, 11, 27), time(19), "https://example.com/checkout"),
+    ]
+
+
 @pytest.mark.parametrize("booked_first", [False, True])
 def test_expanded_programmes_preserve_towns_and_simultaneous_auditoriums(pages, monkeypatch, booked_first):
     selected = {}
@@ -134,13 +166,17 @@ def test_remaining_programmes_distinguish_cinema_aliases_from_named_halls(pages,
     selected = {}
     for prefix, fixture in [
         ("20cc1667", "gunnarsbyn"),
-        ("122103ca", "aspen"),
         ("cd62cdad", "varberg-filmklubb"),
         ("93a5d081", "varberg"),
     ]:
         url, venue = next((url, venue) for url, venue in _SITES.items() if prefix in url)
         selected[url] = venue
         pages[url] = (_FIXTURES / f"{fixture}.html").read_bytes()
+    # Keep historical hall parsing covered without re-enabling this venue in production.
+    aspen_url = bioguiden_se._BASE + "biografer.aspx?cityid=1000&theatreid=122103ca-575b-4712-becd-be8e3c075587"
+    assert aspen_url not in _SITES
+    selected[aspen_url] = Venue(name="Aspen", city="Stockholm", address="Hägerstensvägen 100")
+    pages[aspen_url] = (_FIXTURES / "aspen.html").read_bytes()
     monkeypatch.setattr(bioguiden_se, "_SITES", selected)
     items = list(bioguiden_se.parse())
     screenings = [item for item in items if isinstance(item, Screening)]

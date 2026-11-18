@@ -261,6 +261,7 @@ def write_screenings(
     source: str = "",
     venues: list[Venue] = (),
     replaces_sources: tuple[str, ...] = (),
+    replaces_venues: tuple[tuple[str, str, str], ...] = (),
 ) -> int:
     """Replace a source's screenings from today onward. Returns rows added.
 
@@ -300,6 +301,10 @@ def write_screenings(
             conn.executemany(
                 "DELETE FROM screenings WHERE source = ? AND date >= ?",
                 [(s, today) for s in (source, *replaces_sources)],
+            )
+            conn.executemany(
+                "DELETE FROM screenings WHERE source = ? AND city = ? AND cinema = ? AND date >= ?",
+                [(*venue, today) for venue in replaces_venues],
             )
             # Keep separate source ownership even when public listings overlap.
             conn.executemany(

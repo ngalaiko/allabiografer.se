@@ -86,6 +86,8 @@ class PresentationSystem(StrEnum):
     D_BOX = "D-Box"
     ISENSE = "iSense"
     INFINITY_VISION = "Infinity Vision"
+    AFTERNOON_TEA = "Afternoon Tea"
+    RECORDED_THEATRE = "Inspelad teater"
 
 
 class Dimension(StrEnum):

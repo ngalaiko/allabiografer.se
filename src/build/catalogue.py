@@ -14,6 +14,7 @@ from itertools import combinations, cycle
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from build._goteborg_metadata import apply_metadata
 from store import (
     DB_FILE,
     Film,
@@ -285,6 +286,20 @@ def _groups(nodes: dict[str, _Observation], movies: dict[int, Movie]) -> tuple[l
     return list(result.values()), candidates
 
 
+def _canonical_cinema(city: str, cinema: str) -> str:
+    return "Aspen" if (city, cinema) == ("Stockholm", "Stockholm Bio Aspen") else cinema
+
+
+def _canonical_slot(city: str, cinema: str, day: str, time: str, screen: str) -> tuple[str, ...]:
+    # Preserve exact shared-showtime evidence across the venue's source migration.
+    if city == "Stockholm":
+        if cinema == "Stockholm Bio Aspen":
+            screen = {"Salongen": "Salong 1", "Salong2": "Lusoperan"}.get(screen, screen)
+        elif cinema == "Aspen" and screen == "Aspen":
+            screen = "Salong 1"
+    return city, _canonical_cinema(city, cinema), day, time, screen
+
+
 def reconcile(*, path: Path = DB_FILE, today: date | None = None, enrich: bool = False) -> dict:
     """Publish one consistent snapshot. Offline by default for reproducible backtests."""
     import build
@@ -312,7 +327,8 @@ def reconcile(*, path: Path = DB_FILE, today: date | None = None, enrich: bool =
             historical = Film.from_dict(data["film"])
             # Keep past screening evidence, not superseded source metadata.
             film = films.get(historical.key, historical)
-            nodes[key] = _Observation(key, film, data["tmdb_id"], {tuple(slot) for slot in data["slots"]}, identifier)
+            slots = {_canonical_slot(*slot) for slot in data["slots"]}
+            nodes[key] = _Observation(key, film, data["tmdb_id"], slots, identifier)
         active = set()
         for s in screenings:
             key = observation_key(s)
@@ -326,7 +342,7 @@ def reconcile(*, path: Path = DB_FILE, today: date | None = None, enrich: bool =
             node.film = film
             # A past shared screening remains identity evidence even after
             # either source stops listing it. Only the final schedule expires.
-            node.slots.add((s.city, s.cinema_name, s.date.isoformat(), s.time.isoformat(), s.screen))
+            node.slots.add(_canonical_slot(s.city, s.cinema_name, s.date.isoformat(), s.time.isoformat(), s.screen))
 
         from parse import tmdb
         from parse.queries import read_requests
@@ -494,7 +510,9 @@ def reconcile(*, path: Path = DB_FILE, today: date | None = None, enrich: bool =
                     prepared.poster_keys[key] = poster
                     break
         prepared.city_films = {(slot[0], identities[key]) for key, node in nodes.items() for slot in node.slots}
-        prepared.cinema_slugs.update({(city, cinema): build._slugify_sv(cinema) for city, cinema in previous_cinemas})
+        for city, cinema in previous_cinemas:
+            cinema = _canonical_cinema(city, cinema)
+            prepared.cinema_slugs[city, cinema] = build._slugify_sv(cinema)
         prepared.cinema_slugs.update(
             {(slot[0], slot[1]): build._slugify_sv(slot[1]) for node in nodes.values() for slot in node.slots}
         )
@@ -517,6 +535,7 @@ def reconcile(*, path: Path = DB_FILE, today: date | None = None, enrich: bool =
             for slug, owner in aliases.items()
             if -owner in prepared.movies and slug != records[owner]["slug"]
         }
+        apply_metadata(prepared)
         conn.execute("DELETE FROM catalogue_tmdb_matches")
         conn.executemany(
             "INSERT INTO catalogue_tmdb_matches VALUES (?, ?)",

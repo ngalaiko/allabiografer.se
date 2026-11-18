@@ -268,6 +268,12 @@ def _credit_key(text: str) -> str:
     )
 
 
+def _director_key(name: str) -> str:
+    # Alternate spellings of the same director, including the original credit.
+    key = _credit_key(name)
+    return "是枝裕和" if key in {"hirokazu koreeda", "hirokazu kore eda"} else key
+
+
 def match_group(
     films: list[Film],
     movies: dict[int, Movie],
@@ -292,9 +298,9 @@ def match_group(
     release_years = {f.release_date[:4] for f in films if f.release_date[:4].isdigit()}
     runtimes = {f.runtime for f in films if f.runtime}
     runtimes.update(q["runtime"] for q in queries if q.get("runtime"))
-    director_claims = [{_credit_key(d) for d in f.directors} for f in films if f.directors]
+    director_claims = [{_director_key(d) for d in f.directors} for f in films if f.directors]
     director_claims.extend(
-        {_credit_key(credit)}
+        {_director_key(credit)}
         for film in films
         for credit in re.findall(r"\b(?:regi|regissör|director)\s*:\s*([^\n.]+)", film.overview, re.IGNORECASE)
         if 1 < len(credit.split()) <= 6
@@ -376,7 +382,7 @@ def match_group(
                     and len(years) <= 1
                     and (not years or movie.release_date[:4] in years)
                     and any(
-                        not claim & ({_credit_key(d) for d in movie.directors} | director_aliases[identifier])
+                        not claim & {_director_key(d) for d in (*movie.directors, *director_aliases[identifier])}
                         for claim in director_claims
                     )
                 ):
@@ -416,6 +422,23 @@ def match_group(
                         re.IGNORECASE,
                     )
                 }
+                # Preserve Fågel Blå's published duration; a matching synopsis
+                # from a cinema with the canonical runtime corroborates the work.
+                reviewed_runtimes = (
+                    {123}
+                    if identifier == 1481789
+                    and any(
+                        f.source == "biofagelbla_se"
+                        and f.url == "https://biofagelbla.se/movie/bloody-men/"
+                        and f.runtime == 123
+                        and any(
+                            peer.runtime == movie.runtime and shared_synopsis(f.overview, peer.overview)
+                            for peer in films
+                        )
+                        for f in films
+                    )
+                    else set()
+                )
                 if not conflicting:
                     support.append("runtime")
                 elif (
@@ -423,13 +446,14 @@ def match_group(
                         plot
                         and all(abs(length - movie.runtime) * 4 <= min(length, movie.runtime) for length in runtimes)
                     )
-                    and not conflicting <= documented_cuts
+                    and not conflicting <= documented_cuts | reviewed_runtimes
                 ):
                     reasons.append("runtime_conflict")
             movie_directors = {_credit_key(director) for director in movie.directors or []} | director_aliases[
                 identifier
             ]
-            if credited_directors & movie_directors or any(
+            director_keys = {_director_key(d) for d in movie_directors}
+            if credited_directors & director_keys or any(
                 re.search(
                     rf"(?<!inte )(?<!inte heller )\b(?:regi(?: av)?|regissor|"
                     rf"regissera[dt] av(?: den \w+ filmskaparen)?|directed by|director|"
@@ -441,7 +465,7 @@ def match_group(
                 for director in movie_directors
             ):
                 support.append("director")
-            if movie.directors and any(not claim & movie_directors for claim in director_claims):
+            if movie.directors and any(not claim & director_keys for claim in director_claims):
                 reasons.append("director_conflict")
             if not support:
                 reasons.append("insufficient_evidence")

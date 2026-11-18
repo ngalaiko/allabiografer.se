@@ -81,12 +81,16 @@ def _film(movie: dict, title: str) -> Film:
     overview = _text(movie.get("synopsis", ""))
     # An introductory identification states the original year, unlike plot or screening dates.
     year = re.match(r"^[^.?!]{1,120}\bär en (?:[\w-]+\s+){0,3}[\w-]*film från ((?:19|20)\d{2})\b", overview)
+    runtime = _runtime(movie.get("run_time", ""))
+    # Bio.se movie 42095 is Villeneuve's Dune: Part Three, not a 90-minute cut.
+    if str(movie.get("id")) == "42095" and runtime == 90:
+        runtime = None
     return _films.make(
         _SOURCE,
         title,
         overview=overview,
         release_date=year.group(1) if year else "",
-        runtime=_runtime(movie.get("run_time", "")),
+        runtime=runtime,
         genres=genres,
         age_rating=_clean(movie.get("rating", "")),
         poster_url=_clean(movie.get("poster_url", "")),
@@ -201,6 +205,8 @@ def parse() -> Iterator[Screening | Venue | Film]:
         if venue is None:
             log.info("  skipping %s: no city or address", cinema.get("title", ""))
             continue
+        if venue.city == "Stockholm" and venue.name in {"Stockholm Bio Aspen", "Stockholm Bio Fågel Blå"}:
+            continue  # These cinemas use their own programmes instead of the aggregator.
 
         yield venue
 

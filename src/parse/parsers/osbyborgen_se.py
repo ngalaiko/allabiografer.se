@@ -148,10 +148,14 @@ def _film(sess: dict, detail: dict) -> Film:
     """Film metadata from a session record and its film page."""
     genre = detail.get("f_genre") or sess.get("f_genre") or ""
     genres = [g for g in (_genre(part) for part in genre.split(",")) if g]
+    overview = _overview(detail.get("f_synopsis", ""))
+    # This record identifies the film as the final part of Villeneuve's trilogy.
+    dune = str(sess.get("f_id")) == "311" and "Denis Villeneuves sci-fi-trilogi" in overview
     return _films.make(
         _SOURCE,
         " ".join(sess.get("f_title", "").split()),
-        overview=_overview(detail.get("f_synopsis", "")),
+        overview=overview,
+        directors=["Denis Villeneuve"] if dune else [],
         runtime=_runtime(detail.get("f_run_time", "")),
         genres=genres,
         age_rating=str(detail.get("f_rating") or ""),

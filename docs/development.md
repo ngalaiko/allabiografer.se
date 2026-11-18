@@ -347,9 +347,9 @@ Folkets Hus och Parker includes Bio Roy in Göteborg, Spegeln in Malmö, and
 Röda Kvarn in Helsingborg. Cinemascenen includes Ystad, Katrineholm, Strängnäs,
 Söderhamn, and Hudiksvall. See [mise tasks](../mise.toml) for all parser commands.
 
-`bioguiden_se` imports 91 public Bioguiden programme records for 90 cinemas
+`bioguiden_se` imports 90 public Bioguiden programme records for 89 cinemas
 not currently supplied by our other sources. Coverage includes Lycksele,
-Leksand (Visir), Kristinehamn, Aspen in Stockholm, Saga in Höganäs, Scala in
+Leksand (Visir), Kristinehamn, Saga in Höganäs, Scala in
 Ystad and smaller-town cinemas across Sweden. The explicit URLs, canonical
 venue names and addresses are in
 [`_SITES`](../src/parse/parsers/bioguiden_se.py).
@@ -358,9 +358,14 @@ Existing venue names and city groupings are reused where available; otherwise
 towns come from the cinema's address rather than Bioguiden's municipality selector.
 Varbergs Teater has two programme records, both imported under one venue name.
 
+When verified programmes disagree, pick one schedule per cinema instead of
+combining conflicting times. `bioaspen_se` and `biofagelbla_se` use the cinemas'
+own programmes and dated ticket links; the aggregators no longer import those
+venues. Separately ticketed events are a coverage question, not timing conflicts.
+
 The 2026-11-14 nationwide audit covered all 203 municipalities and 442 cinema
-records listed by Bioguiden: 297 had programmes, of which 91 are imported here,
-204 already have coverage through other sources, and two are held back.
+records listed by Bioguiden: 297 had programmes, of which 91 were imported at the
+time, 204 had coverage through other sources, and two were held back.
 The other 145 records had no screenings. In particular, Odeon in Skövde is
 already supplied under Skövde Filmfestival, and Ersboda is covered by Tickster.
 Bollnäs Filmklubb remains excluded because membership restrictions are unclear.

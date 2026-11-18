@@ -72,7 +72,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
     session = _http.session()
     today = datetime.now(_TZ).date()
     seen: set[str] = set()
-    films: set[str] = set()
+    films: dict[str, Film] = {}
     for site in _SITES:
         yield Venue(name=site.name, city=site.city)
         url = _BASE + site.organiser
@@ -144,9 +144,10 @@ def parse() -> Iterator[Screening | Venue | Film]:
                     runtime=_runtime(overview),
                 )
                 # Tickster's landscape banners and event endDate are not film posters or runtimes.
-                if film.key not in films:
-                    films.add(film.key)
-                    yield film
+                # A bare event must not hide another organiser's film synopsis.
+                previous = films.get(film.key)
+                if previous is None or (not previous.overview and film.overview):
+                    films[film.key] = film
                 yield Screening(
                     title=title,
                     film_key=film.key,
@@ -161,3 +162,4 @@ def parse() -> Iterator[Screening | Venue | Film]:
                 )
                 count += 1
         log.info("Tickster: %s: %d screenings", site.name, count)
+    yield from films.values()

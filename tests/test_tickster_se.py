@@ -18,6 +18,9 @@ _EMMABODA = (_FIXTURES / "emmaboda.html").read_text()
 _ROXY = (_FIXTURES / "roxy.html").read_text()
 _SKARPNACK = (_FIXTURES / "skarpnack.html").read_text()
 _URL = "https://www.tickster.com/se/sv/events/juta7n5a59zxapn/2026-11-15/bio-sjung-for-mig-arja"
+_EMMABODA_URL = (
+    "https://www.tickster.com/se/sv/events/gdnm6zz898uk0cr/2026-11-29/the-hunger-games-sunrise-on-the-reaping-tal-en"
+)
 
 
 def _card(url, title="Bio: Sjung för mig Arja", day="15 nov 2026"):
@@ -84,6 +87,27 @@ def test_mixed_programme_follows_pages_and_uses_start_not_doors(monkeypatch):
     assert films[0].overview
     assert films[0].runtime is None  # endDate describes the event slot, not a film runtime.
     assert films[0].poster_url == ""  # The 960x540 banner is not a poster.
+
+
+def test_later_event_supplies_synopsis_when_first_event_has_none(monkeypatch):
+    # One organiser can publish a bare listing while another supplies the film synopsis.
+    title = "The Hunger Games: Sunrise on the reaping"
+    first, second = _EMMABODA_URL + "?first", _EMMABODA_URL
+    bare = _EMMABODA.replace(second, first).replace('id="event-description"', 'id="other-description"')
+    _setup(
+        monkeypatch,
+        _card(first, title, "29 nov 2026") + _card(second, title, "29 nov 2026"),
+        pages={first: bare, second: _EMMABODA},
+        site=parser._SITES[1],
+    )
+
+    items = list(parser.parse())
+    films = [item for item in items if isinstance(item, Film)]
+    screenings = [item for item in items if isinstance(item, Screening)]
+    assert len(films) == 1
+    assert "Haymitch Abernathy från Distrikt 12" in films[0].overview
+    assert films[0].url == second
+    assert [(s.film_key, s.ticket_url) for s in screenings] == [(films[0].key, first), (films[0].key, second)]
 
 
 @pytest.mark.parametrize(

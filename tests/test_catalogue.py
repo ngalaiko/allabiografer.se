@@ -57,6 +57,114 @@ def catalogue(db):
     return read_catalogue(Path("unused"), path=db)
 
 
+def test_goteborg_audit_metadata_preserves_sessions_and_is_scoped(db):
+    from datetime import date
+
+    day = date(2026, 11, 21)
+    film = Film(key="bioroy_se:sense and sensibility", title="Sense and Sensibility", source="bioroy_se", runtime=131)
+    write_films([film], path=db)
+    tea = Screening(
+        tmdb_id=None,
+        date=day,
+        time=time(11, 30),
+        ticket_url="https://secure.tickster.com/7ba2gljn3tf3wh7",
+        cinema_name="Bio Roy",
+        city="Göteborg",
+        source="folkets_hus_och_parker",
+        title=film.title,
+        film_key=film.key,
+        raw_attributes=("Afternoon Tea",),
+    )
+    ordinary = replace(tea, time=time(19), ticket_url="https://example.com/regular", raw_attributes=())
+    write_screenings([tea, ordinary], path=db, source=tea.source)
+    reconcile(path=db, today=day)
+    sd = read_catalogue(Path("unused"), path=db, today=day)
+    feed = db.parent / "feed.json"
+    build._write_city_feed(sd, "Göteborg", sd.screenings, feed)
+    rows = json.loads(feed.read_text())["screenings"]
+
+    assert [(r["start"], r["ticket_url"], r["presentation"]["experiences"]) for r in rows] == [
+        ("2026-11-21T11:30:00+01:00", tea.ticket_url, ["Afternoon Tea"]),
+        ("2026-11-21T19:00:00+01:00", ordinary.ticket_url, []),
+    ]
+    assert len({r["film"]["url"] for r in rows}) == 1
+
+
+def test_dune_provider_corrections_join_existing_pages(db):
+    from parse.parsers import bio_se, osbyborgen_se
+
+    title = "Dune: Part Three"
+    identifier = 1170608
+    write_movie(
+        Movie.from_dict({"tmdb_id": identifier, "title_sv": title, "runtime": 150, "directors": ["Denis Villeneuve"]}),
+        path=db,
+    )
+    add(db, "bio_se", title=title, runtime=90, day=1)
+    add(db, "osbyborgen_se", title=title, day=2)
+    add(db, "confirmed", title=title, runtime=150, identifier=identifier, day=3)
+    reconcile(path=db)
+    old_slugs = set(catalogue(db).film_slugs.values())
+    assert len(old_slugs) == 3
+
+    write_films(
+        [
+            bio_se._film({"id": 42095, "run_time": "90", "synopsis": "Regi: Denis Villeneuve."}, title),
+            osbyborgen_se._film(
+                {"f_id": 311, "f_title": title},
+                {"f_synopsis": "Filmen är den tredje och sista delen i Denis Villeneuves sci-fi-trilogi."},
+            ),
+        ],
+        path=db,
+    )
+    reconcile(path=db)
+    result = catalogue(db)
+    assert set(result.film_slugs.values()) == {"dune-part-three"}
+    assert {result.film_aliases[slug] for slug in old_slugs - {"dune-part-three"}} == {"dune-part-three"}
+    assert len(result.screenings) == 3
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"), [("Hirokazu Koreeda", 1553969), ("Hirokazu Kore-eda", 1553969), ("Other Director", None)]
+)
+def test_sheep_in_the_box_matches_transliterated_director_credits(db, name, expected):
+    title = "Sheep in the Box"
+    film = add(db, "bioaspen_se", title=title, runtime=126)
+    write_films([replace(film, directors=[name])], path=db)
+    write_movie(
+        Movie.from_dict({"tmdb_id": 1553969, "title_sv": title, "directors": ["是枝裕和"], "runtime": 126}), path=db
+    )
+    reconcile(path=db)
+    assert list(catalogue(db).tmdb_ids.values()) == [expected]
+
+
+@pytest.mark.parametrize(("runtime", "expected"), [(123, 1481789), (124, None)])
+def test_javla_karlar_keeps_cinema_runtime_without_losing_identity(db, runtime, expected):
+    title = "Jävla karlar"
+    overview = (
+        "Julen 1983. Efter ännu ett våldsamt gräl avslöjar sjuårige Andrevs mamma en hemlighet för honom: "
+        "hans pappa är faktiskt inte hans pappa. I stället för att bli förkrossad blir Andrev exalterad över "
+        "de möjligheter avslöjandet innebär."
+    )
+    peer = add(db, "filmstaden_se", title=title, runtime=108, overview=overview)
+    cinema = add(
+        db,
+        "biofagelbla_se",
+        title=title,
+        runtime=runtime,
+        overview=overview,
+        day=2,
+        url="https://biofagelbla.se/movie/bloody-men/",
+    )
+    write_films([replace(peer, directors=["Jens Sjögren"])], path=db)
+    write_movie(
+        Movie.from_dict({"tmdb_id": 1481789, "title_sv": title, "directors": ["Jens Sjögren"], "runtime": 108}), path=db
+    )
+    reconcile(path=db)
+    sd = catalogue(db)
+    assert list(sd.tmdb_ids.values()) == [expected]
+    assert sd.films[cinema.key].runtime == runtime
+
+
 def test_saved_catalogue_builds_without_source_fetch_dependencies(db, tmp_path):
     film = add(db, "a", runtime=103, year="2026", overview="A preserved film synopsis.")
     reconcile(path=db)

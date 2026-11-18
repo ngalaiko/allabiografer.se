@@ -15,6 +15,7 @@ from store import Film, Screening, Venue
 
 _SOURCE = "bioguiden_se"
 _BASE = "https://www.bioguiden.se/"
+_SANKT_JORGEN = _BASE + "biografer.aspx?cityid=227&theatreid=c12ff623-32f1-41a8-9288-c215cc1de994"
 # Verified programmes missing from other sources. Reuse existing Bio.se venue names.
 # Municipality IDs do not necessarily name the cinema's town (e.g. Bollnäs / Arbrå).
 _SITES = {
@@ -141,9 +142,7 @@ _SITES = {
     _BASE + "biografer.aspx?cityid=21&theatreid=7ed28fdb-6dff-4075-9eef-959f3b62bc51": Venue(
         name="Östergarns Bio", city="Katthammarsvik", address="Bygdegården Östergarn"
     ),
-    _BASE + "biografer.aspx?cityid=227&theatreid=c12ff623-32f1-41a8-9288-c215cc1de994": Venue(
-        name="Sankt Jörgen Park Biografen", city="Göteborg", address="Knipplekullen 8"
-    ),
+    _SANKT_JORGEN: Venue(name="Sankt Jörgen Park Biografen", city="Göteborg", address="Knipplekullen 8"),
     _BASE + "biografer.aspx?cityid=227&theatreid=c02545f8-6088-4cae-a107-43190c1322dd": Venue(
         name="Göteborg Bio Vingen Torslanda", city="Göteborg", address="Amhults Torg 7"
     ),
@@ -218,9 +217,6 @@ _SITES = {
     ),
     _BASE + "biografer.aspx?cityid=191&theatreid=5ab846b9-794e-4d25-9683-2691eb43304f": Venue(
         name="Bio Skatten", city="Sorsele", address="Stationsgatan 16"
-    ),
-    _BASE + "biografer.aspx?cityid=1000&theatreid=122103ca-575b-4712-becd-be8e3c075587": Venue(
-        name="Aspen", city="Stockholm", address="Hägerstensvägen 100"
     ),
     _BASE + "biografer.aspx?cityid=43&theatreid=00710e6a-9e91-4ab5-8f94-8902f2d4f63f": Venue(
         name="Gåxsjö Bygdeg.för.bio", city="Gåxsjö", address="Gåxsjö 4420"
@@ -361,6 +357,11 @@ def parse() -> Iterator[Screening | Venue | Film]:
                 ticket_url = urljoin(_BASE, booking["href"]) if booking else url
                 if urlsplit(ticket_url).path == "/redirect.aspx":
                     ticket_url = parse_qs(urlsplit(ticket_url).query)["url"][0]
+                # This venue's bare Tickster event URLs 404; the same IDs open checkout directly.
+                if url == _SANKT_JORGEN and (
+                    event := re.fullmatch(r"https://www\.tickster\.com/sv/events/([A-Z0-9]{15})", ticket_url)
+                ):
+                    ticket_url = f"https://secure.tickster.com/{event[1].lower()}"
                 screening = Screening(
                     tmdb_id=_tmdb(film.title, runtime=film.runtime),
                     title=film.title,
@@ -376,7 +377,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
                 key = replace(screening, ticket_url="")
                 if key not in screenings or screenings[key].ticket_url == url:
                     screenings[key] = screening
-        # Aspen names one hall after the cinema. Keep it when the programme also names other halls.
+        # Keep halls named after their cinema when the programme also names other halls.
         has_auditoriums = any(s.screen not in cinema_names for s in screenings.values())
         for screening in screenings.values():
             yield screening if has_auditoriums else replace(screening, screen="")

@@ -127,6 +127,7 @@ def main() -> None:
         source=args.parser,
         venues=venues,
         replaces_sources=getattr(mod, "REPLACES_SOURCES", ()),
+        replaces_venues=getattr(mod, "REPLACES_VENUES", ()),
     )
     nv = store.write_venues(venues, path=args.output)
     nf = store.write_films(films, path=args.output)
