@@ -52,11 +52,13 @@ def parse_title(raw: str) -> tuple[str, str, str]:
         else:
             subtitles = _version.subtitles(code)
 
-    return _TAG.sub("", raw).strip(), language, subtitles
+    title = _TAG.sub("", raw).strip()
+    title = re.sub(r"\s+\(Live på bio\)$", "", title, flags=re.IGNORECASE)
+    return title, language, subtitles
 
 
-def showtimes(items: list[dict]) -> Iterator[tuple[str, date, time, str, str, str, dict, str]]:
-    """Yield (title, date, time, screen, language, subtitles, movie, booking_url) per schedule row."""
+def showtimes(items: list[dict]) -> Iterator[tuple[str, date, time, str, str, str, dict, str, str]]:
+    """Yield (title, date, time, screen, language, subtitles, movie, booking_url, label) per schedule row."""
     for item in items:
         if item.get("deleted"):
             continue
@@ -65,7 +67,8 @@ def showtimes(items: list[dict]) -> Iterator[tuple[str, date, time, str, str, st
         except ValueError:
             continue
 
-        title, language, subtitles = parse_title(item.get("eventName") or "")
+        raw_title = item.get("eventName") or ""
+        title, language, subtitles = parse_title(raw_title)
         if not title:
             continue
 
@@ -78,6 +81,7 @@ def showtimes(items: list[dict]) -> Iterator[tuple[str, date, time, str, str, st
             subtitles,
             item.get("movie") or {},
             item.get("bookingUrl") or "",
+            "Live på bio" if re.search(r"\(Live på bio\)", raw_title, re.IGNORECASE) else "",
         )
 
 

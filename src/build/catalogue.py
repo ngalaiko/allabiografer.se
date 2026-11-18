@@ -14,6 +14,7 @@ from itertools import combinations, cycle
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from parse.tmdb import _clean_title
 from store import (
     DB_FILE,
     Film,
@@ -100,7 +101,7 @@ def _evidence(
     def titles(node):
         movie = movies.get(node.tmdb_id)
         return {
-            title_key(t)
+            title_key(_clean_title(t))
             for t in (
                 node.film.title,
                 node.film.title_original,
@@ -213,7 +214,7 @@ def _groups(nodes: dict[str, _Observation], movies: dict[int, Movie]) -> tuple[l
                 movie.title_original if movie else "",
             ):
                 if title:
-                    by_title[title_key(title)].add(root(key))
+                    by_title[title_key(_clean_title(title))].add(root(key))
         pairs = {pair for values in by_title.values() for pair in combinations(sorted(values), 2)}
         edges = defaultdict(set)
 

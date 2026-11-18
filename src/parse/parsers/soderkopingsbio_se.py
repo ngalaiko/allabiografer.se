@@ -28,7 +28,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
     programme = _tickster.Programme.fetch(_TICKSTER, session)
 
     films: dict[str, Film] = {}
-    for title, d, t, screen, language, subtitles, movie, booking_url in rows:
+    for title, d, t, screen, language, subtitles, movie, booking_url, label in rows:
         film = films.get(title)
         if film is None:
             slug = movie.get("slug") or ""
@@ -51,6 +51,8 @@ def parse() -> Iterator[Screening | Venue | Film]:
             cinema_name=_CINEMA,
             city=_CITY,
             screen=screen,
-            **_version.screening_facts(language=language, subtitles=subtitles, raw_attributes=labels),
+            **_version.screening_facts(
+                language=language, subtitles=subtitles, raw_attributes=(*labels, label) if label else labels
+            ),
             film_key=film.key,
         )

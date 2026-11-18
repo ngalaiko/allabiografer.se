@@ -25,7 +25,7 @@ _CITY = "Stockholm"
 _TZ = ZoneInfo("Europe/Stockholm")
 # Match allabiografer's rolling two-week programme, without Capitol's infinite scroll.
 _DAYS = 14
-_PREFIX = re.compile(r"^(afternoon tea|frukostbio|seniorbio|singalong|smygpremiär):\s*", re.IGNORECASE)
+_PREFIX = re.compile(r"^(afternoon tea|filmfeber|frukostbio|seniorbio|singalong|smygpremiär):\s*", re.IGNORECASE)
 _PREMIERE = re.compile(r"\s+[-–]\s+Premiär\b.*$", re.IGNORECASE)
 # The cinema also sells a wine tasting through its film calendar.
 _NOT_FILMS = {"Vinkväll med Alf & Petter"}

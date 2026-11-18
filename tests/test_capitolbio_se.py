@@ -104,6 +104,7 @@ def test_movie_production_year_not_the_screening_year_fills_missing_release_year
     ("raw", "title", "year"),
     [
         ("Smygpremiär: Arne Goes to Space med besök", "Arne Goes to Space", ""),
+        ("Filmfeber: Wild Horse Nine", "Wild Horse Nine", ""),
         ("The Hunger Games: Sunrise on the Reaping - Premiär 18 nov", "The Hunger Games: Sunrise on the Reaping", ""),
         ("Paris Is Burning (1991)", "Paris Is Burning", "1991"),
     ],
@@ -112,7 +113,9 @@ def test_programme_labels_do_not_become_film_titles(monkeypatch, raw, title, yea
     items = _parse(monkeypatch, _DAY.replace("De Gaulle: Frihetens röst", raw))
     film = next(i for i in items if isinstance(i, Film) and i.title == title)
     assert film.release_date == year
-    assert any(i.title == title for i in items if isinstance(i, Screening))
+    screening = next(i for i in items if isinstance(i, Screening) and i.title == title)
+    assert screening.film_key == film.key
+    assert raw in screening.raw_attributes
 
 
 def test_wine_tasting_is_not_a_film(monkeypatch):

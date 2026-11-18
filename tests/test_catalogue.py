@@ -121,6 +121,45 @@ def test_unmatched_sources_join_with_year_and_runtime_but_not_title_alone(db):
         assert any(match["reason"] == "title_year_runtime" for matches in evidence for match in matches)
 
 
+@pytest.mark.parametrize(
+    ("title", "labelled"),
+    [
+        ("An Island Mystery", "Filmfeber: An Island Mystery"),
+        ("An Island Mystery", "An Island Mystery (Live på bio)"),
+        ("An Island Mystery", "An Island Mystery: Bioupplevelsen"),
+        ("An Island Mystery", "An Island Mystery Cinema Experience"),
+    ],
+)
+def test_programme_labels_discover_matches_without_becoming_identity_evidence(db, title, labelled):
+    plot = (
+        "A young architect returns to her childhood home with her family and discovers a hidden world "
+        "behind the familiar rooms, forcing them to confront an extraordinary secret together."
+    )
+    add(db, "a", title=title, runtime=103, overview=plot, day=1)
+    labelled_film = add(db, "b", title=labelled, runtime=105, overview=plot, day=2)
+    # A normalized title alone cannot join a sparse record or a different cut.
+    add(db, "sparse", title=labelled, day=3)
+    add(db, "cut", title=labelled, runtime=150, overview=plot, day=4)
+    add(db, "sequel", title=f"{title}: A New Chapter", runtime=103, overview=plot, day=5)
+
+    assert reconcile(path=db)["films"] == 4
+    sd = catalogue(db)
+    identities = {s.source: s.tmdb_id for s in sd.screenings}
+    assert identities["a"] == identities["b"]
+    assert len({identities[s] for s in ("a", "sparse", "cut", "sequel")}) == 4
+    assert len(sd.screenings) == 5
+
+    # A subsequent source import now emits a clean key. Historical labelled
+    # observations must not resurrect the duplicate or lose its URL history.
+    refreshed = replace(labelled_film, key=film_key("b", title), title=title)
+    write_films([refreshed], path=db)
+    screening = next(s for s in read_screenings(path=db) if s.source == "b")
+    write_screenings([replace(screening, title=title, film_key=refreshed.key)], path=db, source="b")
+    assert reconcile(path=db)["films"] == 4
+    assert catalogue(db).film_slugs == sd.film_slugs
+    assert len(catalogue(db).screenings) == 5
+
+
 def test_tmdb_identity_joins_translations_and_editions_without_inventing_tmdb_ids(db, tmp_path):
     write_movie(
         Movie.from_dict(

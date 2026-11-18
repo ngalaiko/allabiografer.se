@@ -72,6 +72,8 @@ def test_film_details_read_the_movie_record():
 def test_parse_title_reads_spaced_and_unspaced_tags():
     assert _parse_title("Bortglömda ön (Sv.Txt) (Sv. Tal)") == ("Bortglömda ön", "Svenskt tal", "Svensk text")
     assert _parse_title("Digger (Sv.Txt) (Eng.Tal)") == ("Digger", "Engelskt tal", "Svensk text")
+    assert _parse_title("Otello (Live på bio) (Sv.Txt) (It.Tal)") == ("Otello", "Italienskt tal", "Svensk text")
+    assert _parse_title("Otello (2027)") == ("Otello (2027)", "", "")
 
 
 def test_parse_title_drops_unknown_language_codes():
@@ -132,6 +134,20 @@ def test_parse_yields_venues_films_and_screenings(monkeypatch):
     assert {s.film_key for s in screenings} == {f.key for f in films}
     assert {(s.cinema_name, s.city) for s in screenings} == {(_KARLSBORG.name, "Karlsborg")}
     assert {s.ticket_url for s in screenings} == {_KARLSBORG.tickets}
+
+
+def test_broadcast_label_is_not_a_title_but_stays_on_the_screening(monkeypatch):
+    site = next(s for s in biosverige_se._SITES if s.city == "Smedjebacken")
+    row = {**_SCHEDULE[0], "eventName": "Otello (Live på bio) (Sv.Txt) (It.Tal)"}
+    items = _parse(monkeypatch, {site.url + "/api/eventschedules": [row]})
+    film = next(i for i in items if isinstance(i, Film))
+    screening = next(i for i in items if isinstance(i, Screening))
+    assert film.title == screening.title == "Otello"
+    assert screening.film_key == film.key == "biosverige_se:otello"
+    assert "Live på bio" in screening.raw_attributes
+    assert screening.version.audio.languages == frozenset({Language.ITALIAN})
+    assert screening.version.subtitles.languages == frozenset({Language.SWEDISH})
+    assert screening.ticket_url == site.tickets
 
 
 def test_parse_shares_films_across_sites(monkeypatch):

@@ -94,6 +94,13 @@ def _clean_title(title: str) -> str:
         title,
         flags=re.IGNORECASE,
     )
+    title = re.sub(r"^filmfeber:\s*", "", title, flags=re.IGNORECASE)
+    title = re.sub(
+        r"(?:\s+\(live på bio\)|\s*:\s*bioupplevelsen|\s+cinema experience)$",
+        "",
+        title,
+        flags=re.IGNORECASE,
+    )
     title = re.sub(r"\s*\((?:sv\.?|eng)\s*(?:tal|txt|text)\)\s*$", "", title, flags=re.IGNORECASE)
     title = re.sub(r"\s+förfilm\s+.*$", "", title, flags=re.IGNORECASE)
     title = re.sub(r",\s*version:.*$", "", title, flags=re.IGNORECASE)
@@ -424,7 +431,8 @@ def match_group(
             ]
             if credited_directors & movie_directors or any(
                 re.search(
-                    rf"\b(?:regi(?: av)?|regissor|regissera[dt] av|directed by|director|"
+                    rf"(?<!inte )(?<!inte heller )\b(?:regi(?: av)?|regissor|"
+                    rf"regissera[dt] av(?: den \w+ filmskaparen)?|directed by|director|"
                     rf"fran (?:\w+ ){{0,6}}regissoren) {re.escape(director)}\b"
                     rf"|\b{re.escape(director)} har regisserat (?:filmen|och skrivit manus)\b",
                     _credit_key(f.overview),
