@@ -14,7 +14,6 @@ from itertools import combinations, cycle
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from parse.tmdb import _clean_title
 from store import (
     DB_FILE,
     Film,
@@ -93,6 +92,8 @@ def _runtime_compatible(a: Film, b: Film, *, programme: bool = False) -> bool:
 def _evidence(
     left: _Observation, right: _Observation, movies: dict[int, Movie], *, shared_title: bool = False
 ) -> tuple[bool, str]:
+    from parse.tmdb import _clean_title
+
     if left.tmdb_id and right.tmdb_id:
         return left.tmdb_id == right.tmdb_id, "same_tmdb" if left.tmdb_id == right.tmdb_id else "different_tmdb"
     if left.film.key == right.film.key and left.film.url and left.film.url == right.film.url:
@@ -159,6 +160,8 @@ def _evidence(
 
 def _groups(nodes: dict[str, _Observation], movies: dict[int, Movie]) -> tuple[list[list[str]], list[dict]]:
     """Validate entire components, not order-dependent similarity chains."""
+    from parse.tmdb import _clean_title
+
     parent = {key: key for key in nodes}
 
     def root(key):

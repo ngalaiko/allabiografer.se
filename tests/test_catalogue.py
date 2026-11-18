@@ -2,6 +2,7 @@
 
 import json
 import sqlite3
+import subprocess
 import sys
 from dataclasses import replace
 from datetime import datetime, time, timedelta
@@ -54,6 +55,34 @@ def add(db, source, *, title="Same film", runtime=None, year="", identifier=None
 
 def catalogue(db):
     return read_catalogue(Path("unused"), path=db)
+
+
+def test_saved_catalogue_builds_without_source_fetch_dependencies(db, tmp_path):
+    film = add(db, "a", runtime=103, year="2026", overview="A preserved film synopsis.")
+    reconcile(path=db)
+    slug = next(iter(catalogue(db).film_slugs.values()))
+    output = tmp_path / "site"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import sys; "
+            "sys.path.insert(0, sys.argv.pop(1)); "
+            "sys.modules.update(dict.fromkeys(('requests', 'bs4', 'curl_cffi', 'playwright'))); "
+            "from build import main; main()",
+            str(Path(build.__file__).resolve().parents[1]),
+            str(output),
+            "--db",
+            str(db),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    page = BeautifulSoup((output / "film" / slug / "index.html").read_text(), "html.parser")
+    assert page.select_one(".film-title").get_text(strip=True) == film.title
+    assert len(page.select("a[data-start]")) == 1
 
 
 @pytest.mark.parametrize("refresh", [False, True])
