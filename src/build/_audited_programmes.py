@@ -36,6 +36,41 @@ _BIOPASSET = {
 _UMEA = _BIO + "13192/sessionId/"
 _CNEMA = _BIO + "5/sessionId/"
 _KINO = "https://www.tickster.com/sv/events/"
+_FILMSTADEN = "https://www.filmstaden.se/bokning/kop/"
+# Session IDs cross-checked against Svenska Bio's local 20–26 November flyers.
+_SVENSKA_BIO_LABELS = {
+    **dict.fromkeys(
+        (
+            "5ed6526b-f88d-4c2a-bdd4-37504f128e38",
+            "9a4af386-925e-435a-9d50-672b838f8ee5",
+            "17495b44-1cda-441e-8493-3f230e087982",
+            "c86ebd7a-43b1-4570-b9bc-8f0d40a8c13e",
+            "cc399238-b132-48de-b3ff-7ebd16cd55ad",
+            "5bd92e16-a9db-4d76-b466-9dab29862a64",
+            "9a336554-b81d-413b-9464-97aab8ffa54a",
+            "91eef287-05f2-4923-a26e-714d714293c5",
+            "f97571e0-df81-4f63-a6c3-44bb687d588b",
+            "2d89a19b-50ad-4a60-a5fe-d3db952b8a2f",
+            "ba9c98d5-3712-431e-a870-75fb34dd7c59",
+        ),
+        PresentationSystem.KNATTEBIO,
+    ),
+    **dict.fromkeys(
+        (
+            "9b900890-3c6b-4872-a76c-46f0abb2473b",
+            "67d251da-b50d-4408-bda6-3f6cdf5e090a",
+            "e3280a9f-fe89-460f-8999-2584ebb3cfe5",
+            "07da3008-2701-45c4-8581-369729434874",
+            "20516506-b756-46a7-ad39-3a07114b21b3",
+            "f58a7533-db00-4bd7-bae0-3bb23232bd8f",
+            "7cf1245e-96cd-4433-9c43-901a7b0b2004",
+            "69ebb1ea-9f9b-487d-8c3b-85cb6089f730",
+            "e25d786f-33f4-4e1c-8656-3196f3332d97",
+        ),
+        PresentationSystem.PREVIEW,
+    ),
+    "1abc0d00-35da-43a6-9ba0-72c136411e51": PresentationSystem.BIOPASSET,
+}
 _SODRAN_TICKETS = {
     "bio_se:kärlek över tanger": "wfbe9evymvb25hz",
     "bio_se:de gaulle motståndets pris": "vbdtj7dl0u038bd",
@@ -179,6 +214,13 @@ def apply_programme_corrections(sd: "SiteData") -> None:
         ):
             # Regionmuseet sells tickets directly on the dated event page.
             show = replace(show, ticket_url="https://regionmuseet.se/kalender/karlek-over-tanger-2/")
+
+        if (
+            show.source == "filmstaden_se"
+            and ticket.startswith(_FILMSTADEN)
+            and (label := _SVENSKA_BIO_LABELS.get(ticket.removeprefix(_FILMSTADEN).rstrip("/")))
+        ):
+            experiences |= {label}
 
         if date(2026, 11, 19) <= show.date <= date(2026, 11, 21):
             if ticket in _AUDITED_RUNTIMES:
