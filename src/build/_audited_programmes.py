@@ -44,6 +44,7 @@ _ERSBODA = ("Umeå", "Ersboda Folkets Hus")
 _ERSBODA_LABAN = (
     "https://www.tickster.com/se/sv/events/cwct1wy22f2zgbg/2026-11-21/familjebio-lilla-spoket-laban-busar-vidare"
 )
+_VAXJO_STALE_SHOW = "https://www.filmstaden.se/bokning/kop/06d49d6a-e7aa-46f3-9693-de9df51e9013/"
 _AUDITED_RUNTIMES = {
     _BIO + "18048/sessionId/55387": 119,
     _BIO + "18048/sessionId/55425": 119,
@@ -96,6 +97,10 @@ _AUDITED_LABELS = {
 
 
 def apply_programme_corrections(sd: "SiteData") -> None:
+    karlstad = ("Karlstad", "Filmstaden Karlstad")
+    if (venue := sd.venues.get(karlstad)) and venue.address == "Drottningggatan 33":
+        sd.venues[karlstad] = replace(venue, address="Drottninggatan 33")
+
     slots: dict[tuple, list[Screening]] = defaultdict(list)
     for show in sd.screenings:
         if (show.city, show.cinema_name) == ("Malmö", "Hypnos Theatre"):
@@ -117,6 +122,9 @@ def apply_programme_corrections(sd: "SiteData") -> None:
     for show in sd.screenings:
         # Hypnos owns the calendar. The ticket broker never adds showtimes.
         if (show.city, show.cinema_name, show.source) == ("Malmö", "Hypnos Theatre", "bio_se"):
+            continue
+        if show.ticket_url == _VAXJO_STALE_SHOW and show.date == date(2026, 11, 19):
+            # Filmstaden no longer lists this exact 14:30 session in its Växjö programme.
             continue
         version = show.version
         ticket = show.ticket_url
@@ -162,6 +170,18 @@ def apply_programme_corrections(sd: "SiteData") -> None:
             if ticket in _AUDITED_RUNTIMES:
                 show = replace(show, runtime=_AUDITED_RUNTIMES[ticket])
             experiences |= _AUDITED_LABELS.get(ticket, frozenset())
+            if (
+                show.film_key == "filmstaden_se:bts world tour arirang in kaohsiung live viewing"
+                and show.city in {"Karlstad", "Växjö"}
+                and show.date == date(2026, 11, 21)
+                and show.time in {time(11, 45), time(16)}
+            ):
+                # The distributor lists the Swedish 11:45 show live and the 16:00 show as an encore.
+                version = replace(version, audio=replace(version.audio, kind=AudioKind.ORIGINAL))
+                if show.time == time(11, 45):
+                    experiences |= {PresentationSystem.LIVE_ON_CINEMA}
+                else:
+                    version = replace(version, edition="Inspelad repris")
             if ticket == _BIO + "5570/sessionId/1991" and show.film_key == "bio_se:donnie darko":
                 show = replace(show, runtime=133)
                 version = replace(version, edition="Director's Cut", subtitles=SubtitleVersion(frozenset()))
@@ -239,6 +259,8 @@ def apply_programme_corrections(sd: "SiteData") -> None:
 
         if film and film.key in {"bio_se:palestina 36", "nfbio_se:julkul med greta gris"}:
             sd.movies[show.tmdb_id] = replace(movie, title_sv=film.title)
+        elif film and film.key == "filmstaden_se:hadoota" and movie.title_sv == "حدوتة":
+            sd.movies[show.tmdb_id] = replace(movie, title_sv=film.title, title_original="حدوتة")
 
         if show.source == "doclounge_se" and (show.date, show.time, show.cinema_name, show.film_key, ticket) == (
             date(2026, 11, 23),

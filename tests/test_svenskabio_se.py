@@ -34,17 +34,24 @@ def test_operator_programme_walks_dates_and_keeps_simultaneous_shows(monkeypatch
         second: {"date": second, "html": _card(3314, second, "Salong 8")},
     }
 
+    programmes = {
+        (4, 3): responses,
+        (5, 4): {"all": {"date": second, "dateOptions": [{"value": second}], "html": _card(4120, second, "Salong 6")}},
+    }
+
     def get(_url, *, params, timeout):
-        return SimpleNamespace(raise_for_status=lambda: None, json=lambda: responses[params["date"]])
+        payload = programmes[params["cityId"], params["cinemaIds"]][params["date"]]
+        return SimpleNamespace(raise_for_status=lambda: None, json=lambda: payload)
 
     monkeypatch.setattr(svenskabio_se._http, "session", lambda: SimpleNamespace(get=get))
     monkeypatch.setattr(svenskabio_se, "lookup", lambda *args, **kwargs: None)
     rows = list(svenskabio_se.parse())
     shows = [row for row in rows if isinstance(row, Screening)]
-    assert [(str(s.date), s.screen, s.ticket_url) for s in shows] == [
-        (first, "Salong 2", "https://biljetter.svenskabio.se/seat-plan/3145"),
-        (first, "Salong 7", "https://biljetter.svenskabio.se/seat-plan/3146"),
-        (second, "Salong 8", "https://biljetter.svenskabio.se/seat-plan/3314"),
+    assert [(s.cinema_name, str(s.date), s.screen, s.ticket_url) for s in shows] == [
+        ("Biostaden Eskilstuna", first, "Salong 2", "https://biljetter.svenskabio.se/seat-plan/3145"),
+        ("Biostaden Eskilstuna", first, "Salong 7", "https://biljetter.svenskabio.se/seat-plan/3146"),
+        ("Biostaden Eskilstuna", second, "Salong 8", "https://biljetter.svenskabio.se/seat-plan/3314"),
+        ("Biostaden Uddevalla", second, "Salong 6", "https://biljetter.svenskabio.se/seat-plan/4120"),
     ]
     assert shows[0].version.audio.languages == {Language.ENGLISH}
     assert shows[0].version.subtitles.languages == {Language.SWEDISH}

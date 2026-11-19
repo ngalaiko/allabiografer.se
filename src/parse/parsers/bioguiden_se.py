@@ -245,9 +245,6 @@ _SITES = {
     _BASE + "biografer.aspx?cityid=257&theatreid=b72b9334-0935-4777-8796-638221e5217e": Venue(
         name="Röda Kvarn", city="Töreboda", address="Storgatan 19"
     ),
-    _BASE + "biografer.aspx?cityid=258&theatreid=c27730e2-5b2e-4f6b-88fe-3663fab0dc04": Venue(
-        name="Biostaden Uddevalla", city="Uddevalla", address="Göteborgsvägen 11A"
-    ),
     _BASE + "biografer.aspx?cityid=258&theatreid=a2640256-8184-42e5-bd07-1dead6f0033e": Venue(
         name="Ljungskile Bybio", city="Ljungskile", address="Valdemar Svenssons väg 11"
     ),

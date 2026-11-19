@@ -237,7 +237,7 @@ def parse() -> Iterator[Screening | Venue | Film]:
 
     for cinema in cinemas:
         ncg_id = cinema["ncgId"]
-        if ncg_id == "NCG26999":  # Biostaden Eskilstuna now uses Svenska Bio's own feed.
+        if ncg_id in {"NCG26999", "NCG12567"}:  # Eskilstuna and Uddevalla moved to Svenska Bio.
             continue
         title = _CINEMA_STATUS.sub("", cinema["title"].strip())
         addr = cinema.get("address") or {}

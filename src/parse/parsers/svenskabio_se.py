@@ -1,4 +1,4 @@
-"""Svenska Bio's own showtimes for Biostaden Eskilstuna."""
+"""Showtimes for cinemas that have moved to Svenska Bio's own website."""
 
 import re
 from collections.abc import Iterator
@@ -13,12 +13,16 @@ from parse.parsers._tmdb_cache import lookup
 from store import Film, Screening, Venue
 
 _SOURCE = "svenskabio_se"
-_VENUE = Venue(name="Biostaden Eskilstuna", city="Eskilstuna", address="Kungsgatan 66")
-REPLACES_VENUES = (("filmstaden_se", _VENUE.city, _VENUE.name),)
+_CINEMAS = (
+    (4, 3, Venue(name="Biostaden Eskilstuna", city="Eskilstuna", address="Kungsgatan 66")),
+    (5, 4, Venue(name="Biostaden Uddevalla", city="Uddevalla", address="Göteborgsvägen 11A")),
+)
+REPLACES_VENUES = (
+    *tuple(("filmstaden_se", venue.city, venue.name) for _, _, venue in _CINEMAS),
+    ("bioguiden_se", "Uddevalla", "Biostaden Uddevalla"),
+)
 _FEED = "https://svenskabio.se/wp-json/evermade/v1/movie-feed"
 _PARAMS = {
-    "cityId": 4,
-    "cinemaIds": 3,
     "cinemaId": 0,
     "movieType": "current",
     "includeCampaign": 1,
@@ -33,17 +37,28 @@ _CARD = ".em-block-showtime-movie-card"
 
 def parse() -> Iterator[Screening | Venue | Film]:
     session = _http.session()
+    films: dict[str, Film] = {}
+    for city_id, cinema_id, venue in _CINEMAS:
+        yield from _programme(session, city_id, cinema_id, venue, films)
+    yield from films.values()
 
+
+def _programme(
+    session, city_id: int, cinema_id: int, venue: Venue, films: dict[str, Film]
+) -> Iterator[Screening | Venue]:
     def fetch(day: str) -> dict:
-        response = session.get(_FEED, params={**_PARAMS, "date": day}, timeout=20)
+        response = session.get(
+            _FEED, params={**_PARAMS, "cityId": city_id, "cinemaIds": cinema_id, "date": day}, timeout=20
+        )
         response.raise_for_status()
         return response.json()
 
     first = fetch("all")
     days = sorted({date.fromisoformat(p["value"]).isoformat() for p in first["dateOptions"] if p["value"] != "all"})
-    films: dict[str, Film] = {}
+    if not days:
+        raise ValueError(f"svenskabio: missing advertised dates for {venue.name}")
     seen: set[str] = set()
-    yield _VENUE
+    yield venue
     for day in days:
         payload = first if first["date"] == day else fetch(day)
         cards = BeautifulSoup(payload["html"], "html.parser").select(_CARD)
@@ -78,8 +93,8 @@ def parse() -> Iterator[Screening | Venue | Film]:
                 tmdb_id=lookup(title, runtime=runtime),
                 title=title,
                 film_key=film.key,
-                city=_VENUE.city,
-                cinema_name=_VENUE.name,
+                city=venue.city,
+                cinema_name=venue.name,
                 date=when.date(),
                 time=when.time(),
                 screen=card.select_one(f"{_CARD}__screen").get_text(" ", strip=True),
@@ -90,4 +105,3 @@ def parse() -> Iterator[Screening | Venue | Film]:
                     raw_attributes=("Slutsålt",) if sold_out else (),
                 ),
             )
-    yield from films.values()
