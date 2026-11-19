@@ -263,7 +263,11 @@ def apply_programme_corrections(sd: "SiteData") -> None:
         ):
             experiences |= {PresentationSystem.CINEVILLE}
 
-        if film and film.key in {"bio_se:palestina 36", "nfbio_se:julkul med greta gris"}:
+        if (film and film.key in {"bio_se:palestina 36", "filmstaden_se:julkul med greta bioupplevelsen"}) or (
+            film
+            and film.key == "nfbio_se:julkul med greta gris"
+            and movie.title_sv != "Julkul med Greta: Bioupplevelsen"
+        ):
             sd.movies[show.tmdb_id] = replace(movie, title_sv=film.title)
         elif film and film.key == "filmstaden_se:hadoota" and movie.title_sv == "حدوتة":
             sd.movies[show.tmdb_id] = replace(movie, title_sv=film.title, title_original="حدوتة")
