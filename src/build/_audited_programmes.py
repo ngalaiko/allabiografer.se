@@ -171,6 +171,14 @@ def apply_programme_corrections(sd: "SiteData") -> None:
             sd.films[film.key] = replace(film, runtime=80)
             sd.movies[show.tmdb_id] = replace(movie, runtime=80)
             version = replace(version, audio=AudioVersion(languages=_SWEDISH))
+        elif (show.cinema_name, show.date, show.time, show.film_key) == (
+            "Kristianstad Filmmuseet",
+            date(2026, 11, 21),
+            time(14),
+            "bioguiden_se:kärlek över tanger",
+        ):
+            # Regionmuseet sells tickets directly on the dated event page.
+            show = replace(show, ticket_url="https://regionmuseet.se/kalender/karlek-over-tanger-2/")
 
         if date(2026, 11, 19) <= show.date <= date(2026, 11, 21):
             if ticket in _AUDITED_RUNTIMES:
