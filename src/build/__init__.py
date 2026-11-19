@@ -1025,7 +1025,7 @@ def _variants(screenings: list[Screening]) -> dict[Screening, tuple[str, str]]:
             split_axes.add(1)
         if len({profile[2] for profile in profiles}) > 1:
             split_axes.add(2)
-        if len({profile[3] for profile in profiles}) > 1:
+        if any(profile[3] for profile in profiles):
             split_axes.add(3)
         if len({profile[4] for profile in profiles}) > 1 or any(profile[4] for profile in profiles):
             split_axes.add(4)

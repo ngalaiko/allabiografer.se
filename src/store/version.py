@@ -88,6 +88,12 @@ class PresentationSystem(StrEnum):
     INFINITY_VISION = "Infinity Vision"
     AFTERNOON_TEA = "Afternoon Tea"
     RECORDED_THEATRE = "Inspelad teater"
+    KNATTEBIO = "Knattebio"
+    BOOK_CLUB = "Bokklubb"
+    BIOPASSET = "Biopasset"
+    CINEVILLE = "Cineville"
+    NEW_FINNISH_FILM = "Ny finsk film"
+    DIRECTOR_QA = "Regissörssamtal (teckenspråkstolkat)"
 
 
 class Dimension(StrEnum):

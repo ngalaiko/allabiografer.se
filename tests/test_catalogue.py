@@ -57,6 +57,45 @@ def catalogue(db):
     return read_catalogue(Path("unused"), path=db)
 
 
+def test_hypnos_operator_listing_keeps_its_runtime_and_direct_booking(db):
+    day = datetime.now(SWEDEN_TZ).date() + timedelta(days=1)
+    title = "La Chimera"
+    operator = "hypnostheatre_com"
+    broker = "bio_se"
+    direct = "https://bio.se/bokning/cinemaId/31791/sessionId/77"
+    write_movie(
+        Movie.from_dict({"tmdb_id": 837335, "title_sv": title, "release_date": "2023", "runtime": 131}), path=db
+    )
+    for source, length, url in (
+        (operator, 133, "https://bio.se/biografer/hypnos"),
+        (broker, 130, direct),
+    ):
+        film = add(db, source, title=title, year="2023", runtime=length, identifier=837335)
+        show = Screening(
+            tmdb_id=837335,
+            title=title,
+            film_key=film.key,
+            source=source,
+            city="Malmö",
+            cinema_name="Hypnos Theatre",
+            date=day,
+            time=time(19, 30),
+            ticket_url=url,
+        )
+        extra = [replace(show, time=time(21), ticket_url=direct.removesuffix("77") + "79")] if source == broker else []
+        write_screenings([show, *extra], path=db, source=source)
+
+    reconcile(path=db, today=day)
+    sd = read_catalogue(Path("unused"), path=db, today=day)
+    feed = db.parent / "malmo.json"
+    build._write_city_feed(sd, "Malmö", sd.screenings, feed)
+    rows = json.loads(feed.read_text())["screenings"]
+    assert [(r["source"], r["ticket_url"], r["film"]["runtime_minutes"]) for r in rows] == [
+        (operator, direct, 133),
+    ]
+    assert rows[0]["version"]["subtitles"] == ["Engelska"]
+
+
 def test_goteborg_audit_metadata_preserves_sessions_and_is_scoped(db):
     from datetime import date
 

@@ -14,6 +14,7 @@ from itertools import combinations, cycle
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from build._audited_programmes import apply_programme_corrections
 from build._goteborg_metadata import apply_metadata
 from store import (
     DB_FILE,
@@ -535,6 +536,7 @@ def reconcile(*, path: Path = DB_FILE, today: date | None = None, enrich: bool =
             for slug, owner in aliases.items()
             if -owner in prepared.movies and slug != records[owner]["slug"]
         }
+        apply_programme_corrections(prepared)
         apply_metadata(prepared)
         conn.execute("DELETE FROM catalogue_tmdb_matches")
         conn.executemany(
