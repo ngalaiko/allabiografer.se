@@ -94,6 +94,12 @@ class PresentationSystem(StrEnum):
     CINEVILLE = "Cineville"
     NEW_FINNISH_FILM = "Ny finsk film"
     DIRECTOR_QA = "Regissörssamtal (teckenspråkstolkat)"
+    FAMILY_CINEMA = "Familjebio"
+    PREMIERE = "Premiär"
+    PREVIEW = "Förhandsvisning"
+    BIOVINO = "BioVino"
+    PAWLIKOWSKI_SERIES = "3 x Pawlikowski"
+    LIVE_ON_CINEMA = "Live på bio"
 
 
 class Dimension(StrEnum):

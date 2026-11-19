@@ -40,6 +40,7 @@ class Screening:
     presentation: Presentation = field(default_factory=Presentation)
     accessibility: Accessibility = field(default_factory=Accessibility)
     raw_attributes: tuple[str, ...] = ()
+    runtime: int | None = None
 
     def to_dict(self) -> dict:
         """Serialise for JSON storage."""
@@ -58,6 +59,7 @@ class Screening:
             "presentation": _presentation_to_dict(self.presentation),
             "accessibility": [feature.value for feature in sorted(self.accessibility.features)],
             "raw_attributes": list(self.raw_attributes),
+            **({"runtime": self.runtime} if self.runtime is not None else {}),
         }
 
     @classmethod
@@ -79,6 +81,7 @@ class Screening:
             presentation=_presentation_from_dict(d.get("presentation", {})),
             accessibility=Accessibility(frozenset(AccessibilityFeature(v) for v in d.get("accessibility", ()))),
             raw_attributes=tuple(d.get("raw_attributes", ())),
+            runtime=d.get("runtime"),
         )
 
 

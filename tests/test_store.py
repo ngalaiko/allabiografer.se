@@ -139,10 +139,11 @@ def test_screening_unknown_and_explicit_none_round_trip(db):
 
 def test_screening_dict_round_trip_uses_canonical_immutable_languages():
     original = screening(
+        runtime=91,
         version=ContentVersion(
             audio=AudioVersion(AudioKind.DUBBED, frozenset({Language.SWEDISH, Language.ENGLISH})),
             subtitles=SubtitleVersion(frozenset({Language.SPANISH})),
-        )
+        ),
     )
     restored = Screening.from_dict(original.to_dict())
     assert restored == original

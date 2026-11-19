@@ -5,6 +5,7 @@ from dataclasses import replace
 from datetime import date, time
 from typing import TYPE_CHECKING
 
+from store import Venue
 from store.version import AudioKind, AudioVersion, Language, PresentationSystem, ProjectionAttribute, SubtitleVersion
 
 if TYPE_CHECKING:
@@ -31,6 +32,34 @@ _BIOPASSET = {
     (21, "15:40"),
     (21, "17:45"),
     (21, "20:00"),
+}
+_UMEA = _BIO + "13192/sessionId/"
+_CNEMA = _BIO + "5/sessionId/"
+_ERSBODA = ("Umeå", "Ersboda Folkets Hus")
+_ERSBODA_LABAN = (
+    "https://www.tickster.com/se/sv/events/cwct1wy22f2zgbg/2026-11-21/familjebio-lilla-spoket-laban-busar-vidare"
+)
+_AUDITED_RUNTIMES = {
+    _UMEA + "13571": 157,
+    _UMEA + "13114": 118,
+    _UMEA + "13577": 118,
+    _UMEA + "13583": 118,
+    _UMEA + "13579": 108,
+    _UMEA + "13586": 108,
+    _CNEMA + "20773": 91,
+}
+_AUDITED_LABELS = {
+    _UMEA + "13114": {PresentationSystem.BIOVINO, PresentationSystem.PREVIEW},
+    _UMEA + "13450": {PresentationSystem.PREMIERE},
+    _UMEA + "13451": {PresentationSystem.PAWLIKOWSKI_SERIES},
+    _UMEA + "13582": {PresentationSystem.KNATTEBIO},
+    _CNEMA + "20445": {PresentationSystem.PREVIEW},
+    _CNEMA + "20629": {PresentationSystem.LIVE_ON_CINEMA},
+    **dict.fromkeys(
+        [_UMEA + s for s in ("13577", "13578", "13580")]
+        + [_CNEMA + s for s in ("20446", "20617", "20618", "20619", "20690")],
+        frozenset({PresentationSystem.PREMIERE}),
+    ),
 }
 
 
@@ -96,6 +125,32 @@ def apply_programme_corrections(sd: "SiteData") -> None:
             sd.films[film.key] = replace(film, runtime=80)
             sd.movies[show.tmdb_id] = replace(movie, runtime=80)
             version = replace(version, audio=AudioVersion(languages=_SWEDISH))
+
+        if date(2026, 11, 19) <= show.date <= date(2026, 11, 21):
+            if ticket in _AUDITED_RUNTIMES:
+                show = replace(show, runtime=_AUDITED_RUNTIMES[ticket])
+            experiences |= _AUDITED_LABELS.get(ticket, frozenset())
+            if ticket == _UMEA + "13450" and (show.date, show.film_key) == (
+                date(2026, 11, 21),
+                "bio_se:you can see everything",
+            ):
+                # The operator moved this exact session 35 minutes and marked it full.
+                show = replace(
+                    show,
+                    time=time(17, 5),
+                    raw_attributes=(*show.raw_attributes, "Slutsålt"),
+                )
+            elif ticket == _UMEA + "13573":
+                version = replace(version, subtitles=SubtitleVersion(_ENGLISH))
+            elif ticket in {_UMEA + "13578", _UMEA + "13588"}:
+                version = replace(version, subtitles=SubtitleVersion(frozenset()))
+            elif ticket == _UMEA + "13582":
+                version = replace(version, audio=AudioVersion(languages=_SWEDISH), subtitles=SubtitleVersion(_SWEDISH))
+            elif (show.city, show.cinema_name) == _ERSBODA and ticket == _ERSBODA_LABAN:
+                show = replace(show, runtime=62, ticket_url="https://secure.tickster.com/cwct1wy22f2zgbg")
+                experiences |= {PresentationSystem.FAMILY_CINEMA}
+                venue = sd.venues.get(_ERSBODA) or Venue(city=show.city, name=show.cinema_name)
+                sd.venues[_ERSBODA] = replace(venue, address="Byttgränd 13, Umeå")
 
         if film and film.key == "biorodakvarn_se:citizen kane" and "otextad 4k-kopia" in film.overview.casefold():
             show = replace(

@@ -283,6 +283,8 @@ def _merge_films(movie: Movie, films: list[Film]) -> Movie:
 
 def _screening_runtime(sd: SiteData, screening: Screening) -> int | None:
     """The cinema's listed duration; missing source data stays unknown."""
+    if screening.runtime is not None:
+        return screening.runtime
     film = sd.films.get(screening.film_key)
     movie = sd.movies.get(screening.tmdb_id)
     return (film.runtime if film else movie.runtime if movie else None) or None
