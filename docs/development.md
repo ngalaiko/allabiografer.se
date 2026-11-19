@@ -292,6 +292,8 @@ The version 1 contract contains:
   `cinema` (name, nullable address and screen, programme URL), `ticket_url`, `source`,
   `version`, `presentation`, and `accessibility`. Build-only synthetic movie IDs
   are published as `null`. Missing URLs and metadata are `null`, not guessed.
+  Optional `availability: "sold_out"` means the operator reported that status
+  in the imported schedule. An omitted field does not imply tickets are available.
 
 Version and presentation values follow the stored screening facts, not inferred
 film languages or merged display labels. Audio `kind: "unknown"` and an empty

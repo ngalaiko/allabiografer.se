@@ -102,6 +102,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .schedule-cell > a, .schedule-cell > span, .festival-time, .festival-screening a { width: 45px; min-height: 20px; padding: 5px; line-height: 10px; white-space: nowrap; text-align: center; font-feature-settings: 'case' 1; font-size: var(--cap-height-10); }
 .schedule-cell > a:hover, .festival-time:hover, .festival-screening a:hover, .newsletter-preferences button:hover:not(:disabled) { color: var(--hover); text-decoration: none; background: var(--hover-background); }
 .schedule-cell .past { color: var(--past); }
+.schedule-cell .sold-out time { text-decoration: line-through; }
 .no-screenings { padding: 16px 12px; }
 .programme-note { position: sticky; left: var(--frame); width: min(calc(100vw - 2 * var(--frame)), var(--sheet-width)); margin: 0; padding: 12px; }
 

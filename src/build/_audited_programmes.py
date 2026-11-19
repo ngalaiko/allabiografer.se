@@ -5,7 +5,7 @@ from dataclasses import replace
 from datetime import date, time
 from typing import TYPE_CHECKING
 
-from store.version import AudioKind, AudioVersion, Language, PresentationSystem, SubtitleVersion
+from store.version import AudioKind, AudioVersion, Language, PresentationSystem, ProjectionAttribute, SubtitleVersion
 
 if TYPE_CHECKING:
     from build import SiteData
@@ -91,6 +91,19 @@ def apply_programme_corrections(sd: "SiteData") -> None:
             sd.films[film.key] = replace(film, runtime=90)
             sd.movies[show.tmdb_id] = replace(movie, runtime=90)
             version = replace(version, audio=AudioVersion(languages=_SWEDISH))
+        elif ticket == _BIO + "16/sessionId/7668" and show.film_key == "bio_se:kvinnohuset" and film:
+            # Bio Roxy's municipal programme gives 80 minutes and Swedish audio.
+            sd.films[film.key] = replace(film, runtime=80)
+            sd.movies[show.tmdb_id] = replace(movie, runtime=80)
+            version = replace(version, audio=AudioVersion(languages=_SWEDISH))
+
+        if film and film.key == "biorodakvarn_se:citizen kane" and "otextad 4k-kopia" in film.overview.casefold():
+            show = replace(
+                show,
+                presentation=replace(
+                    show.presentation, projection=show.presentation.projection | {ProjectionAttribute.K4}
+                ),
+            )
 
         if show.cinema_name == _ELEKTRA and date(2026, 11, 19) <= show.date <= date(2026, 11, 21):
             if (show.date.day, show.time.strftime("%H:%M")) in _BIOPASSET:
