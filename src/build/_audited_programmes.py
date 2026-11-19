@@ -45,6 +45,9 @@ _ERSBODA_LABAN = (
     "https://www.tickster.com/se/sv/events/cwct1wy22f2zgbg/2026-11-21/familjebio-lilla-spoket-laban-busar-vidare"
 )
 _AUDITED_RUNTIMES = {
+    _BIO + "18048/sessionId/55387": 119,
+    _BIO + "18048/sessionId/55425": 119,
+    _BIO + "18048/sessionId/55373": 117,
     _UMEA + "13571": 157,
     _UMEA + "13114": 118,
     _UMEA + "13577": 118,
