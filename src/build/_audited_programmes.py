@@ -56,6 +56,8 @@ _AUDITED_RUNTIMES = {
     _UMEA + "13579": 108,
     _UMEA + "13586": 108,
     _CNEMA + "20773": 91,
+    _BIO + "3214/sessionId/7553": 101,
+    _BIO + "3214/sessionId/7554": 101,
     **{
         _KINO + code: minutes
         for code, minutes in {
@@ -74,6 +76,7 @@ _AUDITED_LABELS = {
     _UMEA + "13582": {PresentationSystem.KNATTEBIO},
     _CNEMA + "20445": {PresentationSystem.PREVIEW},
     _CNEMA + "20629": {PresentationSystem.LIVE_ON_CINEMA},
+    _BIO + "5318/sessionId/4368": {PresentationSystem.QA},
     _KINO + "AYEDGWRBVVE3AJB": {PresentationSystem.CLASSIC},
     _KINO + "7B34YFEK9K5KXAG": {PresentationSystem.FAMILY_CINEMA},
     _KINO + "PN21PFLV7X13JR0": {PresentationSystem.PREMIERE, PresentationSystem.FILM_INTRODUCTION},
@@ -100,6 +103,9 @@ def apply_programme_corrections(sd: "SiteData") -> None:
     karlstad = ("Karlstad", "Filmstaden Karlstad")
     if (venue := sd.venues.get(karlstad)) and venue.address == "Drottningggatan 33":
         sd.venues[karlstad] = replace(venue, address="Drottninggatan 33")
+    regina = ("Östersund", "Östersund Folkets Bio Regina")
+    if (venue := sd.venues.get(regina)) and venue.address == "Prästgatan 56 Östersund":
+        sd.venues[regina] = replace(venue, address="Prästgatan 56 B, Östersund")
 
     slots: dict[tuple, list[Screening]] = defaultdict(list)
     for show in sd.screenings:
@@ -172,7 +178,7 @@ def apply_programme_corrections(sd: "SiteData") -> None:
             experiences |= _AUDITED_LABELS.get(ticket, frozenset())
             if (
                 show.film_key == "filmstaden_se:bts world tour arirang in kaohsiung live viewing"
-                and show.city in {"Karlstad", "Växjö"}
+                and show.city in {"Karlstad", "Luleå", "Växjö"}
                 and show.date == date(2026, 11, 21)
                 and show.time in {time(11, 45), time(16)}
             ):

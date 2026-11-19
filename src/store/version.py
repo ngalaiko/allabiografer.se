@@ -93,6 +93,7 @@ class PresentationSystem(StrEnum):
     BIOPASSET = "Biopasset"
     CINEVILLE = "Cineville"
     NEW_FINNISH_FILM = "Ny finsk film"
+    QA = "Frågestund"
     DIRECTOR_QA = "Regissörssamtal (teckenspråkstolkat)"
     FAMILY_CINEMA = "Familjebio"
     PREMIERE = "Premiär"
