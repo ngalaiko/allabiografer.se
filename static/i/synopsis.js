@@ -1,7 +1,8 @@
-/* Two-line synopses with per-page expansion stored locally. */
+/* Two-line synopses on compact screens, with per-page expansion stored locally. */
 (() => {
   const buttons = [...document.querySelectorAll("[data-more]")];
   if (!buttons.length) return;
+  const compact = matchMedia("(max-width: 700px)"); // Match the compact programme layout.
   const ids = new Set(buttons.map(button => button.dataset.more));
   const key = `synopsis:${location.pathname}`;
   let expanded = new Set();
@@ -37,7 +38,7 @@
     for (const { paragraph } of items) paragraph.classList.remove("clamped");
     const results = items.map(({ paragraph }) => ({
       width: paragraph.getBoundingClientRect().width,
-      collapsible: needsCollapse(paragraph),
+      collapsible: compact.matches && needsCollapse(paragraph),
     }));
     for (const [index, item] of items.entries()) {
       item.width = results[index].width;
@@ -74,5 +75,6 @@
   });
   for (const { paragraph } of items) observer.observe(paragraph);
   document.fonts?.addEventListener("loadingdone", () => schedule(items));
+  compact.addEventListener("change", () => schedule(items));
   refresh(items);
 })();

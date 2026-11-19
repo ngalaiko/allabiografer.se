@@ -64,14 +64,23 @@ def test_synopsis_overflow(browser, width, overflow):
         button = page.locator(".synopsis-more").first
         assert paragraph.is_visible()
         assert page.locator(".synopsis-short:visible").count() == 0
-        assert button.is_visible() == (overflow > len("Visa mer…"))
-        if overflow > len("Visa mer…"):
+        collapsible = width == 375 and overflow > len("Visa mer…")
+        assert button.is_visible() == collapsible
+        if collapsible:
             assert paragraph.evaluate("p => p.clientHeight") == 40
             button.click()
             assert paragraph.evaluate("p => p.clientHeight == p.scrollHeight")
             assert other.evaluate("p => p.clientHeight") == 40
+            # Crossing the breakpoint also matters when the synopsis width is unchanged.
+            page.set_viewport_size({"width": 1280, "height": 800})
+            playwright.expect(page.locator(".synopsis-more").last).to_be_hidden()
+            assert other.evaluate("p => p.clientHeight == p.scrollHeight")
+            page.set_viewport_size({"width": 375, "height": 800})
+            playwright.expect(button).to_be_visible()
+            assert button.get_attribute("aria-expanded") == "true"
+            assert other.evaluate("p => p.clientHeight") == 40
             # Width changes must not discard the saved expansion state.
-            paragraph.evaluate("p => p.style.width = '80ch'")
+            paragraph.evaluate("p => p.style.width = '40ch'")
             playwright.expect(button).to_be_hidden()
             paragraph.evaluate("p => p.style.width = '20ch'")
             playwright.expect(button).to_be_visible()
@@ -80,7 +89,7 @@ def test_synopsis_overflow(browser, width, overflow):
             assert other.evaluate("p => p.clientHeight") == 40
             button.click()
             assert paragraph.evaluate("p => p.clientHeight") == 40
-            paragraph.evaluate("p => p.style.width = '80ch'")
+            paragraph.evaluate("p => p.style.width = '40ch'")
             playwright.expect(button).to_be_hidden()
             assert paragraph.evaluate("p => p.clientHeight == p.scrollHeight")
             paragraph.evaluate("p => p.style.width = '20ch'")
@@ -96,7 +105,7 @@ def test_synopsis_overflow(browser, width, overflow):
 
 
 def test_synopsis_remeasures_when_a_font_loads_without_a_width_change(browser):
-    page = browser.new_page()
+    page = browser.new_page(viewport={"width": 375, "height": 800})
     try:
         page.set_content(
             f'<p class="synopsis" id="description">{"i" * 90}</p>'

@@ -23,6 +23,7 @@ function synopsis(storage = new Map(), href = 'https://allabiografer.se/stad/var
       createRange: () => ({ selectNodeContents() {}, getClientRects: () => Array(4).fill({ width: 200 }) }),
     },
     getComputedStyle: () => ({ font: '16px sans-serif' }),
+    matchMedia: () => ({ matches: true, addEventListener() {} }),
     localStorage: {
       getItem(key) { if (blocked) throw Error('blocked'); return storage.get(key) ?? null; },
       setItem(key, value) { if (blocked) throw Error('blocked'); storage.set(key, value); },
