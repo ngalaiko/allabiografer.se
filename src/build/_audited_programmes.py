@@ -37,7 +37,7 @@ _UMEA = _BIO + "13192/sessionId/"
 _CNEMA = _BIO + "5/sessionId/"
 _KINO = "https://www.tickster.com/sv/events/"
 _FILMSTADEN = "https://www.filmstaden.se/bokning/kop/"
-# Session IDs cross-checked against Svenska Bio's local 20–26 November flyers.
+# Session IDs cross-checked against Svenska Bio's flyers, announcements and show feeds.
 _SVENSKA_BIO_LABELS = {
     **dict.fromkeys(
         (
@@ -52,6 +52,12 @@ _SVENSKA_BIO_LABELS = {
             "f97571e0-df81-4f63-a6c3-44bb687d588b",
             "2d89a19b-50ad-4a60-a5fe-d3db952b8a2f",
             "ba9c98d5-3712-431e-a870-75fb34dd7c59",
+            "0eec1c46-c9d9-40a4-b894-32af6d82b7f6",
+            "610d620c-03fa-4530-a00e-c7d40ebfea5e",
+            "92fb1bff-8a0e-4d13-9f8d-09404c92bbef",
+            "527cf82e-c8e3-4c4b-a905-09abc4f08dbc",
+            "6d82db33-574e-4be1-86ff-785f9aef9666",
+            "2aa2146c-78df-4bcb-b343-c739f400004d",
         ),
         PresentationSystem.KNATTEBIO,
     ),
@@ -66,10 +72,30 @@ _SVENSKA_BIO_LABELS = {
             "7cf1245e-96cd-4433-9c43-901a7b0b2004",
             "69ebb1ea-9f9b-487d-8c3b-85cb6089f730",
             "e25d786f-33f4-4e1c-8656-3196f3332d97",
+            "bc888555-5796-48a5-96d0-7c058006da10",
+            "fcb57d2c-d9f3-4f2d-848a-26e807d56a3e",
+            "5d82b931-f503-4615-a23a-f0772ba20e4a",
+            "110f9647-d89d-46aa-b670-11af1a5048e2",
+            "b520dfde-8e7d-4848-ab15-448d306a637a",
+            "309963ee-8d91-4b7c-88e4-4e9d9eb76211",
         ),
         PresentationSystem.PREVIEW,
     ),
     "1abc0d00-35da-43a6-9ba0-72c136411e51": PresentationSystem.BIOPASSET,
+    **dict.fromkeys(
+        (
+            "3d47ca48-41e7-4fd3-89a1-57df38ee9587",
+            "cda1996a-63b0-4cc4-802e-d996e402ae00",
+            "aeb8e06e-9bf1-41ac-9296-c28eea640cd9",
+            "511a1735-8c9b-4dc3-a53b-01ab5dd8911d",
+            "f934d2d8-f878-4c74-b485-40b36bff3d39",
+        ),
+        PresentationSystem.BIOPASSET,
+    ),
+    **dict.fromkeys(
+        ("700215f6-999a-4941-8ed2-20a004c9294f", "4d0d68a5-f614-4f18-b1c6-dfae0bf78a14"),
+        PresentationSystem.PREMIERE,
+    ),
 }
 _SODRAN_TICKETS = {
     "bio_se:kärlek över tanger": "wfbe9evymvb25hz",
@@ -80,6 +106,24 @@ _ERSBODA_LABAN = (
     "https://www.tickster.com/se/sv/events/cwct1wy22f2zgbg/2026-11-21/familjebio-lilla-spoket-laban-busar-vidare"
 )
 _VAXJO_STALE_SHOW = "https://www.filmstaden.se/bokning/kop/06d49d6a-e7aa-46f3-9693-de9df51e9013/"
+# Bio 3:an's own programme gives runtimes for these Tickster sessions.
+_PITEA_RUNTIMES = {
+    **dict.fromkeys(
+        (
+            "PMT1ZHCKNJZA2UE",
+            "K2G2MXLYP3F8TZH",
+            "3GVL9L61UGVXY49",
+            "GULKPXFWZ58NMED",
+            "XHV53M7C6EFVFJ2",
+            "EYXWX3WJCFFLJN4",
+            "TY3DZ5A2NXK64FZ",
+        ),
+        100,
+    ),
+    **dict.fromkeys(("XXNR7KYKUK3XH62", "4HE27BTKVGW5X5F", "F9KCX6HXWKDJ1J3"), 108),
+    **dict.fromkeys(("2E6AY9HBFEV3YEB", "NX3M27VC0A29712"), 75),
+    **dict.fromkeys(("RD1XWA373CA2FCY", "2MLY6BYCE1V320P"), 118),
+}
 _AUDITED_RUNTIMES = {
     _BIO + "18048/sessionId/55387": 119,
     _BIO + "18048/sessionId/55425": 119,
@@ -164,6 +208,13 @@ def apply_programme_corrections(sd: "SiteData") -> None:
         # Hypnos owns the calendar. The ticket broker never adds showtimes.
         if (show.city, show.cinema_name, show.source) == ("Malmö", "Hypnos Theatre", "bio_se"):
             continue
+        if (show.city, show.cinema_name) == ("Piteå", "Piteå Bio 3:an") and show.ticket_url.startswith(_KINO):
+            code = show.ticket_url.removeprefix(_KINO)
+            if code == "82J988MC1AJ6XXK" and show.screen == "Salongen":
+                # Bio 3:an and Tickster both list this exact event in Saga.
+                continue
+            if code in _PITEA_RUNTIMES:
+                show = replace(show, runtime=_PITEA_RUNTIMES[code])
         if show.ticket_url == _VAXJO_STALE_SHOW and show.date == date(2026, 11, 19):
             # Filmstaden no longer lists this exact 14:30 session in its Växjö programme.
             continue
@@ -172,6 +223,9 @@ def apply_programme_corrections(sd: "SiteData") -> None:
         experiences = show.presentation.experiences
         film = sd.films.get(show.film_key)
         movie = sd.movies[show.tmdb_id]
+        if show.film_key == "filmstaden_se:paw patrol dinosaurie filmen" and sd.tmdb_ids.get(show.tmdb_id) == 1185806:
+            # Filmstaden publishes the Swedish classification as unrestricted.
+            sd.movies[show.tmdb_id] = replace(movie, age_rating="Barntillåten")
         if show in links:
             show = replace(show, ticket_url=links[show])
         if show.film_key == "hypnostheatre_com:la chimera" and show.ticket_url in {_HYPNOS + "77", _HYPNOS + "78"}:
