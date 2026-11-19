@@ -100,6 +100,9 @@ class PresentationSystem(StrEnum):
     BIOVINO = "BioVino"
     PAWLIKOWSKI_SERIES = "3 x Pawlikowski"
     LIVE_ON_CINEMA = "Live på bio"
+    CLASSIC = "Klassiker"
+    FILM_INTRODUCTION = "Filmintroduktion"
+    CHILDRENS_CINEMA = "Barnbio"
 
 
 class Dimension(StrEnum):

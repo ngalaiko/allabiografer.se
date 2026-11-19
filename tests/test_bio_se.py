@@ -341,6 +341,18 @@ def test_non_film_sessions_are_dropped_unless_broadcast():
     assert [f.title for f, *_ in _showtimes(payload)] == ["Otello", "Così fan tutte", "Film"]
 
 
+def test_boras_misclassified_film_uses_its_actual_title():
+    payload = _payload(
+        {"id": 50054, "title": "Throwback Thursday: Donnie Darko", "run_time": "133"},
+        _session(format="Inte en film", payment_link="/bokning/cinemaId/5570/sessionId/1991"),
+        _session(format="Inte en film", payment_link="/bokning/cinemaId/5570/sessionId/1992"),
+    )
+    [(film, *_, url, _screen, _fmt, _audio, _subs, _texts, _attrs, _broadcast)] = _showtimes(payload)
+    assert film.title == "Donnie Darko"
+    assert film.runtime == 133
+    assert url == "https://bio.se/bokning/cinemaId/5570/sessionId/1991"
+
+
 def test_movie_label_and_short_session_info_become_raw_attributes():
     payload = _payload(
         {"label": "Klassiker"},

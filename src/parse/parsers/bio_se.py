@@ -142,6 +142,9 @@ def _showtimes(
         movie = entry.get("movie", {})
         # Versions ride in titles: "Bortglömda ön eng. tal ATMOS".
         title_raw = _clean(movie.get("title", ""))
+        boras_donnie = str(movie.get("id")) == "50054" and title_raw == "Throwback Thursday: Donnie Darko"
+        if boras_donnie:
+            title_raw = "Donnie Darko"
         title, fmt, language, subtitles = _version.split_title(title_raw)
         film = _film(movie, title)
         if not film.title:
@@ -154,6 +157,12 @@ def _showtimes(
             if not raw:
                 continue
             format_raw = _clean(sess.get("format", ""))
+            # Borås Stad lists this exact session as a screening of the Director's Cut.
+            if (
+                boras_donnie
+                and _ticket_url(sess.get("payment_link", "")) == f"{_SITE}/bokning/cinemaId/5570/sessionId/1991"
+            ):
+                format_raw = ""
             if format_raw == _NOT_A_FILM and not broadcast:
                 continue
             url = _ticket_url(sess.get("payment_link", "")) or fallback_url

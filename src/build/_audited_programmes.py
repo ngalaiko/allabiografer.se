@@ -35,6 +35,11 @@ _BIOPASSET = {
 }
 _UMEA = _BIO + "13192/sessionId/"
 _CNEMA = _BIO + "5/sessionId/"
+_KINO = "https://www.tickster.com/sv/events/"
+_SODRAN_TICKETS = {
+    "bio_se:kärlek över tanger": "wfbe9evymvb25hz",
+    "bio_se:de gaulle motståndets pris": "vbdtj7dl0u038bd",
+}
 _ERSBODA = ("Umeå", "Ersboda Folkets Hus")
 _ERSBODA_LABAN = (
     "https://www.tickster.com/se/sv/events/cwct1wy22f2zgbg/2026-11-21/familjebio-lilla-spoket-laban-busar-vidare"
@@ -47,6 +52,16 @@ _AUDITED_RUNTIMES = {
     _UMEA + "13579": 108,
     _UMEA + "13586": 108,
     _CNEMA + "20773": 91,
+    **{
+        _KINO + code: minutes
+        for code, minutes in {
+            "J56K8U50G4FNY1D": 119,
+            "PVDKV2MUN8AWFN3": 157,
+            "9PZYY5VLGHLPRNG": 157,
+            "71V6TLHHC1BWZU2": 118,
+            "FTLW1RJ4JUAD24N": 118,
+        }.items()
+    },
 }
 _AUDITED_LABELS = {
     _UMEA + "13114": {PresentationSystem.BIOVINO, PresentationSystem.PREVIEW},
@@ -55,6 +70,20 @@ _AUDITED_LABELS = {
     _UMEA + "13582": {PresentationSystem.KNATTEBIO},
     _CNEMA + "20445": {PresentationSystem.PREVIEW},
     _CNEMA + "20629": {PresentationSystem.LIVE_ON_CINEMA},
+    _KINO + "AYEDGWRBVVE3AJB": {PresentationSystem.CLASSIC},
+    _KINO + "7B34YFEK9K5KXAG": {PresentationSystem.FAMILY_CINEMA},
+    _KINO + "PN21PFLV7X13JR0": {PresentationSystem.PREMIERE, PresentationSystem.FILM_INTRODUCTION},
+    **dict.fromkeys(
+        [
+            _KINO + s
+            for s in ("7FZHRUKFMEJA6JC", "DNWPBPFEW5LFWF0", "PEV9F94ATPD60DH", "EP9XFG26U68JT0F", "71V6TLHHC1BWZU2")
+        ],
+        frozenset({PresentationSystem.PREMIERE}),
+    ),
+    **dict.fromkeys(
+        [_KINO + s for s in ("H80GWU116ML8PU0", "A6DA9ETP7VPXNLN", "MXKWN35X8J96NNP")],
+        frozenset({PresentationSystem.CHILDRENS_CINEMA}),
+    ),
     **dict.fromkeys(
         [_UMEA + s for s in ("13577", "13578", "13580")]
         + [_CNEMA + s for s in ("20446", "20617", "20618", "20619", "20690")],
@@ -130,6 +159,34 @@ def apply_programme_corrections(sd: "SiteData") -> None:
             if ticket in _AUDITED_RUNTIMES:
                 show = replace(show, runtime=_AUDITED_RUNTIMES[ticket])
             experiences |= _AUDITED_LABELS.get(ticket, frozenset())
+            if ticket == _BIO + "5570/sessionId/1991" and show.film_key == "bio_se:donnie darko":
+                show = replace(show, runtime=133)
+                version = replace(version, edition="Director's Cut", subtitles=SubtitleVersion(frozenset()))
+                experiences |= {PresentationSystem.CLASSIC, PresentationSystem.FILM_INTRODUCTION}
+            elif ticket == _BIO + "42051/sessionId/162" and show.film_key == "bio_se:låt den rätte komma in":
+                version = replace(version, subtitles=SubtitleVersion(_ENGLISH))
+                show = replace(show, ticket_url="https://www.gavle.se/evenemang/bio-lat-den-ratte-komma-in/")
+            elif (show.cinema_name, show.date, ticket) == ("Lund Södran", date(2026, 11, 21), "http://kino.nu"):
+                if code := _SODRAN_TICKETS.get(show.film_key):
+                    show = replace(show, ticket_url=f"https://secure.tickster.com/{code}")
+            elif show.cinema_name == "Lund Kino" and ticket.startswith(_KINO):
+                code = ticket.removeprefix(_KINO)
+                if code == "J56K8U50G4FNY1D":
+                    version = replace(
+                        version, audio=replace(version.audio, languages=frozenset({Language.ARABIC, Language.ENGLISH}))
+                    )
+                elif code in {"DNWPBPFEW5LFWF0", "BRYKFR8ADTVF1YE"}:
+                    version = replace(
+                        version, audio=replace(version.audio, languages=frozenset({Language.CATALAN, Language.SPANISH}))
+                    )
+                elif code in {"LL0MPN6L73LL78B", "LZABNGRK3A98MHF"}:
+                    version = replace(version, subtitles=SubtitleVersion(_SWEDISH))
+                elif code in {"EP9XFG26U68JT0F", "DJ97XHE5X8LR0M3"}:
+                    version = replace(version, subtitles=SubtitleVersion(frozenset()))
+                elif code == "MXKWN35X8J96NNP":
+                    version = replace(
+                        version, audio=AudioVersion(AudioKind.DUBBED, _SWEDISH), subtitles=SubtitleVersion(_SWEDISH)
+                    )
             if ticket == _UMEA + "13450" and (show.date, show.film_key) == (
                 date(2026, 11, 21),
                 "bio_se:you can see everything",
