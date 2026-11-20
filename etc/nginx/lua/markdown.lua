@@ -37,7 +37,8 @@ end
 function M.link()
     if ngx.status ~= 200 then return end
     local media = (ngx.header.content_type or ""):match("^[^;]+")
-    local city = ngx.var.uri:match("^(/stad/[^/]+/)index%.[^/]+$")
+    local suffix = ({ ["text/html"] = "html", ["text/markdown"] = "md",
+        ["application/ld+json"] = "jsonld", ["text/calendar"] = "ics" })[media]
     local path, alternate
     if media == "text/html" and ngx.var.uri:match("%.html$") then
         path = ngx.var.uri:gsub("%.html$", ".md")
@@ -45,8 +46,8 @@ function M.link()
     elseif media == "text/markdown" and ngx.var.uri:match("%.md$") then
         path = ngx.var.uri:gsub("%.md$", ".html")
         alternate = "text/html"
-    elseif media == "application/json" and city and ngx.var.uri:match("%.json$") then
-        path = city .. "index.html"
+    elseif (suffix == "ics" or suffix == "jsonld") and ngx.var.uri:match("/index%." .. suffix .. "$") then
+        path = ngx.var.uri:gsub("%.[^.]+$", ".html")
         alternate = "text/html"
     else
         return
@@ -54,9 +55,19 @@ function M.link()
     -- Encode non-ASCII city names and URI delimiters, but retain path separators.
     path = path:gsub("[^/]+", function(segment) return ngx.escape_uri(segment) end)
     ngx.header["Link"] = '<' .. path .. '>; rel="alternate"; type="' .. alternate .. '"'
-    if city and (media == "text/html" or media == "text/markdown") then
-        local feed = (city .. "index.json"):gsub("[^/]+", function(segment) return ngx.escape_uri(segment) end)
-        ngx.header["Link"] = ngx.header["Link"] .. ', <' .. feed .. '>; rel="alternate"; type="application/json"'
+    local stem = suffix and ngx.var.uri:match("^(.*)/index%." .. suffix .. "$")
+    if stem then
+        for _, item in ipairs({ {"jsonld", "application/ld+json"}, {"ics", "text/calendar"}, {"md", "text/markdown"} }) do
+            if item[1] ~= suffix and item[2] ~= alternate then
+                local feed = stem .. "/index." .. item[1]
+                local file = io.open(ngx.var.document_root .. feed, "rb")
+                if file then
+                    file:close()
+                    feed = feed:gsub("[^/]+", function(segment) return ngx.escape_uri(segment) end)
+                    ngx.header["Link"] = ngx.header["Link"] .. ', <' .. feed .. '>; rel="alternate"; type="' .. item[2] .. '"'
+                end
+            end
+        end
     end
 end
 

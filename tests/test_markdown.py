@@ -59,16 +59,13 @@ def test_build_writes_markdown_from_database(tmp_path, monkeypatch):
     guide = (out / "llms.txt").read_text()
     assert guide.startswith("# allabiografer.se\n\n> ")
     assert "Accept: text/markdown" in guide
-    assert "generated_at is the build time, not a source fetch time" in guide
-    assert "coverage.completeness is unknown" in guide
-    assert "no_listings_found does not prove that nothing is showing" in guide
-    assert "Subtitle languages are null when unknown, [] when explicitly absent" in guide
     links = re.findall(r"\]\((https://allabiografer\.se/[^)]+)\)", guide)
     assert links
     for url in links:
         assert (out / unquote(urlsplit(url).path).lstrip("/")).is_file()
-    feed_links = [url for url in links if url.endswith(".json")]
-    assert feed_links == ["https://allabiografer.se/stad/göteborg/index.json"]
+    feed_links = [url for url in links if url.endswith(".jsonld")]
+    assert feed_links == ["https://allabiografer.se/stad/göteborg/index.jsonld"]
+    assert not (out / "stad/göteborg/index.json").exists()
     for page in pages:
         soup = BeautifulSoup(page.read_text(), "html.parser")
         if soup.select_one('link[rel="canonical"]'):

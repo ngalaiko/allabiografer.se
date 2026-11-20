@@ -56,9 +56,9 @@ def nginx_server(tmp_path):
         path.write_text(page)
         if path.suffix == ".html":
             path.with_suffix(".md").write_text(f"# {page}\n\nBioprogram i Sverige.\n")
-    for city in ("stockholm", "göteborg"):
-        (root / "stad" / city / "index.json").write_text('{"schema_version":1,"screenings":[]}\n')
-    for suffix in ("js", "json", "md", "xml"):
+    (root / "stad/göteborg/index.jsonld").write_text('{"@context":"https://schema.org","@graph":[]}\n')
+    (root / "stad/göteborg/index.ics").write_bytes(b"BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n")
+    for suffix in ("js", "json", "jsonld", "md", "xml"):
         (root / f"i/compression.{suffix}").write_text("compressible content\n" * 100)
 
     from build import SiteData, _write_film_redirects
@@ -299,8 +299,6 @@ def test_markdown_negotiation(nginx_server, accept, markdown, path):
             alternate_path = alternate_path.removesuffix(".html") + ".md"
         alternate_type = "text/html" if markdown else "text/markdown"
         expected_link = f'<{alternate_path}>; rel="alternate"; type="{alternate_type}"'
-        if path == "/stad/stockholm/":
-            expected_link += ', </stad/stockholm/index.json>; rel="alternate"; type="application/json"'
         assert response.getheader("Link") == expected_link
         if markdown:
             assert "Bioprogram i Sverige." in body
@@ -343,29 +341,44 @@ def test_direct_representations_advertise_fetchable_alternate(nginx_server, suff
         alternate = "md" if suffix == "html" else "html"
         media = "markdown" if suffix == "html" else "html"
         link = f"/stad/g%C3%B6teborg/index.{alternate}"
-        assert response.getheader("Link") == (
-            f'<{link}>; rel="alternate"; type="text/{media}", '
-            '</stad/g%C3%B6teborg/index.json>; rel="alternate"; type="application/json"'
-        )
+        expected = f'<{link}>; rel="alternate"; type="text/{media}"'
+        expected += ', </stad/g%C3%B6teborg/index.jsonld>; rel="alternate"; type="application/ld+json"'
+        expected += ', </stad/g%C3%B6teborg/index.ics>; rel="alternate"; type="text/calendar"'
+        assert response.getheader("Link") == expected
         response.read()
         connection.request("GET", link)
         response = connection.getresponse()
         assert response.status == 200
         assert response.getheader("Content-Type").startswith(f"text/{media}")
+        response.read()
+        connection.request("GET", "/stad/g%C3%B6teborg/index.jsonld", headers={"Accept": "text/markdown"})
+        response = connection.getresponse()
+        assert response.status == 200
+        assert response.getheader("Content-Type") == "application/ld+json"
+        assert response.read() == b'{"@context":"https://schema.org","@graph":[]}\n'
+        assert response.getheader("Link") == (
+            '</stad/g%C3%B6teborg/index.html>; rel="alternate"; type="text/html", '
+            '</stad/g%C3%B6teborg/index.ics>; rel="alternate"; type="text/calendar", '
+            '</stad/g%C3%B6teborg/index.md>; rel="alternate"; type="text/markdown"'
+        )
+        connection.request("GET", "/stad/g%C3%B6teborg/index.ics")
+        response = connection.getresponse()
+        assert response.status == 200
+        assert response.getheader("Content-Type") == "text/calendar"
+        assert '</stad/g%C3%B6teborg/index.jsonld>; rel="alternate"' in response.getheader("Link")
+        assert response.read() == b"BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n"
     finally:
         connection.close()
 
 
 @pytest.mark.parametrize("accept", ["application/json", "text/markdown", "*/*"])
-def test_city_json_is_fetchable_without_negotiation(nginx_server, accept):
+def test_retired_city_json_returns_not_found(nginx_server, accept):
     connection = http.client.HTTPConnection("127.0.0.1", nginx_server)
     try:
         connection.request("GET", "/stad/g%C3%B6teborg/index.json", headers={"Accept": accept})
         response = connection.getresponse()
-        assert response.status == 200
-        assert response.getheader("Content-Type").split(";")[0] == "application/json"
-        assert response.getheader("Link") == ('</stad/g%C3%B6teborg/index.html>; rel="alternate"; type="text/html"')
-        assert response.read() == b'{"schema_version":1,"screenings":[]}\n'
+        assert response.status == 404
+        assert response.getheader("Link") is None
     finally:
         connection.close()
 
@@ -375,7 +388,7 @@ def test_city_json_is_fetchable_without_negotiation(nginx_server, accept):
     [
         ("/", 200, "no-cache"),
         ("/index.md", 200, "no-cache"),
-        ("/stad/stockholm/index.json", 200, "no-cache"),
+        ("/stad/g%C3%B6teborg/index.jsonld", 200, "no-cache"),
         ("/i/newsletter-cities.json?v=0123456789ab", 200, "no-cache"),
         ("/llms.txt", 200, "no-cache"),
         ("/i/style.css", 200, "no-cache"),
@@ -451,7 +464,7 @@ def test_conditional_cache_policy(nginx_server, path, accept, policy):
         connection.close()
 
 
-@pytest.mark.parametrize("suffix", ["js", "json", "md", "xml"])
+@pytest.mark.parametrize("suffix", ["js", "json", "jsonld", "md", "xml"])
 def test_text_compression(nginx_server, suffix):
     import gzip
 

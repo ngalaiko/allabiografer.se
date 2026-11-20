@@ -121,7 +121,7 @@ def prepare(festival: dict) -> dict:
     return festival
 
 
-def _festival_jsonld(sd, festival: dict, canonical: str) -> str | None:
+def _festival_nodes(sd, festival: dict, canonical: str) -> tuple[list[dict], list[dict]]:
     movies = {}
     for film in festival["films"]:
         movie = {
@@ -135,7 +135,7 @@ def _festival_jsonld(sd, festival: dict, canonical: str) -> str | None:
             movie["description"] = description
         movies[film["id"]] = movie
     events = []
-    for s in festival["screenings"][: build.MAX_JSONLD_EVENTS]:
+    for s in festival["screenings"]:
         event = build._screening_node(
             sd,
             movies[s["film_id"]],
@@ -152,7 +152,7 @@ def _festival_jsonld(sd, festival: dict, canonical: str) -> str | None:
                     _LANGUAGE_TAGS.get(name.casefold()) or {"@type": "Language", "name": name} for name in names
                 ]
         events.append(event)
-    return build._jsonld({"@context": "https://schema.org", "@graph": [*movies.values(), *events]}) if movies else None
+    return list(movies.values()), events
 
 
 def build_festivals(env, sd, register, db_path: Path = DB_FILE) -> list[dict]:
@@ -168,6 +168,8 @@ def build_festivals(env, sd, register, db_path: Path = DB_FILE) -> list[dict]:
         out = sd.out_dir / festival["path"].strip("/") / "index.html"
         out.parent.mkdir(parents=True, exist_ok=True)
         canonical = register(sd, out)
+        movies, events = _festival_nodes(sd, festival, canonical)
+        build._write_schedule_feeds(out, movies, events, sd.generated_at)
         out.write_text(
             env.get_template("festival.html").render(
                 title=f"{festival['name']} {festival['year']} – program och eget schema",
@@ -183,13 +185,20 @@ def build_festivals(env, sd, register, db_path: Path = DB_FILE) -> list[dict]:
                     )
                 ),
                 canonical=canonical,
-                jsonld=_festival_jsonld(sd, festival, canonical),
+                schedule_alternates=True,
                 festival=festival,
                 city_url=urlparse(build.city_programme_url(festival["city"])).path,
                 versions=versions,
             )
         )
-        write_festival(out, festival)
+        end = sd.today + timedelta(days=build.SCHEDULE_DAYS)
+        markdown = prepare(
+            {
+                **festival,
+                "screenings": [s for s in festival["screenings"] if sd.today <= date.fromisoformat(s["date"]) < end],
+            }
+        )
+        write_festival(out, markdown)
     out = sd.out_dir / "festival" / "index.html"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(

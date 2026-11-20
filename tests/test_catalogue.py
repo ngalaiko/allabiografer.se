@@ -87,13 +87,10 @@ def test_hypnos_operator_listing_keeps_its_runtime_and_direct_booking(db):
 
     reconcile(path=db, today=day)
     sd = read_catalogue(Path("unused"), path=db, today=day)
-    feed = db.parent / "malmo.json"
-    build._write_city_feed(sd, "Malmö", sd.screenings, feed)
-    rows = json.loads(feed.read_text())["screenings"]
-    assert [(r["source"], r["ticket_url"], r["film"]["runtime_minutes"]) for r in rows] == [
+    assert [(s.source, s.ticket_url, build._screening_runtime(sd, s)) for s in sd.screenings] == [
         (operator, direct, 133),
     ]
-    assert rows[0]["version"]["subtitles"] == ["Engelska"]
+    assert sorted(sd.screenings[0].version.subtitles.languages) == ["Engelska"]
 
 
 def test_goteborg_audit_metadata_preserves_sessions_and_is_scoped(db):
@@ -118,15 +115,12 @@ def test_goteborg_audit_metadata_preserves_sessions_and_is_scoped(db):
     write_screenings([tea, ordinary], path=db, source=tea.source)
     reconcile(path=db, today=day)
     sd = read_catalogue(Path("unused"), path=db, today=day)
-    feed = db.parent / "feed.json"
-    build._write_city_feed(sd, "Göteborg", sd.screenings, feed)
-    rows = json.loads(feed.read_text())["screenings"]
-
-    assert [(r["start"], r["ticket_url"], r["presentation"]["experiences"]) for r in rows] == [
-        ("2026-11-21T11:30:00+01:00", tea.ticket_url, ["Afternoon Tea"]),
-        ("2026-11-21T19:00:00+01:00", ordinary.ticket_url, []),
+    shows = sorted(sd.screenings, key=lambda s: s.time)
+    assert [(s.time, s.ticket_url, sorted(s.presentation.experiences)) for s in shows] == [
+        (time(11, 30), tea.ticket_url, ["Afternoon Tea"]),
+        (time(19), ordinary.ticket_url, []),
     ]
-    assert len({r["film"]["url"] for r in rows}) == 1
+    assert len({s.tmdb_id for s in shows}) == 1
 
 
 def test_dune_provider_corrections_join_existing_pages(db):
@@ -272,7 +266,8 @@ def test_known_pages_survive_last_screening_without_publishing_old_tickets(db, t
         page = BeautifulSoup((sd.out_dir / path).read_text(), "html.parser")
         assert page.h1 is not None
         assert not page.select(".schedule-header, .schedule-dates, .schedule-cell")
-    assert json.loads((sd.out_dir / "stad/stockholm/index.json").read_text())["screenings"] == []
+    graph = json.loads((sd.out_dir / "stad/stockholm/index.jsonld").read_text())["@graph"]
+    assert not any(node["@type"] == "ScreeningEvent" for node in graph)
     assert not (sd.out_dir / "film/unknown/index.html").exists()
     assert not (sd.out_dir / "stad/legacy-city/index.html").exists()
 
@@ -367,10 +362,13 @@ def test_tmdb_identity_joins_translations_and_editions_without_inventing_tmdb_id
     assert list(sd.tmdb_ids.values()) == [5961]
     sd.out_dir = tmp_path / "site"
     build._build_programme_pages(build._make_env(), sd)
-    rows = json.loads((sd.out_dir / "stad/stockholm/index.json").read_text())["screenings"]
-    assert {row["film"]["runtime_minutes"] for row in rows} == {180, 326}
-    assert {row["film"]["tmdb_id"] for row in rows} == {5961}
-    assert len({row["film"]["url"] for row in rows}) == 1
+    graph = json.loads((sd.out_dir / "stad/stockholm/index.jsonld").read_text())["@graph"]
+    events = [node for node in graph if node["@type"] == "ScreeningEvent"]
+    assert {
+        (datetime.fromisoformat(node["endDate"]) - datetime.fromisoformat(node["startDate"])).total_seconds() / 60
+        for node in events
+    } == {180, 326}
+    assert len({node["workPresented"]["@id"] for node in events}) == 1
 
 
 def test_same_title_different_works_and_ambiguous_bridge_remain_separate(db):

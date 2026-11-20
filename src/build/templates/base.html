@@ -8,7 +8,8 @@
 {% if canonical %}<link rel="canonical" href="{{ canonical }}">{% endif %}
 {% if canonical %}<link rel="alternate" hreflang="sv" href="{{ canonical }}">{% endif %}
 {% if canonical %}<link rel="alternate" type="text/markdown" href="{{ canonical }}index.md">{% endif %}
-{% if json_feed_url %}<link rel="alternate" type="application/json" href="{{ json_feed_url }}">{% endif %}
+{% if schedule_alternates %}<link rel="alternate" type="application/ld+json" href="{{ canonical }}index.jsonld">
+<link rel="alternate" type="text/calendar" href="{{ canonical }}index.ics">{% endif %}
 <link rel="help" type="text/plain" href="/llms.txt">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <meta property="og:type" content="{{ og_type or 'website' }}">

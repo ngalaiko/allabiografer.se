@@ -22,7 +22,7 @@ import shutil
 import unicodedata
 from collections import defaultdict
 from dataclasses import dataclass, field, replace
-from datetime import date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from html import escape
 from itertools import combinations
 from pathlib import Path
@@ -78,8 +78,6 @@ SITE_DESCRIPTION = (
     "Hitta vad som går på bio i hela Sverige — speltider, kommande premiärer "
     "och alla biografer, stad för stad. Samlad bioguide för alla svenska biografer."
 )
-# Cap structured-data events per page to keep page weight sane.
-MAX_JSONLD_EVENTS = 100
 SCHEDULE_DAYS = 14
 TIME_ROW_HEIGHT = 22.5
 TIME_LINK_HEIGHT = 20
@@ -597,6 +595,69 @@ def _jsonld(data: object) -> str:
     return json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
 
 
+def _write_schedule_feeds(out: Path, nodes: list[dict], events: list[dict], generated_at: datetime) -> None:
+    """Export the same complete schedule as JSON-LD and iCalendar."""
+    graph = {"@context": "https://schema.org", "@graph": [*nodes, *events]}
+    out.with_suffix(".jsonld").write_text(_jsonld(graph) + "\n", encoding="utf-8")
+
+    def stamp(value: datetime) -> str:
+        return value.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
+
+    def text(value: str) -> str:
+        return (
+            value.replace("\\", "\\\\")
+            .replace("\r\n", "\n")
+            .replace("\r", "\n")
+            .replace("\n", "\\n")
+            .replace(";", "\\;")
+            .replace(",", "\\,")
+        )
+
+    movies = {node["@id"]: node["name"] for node in nodes if node["@type"] == "Movie"}
+    occurrences: dict[str, int] = defaultdict(int)
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//allabiografer.se//Bioprogram//SV", "CALSCALE:GREGORIAN"]
+    generated = stamp(generated_at)
+    for event in events:
+        movie_id = event["workPresented"]["@id"]
+        cinema = event["location"]
+        url = event.get("offers", {}).get("url", "")
+        start = stamp(datetime.fromisoformat(event["startDate"]))
+        location = ", ".join(
+            filter(None, (cinema["name"], cinema["address"].get("streetAddress"), cinema["address"]["addressLocality"]))
+        )
+        identity = _jsonld([movie_id, start, cinema["name"], cinema["address"]["addressLocality"], url])
+        occurrences[identity] += 1
+        uid = hashlib.sha256(identity.encode()).hexdigest()
+        lines.extend(
+            (
+                "BEGIN:VEVENT",
+                f"UID:{uid}-{occurrences[identity]}@allabiografer.se",
+                f"DTSTAMP:{generated}",
+                f"DTSTART:{start}",
+            )
+        )
+        if end := event.get("endDate"):
+            lines.append(f"DTEND:{stamp(datetime.fromisoformat(end))}")
+        lines.extend((f"SUMMARY:{text(movies[movie_id])}", f"LOCATION:{text(location)}"))
+        if url:
+            lines.append(f"URL:{url.replace(chr(13), '%0D').replace(chr(10), '%0A')}")
+        lines.append("END:VEVENT")
+    lines.append("END:VCALENDAR")
+
+    # RFC 5545 line folding counts UTF-8 octets, not characters.
+    folded = []
+    for line in lines:
+        raw = line.encode()
+        while len(raw) > 75:
+            cut = 75
+            while raw[cut] & 0xC0 == 0x80:
+                cut -= 1
+            folded.append(raw[:cut])
+            raw = b" " + raw[cut:]
+        folded.append(raw)
+    out.with_suffix(".ics").write_bytes(b"\r\n".join(folded) + b"\r\n")
+
+
 def _breadcrumb_node(items: list[tuple[str, str | None]]) -> dict:
     """A schema.org BreadcrumbList from (name, absolute-url|None) pairs."""
     elements = []
@@ -678,7 +739,9 @@ def _screening_node(
     }
 
 
-def _programme_nodes(sd: SiteData, screenings: list[Screening], movie_id: int | None, canonical: str) -> list[dict]:
+def _programme_nodes(
+    sd: SiteData, screenings: list[Screening], movie_id: int | None, canonical: str
+) -> tuple[list[dict], list[dict]]:
     by_movie = defaultdict(list)
     for s in screenings:
         by_movie[s.tmdb_id].append(s)
@@ -686,7 +749,7 @@ def _programme_nodes(sd: SiteData, screenings: list[Screening], movie_id: int | 
         by_movie.setdefault(movie_id, [])
     movies = {id_: _movie_node(sd, id_, shows, canonical) for id_, shows in by_movie.items()}
     events = []
-    for s in sorted(screenings, key=lambda s: (s.date, s.time))[:MAX_JSONLD_EVENTS]:
+    for s in sorted(screenings, key=lambda s: (s.date, s.time)):
         start = datetime.combine(s.date, s.time, tzinfo=SWEDEN_TZ)
         runtime = _screening_runtime(sd, s)
         event = _screening_node(
@@ -720,7 +783,7 @@ def _programme_nodes(sd: SiteData, screenings: list[Screening], movie_id: int | 
         if s.version.subtitles.languages:
             event["subtitleLanguage"] = sorted(language.tag for language in s.version.subtitles.languages)
         events.append(event)
-    return [*movies.values(), *events]
+    return list(movies.values()), events
 
 
 def _cinema_nodes(sd: SiteData, city: str, cinema_name: str, canonical: str) -> list[dict]:
@@ -1298,68 +1361,6 @@ def _prepare_programme_blocks(
     return blocks
 
 
-def _write_city_feed(sd: SiteData, city: str, screenings: list[Screening], out_path: Path) -> None:
-    """Publish observed screening facts, without inferring freshness or completeness."""
-    rows = []
-    for screening in sorted(
-        _schedule_screenings(sd, screenings),
-        key=lambda s: (s.date, s.time, s.cinema_name, s.title, s.ticket_url, s.source, s.screen),
-    ):
-        movie = sd.movies.get(screening.tmdb_id)
-        title = movie.title_sv if movie and movie.title_sv else screening.title
-        film_slug = sd.film_slugs.get(screening.tmdb_id, _slugify_sv(title))
-        city_slug = sd.city_slugs[city]
-        cinema_slug = sd.cinema_slugs[(city, screening.cinema_name)]
-        venue = sd.venues.get((city, screening.cinema_name))
-        facts = screening.to_dict()
-        rows.append(
-            {
-                "start": datetime.combine(screening.date, screening.time, tzinfo=SWEDEN_TZ).isoformat(),
-                "film": {
-                    "tmdb_id": sd.tmdb_ids.get(
-                        screening.tmdb_id, screening.tmdb_id if screening.tmdb_id and screening.tmdb_id > 0 else None
-                    ),
-                    "source_key": screening.film_key or None,
-                    "title": title,
-                    "url": f"{BASE_URL}/stad/{city_slug}/film/{film_slug}/" if movie and movie.title_sv else None,
-                    "runtime_minutes": _screening_runtime(sd, screening),
-                },
-                "cinema": {
-                    "name": screening.cinema_name,
-                    "address": venue.address if venue and venue.address else None,
-                    "url": f"{BASE_URL}/stad/{city_slug}/{cinema_slug}/",
-                    "screen": screening.screen or None,
-                },
-                "ticket_url": screening.ticket_url or None,
-                "source": screening.source or None,
-                "version": facts["version"],
-                "presentation": facts["presentation"],
-                "accessibility": facts["accessibility"] or None,
-            }
-        )
-    feed = {
-        "schema_version": 1,
-        "city": city,
-        "url": f"{BASE_URL}/stad/{sd.city_slugs[city]}/",
-        "generated_at": sd.generated_at.isoformat(),
-        "timezone": "Europe/Stockholm",
-        "coverage": {
-            "starts_on": sd.today.isoformat(),
-            "ends_before": (sd.today + timedelta(days=SCHEDULE_DAYS)).isoformat(),
-            "status": "listings_found" if rows else "no_listings_found",
-            "completeness": "unknown",
-            "screening_count": len(rows),
-            "cinema_count": len({row["cinema"]["name"] for row in rows}),
-        },
-        "sources": [
-            {"id": source, "fetched_at": None} for source in sorted({s.source for s in screenings if s.source})
-        ],
-        "screenings": rows,
-    }
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(feed, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
-
-
 def _write_programme(
     env: Environment,
     sd: SiteData,
@@ -1375,13 +1376,13 @@ def _write_programme(
     og_image: str | None = None,
     og_type: str | None = None,
     clear_filter_url: str | None = None,
-    json_feed_url: str | None = None,
     show_next_screening: bool = False,
     movie_id: int | None = None,
     empty_context: list[dict] | None = None,
 ) -> None:
     programme_note = ""
-    scheduled = _schedule_screenings(sd, screenings)
+    in_window = _schedule_screenings(sd, screenings)
+    scheduled = in_window
     if show_next_screening and not scheduled and screenings:
         next_show = min(screenings, key=lambda s: (s.date, s.time))
         scheduled = [s for s in screenings if s.date == next_show.date]
@@ -1389,21 +1390,23 @@ def _write_programme(
             "Inga visningar de närmaste två veckorna. "
             f"Nästa visning: {_format_day(next_show.date)} {next_show.date.year} kl. {next_show.time:%H:%M}."
         )
-    screenings = scheduled
-    page_days = _compute_days(screenings)
-    blocks = _prepare_programme_blocks(sd, screenings, page_days, city=city, movie_id=movie_id)
-    if not screenings:
+    page_days = _compute_days(scheduled)
+    blocks = _prepare_programme_blocks(sd, scheduled, page_days, city=city, movie_id=movie_id)
+    if not scheduled:
         programme_note = "Inga kommande visningar publicerade." if show_next_screening else ""
     days = [{"label": _format_day(d), "date": d.isoformat()} for d in page_days]
-    graph = [*_programme_nodes(sd, screenings, movie_id, canonical), *(page_nodes or [])]
+    movies, events = _programme_nodes(sd, screenings, movie_id, canonical)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    _write_schedule_feeds(out_path, [*movies, *(page_nodes or [])], events, sd.generated_at)
+    inline = [*(movies if movie_id is not None else []), *(page_nodes or [])]
 
     tmpl = env.get_template("program.html")
     html = tmpl.render(
         title=title,
         description=description,
         canonical=canonical,
-        jsonld=_jsonld({"@context": "https://schema.org", "@graph": graph}) if graph else None,
-        json_feed_url=json_feed_url,
+        jsonld=_jsonld({"@context": "https://schema.org", "@graph": inline}) if inline else None,
+        schedule_alternates=True,
         og_image=og_image or _abs(write_card(sd.out_dir)),
         og_type=og_type,
         breadcrumbs=breadcrumbs,
@@ -1415,8 +1418,11 @@ def _write_programme(
         programme_note=programme_note,
         empty_context=empty_context or [],
     )
-    out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html, encoding="utf-8")
+    if scheduled is not in_window:
+        blocks = _prepare_programme_blocks(sd, in_window, [], city=city, movie_id=movie_id)
+        days = []
+        programme_note = "Inga visningar de närmaste två veckorna."
     write_programme(out_path, title, blocks, days, note=programme_note, empty_context=empty_context)
 
 
@@ -1456,7 +1462,6 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
         print(f"  /stad/{slug}/")
         out_path = sd.out_dir / "stad" / slug / "index.html"
         canonical = _register(sd, out_path)
-        _write_city_feed(sd, city_name, city_screenings, out_path.with_suffix(".json"))
         scheduled = _schedule_screenings(sd, city_screenings)
         n_films = len({s.tmdb_id for s in scheduled})
         n_cinemas = len({s.cinema_name for s in scheduled})
@@ -1475,7 +1480,6 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
                 else f"Bio i {city_name}. Inga publicerade visningar de närmaste två veckorna."
             ),
             canonical=canonical,
-            json_feed_url=canonical + "index.json",
             page_nodes=_collection_nodes(
                 f"På bio i {city_name}",
                 canonical,
@@ -1730,29 +1734,15 @@ def _write_llms(sd: SiteData) -> None:
         "",
         "## Feed contract and limitations",
         "",
-        "City feeds are static JSON at /stad/{city-slug}/index.json, fetched directly without authentication. "
-        "Accept: application/json does not select JSON at the HTML page URL. The feeds have schema_version 1.",
+        "Each programme has an index.jsonld (Schema.org) and index.ics (iCalendar) with all available screenings. "
+        "Fetch these URLs directly. Markdown lists the next 14 local calendar days only. "
+        "An empty feed does not prove nothing is showing; failed or empty parses can retain older listings.",
         "",
-        f"Coverage is {SCHEDULE_DAYS} local calendar days: coverage.starts_on is inclusive and coverage.ends_before "
-        "is exclusive. Today's elapsed showtimes are included. Times use Europe/Stockholm with explicit UTC offsets. "
-        "City feeds exclude the separate festival planner and preserve potentially overlapping source records.",
-        "",
-        "generated_at is the build time, not a source fetch time. Source fetched_at values are null because fetch "
-        "timestamps and parser health are not recorded. coverage.completeness is unknown; no_listings_found does not "
-        "prove that nothing is showing. Failed or empty parses can retain older listings.",
-        "",
-        "Screenings include start, film, cinema, ticket_url, source, version, presentation and accessibility. "
-        "Missing TMDB IDs and metadata are null. Audio languages are recorded screening facts, not inferred film "
-        "languages; an empty audio-language list means unknown. Subtitle languages are null when unknown, [] when "
-        "explicitly absent, or Swedish language names such as Engelska. Accessibility is null when unknown; recorded "
-        "features are not an exhaustive assessment. Prices, seat availability and end times are not inferred. "
-        "Ticket URLs can lead to a cinema's general booking page rather than a specific screening.",
-        "",
-        "## City JSON feeds",
+        "## City schedule feeds",
         "",
     ]
     lines.extend(
-        f"- {link(city, BASE_URL + '/stad/' + sd.city_slugs[city] + '/index.json')}"
+        f"- {link(city, BASE_URL + '/stad/' + sd.city_slugs[city] + '/index.jsonld')}"
         for city in sorted(sd.cities, key=_swedish_sort_key)
     )
     (sd.out_dir / "llms.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")

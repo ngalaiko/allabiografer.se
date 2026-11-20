@@ -59,7 +59,7 @@ def test_festival_build_keeps_full_programme_before_and_after_festival(tmp_path,
         screenings,
         path=db,
     )
-    for today in (date(2026, 1, 1), date(2027, 1, 1)):
+    for today in (date(2026, 1, 1), date(2026, 11, 1), date(2027, 1, 1)):
         sd = build.SiteData(
             out_dir=tmp_path / str(today.year),
             today=today,
@@ -75,7 +75,12 @@ def test_festival_build_keeps_full_programme_before_and_after_festival(tmp_path,
         assert "https://example.com/tickets" in html
         assert "festival-data" in html
         soup = BeautifulSoup(html, "html.parser")
-        graph = json.loads(soup.select_one('head script[type="application/ld+json"]').string)["@graph"]
+        assert soup.select_one('head script[type="application/ld+json"]') is None
+        alternate = soup.select_one('head link[rel="alternate"][type="application/ld+json"]')
+        assert alternate["href"] == "https://allabiografer.se/festival/test-festival/2026/index.jsonld"
+        graph = json.loads((sd.out_dir / "festival/test-festival/2026/index.jsonld").read_text())["@graph"]
+        calendar = (sd.out_dir / "festival/test-festival/2026/index.ics").read_bytes()
+        assert b"DTSTART:20261111T163000Z\r\nDTEND:20261111T183000Z\r\n" in calendar
         movie, event = graph
         assert movie["@type"] == "Movie"
         assert movie["name"] == "Film <ett>"
@@ -96,9 +101,10 @@ def test_festival_build_keeps_full_programme_before_and_after_festival(tmp_path,
         assert "COMPETITION, ICONS" in html.split('id="festival-data"')[0]
         assert "Genre not shown" not in html.split('id="festival-data"')[0]
         markdown = (sd.out_dir / "festival/test-festival/2026/index.md").read_text()
-        assert "Film \\<ett\\>" in markdown
-        assert "[2026-11-11 17:30–19:30](https://example.com/tickets)" in markdown
-        assert "COMPETITION, ICONS" in markdown
+        within_window = today == date(2026, 11, 1)
+        assert ("Film \\<ett\\>" in markdown) is within_window
+        assert ("[2026-11-11 17:30–19:30](https://example.com/tickets)" in markdown) is within_window
+        assert ("COMPETITION, ICONS" in markdown) is within_window
         assert "Genre not shown" not in markdown
         assert "https://allabiografer.se/festival/test-festival/2026/" in sd.sitemap_urls
         for path in ("index.html", "festival/index.html"):

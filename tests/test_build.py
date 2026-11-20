@@ -144,7 +144,13 @@ def test_schedule_pages_describe_their_screenings_and_formats(db, tmp_path):
         "film/filmen": {"goteborg"},
     }.items():
         page = BeautifulSoup((out / path / "index.html").read_text(), "html.parser")
-        payload = json.loads(page.select_one('head script[type="application/ld+json"]').string)
+        inline = json.loads(page.select_one('head script[type="application/ld+json"]').string)
+        assert not any(node["@type"] == "ScreeningEvent" for node in inline["@graph"])
+        alternate = page.select_one('head link[rel="alternate"][type="application/ld+json"]')
+        assert alternate["href"] == f"https://allabiografer.se/{path}/index.jsonld"
+        calendar = page.select_one('head link[rel="alternate"][type="text/calendar"]')
+        assert calendar["href"] == f"https://allabiografer.se/{path}/index.ics"
+        payload = json.loads((out / path / "index.jsonld").read_text())
         assert payload["@context"] == "https://schema.org"
         graph = payload["@graph"]
         events = {node["offers"]["url"]: node for node in graph if node["@type"] == "ScreeningEvent"}
@@ -158,6 +164,42 @@ def test_schedule_pages_describe_their_screenings_and_formats(db, tmp_path):
         assert imax["inLanguage"] == ["sv"]
         assert imax["subtitleLanguage"] == ["en", "fi"]
         assert not {"videoFormat", "inLanguage", "subtitleLanguage"} & events["https://example.com/unknown"].keys()
+
+
+def test_schedule_feeds_include_showtimes_beyond_display_window(db, tmp_path):
+    day = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
+    write_movie(movie(42), path=db)
+    write_screenings(
+        [
+            screening(
+                tmdb_id=42,
+                date=day + timedelta(days=30 if i == 100 else 0),
+                time=time(12 + i // 60, i % 60),
+                ticket_url=f"https://example.com/{i}",
+            )
+            for i in range(101)
+        ],
+        path=db,
+    )
+    out = tmp_path / "out"
+    build._build_programme_pages(build._make_env(), build._load_data(out))
+    city = out / "stad/stockholm"
+    page = BeautifulSoup((city / "index.html").read_text(), "html.parser")
+    inline = json.loads(page.select_one('script[type="application/ld+json"]').string)["@graph"]
+    full = json.loads((city / "index.jsonld").read_text())["@graph"]
+    assert not any(node["@type"] == "ScreeningEvent" for node in inline)
+    urls = [f"https://example.com/{i}" for i in range(101)]
+    assert [node["offers"]["url"] for node in full if node["@type"] == "ScreeningEvent"] == urls
+    ics = (city / "index.ics").read_bytes()
+    assert ics.startswith(b"BEGIN:VCALENDAR\r\n")
+    assert ics.endswith(b"END:VCALENDAR\r\n")
+    assert all(len(line) <= 75 for line in ics.split(b"\r\n"))
+    lines = ics.decode().replace("\r\n ", "").splitlines()
+    assert [line.removeprefix("URL:") for line in lines if line.startswith("URL:")] == urls
+    assert len({line for line in lines if line.startswith("UID:")}) == 101
+    assert not any(line.startswith("DTEND:") for line in lines)
+    assert urls[-1] not in {a["href"] for a in page.select("a[data-start]")}
+    assert f"({urls[-1]})" not in (city / "index.md").read_text()
 
 
 def test_load_data_ignores_synthetic_ids(db, tmp_path):
@@ -321,16 +363,7 @@ def test_programme_preserves_source_runtimes_without_changing_film_identity(
     )
     out = tmp_path / "out"
     build._build_programme_pages(build._make_env(), build._load_data(out))
-    rows = json.loads((out / "stad/stockholm/index.json").read_text())["screenings"]
-    by_url = {row["ticket_url"]: row["film"] for row in rows}
-    source = by_url["https://example.com/0"]
-    standard = by_url["https://example.com/1"]
-    assert source["runtime_minutes"] == expected_runtime
-    assert source["tmdb_id"] == 5961
-    assert standard["runtime_minutes"] == 180
-    assert standard["tmdb_id"] == 5961
-    assert source["url"] == standard["url"]
-    page = out / source["url"].removeprefix(build.BASE_URL).strip("/")
+    page = out / "stad/stockholm/film/fanny-och-alexander"
     html = BeautifulSoup((page / "index.html").read_text(), "html.parser")
     assert len(html.select(".schedule-cell time")) == 2
     expected_blocks = 1 if expected_runtime is None or abs(expected_runtime - 180) <= 5 else 2
@@ -339,12 +372,9 @@ def test_programme_preserves_source_runtimes_without_changing_film_identity(
     assert len(city_html.select("article.schedule-film")) == expected_blocks
     ids = [element["id"] for element in html.select("[id]")]
     assert len(ids) == len(set(ids))
-    graph = next(
-        json.loads(script.string)["@graph"]
-        for script in html.select('script[type="application/ld+json"]')
-        if '"@graph"' in script.string
-    )
+    graph = json.loads((page / "index.jsonld").read_text())["@graph"]
     events = {node["offers"]["url"]: node for node in graph if node["@type"] == "ScreeningEvent"}
+    assert len({event["workPresented"]["@id"] for event in events.values()}) == 1
     if expected_runtime is None:
         assert "endDate" not in events["https://example.com/0"]
         assert "duration" not in graph[0]
@@ -433,24 +463,27 @@ def test_same_title_works_keep_their_metadata_screenings_and_page_links(db, tmp_
     sd = build._load_data(out)
     env = build._make_env()
     build._build_programme_pages(env, sd)
-    feed = json.loads((out / "stad/stockholm/index.json").read_text())
-    rows = {row["ticket_url"].rsplit("/", 1)[-1]: row for row in feed["screenings"]}
+    graph = json.loads((out / "stad/stockholm/index.jsonld").read_text())["@graph"]
+    movies = {node["@id"]: node for node in graph if node["@type"] == "Movie"}
+    rows = {node["offers"]["url"].rsplit("/", 1)[-1]: node for node in graph if node["@type"] == "ScreeningEvent"}
     expected = {
-        "musical": (135, None, "West End recording."),
-        "short": (10, None, "An unrelated short."),
-        "feature": (107, 16367, "2005 feature."),
-        "adaptation": (121, 42, "Different adaptation."),
+        "musical": (135, "West End recording."),
+        "short": (10, "An unrelated short."),
+        "feature": (107, "2005 feature."),
+        "adaptation": (121, "Different adaptation."),
     }
     assert set(rows) == set(expected)
-    assert len({row["film"]["url"] for row in rows.values()}) == 4
-    for name, (runtime, tmdb_id, synopsis) in expected.items():
+    assert len({row["workPresented"]["@id"] for row in rows.values()}) == 4
+    for name, (runtime, synopsis) in expected.items():
         row = rows[name]
-        assert (row["film"]["runtime_minutes"], row["film"]["tmdb_id"]) == (runtime, tmdb_id)
-        path = row["film"]["url"].removeprefix(build.BASE_URL).strip("/")
-        for page_path in (path, path.removeprefix("stad/stockholm/")):
+        assert (datetime.fromisoformat(row["endDate"]) - datetime.fromisoformat(row["startDate"])) == timedelta(
+            minutes=runtime
+        )
+        path = movies[row["workPresented"]["@id"]]["url"].removeprefix(build.BASE_URL).strip("/")
+        for page_path in (path, f"stad/stockholm/{path}"):
             page = BeautifulSoup((out / page_path / "index.html").read_text(), "html.parser")
             assert [p.get_text() for p in page.select(".synopsis")] == [synopsis]
-            assert {a["href"] for a in page.select("a[data-start]")} == {row["ticket_url"]}
+            assert {a["href"] for a in page.select("a[data-start]")} == {row["offers"]["url"]}
 
 
 def test_source_with_more_showings_supplies_metadata(db, tmp_path):
@@ -710,9 +743,9 @@ def test_city_film_description_uses_local_schedule(db, tmp_path, cinema_count):
         == "Senare bio i Stockholm. Inga publicerade visningar de närmaste två veckorna."
     )
 
-    graph = json.loads(nationwide_page.find("script", type="application/ld+json").string)["@graph"]
+    graph = json.loads((out / "film/filmen/index.jsonld").read_text())["@graph"]
     events = [node for node in graph if node["@type"] == "ScreeningEvent"]
-    assert {node["offers"]["url"] for node in events} == {
+    assert {node["offers"]["url"] for node in events} == {"https://example.com/1"} | {
         link["href"] for link in nationwide_page.select("a[data-start]")
     }
     assert all("availability" not in node["offers"] for node in events)
@@ -763,26 +796,29 @@ def test_film_pages_show_the_next_booked_day_when_outside_the_programme(db, tmp_
         assert page.select_one(".synopsis").get_text() == "En framtida resa."
         assert "1 tim. 37 min." in page.select_one(".film-meta").get_text()
         assert {a["href"] for a in page.select("a[data-start]")} == {ticket}
-        graph = json.loads(page.select_one('script[type="application/ld+json"]').string)["@graph"]
+        graph = json.loads((out / path / "index.jsonld").read_text())["@graph"]
         events = [node for node in graph if node["@type"] == "ScreeningEvent"]
-        assert [(event["offers"]["url"], event["startDate"]) for event in events] == [
-            (ticket, page.select_one("a[data-start]")["data-start"])
-        ]
+        assert (events[0]["offers"]["url"], events[0]["startDate"]) == (
+            ticket,
+            page.select_one("a[data-start]")["data-start"],
+        )
+        assert events[-1]["offers"]["url"] == "https://example.com/later"
         assert [t["datetime"] for t in page.select(".schedule-dates time")] == [day.isoformat()]
         note = page.select_one(".programme-note")
         assert bool(note) == (offset >= 14)
         md = (out / path / "index.md").read_text()
         assert "En framtida resa." in md
-        assert f"{day.isoformat()}: [{label}]({ticket})" in md
+        assert (f"{day.isoformat()}: [{label}]({ticket})" in md) == (offset < 14)
         if note:
             assert "Inga visningar de närmaste två veckorna" in note.get_text()
             assert str(day.year) in note.get_text()
-            assert note.get_text() in md
+            assert "Inga visningar de närmaste två veckorna" in md
 
     city = BeautifulSoup((out / "stad/stockholm/index.html").read_text(), "html.parser")
     assert city.select_one(".programme-note") is None
     assert not city.select(".schedule-film")
-    assert json.loads((out / "stad/stockholm/index.json").read_text())["screenings"] == []
+    graph = json.loads((out / "stad/stockholm/index.jsonld").read_text())["@graph"]
+    assert sum(node["@type"] == "ScreeningEvent" for node in graph) == 2
 
 
 def _blocks(db, tmp_path, screenings):
@@ -1007,17 +1043,16 @@ def test_cross_source_screenings_share_a_programme_without_duplicate_showtimes(
     sd = build._load_data(out)
     build._build_programme_pages(build._make_env(), sd)
     city_dir = out / "stad" / build._slugify_sv(city)
-    feed = json.loads((city_dir / "index.json").read_text())
-    assert feed["coverage"]["cinema_count"] == 1
-    assert feed["coverage"]["screening_count"] == 3
-    assert [row["start"][11:16] for row in feed["screenings"]] == ["18:30", "19:30", "20:30"]
-    first = feed["screenings"][0]
-    assert first["ticket_url"] == "https://tickets.nortic.se/ticket/show/1"
-    assert first["film"]["runtime_minutes"] is None
-    assert first["version"]["audio"] == {"kind": "original", "languages": ["Engelska"]}
-    assert first["version"]["subtitles"] == ["Svenska"]
-    assert first["presentation"]["dimension"] == "2D"
-    assert first["cinema"]["screen"] == "Salongen"
+    graph = json.loads((city_dir / "index.jsonld").read_text())["@graph"]
+    events = [node for node in graph if node["@type"] == "ScreeningEvent"]
+    assert [event["startDate"][11:16] for event in events] == ["18:30", "19:30", "20:30"]
+    first = events[0]
+    assert first["offers"]["url"] == "https://tickets.nortic.se/ticket/show/1"
+    assert "endDate" not in first
+    assert first["inLanguage"] == ["en"]
+    assert first["subtitleLanguage"] == ["sv"]
+    assert first["videoFormat"] == "2D"
+    assert sd.screenings[0].screen == "Salongen"
     html = BeautifulSoup((city_dir / "index.html").read_text(), "html.parser")
     assert len(html.select(".schedule-cell time")) == 3
     assert len(read_screenings(path=db)) == 4  # Source ownership is unchanged in storage.
@@ -1064,11 +1099,11 @@ def test_cross_source_deduplication_keeps_distinct_screenings(db, tmp_path, diff
     sd = build._load_data(out)
     sd.today += timedelta(days=30)
     build._build_programme_pages(build._make_env(), sd)
-    feed = json.loads((out / "stad/stockholm/index.json").read_text())
-    assert feed["coverage"]["screening_count"] == len(observations)
+    graph = json.loads((out / "stad/stockholm/index.jsonld").read_text())["@graph"]
+    assert sum(node["@type"] == "ScreeningEvent" for node in graph) == len(observations)
 
 
-def test_city_json_feed_matches_programme_window_and_preserves_unknown_facts(db, tmp_path):
+def test_schedule_feeds_preserve_timezone_offsets_across_daylight_saving(db, tmp_path):
     day = date(2030, 3, 24)
     write_movie(Movie.from_dict({"tmdb_id": 42, "title_sv": "Filmen", "runtime": 97}), path=db)
     write_venue(Venue(city="Göteborg", name="Bio", address="Gatan 3"), path=db)
@@ -1122,55 +1157,15 @@ def test_city_json_feed_matches_programme_window_and_preserves_unknown_facts(db,
     sd.generated_at = datetime(2030, 3, 24, 8, tzinfo=SWEDEN_TZ)
     build._build_programme_pages(build._make_env(), sd)
 
-    feed = json.loads((out / "stad/göteborg/index.json").read_text())
-    assert feed["schema_version"] == 1
-    assert feed["city"] == "Göteborg"
-    assert feed["timezone"] == "Europe/Stockholm"
-    assert feed["generated_at"] == "2030-03-24T08:00:00+01:00"
-    assert feed["coverage"] == {
-        "starts_on": "2030-03-24",
-        "ends_before": "2030-04-07",
-        "status": "listings_found",
-        "completeness": "unknown",
-        "screening_count": 103,
-        "cinema_count": 2,
-    }
-    assert feed["sources"] == [{"id": "chain", "fetched_at": None}, {"id": "local", "fetched_at": None}]
-    first, *_, last = feed["screenings"]
-    assert first["start"] == "2030-03-24T09:00:00+01:00"
-    assert first["film"]["tmdb_id"] is None  # Build-only negative identities are not TMDB IDs.
-    assert first["film"]["source_key"] == film_key("local", UNTITLED)
-    assert first["film"]["title"] == UNTITLED
-    assert first["film"]["runtime_minutes"] is None
-    assert first["version"]["audio"] == {"kind": "unknown", "languages": []}
-    assert first["version"]["subtitles"] is None
-    assert first["accessibility"] is None
-    assert first["cinema"]["address"] == "Gatan 3"
-    assert last["start"] == "2030-04-06T20:15:00+02:00"
-    assert last["film"]["tmdb_id"] == 42
-    assert last["film"]["runtime_minutes"] == 97
-    assert last["cinema"]["screen"] == "2"
-    assert last["cinema"]["address"] is None
-    assert last["version"]["audio"] == {"kind": "original", "languages": ["Engelska"]}
-    assert last["version"]["subtitles"] == []
-    assert last["presentation"]["dimension"] == "3D"
-    assert last["accessibility"] == ["Syntolkning"]
-    for row in feed["screenings"]:
-        assert "availability" not in row
-        for url in (row["film"]["url"], row["cinema"]["url"]):
-            assert (out / url.removeprefix(build.BASE_URL).lstrip("/") / "index.html").exists()
+    graph = json.loads((out / "stad/göteborg/index.jsonld").read_text())["@graph"]
+    starts = {node["startDate"] for node in graph if node["@type"] == "ScreeningEvent"}
+    assert {"2030-03-24T09:00:00+01:00", "2030-04-06T20:15:00+02:00"} <= starts
+    calendar = (out / "stad/göteborg/index.ics").read_bytes()
+    assert b"DTSTART:20300324T080000Z\r\n" in calendar
+    assert b"DTSTART:20300406T181500Z\r\n" in calendar
     html = BeautifulSoup((out / "stad/göteborg/index.html").read_text(), "html.parser")
-    assert html.select_one('link[type="application/json"]')["href"] == feed["url"] + "index.json"
     assert len(html.select(".schedule-cell time")) == 103
     ticket = html.select_one('.schedule-cell a[href="https://example.com/0"]')
     assert ticket.time.string == "12:00"
     assert "sold-out" not in ticket.get("class", [])
     assert "slutsålt" not in str(ticket).casefold()
-    assert json.loads((out / "stad/malmö/index.json").read_text())["coverage"]["screening_count"] == 1
-
-    empty = json.loads((out / "stad/umeå/index.json").read_text())
-    assert empty["generated_at"] == feed["generated_at"]
-    assert empty["coverage"]["status"] == "no_listings_found"
-    assert empty["coverage"]["completeness"] == "unknown"
-    assert empty["coverage"]["screening_count"] == empty["coverage"]["cinema_count"] == 0
-    assert empty["screenings"] == []
