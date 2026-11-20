@@ -6,14 +6,16 @@ from collections import defaultdict
 from dataclasses import asdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 from zoneinfo import ZoneInfo
 
 import build
 from build.markdown import link, write_festival, write_page
 from store import DB_FILE, read_festivals
+from store.version import Language
 
 TZ = ZoneInfo("Europe/Stockholm")
+_LANGUAGE_TAGS = {language.value.casefold(): language.tag for language in Language}
 
 
 def _web_url(value: str) -> str:
@@ -119,6 +121,40 @@ def prepare(festival: dict) -> dict:
     return festival
 
 
+def _festival_jsonld(sd, festival: dict, canonical: str) -> str | None:
+    movies = {}
+    for film in festival["films"]:
+        movie = {
+            "@type": "Movie",
+            "@id": f"{canonical}#movie-{quote(str(film['id']), safe='')}",
+            "name": film["title"],
+        }
+        if film["poster_url"]:
+            movie["image"] = film["poster_url"]
+        if description := film["description"] or film["intro"]:
+            movie["description"] = description
+        movies[film["id"]] = movie
+    events = []
+    for s in festival["screenings"][: build.MAX_JSONLD_EVENTS]:
+        event = build._screening_node(
+            sd,
+            movies[s["film_id"]],
+            city=festival["city"],
+            cinema=s["venue"],
+            start=datetime.fromisoformat(s["start"]).astimezone(TZ).isoformat(),
+            end=datetime.fromisoformat(s["end"]).astimezone(TZ).isoformat() if s.get("end") else "",
+            ticket_url=s["url"],
+        )
+        for source, prop in (("language", "inLanguage"), ("subtitles", "subtitleLanguage")):
+            names = dict.fromkeys(part.strip() for part in s.get(source, "").split(",") if part.strip())
+            if names:
+                event[prop] = [
+                    _LANGUAGE_TAGS.get(name.casefold()) or {"@type": "Language", "name": name} for name in names
+                ]
+        events.append(event)
+    return build._jsonld({"@context": "https://schema.org", "@graph": [*movies.values(), *events]}) if movies else None
+
+
 def build_festivals(env, sd, register, db_path: Path = DB_FILE) -> list[dict]:
     festivals = [
         prepare({**asdict(festival), "screenings": [asdict(s) for s in screenings]})
@@ -147,6 +183,7 @@ def build_festivals(env, sd, register, db_path: Path = DB_FILE) -> list[dict]:
                     )
                 ),
                 canonical=canonical,
+                jsonld=_festival_jsonld(sd, festival, canonical),
                 festival=festival,
                 city_url=urlparse(build.city_programme_url(festival["city"])).path,
                 versions=versions,

@@ -108,6 +108,58 @@ def test_robots_declares_content_signals_for_every_crawler(tmp_path):
     assert "Sitemap: https://allabiografer.se/sitemap.xml" in robots.splitlines()
 
 
+def test_schedule_pages_describe_their_screenings_and_formats(db, tmp_path):
+    day = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
+    write_movie(Movie.from_dict({"tmdb_id": 42, "title_sv": "Filmen", "genres": ["Drama"]}), path=db)
+    write_movie(Movie.from_dict({"tmdb_id": 43, "title_sv": "En annan film"}), path=db)
+    write_screenings(
+        [
+            screening(
+                tmdb_id=42,
+                date=day,
+                ticket_url="https://example.com/imax",
+                version=ContentVersion(
+                    audio=AudioVersion(AudioKind.DUBBED, frozenset({Language.SWEDISH})),
+                    subtitles=SubtitleVersion(frozenset({Language.FINNISH, Language.ENGLISH})),
+                ),
+                presentation=Presentation(
+                    experiences=frozenset({PresentationSystem.IMAX, PresentationSystem.PREMIERE}),
+                    dimension=Dimension.THREE_D,
+                ),
+            ),
+            screening(tmdb_id=42, date=day, ticket_url="https://example.com/unknown"),
+            screening(tmdb_id=43, date=day, cinema_name="Annan Bio", ticket_url="https://example.com/other"),
+            screening(tmdb_id=42, date=day, city="Göteborg", ticket_url="https://example.com/goteborg"),
+        ],
+        path=db,
+    )
+    out = tmp_path / "out"
+    build._build_programme_pages(build._make_env(), build._load_data(out))
+
+    for path, additional in {
+        "stad/stockholm": {"other"},
+        "stad/stockholm/bio": set(),
+        "stad/stockholm/genre/drama": set(),
+        "stad/stockholm/film/filmen": set(),
+        "film/filmen": {"goteborg"},
+    }.items():
+        page = BeautifulSoup((out / path / "index.html").read_text(), "html.parser")
+        payload = json.loads(page.select_one('head script[type="application/ld+json"]').string)
+        assert payload["@context"] == "https://schema.org"
+        graph = payload["@graph"]
+        events = {node["offers"]["url"]: node for node in graph if node["@type"] == "ScreeningEvent"}
+        assert set(events) == {f"https://example.com/{name}" for name in {"imax", "unknown"} | additional}
+        movies = [node["@id"] for node in graph if node["@type"] == "Movie"]
+        assert len(movies) == len(set(movies)) == (2 if "other" in additional else 1)
+        assert all(event["workPresented"]["@id"] in movies for event in events.values())
+        imax = events["https://example.com/imax"]
+        assert imax["workPresented"] == {"@id": "https://allabiografer.se/film/filmen/#movie"}
+        assert imax["videoFormat"] == "IMAX 3D"
+        assert imax["inLanguage"] == ["sv"]
+        assert imax["subtitleLanguage"] == ["en", "fi"]
+        assert not {"videoFormat", "inLanguage", "subtitleLanguage"} & events["https://example.com/unknown"].keys()
+
+
 def test_load_data_ignores_synthetic_ids(db, tmp_path):
     write_screenings(
         [
@@ -660,9 +712,8 @@ def test_city_film_description_uses_local_schedule(db, tmp_path, cinema_count):
 
     graph = json.loads(nationwide_page.find("script", type="application/ld+json").string)["@graph"]
     events = [node for node in graph if node["@type"] == "ScreeningEvent"]
-    assert len(events) == cinema_count * 2
     assert {node["offers"]["url"] for node in events} == {
-        f"https://example.com/{i}/{j}" for i in range(cinema_count) for j in range(2)
+        link["href"] for link in nationwide_page.select("a[data-start]")
     }
     assert all("availability" not in node["offers"] for node in events)
 
@@ -712,6 +763,11 @@ def test_film_pages_show_the_next_booked_day_when_outside_the_programme(db, tmp_
         assert page.select_one(".synopsis").get_text() == "En framtida resa."
         assert "1 tim. 37 min." in page.select_one(".film-meta").get_text()
         assert {a["href"] for a in page.select("a[data-start]")} == {ticket}
+        graph = json.loads(page.select_one('script[type="application/ld+json"]').string)["@graph"]
+        events = [node for node in graph if node["@type"] == "ScreeningEvent"]
+        assert [(event["offers"]["url"], event["startDate"]) for event in events] == [
+            (ticket, page.select_one("a[data-start]")["data-start"])
+        ]
         assert [t["datetime"] for t in page.select(".schedule-dates time")] == [day.isoformat()]
         note = page.select_one(".programme-note")
         assert bool(note) == (offset >= 14)

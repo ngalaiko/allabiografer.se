@@ -57,6 +57,7 @@ from store.version import (
     Dimension,
     Language,
     Presentation,
+    PresentationSystem,
     ProjectionMedium,
     SubtitleVersion,
     speech_label,
@@ -77,7 +78,7 @@ SITE_DESCRIPTION = (
     "Hitta vad som går på bio i hela Sverige — speltider, kommande premiärer "
     "och alla biografer, stad för stad. Samlad bioguide för alla svenska biografer."
 )
-# Cap structured-data events per film page to keep page weight sane.
+# Cap structured-data events per page to keep page weight sane.
 MAX_JSONLD_EVENTS = 100
 SCHEDULE_DAYS = 14
 TIME_ROW_HEIGHT = 22.5
@@ -620,15 +621,20 @@ def _website_jsonld() -> str:
     )
 
 
-def _film_jsonld(sd: SiteData, movie: Movie, screenings: list[Screening], canonical: str) -> str:
-    """Movie + ScreeningEvent graph for a film programme page."""
-    title = movie.title_sv or movie.title_original or f"Film {movie.tmdb_id}"
+def _movie_node(sd: SiteData, movie_id: int, screenings: list[Screening], canonical: str) -> dict:
+    movie = sd.movies.get(movie_id)
+    slug = sd.film_slugs.get(movie_id)
+    url = f"{BASE_URL}/film/{slug}/" if slug else None
+    title = (movie.title_sv or movie.title_original if movie else "") or f"Film {movie_id}"
     movie_node: dict = {
         "@type": "Movie",
-        "@id": f"{canonical}#movie",
+        "@id": f"{url}#movie" if url else f"{canonical}#movie-{movie_id}",
         "name": title,
-        "url": canonical,
     }
+    if url:
+        movie_node["url"] = url
+    if movie is None:
+        return movie_node
     languages = movie.spoken_languages if movie.spoken_languages is not None else [movie.original_language]
     languages = [code for code in languages if code and code != "xx"]
     if languages:
@@ -649,46 +655,75 @@ def _film_jsonld(sd: SiteData, movie: Movie, screenings: list[Screening], canoni
         movie_node["duration"] = f"PT{runtime}M"
     if movie.age_rating:
         movie_node["contentRating"] = movie.age_rating
+    return movie_node
 
-    graph: list[dict] = [movie_node]
-    ordered = sorted(_schedule_screenings(sd, screenings), key=lambda s: (s.date, s.time))[:MAX_JSONLD_EVENTS]
-    for s in ordered:
-        start = datetime.combine(s.date, s.time, tzinfo=SWEDEN_TZ).isoformat()
+
+def _screening_node(
+    sd: SiteData, movie: dict, *, city: str, cinema: str, start: str, end: str, ticket_url: str
+) -> dict:
+    address = {"@type": "PostalAddress", "addressLocality": city, "addressCountry": "SE"}
+    venue = sd.venues.get((city, cinema))
+    if venue and venue.address:
+        address["streetAddress"] = venue.address
+    return {
+        "@type": "ScreeningEvent",
+        "name": f"{movie['name']} – {cinema}, {city}",
+        "startDate": start,
+        **({"endDate": end} if end else {}),
+        "eventStatus": "https://schema.org/EventScheduled",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+        "location": {"@type": "MovieTheater", "name": cinema, "address": address},
+        "workPresented": {"@id": movie["@id"]},
+        **({"offers": {"@type": "Offer", "url": ticket_url}} if ticket_url else {}),
+    }
+
+
+def _programme_nodes(sd: SiteData, screenings: list[Screening], movie_id: int | None, canonical: str) -> list[dict]:
+    by_movie = defaultdict(list)
+    for s in screenings:
+        by_movie[s.tmdb_id].append(s)
+    if movie_id is not None:
+        by_movie.setdefault(movie_id, [])
+    movies = {id_: _movie_node(sd, id_, shows, canonical) for id_, shows in by_movie.items()}
+    events = []
+    for s in sorted(screenings, key=lambda s: (s.date, s.time))[:MAX_JSONLD_EVENTS]:
+        start = datetime.combine(s.date, s.time, tzinfo=SWEDEN_TZ)
         runtime = _screening_runtime(sd, s)
-        address: dict = {"@type": "PostalAddress", "addressLocality": s.city, "addressCountry": "SE"}
-        venue = sd.venues.get((s.city, s.cinema_name))
-        if venue and venue.address:
-            address["streetAddress"] = venue.address
-        event: dict = {
-            "@type": "ScreeningEvent",
-            "name": f"{title} – {s.cinema_name}, {s.city}",
-            "startDate": start,
-            **(
-                {
-                    "endDate": (
-                        datetime.combine(s.date, s.time, tzinfo=SWEDEN_TZ) + timedelta(minutes=runtime)
-                    ).isoformat()
-                }
-                if runtime
-                else {}
-            ),
-            "eventStatus": "https://schema.org/EventScheduled",
-            "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-            "location": {"@type": "MovieTheater", "name": s.cinema_name, "address": address},
-            "workPresented": {"@id": f"{canonical}#movie"},
+        event = _screening_node(
+            sd,
+            movies[s.tmdb_id],
+            city=s.city,
+            cinema=s.cinema_name,
+            start=start.isoformat(),
+            end=(start + timedelta(minutes=runtime)).isoformat() if runtime else "",
+            ticket_url=s.ticket_url,
+        )
+        p = s.presentation
+        systems = {
+            PresentationSystem.IMAX,
+            PresentationSystem.DOLBY_CINEMA,
+            PresentationSystem.FOUR_DX,
+            PresentationSystem.SCREENX,
+            PresentationSystem.ISENSE,
+            PresentationSystem.INFINITY_VISION,
         }
-        if s.ticket_url:
-            event["offers"] = {
-                "@type": "Offer",
-                "url": s.ticket_url,
-            }
-        graph.append(event)
+        formats = sorted(p.experiences & systems)
+        if p.dimension != Dimension.UNKNOWN:
+            formats.append(p.dimension)
+        if p.medium != ProjectionMedium.UNKNOWN:
+            formats.append(p.medium)
+        formats.extend(sorted(p.projection))
+        if formats:
+            event["videoFormat"] = " ".join(formats)
+        if s.version.audio.languages and s.version.audio.kind != AudioKind.SILENT:
+            event["inLanguage"] = sorted(language.tag for language in s.version.audio.languages)
+        if s.version.subtitles.languages:
+            event["subtitleLanguage"] = sorted(language.tag for language in s.version.subtitles.languages)
+        events.append(event)
+    return [*movies.values(), *events]
 
-    graph.append(_breadcrumb_node([(SITE_NAME, f"{BASE_URL}/"), (title, canonical)]))
-    return _jsonld({"@context": "https://schema.org", "@graph": graph})
 
-
-def _cinema_jsonld(sd: SiteData, city: str, cinema_name: str, canonical: str) -> str:
+def _cinema_nodes(sd: SiteData, city: str, cinema_name: str, canonical: str) -> list[dict]:
     """MovieTheater node + breadcrumb for a cinema programme page."""
     address: dict = {"@type": "PostalAddress", "addressLocality": city, "addressCountry": "SE"}
     venue = sd.venues.get((city, cinema_name))
@@ -705,10 +740,10 @@ def _cinema_jsonld(sd: SiteData, city: str, cinema_name: str, canonical: str) ->
     crumb = _breadcrumb_node(
         [(SITE_NAME, f"{BASE_URL}/"), (city, f"{BASE_URL}/stad/{city_slug}/"), (cinema_name, canonical)]
     )
-    return _jsonld({"@context": "https://schema.org", "@graph": [theater, crumb]})
+    return [theater, crumb]
 
 
-def _collection_jsonld(name: str, canonical: str, crumbs: list[tuple[str, str | None]]) -> str:
+def _collection_nodes(name: str, canonical: str, crumbs: list[tuple[str, str | None]]) -> list[dict]:
     """CollectionPage + breadcrumb for city / genre listing pages."""
     page = {
         "@type": "CollectionPage",
@@ -717,7 +752,7 @@ def _collection_jsonld(name: str, canonical: str, crumbs: list[tuple[str, str | 
         "inLanguage": "sv-SE",
         "isPartOf": {"@type": "WebSite", "name": SITE_NAME, "url": f"{BASE_URL}/"},
     }
-    return _jsonld({"@context": "https://schema.org", "@graph": [page, _breadcrumb_node(crumbs)]})
+    return [page, _breadcrumb_node(crumbs)]
 
 
 # ---------------------------------------------------------------------------
@@ -1336,7 +1371,7 @@ def _write_programme(
     canonical: str,
     city: str | None = None,
     description: str | None = None,
-    jsonld: str | None = None,
+    page_nodes: list[dict] | None = None,
     og_image: str | None = None,
     og_type: str | None = None,
     clear_filter_url: str | None = None,
@@ -1360,13 +1395,14 @@ def _write_programme(
     if not screenings:
         programme_note = "Inga kommande visningar publicerade." if show_next_screening else ""
     days = [{"label": _format_day(d), "date": d.isoformat()} for d in page_days]
+    graph = [*_programme_nodes(sd, screenings, movie_id, canonical), *(page_nodes or [])]
 
     tmpl = env.get_template("program.html")
     html = tmpl.render(
         title=title,
         description=description,
         canonical=canonical,
-        jsonld=jsonld,
+        jsonld=_jsonld({"@context": "https://schema.org", "@graph": graph}) if graph else None,
         json_feed_url=json_feed_url,
         og_image=og_image or _abs(write_card(sd.out_dir)),
         og_type=og_type,
@@ -1440,7 +1476,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             ),
             canonical=canonical,
             json_feed_url=canonical + "index.json",
-            jsonld=_collection_jsonld(
+            page_nodes=_collection_nodes(
                 f"På bio i {city_name}",
                 canonical,
                 [(SITE_NAME, f"{BASE_URL}/"), (city_name, canonical)],
@@ -1489,7 +1525,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
                 else f"{cinema_name}{location}. Inga publicerade visningar de närmaste två veckorna."
             ),
             canonical=canonical,
-            jsonld=_cinema_jsonld(sd, city_name, cinema_name, canonical),
+            page_nodes=_cinema_nodes(sd, city_name, cinema_name, canonical),
             breadcrumbs=f' / <a href="/stad/{city_slug}/">{city_name}</a> / {cinema_name}',
             clear_filter_url=f"/stad/{city_slug}/",
             out_path=out_path,
@@ -1529,7 +1565,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
                 else f"{genre} på bio i {city_name}. Inga publicerade visningar de närmaste två veckorna."
             ),
             canonical=canonical,
-            jsonld=_collection_jsonld(
+            page_nodes=_collection_nodes(
                 f"{genre} på bio i {city_name}",
                 canonical,
                 [
@@ -1561,7 +1597,6 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             )
         else:
             description = f"Speltider för {film_title} i {city_name}. Inga visningar de närmaste två veckorna."
-        jsonld = _film_jsonld(sd, movie, city_film_screenings, canonical) if movie else None
         poster_key = sd.poster_keys.get(movie.tmdb_id) if movie else None
         og_image = _abs(
             write_card(
@@ -1578,7 +1613,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             title=f"{film_title} i {city_name} – speltider på bio",
             description=description,
             canonical=canonical,
-            jsonld=jsonld,
+            page_nodes=[_breadcrumb_node([(SITE_NAME, f"{BASE_URL}/"), (film_title, canonical)])],
             og_image=og_image,
             og_type="video.movie",
             breadcrumbs=f' / <a href="/stad/{city_slug}/">{city_name}</a> / {film_title}',
@@ -1608,7 +1643,6 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             )
         else:
             description = f"{film_title}. Inga kommande visningar publicerade."
-        jsonld = _film_jsonld(sd, movie, film_screenings, canonical) if movie else None
         poster_key = sd.poster_keys.get(movie.tmdb_id) if movie else None
         og_image = _abs(
             write_card(
@@ -1625,7 +1659,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             title=f"{film_title} – speltider på bio i Sverige",
             description=description,
             canonical=canonical,
-            jsonld=jsonld,
+            page_nodes=[_breadcrumb_node([(SITE_NAME, f"{BASE_URL}/"), (film_title, canonical)])],
             og_image=og_image,
             og_type="video.movie",
             breadcrumbs=f" / {film_title}",

@@ -1,5 +1,6 @@
 """Festival imports and static pages."""
 
+import json
 import os
 from datetime import date
 from pathlib import Path
@@ -40,7 +41,9 @@ def festival():
 
 def test_festival_build_keeps_full_programme_before_and_after_festival(tmp_path, festival):
     db = tmp_path / "db.sqlite"
-    festival["screenings"][0].update(genres="Genre not shown", sections="COMPETITION, ICONS")
+    festival["screenings"][0].update(
+        genres="Genre not shown", sections="COMPETITION, ICONS", language="Engelska, Bambara", subtitles="Svenska"
+    )
     screenings = [FestivalScreening(**s) for s in festival.pop("screenings")]
     write_festival(Festival(**festival, source="stockholm"), screenings, path=db)
     write_festival(
@@ -72,6 +75,18 @@ def test_festival_build_keeps_full_programme_before_and_after_festival(tmp_path,
         assert "https://example.com/tickets" in html
         assert "festival-data" in html
         soup = BeautifulSoup(html, "html.parser")
+        graph = json.loads(soup.select_one('head script[type="application/ld+json"]').string)["@graph"]
+        movie, event = graph
+        assert movie["@type"] == "Movie"
+        assert movie["name"] == "Film <ett>"
+        assert event["@type"] == "ScreeningEvent"
+        assert event["workPresented"] == {"@id": movie["@id"]}
+        assert event["startDate"] == soup.select_one(".festival-time time")["datetime"]
+        assert event["endDate"] == "2026-11-11T19:30:00+01:00"
+        assert event["offers"]["url"] == "https://example.com/tickets"
+        assert event["inLanguage"] == ["en", {"@type": "Language", "name": "Bambara"}]
+        assert event["subtitleLanguage"] == ["sv"]
+        assert "videoFormat" not in event
         assert soup.select_one(".festival-time time")["datetime"] == "2026-11-11T17:30:00+01:00"
         assert soup.select_one("noscript a time")["datetime"] == "2026-11-11T17:30:00+01:00"
         assert soup.select_one('link[type="text/markdown"]')["href"] == (
