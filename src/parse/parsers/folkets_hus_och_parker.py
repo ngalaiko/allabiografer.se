@@ -254,7 +254,7 @@ def _parse_program_list(
                         language=info.get("audioLanguage") or "",
                         subtitles=info.get("textLanguage") or "",
                         audio_role_text="stumfilm" if silent else "",
-                        raw_attributes=(*labels, "Slutsålt") if show.get("soldOut") is True else labels,
+                        raw_attributes=labels,
                     ),
                     film_key=film.key,
                 )

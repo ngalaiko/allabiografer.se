@@ -88,7 +88,6 @@ def _programme(
                 label.get_text(strip=True): label.parent.select_one(f"{_CARD}__label-text").get_text(strip=True)
                 for label in card.select(f"{_CARD}__label .screen-reader-text")
             }
-            sold_out = any(n.get_text(strip=True) == "Slutsålt" for n in card.select(f"{_CARD}__availability span"))
             yield Screening(
                 tmdb_id=lookup(title, runtime=runtime),
                 title=title,
@@ -102,6 +101,5 @@ def _programme(
                 **_version.screening_facts(
                     language=labels.get("Tal:", ""),
                     subtitles=labels.get("Text:", ""),
-                    raw_attributes=("Slutsålt",) if sold_out else (),
                 ),
             )

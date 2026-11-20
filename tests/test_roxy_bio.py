@@ -54,4 +54,4 @@ def test_roxy_keeps_public_screenings_and_local_booking_identity(monkeypatch):
     assert screening.version.audio.kind is AudioKind.ORIGINAL
     assert screening.version.audio.languages == {Language.ENGLISH}
     assert screening.version.subtitles.languages == {Language.SWEDISH}
-    assert screening.raw_attributes == ("Slutsålt",)
+    assert screening.raw_attributes == ()

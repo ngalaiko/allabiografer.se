@@ -85,5 +85,4 @@ def parse() -> Iterator[Screening | Venue | Film]:
                 audio=AudioVersion(kind, audio),
                 subtitles=SubtitleVersion(_version.languages(subtitle) if subtitle else None),
             ),
-            raw_attributes=("Slutsålt",) if row.get("sold_out") else (),
         )

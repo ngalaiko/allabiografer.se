@@ -292,8 +292,6 @@ The version 1 contract contains:
   `cinema` (name, nullable address and screen, programme URL), `ticket_url`, `source`,
   `version`, `presentation`, and `accessibility`. Build-only synthetic movie IDs
   are published as `null`. Missing URLs and metadata are `null`, not guessed.
-  Optional `availability: "sold_out"` means the operator reported that status
-  in the imported schedule. An omitted field does not imply tickets are available.
 
 Version and presentation values follow the stored screening facts, not inferred
 film languages or merged display labels. Audio `kind: "unknown"` and an empty
@@ -302,7 +300,7 @@ audio-language list mean unknown. Subtitle languages are `null` for unknown,
 `["Engelska"]`. Presentation dimensions/media use `"unknown"` when missing;
 empty feature arrays mean no recorded facts, not confirmed absence. Accessibility
 is `null` when unknown, otherwise a list of recorded features (not an exhaustive
-assessment). No prices, seat availability or screening end times are inferred.
+assessment). The feed does not report seat availability, prices or screening end times.
 Ticket links may target a cinema's general booking page rather than a specific show.
 
 Feeds contain regular programme data only, not the separate festival planner.

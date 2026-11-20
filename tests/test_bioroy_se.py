@@ -41,8 +41,10 @@ def test_private_hire_excluded(screenings):
     assert len(screenings) == 10
 
 
-def test_sold_out_shows_are_kept(screenings):
-    assert any(s.title == "Tony" and s.date.isoformat() == "2026-09-20" for s in screenings)
+def test_sold_out_shows_are_kept_without_status(screenings):
+    show = next(s for s in screenings if s.title == "Tony" and s.date.isoformat() == "2026-09-20")
+    assert show.ticket_url
+    assert show.raw_attributes == ()
 
 
 def test_languages_from_feature_info(screenings):

@@ -55,7 +55,7 @@ def test_operator_programme_walks_dates_and_keeps_simultaneous_shows(monkeypatch
     ]
     assert shows[0].version.audio.languages == {Language.ENGLISH}
     assert shows[0].version.subtitles.languages == {Language.SWEDISH}
-    assert shows[0].raw_attributes == ("Slutsålt",)
+    assert all(not show.raw_attributes for show in shows)
     (film,) = [row for row in rows if isinstance(row, Film)]
     assert film.runtime == 107
 

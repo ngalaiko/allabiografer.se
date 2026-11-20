@@ -1025,6 +1025,7 @@ def test_city_json_feed_matches_programme_window_and_preserves_unknown_facts(db,
                 time=time(12 + i // 60, i % 60),
                 ticket_url=f"https://example.com/{i}",
                 source="chain",
+                raw_attributes=("Slutsålt",) if i == 0 else (),  # Previously stored observation.
             )
             for i in range(101)
         ]
@@ -1099,11 +1100,16 @@ def test_city_json_feed_matches_programme_window_and_preserves_unknown_facts(db,
     assert last["presentation"]["dimension"] == "3D"
     assert last["accessibility"] == ["Syntolkning"]
     for row in feed["screenings"]:
+        assert "availability" not in row
         for url in (row["film"]["url"], row["cinema"]["url"]):
             assert (out / url.removeprefix(build.BASE_URL).lstrip("/") / "index.html").exists()
     html = BeautifulSoup((out / "stad/göteborg/index.html").read_text(), "html.parser")
     assert html.select_one('link[type="application/json"]')["href"] == feed["url"] + "index.json"
     assert len(html.select(".schedule-cell time")) == 103
+    ticket = html.select_one('.schedule-cell a[href="https://example.com/0"]')
+    assert ticket.time.string == "12:00"
+    assert "sold-out" not in ticket.get("class", [])
+    assert "slutsålt" not in str(ticket).casefold()
     assert json.loads((out / "stad/malmö/index.json").read_text())["coverage"]["screening_count"] == 1
 
     empty = json.loads((out / "stad/umeå/index.json").read_text())

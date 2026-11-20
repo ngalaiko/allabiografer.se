@@ -1067,9 +1067,6 @@ def _prepare_programme_blocks(
     now = datetime.now(tz=SWEDEN_TZ)
     day_indices = {day: index for index, day in enumerate(days)}
     filtered = [s for s in screenings if s.date in day_indices]
-    sold_out = {
-        (s.city, s.cinema_name, s.date, s.time, s.ticket_url) for s in filtered if "Slutsålt" in s.raw_attributes
-    }
     variants = _variants(filtered)
 
     runtimes: dict[tuple[int, str, str], set[int]] = defaultdict(set)
@@ -1202,7 +1199,6 @@ def _prepare_programme_blocks(
                     dt = datetime.combine(days[day_idx], time(*map(int, p["label"].split(":"))), tzinfo=SWEDEN_TZ)
                     p["past"] = dt < now
                     p["start"] = dt.isoformat()
-                    p["sold_out"] = (cinema_city, cinema_name, dt.date(), dt.time(), p["url"]) in sold_out
                 h = _cell_min_height(positions)
                 if h > max_h:
                     max_h = h
@@ -1304,7 +1300,6 @@ def _write_city_feed(sd: SiteData, city: str, screenings: list[Screening], out_p
                 "version": facts["version"],
                 "presentation": facts["presentation"],
                 "accessibility": facts["accessibility"] or None,
-                **({"availability": "sold_out"} if "Slutsålt" in screening.raw_attributes else {}),
             }
         )
     feed = {

@@ -346,12 +346,8 @@ def apply_programme_corrections(sd: "SiteData") -> None:
                 date(2026, 11, 21),
                 "bio_se:you can see everything",
             ):
-                # The operator moved this exact session 35 minutes and marked it full.
-                show = replace(
-                    show,
-                    time=time(17, 5),
-                    raw_attributes=(*show.raw_attributes, "Slutsålt"),
-                )
+                # The operator moved this exact session 35 minutes.
+                show = replace(show, time=time(17, 5))
             elif ticket == _UMEA + "13573":
                 version = replace(version, subtitles=SubtitleVersion(_ENGLISH))
             elif ticket in {_UMEA + "13578", _UMEA + "13588"}:
