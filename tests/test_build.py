@@ -812,7 +812,7 @@ def test_film_pages_show_the_next_booked_day_when_outside_the_programme(db, tmp_
         if note:
             assert "Inga visningar de närmaste två veckorna" in note.get_text()
             assert str(day.year) in note.get_text()
-            assert "Inga visningar de närmaste två veckorna" in md
+            assert md.count("Inga visningar de närmaste två veckorna") == 1
 
     city = BeautifulSoup((out / "stad/stockholm/index.html").read_text(), "html.parser")
     assert city.select_one(".programme-note") is None
@@ -911,11 +911,19 @@ def test_language_and_subtitles_go_in_the_details_line(db, tmp_path):
     assert [(b["variant"], b["mi"]) for b in blocks] == [("", "Engelskt tal • Svensk text")]
 
 
-def test_variant_is_shown_beside_the_title(db, tmp_path):
+def test_programme_shows_formats_for_the_same_film(db, tmp_path):
     day = datetime.now(tz=SWEDEN_TZ).date() + timedelta(days=1)
-    write_movie(Movie.from_dict({"tmdb_id": 42, "title_sv": "Filmen"}), path=db)
+    write_movie(Movie.from_dict({"tmdb_id": 42, "title_sv": "Filmen", "overview_sv": "En resa."}), path=db)
     write_screenings(
-        [screening(tmdb_id=42, date=day, presentation=Presentation(experiences=frozenset({PresentationSystem.IMAX})))],
+        [
+            screening(tmdb_id=42, date=day, time=time(17, 15), ticket_url="https://example.com/ordinary"),
+            screening(
+                tmdb_id=42,
+                date=day,
+                ticket_url="https://example.com/imax",
+                presentation=Presentation(experiences=frozenset({PresentationSystem.IMAX})),
+            ),
+        ],
         path=db,
     )
     sd = build._load_data(tmp_path / "out")
@@ -924,6 +932,12 @@ def test_variant_is_shown_beside_the_title(db, tmp_path):
     assert '<a href="/film/filmen/" title="Filmen">Filmen</a> <span class="film-variant">(IMAX)</span>' in (
         out.read_text()
     )
+    markdown = out.with_suffix(".md").read_text()
+    assert [line for line in markdown.splitlines() if line.startswith("## ")] == ["## [Filmen](/film/filmen/index.md)"]
+    assert markdown.count("En resa.") == 1
+    ordinary, imax = markdown.split("\n### IMAX\n")
+    assert f"- {day}: [17:15](https://example.com/ordinary)" in ordinary
+    assert f"- {day}: [18:30](https://example.com/imax)" in imax
 
 
 def test_variants_of_a_film_are_adjacent(db, tmp_path):

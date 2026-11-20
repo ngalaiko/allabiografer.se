@@ -32,7 +32,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from PIL import Image, UnidentifiedImageError
 
 from build.festivals import build_festivals
-from build.markdown import link, write_page, write_programme
+from build.markdown import link, page_link, write_page, write_programme
 from build.og import write_card
 from store import (
     DB_FILE,
@@ -918,10 +918,10 @@ def _build_index(env: Environment, sd: SiteData, festivals: list[dict]) -> None:
     lines = [SITE_DESCRIPTION]
     if festivals:
         lines.append("## Filmfestivaler")
-        lines.extend(f"- {link(f['name'] + ' ' + str(f['year']), f['path'])}" for f in festivals)
+        lines.append("\n".join(f"- {page_link(f['name'] + ' ' + str(f['year']), f['path'])}" for f in festivals))
     for letter, cities in groups:
         lines.append(f"## {letter}")
-        lines.extend(f"- {link(c['name'], '/stad/' + c['slug'] + '/')}" for c in cities)
+        lines.append("\n".join(f"- {page_link(c['name'], '/stad/' + c['slug'] + '/')}" for c in cities))
     write_page(out, "Alla biografer i Sverige – vad går på bio just nu?", lines)
 
 

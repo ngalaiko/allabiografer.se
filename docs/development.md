@@ -235,6 +235,9 @@ The build writes an `index.md` beside each HTML page, directly from the same
 database-backed page data rather than converting HTML. Programme text includes
 film descriptions, versions, cinemas, dates, times and ticket links; festival
 pages include their full programmes. Scripts, forms and layout are omitted.
+Each film has one heading, with any format or language variants listed beneath it.
+Showtimes are grouped into compact lists by cinema. Links between generated
+pages point directly to `index.md`; external festival and ticket links are unchanged.
 
 Production nginx serves this representation at the original page URL when
 `Accept: text/markdown` is explicitly requested with a positive quality value

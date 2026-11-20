@@ -81,13 +81,16 @@ def test_build_writes_markdown_from_database(tmp_path, monkeypatch):
     assert "Kärlek & hopp" in city
     assert "Drama • A & B" in city
     assert "href=" not in city
-    assert "Bio Roy" in city
-    assert f"{tomorrow}: [17:30](https://tickets.example/0)" in city
-    assert f"{tomorrow + timedelta(days=1)}: [20:30](https://tickets.example/1)" in city
+    assert "## [Filmen \\[ett\\]](/stad/göteborg/film/filmen-ett/index.md)" in city
+    assert "### [Bio Roy](/stad/göteborg/bio-roy/index.md)" in city
+    assert (
+        f"- {tomorrow}: [17:30](https://tickets.example/0)\n"
+        f"- {tomorrow + timedelta(days=1)}: [20:30](https://tickets.example/1)\n"
+    ) in city
     assert "<script" not in city
     assert "<style" not in city
     assert "Prenumerera" not in city
-    assert "[Göteborg](/stad/göteborg/)" in (out / "index.md").read_text()
+    assert "[Göteborg](/stad/göteborg/index.md)" in (out / "index.md").read_text()
     assert (out / "film/filmen-ett/index.html").is_file()
     assert (out / "film/filmen-ett/index.md").is_file()
     sitemap = (out / "sitemap.xml").read_text()

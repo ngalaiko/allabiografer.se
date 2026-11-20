@@ -10,7 +10,7 @@ from urllib.parse import quote, urlparse
 from zoneinfo import ZoneInfo
 
 import build
-from build.markdown import link, write_festival, write_page
+from build.markdown import page_link, write_festival, write_page
 from store import DB_FILE, read_festivals
 from store.version import Language
 
@@ -216,6 +216,6 @@ def build_festivals(env, sd, register, db_path: Path = DB_FILE) -> list[dict]:
     write_page(
         out,
         "Filmfestivaler – program och egna scheman",
-        [f"- {link(f['name'] + ' ' + str(f['year']), f['path'])}" for f in festivals],
+        ["\n".join(f"- {page_link(f['name'] + ' ' + str(f['year']), f['path'])}" for f in festivals)],
     )
     return festivals
