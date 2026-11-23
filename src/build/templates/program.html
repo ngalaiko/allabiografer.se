@@ -28,7 +28,7 @@
 {% endif %}
 {% if programme_note and days %}<p class="programme-note">{{ programme_note }}</p>{% endif %}
 <header{% if days %} class="schedule-header"{% endif %}>
-<nav class="schedule-breadcrumbs" aria-label="Brödsmulor"><a class="home" href="/" aria-label="Alla städer">{% include "home_icon.html" %}</a><div class="breadcrumb-label">{{ breadcrumbs|safe }}{% if clear_filter_url %} <a class="filter-close" href="{{ clear_filter_url }}" aria-label="Ta bort filter"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4.5 4.5L11.5 11.5M11.5 4.5L4.5 11.5" stroke="currentColor" stroke-width="1.5"/></svg></a>{% endif %}</div></nav>
+<nav class="schedule-breadcrumbs" aria-label="Brödsmulor"><div class="breadcrumb-content"><a class="home" href="/" aria-label="Alla städer">{% include "home_icon.html" %}</a><div class="breadcrumb-label">{{ breadcrumbs|safe }}{% if clear_filter_url %} <a class="filter-close" href="{{ clear_filter_url }}" aria-label="Ta bort filter"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4.5 4.5L11.5 11.5M11.5 4.5L4.5 11.5" stroke="currentColor" stroke-width="1.5"/></svg></a>{% endif %}</div></div></nav>
 {% if days %}
 <div class="schedule-dates">
 {% for day in days %}<time datetime="{{ day.date }}">{{ day.label }}</time>{% endfor %}

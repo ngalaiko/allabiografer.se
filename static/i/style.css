@@ -65,7 +65,7 @@ body { font: var(--cap-height-11) / 19px 'Fira Sans'; background: var(--backgrou
 .schedule-scroll > .site-footer { position: sticky; left: 0; width: 100vw; box-sizing: border-box; padding-top: 20px; }
 h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 /* --frame: margin around the sheet; --schedule-top: rows above the sticky header. */
-.program { --frame: 20px; --schedule-top: 0px; --day-width: 200px; --sheet-width: calc(445px + var(--day-count) * var(--day-width)); padding: 20px 20px 0; cursor: default; width: max-content; position: relative; }
+.program { --frame: 20px; --schedule-top: 0px; --poster-column: 135px; --cinema-column: 310px; --schedule-start: calc(var(--poster-column) + var(--cinema-column)); --day-width: 200px; --sheet-width: calc(var(--schedule-start) + var(--day-count) * var(--day-width)); padding: 20px 20px 0; cursor: default; width: max-content; position: relative; }
 .program::before { content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 20px; z-index: 50; background: var(--background); }
 .program::after { content: ""; position: fixed; top: 0; left: 0; width: 20px; height: 100vh; z-index: 55; background: var(--background); }
 .festival-banner { --link: var(--selected-text); --hover: var(--selected-text); position: sticky; left: var(--frame); width: calc(100vw - 2 * var(--frame)); margin-bottom: 12px; background: var(--selected); border: 1px solid var(--selected-border); border-left: 3px solid var(--selected-text); display: grid; grid-template-columns: 1fr auto; }
@@ -76,11 +76,17 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .festival-banner button:hover { background: var(--selected-border); }
 .festival-banner strong { font-weight: 600; }
 .festival-banner strong, .festival-banner span { white-space: nowrap; }
-.schedule-header { position: sticky; top: calc(var(--frame) + var(--schedule-top)); z-index: 50; width: var(--sheet-width); display: grid; grid-template-columns: 445px 1fr; background: var(--schedule-surface); }
-.schedule-breadcrumbs { position: sticky; left: 20px; z-index: 60; width: 445px; min-height: var(--schedule-nav-height); display: flex; align-items: center; gap: 5px; padding: 5px; background: var(--schedule-surface); border: 1px solid var(--border-color); }
+.schedule-header { position: sticky; top: calc(var(--frame) + var(--schedule-top)); z-index: 50; width: var(--sheet-width); display: grid; grid-template-columns: var(--schedule-start) 1fr; background: var(--schedule-surface); }
+.schedule-breadcrumbs { position: sticky; left: 20px; z-index: 60; width: var(--schedule-start); min-height: var(--schedule-nav-height); display: flex; align-items: center; gap: 5px; padding: 5px; background: var(--schedule-surface); border: 1px solid var(--border-color); }
+.breadcrumb-content { display: contents; }
+@media (width > 700px) {
+  /* Scroll the cell behind the frame with the poster column, but pin its contents. */
+  .schedule-header > .schedule-breadcrumbs:has(> .breadcrumb-content) { left: calc(var(--frame) - var(--poster-column)); padding: 0; border-left: 0; }
+  .schedule-header .breadcrumb-content { position: sticky; left: var(--frame); display: flex; align-self: stretch; align-items: center; gap: 5px; max-width: calc(var(--cinema-column) - 1px); padding: 5px; border-left: 1px solid var(--border-color); }
+}
 .schedule-dates { display: grid; grid-template-columns: repeat(var(--day-count), var(--day-width)); }
 .schedule-dates > time { min-height: var(--schedule-day-height); padding: 5px; line-height: 20px; text-align: center; background: var(--schedule-surface); border-block: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
-.schedule-film { display: grid; grid-template-columns: 135px 310px repeat(var(--day-count), var(--day-width)); width: var(--sheet-width); background: var(--schedule-surface); border-bottom: 1px solid var(--border-color); }
+.schedule-film { display: grid; grid-template-columns: var(--poster-column) var(--cinema-column) repeat(var(--day-count), var(--day-width)); width: var(--sheet-width); background: var(--schedule-surface); border-bottom: 1px solid var(--border-color); }
 .film-title { grid-column: 2 / 4; grid-row: 1; position: sticky; left: 20px; padding: 5px var(--schedule-inset) 0; background: var(--schedule-surface); border-left: 1px solid var(--border-color); }
 .film-title h2, .preferences-heading h1 { font-size: var(--cap-height-13); line-height: 19px; margin: 0 0 7px; }
 .film-variant { font-weight: inherit; }
@@ -91,7 +97,7 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .film-poster img, .film-poster .poster-placeholder { position: sticky; top: calc(55px + var(--schedule-top)); width: 125px; height: 177px; object-fit: cover; border-radius: 0; background: var(--poster); }
 .film-description { grid-column: 2 / -1; grid-row: 2; position: sticky; left: 20px; padding: 0 var(--schedule-inset) 5px; background: var(--schedule-surface); border-left: 1px solid var(--border-color); }
 /* Use the visible part of the schedule, not its full scrollable width. */
-.schedule-film .film-description { max-width: min(830px, calc(100vw - 135px - 2 * var(--frame))); }
+.schedule-film .film-description { max-width: min(830px, calc(100vw - var(--poster-column) - 2 * var(--frame))); }
 .synopsis { margin: 0; }
 .synopsis.clamped:not(.expanded) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .synopsis-more { font: inherit; padding: 0; border: 0; background: none; color: inherit; text-decoration: underline; cursor: pointer; }

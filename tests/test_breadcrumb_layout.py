@@ -183,6 +183,44 @@ def test_breadcrumb_centers(browser, width, template):
     page.close()
 
 
+@pytest.mark.parametrize("width", [375, 1280])
+def test_breadcrumb_edge_tracks_cinema_column_when_dates_scroll(browser, width):
+    html = (
+        _make_env()
+        .get_template("program.html")
+        .render(
+            breadcrumbs=" / Göteborg",
+            num_days=10,
+            days=[{"date": f"2026-11-{day:02d}", "label": str(day)} for day in range(1, 11)],
+            blocks=[{"film_title": "Film", "cinemas": [{"name": "Biopalatset", "min_height": 60}]}],
+        )
+    )
+    page = browser.new_page(viewport={"width": width, "height": 800})
+    try:
+        page.set_content(html)
+        page.add_style_tag(content=(ROOT / "static/i/style.css").read_text())
+        home = page.get_by_role("link", name="Alla städer").first
+        nav = page.get_by_role("navigation", name="Brödsmulor")
+        cinema = page.locator(".cinema-name")
+        home_x = home.bounding_box()["x"]
+        for offset in (0, 64, 420, 0):
+            scroll_x = page.evaluate(
+                """x => {
+                const scroller = innerWidth <= 700 ? document.querySelector('.schedule-scroll') : window;
+                scroller.scrollTo(x, 0);
+                return scroller.scrollLeft ?? scroller.scrollX;
+            }""",
+                offset,
+            )
+            assert scroll_x == offset
+            assert home.bounding_box()["x"] == pytest.approx(home_x)
+            nav_box = nav.bounding_box()
+            cinema_box = cinema.bounding_box()
+            assert nav_box["x"] + nav_box["width"] == pytest.approx(cinema_box["x"] + cinema_box["width"])
+    finally:
+        page.close()
+
+
 @pytest.mark.parametrize("width", [375, 700, 1280])
 @pytest.mark.parametrize("city", ["", "Göteborg"])
 def test_cinema_address_layout(browser, width, city):
