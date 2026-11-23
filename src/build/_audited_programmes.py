@@ -1,5 +1,6 @@
 """Operator corrections for audited programmes that the booking feeds do not carry."""
 
+import re
 from collections import defaultdict
 from dataclasses import replace
 from datetime import date, time
@@ -297,6 +298,11 @@ def apply_programme_corrections(sd: "SiteData") -> None:
             and (label := _SVENSKA_BIO_LABELS.get(ticket.removeprefix(_FILMSTADEN).rstrip("/")))
         ):
             experiences |= {label}
+
+        if show.source == "filmstaden_se" and any(
+            re.fullmatch(r"Biopasset(?: [0-9]+)?", attribute, re.IGNORECASE) for attribute in show.raw_attributes
+        ):
+            experiences |= {PresentationSystem.BIOPASSET}
 
         if date(2026, 11, 19) <= show.date <= date(2026, 11, 21):
             if ticket in _AUDITED_RUNTIMES:

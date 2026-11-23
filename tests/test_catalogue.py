@@ -57,6 +57,22 @@ def catalogue(db):
     return read_catalogue(Path("unused"), path=db)
 
 
+def test_biopasset_applies_only_to_the_tagged_screening(db):
+    source = "filmstaden_se"
+    film = add(db, source)
+    show = next(s for s in read_screenings(path=db) if s.film_key == film.key)
+    tagged = replace(show, raw_attributes=("Biopasset 5",))
+    ordinary = replace(show, time=time(20), raw_attributes=())
+    write_screenings([tagged, ordinary], path=db, source=source)
+
+    reconcile(path=db)
+
+    assert {s.time: sorted(s.presentation.experiences) for s in catalogue(db).screenings} == {
+        time(18, 30): ["Biopasset"],
+        time(20): [],
+    }
+
+
 def test_hypnos_operator_listing_keeps_its_runtime_and_direct_booking(db):
     day = datetime.now(SWEDEN_TZ).date() + timedelta(days=1)
     title = "La Chimera"
