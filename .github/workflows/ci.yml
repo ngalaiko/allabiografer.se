@@ -38,16 +38,17 @@ jobs:
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Deploy
         run: |
+          # Build on the GitHub runner so site generation does not depend on Depot.
           if [ "$DETACH_LOG_VOLUME" = true ]; then
             flyctl volumes list --json > /tmp/volumes-before.json
-            flyctl deploy --remote-only --yes
+            flyctl deploy --local-only --yes
             flyctl volumes list --json > /tmp/volumes-after.json
             jq -e --slurpfile after /tmp/volumes-after.json \
               'all(.[]; .id as $id | any($after[0][]; .id == $id))' /tmp/volumes-before.json
             flyctl machine list --json > /tmp/machines-after.json
             jq -e 'length > 0 and all(.[]; (.config.mounts // []) | length == 0)' /tmp/machines-after.json
           else
-            flyctl deploy --remote-only
+            flyctl deploy --local-only
           fi
         env:
           DETACH_LOG_VOLUME: ${{ inputs.detach_log_volume || false }}
