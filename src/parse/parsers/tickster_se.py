@@ -39,7 +39,6 @@ _SITES = (
     _Site("cm4wj7hhvxmhhb8/vilhelmina-f-h", "Vilhelmina Folkets Hus", "Vilhelmina"),
     _Site("57775z43gv88xrk/folkets-hus-sater", "Folkets Hus Säter", "Säter", "Biosalongen"),
     _Site("tntfe5rzu5zybfl/folketshus-alvsbyn", "Folkets Hus Älvsbyn", "Älvsbyn", "Andromeda"),
-    _Site("ddaey584vk71j32/kristianstad-rtf", "Roxy Bio", "Kristianstad"),
     _Site("agd4gkadcmcxeeg/metropol-kultur", "Metropol Kultur", "Karlshamn"),
     _Site("1m4h76jn8pvw8b0/ersboda-folkets-hus", "Ersboda Folkets Hus", "Umeå"),
     _Site("3gaa3vubd6a3yr5/skarpnacks-kulturhus", "Skarpnäcks Kulturhus", "Skarpnäck", "A-salen"),

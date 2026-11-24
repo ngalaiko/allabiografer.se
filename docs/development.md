@@ -326,8 +326,11 @@ Varbergs Teater has two programme records, both imported under one venue name.
 
 When verified programmes disagree, pick one schedule per cinema instead of
 combining conflicting times. `bioaspen_se` and `biofagelbla_se` use the cinemas'
-own programmes and dated ticket links; the aggregators no longer import those
-venues. Separately ticketed events are a coverage question, not timing conflicts.
+own programmes and dated ticket links. Use Nortic for Tellus and Ellös, the
+cinemas' own feeds for Hypnos and Roxy, Bio.se for Rio Eskilstuna and Göta Lejon,
+and Filmstaden for Röda Kvarn Halmstad. Skip secondary cinema requests when
+possible; Nortic's bulk feed must be filtered after download. Events listed
+only in an excluded source are not imported for those cinemas.
 
 The 2026-11-14 nationwide audit covered all 203 municipalities and 442 cinema
 records listed by Bioguiden: 297 had programmes, of which 91 were imported at the
@@ -357,7 +360,7 @@ It is separate from Capitol Göteborg (`wp_theatre`) and Capitol Varberg
 (`filmstaden_se`). Wine-tasting events are excluded.
 
 `tickster_se` imports verified cinema organisers in Finspång, Emmaboda,
-Grebbestad, Sjöbo, Gnesta, Vilhelmina, Säter, Älvsbyn, Kristianstad (Roxy),
+Grebbestad, Sjöbo, Gnesta, Vilhelmina, Säter, Älvsbyn,
 Karlshamn (Metropol), Umeå (Ersboda) and Skarpnäck. It follows organiser pagination and
 uses event-page start times, not doors-open times. Only events tagged `bio`
 at the configured venues qualify; gift cards, templates, non-film events and
@@ -366,9 +369,9 @@ are deliberately left out. Extend its organiser list only after checking for
 existing coverage. A failed programme or event request aborts the import,
 preserving the previous programme rather than replacing it with partial data.
 
-`kraftenifinspang_se` supplements Tickster with explicitly free `Film/Bio`
-events from Kraften i Finspång's public calendar API. It follows every result
-page, converts UTC starts to Stockholm time and links to the event information
+`kraftenifinspang_se` imports explicitly free `Film/Bio` events from Kraften i
+Finspång's public calendar API outside Kulturhuset Finspång, which uses Tickster.
+It follows every result page, converts UTC starts to Stockholm time and links to the event information
 page instead of requiring a purchase link. Unknown prices are not assumed free;
 paid events and events linking to Tickster are excluded to avoid overlap.
 

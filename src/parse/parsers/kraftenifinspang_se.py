@@ -47,6 +47,8 @@ def parse() -> Iterator[Screening | Venue | Film]:
             name, city = venue.get("venue", "").strip(), venue.get("city", "").strip()
             if not name or not city:
                 continue
+            if (city, name) == ("Finspång", "Kulturhuset Finspång"):
+                continue  # Tickster owns this cinema's programme.
             # The API supplies UTC separately; convert it before taking the local date and time.
             start = datetime.fromisoformat(event["utc_start_date"]).replace(tzinfo=UTC).astimezone(_TZ)
             if start.date() < today:

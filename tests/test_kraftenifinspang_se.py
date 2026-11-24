@@ -14,7 +14,8 @@ from parse.parsers import kraftenifinspang_se as parser
 from store import Film, Screening, Venue
 
 _DATA = json.loads((Path(__file__).parent / "fixtures/kraftenifinspang_se/events.json").read_text())
-_FREE = _DATA["events"][0]
+_KULTURHUSET = _DATA["events"][0]
+_FREE = dict(_KULTURHUSET, venue=dict(_KULTURHUSET["venue"], venue="Folkets Hus"))
 
 
 def _setup(monkeypatch, pages):
@@ -36,14 +37,14 @@ def _setup(monkeypatch, pages):
 
 
 def test_imports_free_film_with_local_start_and_information_link(monkeypatch):
-    _setup(monkeypatch, [_DATA])
+    _setup(monkeypatch, [{"events": [_KULTURHUSET, _FREE, *_DATA["events"][1:]], "total_pages": 1}])
     items = list(parser.parse())
     assert "kraftenifinspang_se" in _available()
     screenings = [i for i in items if isinstance(i, Screening)]
     assert len(screenings) == 1
     s = screenings[0]
     assert (s.title, s.date, s.time) == ("Tyst faller snön", date(2026, 11, 18), time(19))
-    assert (s.city, s.cinema_name) == ("Finspång", "Kulturhuset Finspång")
+    assert (s.city, s.cinema_name) == ("Finspång", "Folkets Hus")
     assert s.ticket_url == "https://kraftenifinspang.se/evenemang/bio-tyst-faller-snon-fri-entre/"
     assert s.raw_attributes == ("Fri entré",)
     assert s.version.audio.languages == frozenset()

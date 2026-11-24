@@ -17,6 +17,8 @@ log = logging.getLogger(__name__)
 
 _SOURCE = "nortic_se"
 _API = "https://www.nortic.se/api/json/shows"
+# The bulk feed cannot exclude individual halls. Rio and Göta Lejon use Bio.se; Röda Kvarn uses Filmstaden.
+_OTHER_PROGRAMMES = {("Eskilstuna", "Rio"), ("Götene", "Bio Göta Lejon"), ("Halmstad", "Bio Röda Kvarn")}
 # Venues file cinema screenings under either label.
 _CATEGORIES = {"Bio", "Film"}
 # Opera holds stage productions and cinema broadcasts alike; broadcasts say so.
@@ -251,6 +253,8 @@ def _parse_payload(data: dict) -> Iterator[Screening | Venue | Film]:
             arena, screen = _arena(show)
             city = _city(show)
             cinema_name = names.get((event.get("organizerId"), city, arena), arena)
+            if (city, cinema_name) in _OTHER_PROGRAMMES:
+                continue
             address = show.get("arenaAddress") or ""
             ticket_url = show.get("link") or ""
             raw_dt = show.get("startDate") or ""

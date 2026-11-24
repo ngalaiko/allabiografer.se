@@ -426,6 +426,19 @@ def test_malformed_cinema_aborts_a_partial_import(monkeypatch):
         _parse(monkeypatch, {1: _payload({}, _session()), 2: {"movies": None}})
 
 
+def test_only_fetches_programmes_owned_by_bio_se(monkeypatch):
+    items = _parse(
+        monkeypatch,
+        {
+            2126: AssertionError("Tellus"),
+            31791: AssertionError("Hypnos"),
+            39360: AssertionError("Ellös"),
+            2813: _payload({}, _session()),
+        },
+    )
+    assert [item.cinema_name for item in items if isinstance(item, Screening)] == ["Bio 2813"]
+
+
 def test_kino_address_does_not_point_to_sodran(monkeypatch):
     cinemas = [
         {"id": 2040, "title": "Lund Kino", "city": "Lund", "street_address": "Mejeriet, Stora Södergatan 64"},

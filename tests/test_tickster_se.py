@@ -15,7 +15,6 @@ from store.version import Language
 _FIXTURES = Path(__file__).parent / "fixtures" / "tickster_se"
 _FINSPANG = (_FIXTURES / "finspang.html").read_text()
 _EMMABODA = (_FIXTURES / "emmaboda.html").read_text()
-_ROXY = (_FIXTURES / "roxy.html").read_text()
 _SKARPNACK = (_FIXTURES / "skarpnack.html").read_text()
 _URL = "https://www.tickster.com/se/sv/events/juta7n5a59zxapn/2026-11-15/bio-sjung-for-mig-arja"
 _EMMABODA_URL = (
@@ -134,17 +133,14 @@ def test_only_explicit_film_durations_become_runtime(monkeypatch, description, r
 
 
 @pytest.mark.parametrize(
-    ("site_index", "page", "title", "screen", "language", "subtitles"),
+    ("city", "page", "title", "screen", "language", "subtitles"),
     [
-        (1, _EMMABODA, "The Hunger Games: Sunrise on the reaping", "", {Language.ENGLISH}, None),
-        (8, _ROXY, "André Rieu's Christmas concert: Let it snow!", "Salong 2", set(), None),
-        (11, _SKARPNACK, "Kärlek över Tanger", "A-salen", {Language.SPANISH}, {Language.SWEDISH}),
+        ("Emmaboda", _EMMABODA, "The Hunger Games: Sunrise on the reaping", "", {Language.ENGLISH}, None),
+        ("Skarpnäck", _SKARPNACK, "Kärlek över Tanger", "A-salen", {Language.SPANISH}, {Language.SWEDISH}),
     ],
 )
-def test_event_versions_truncated_tags_and_cinema_broadcasts(
-    monkeypatch, site_index, page, title, screen, language, subtitles
-):
-    site = parser._SITES[site_index]
+def test_event_versions_truncated_tags(monkeypatch, city, page, title, screen, language, subtitles):
+    site = next(site for site in parser._SITES if site.city == city)
     _setup(monkeypatch, _card(_URL), pages={_URL: page}, site=site)
     items = list(parser.parse())
     screening = next(i for i in items if isinstance(i, Screening))

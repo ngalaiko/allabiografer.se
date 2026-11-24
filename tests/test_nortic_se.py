@@ -33,6 +33,26 @@ def test_film_category_is_ingested(items):
     assert {s.title for s in tellus} == {"Tony"}
 
 
+def test_bulk_feed_does_not_import_programmes_owned_by_other_sources():
+    data = json.loads(_FIXTURE.read_text())
+    event = next(event for event in data["events"] if event["title"] == "Tony")
+    event["shows"] += [
+        dict(event["shows"][0], arenaCity=city, arenaName=arena)
+        for city, arena in (
+            ("Eskilstuna", "Rio"),
+            ("Götene", "Götasalen"),
+            ("Halmstad", "Bio Röda Kvarn"),
+            ("Annan ort", "Rio"),
+        )
+    ]
+    items = list(nortic_se._parse_payload({"events": [event]}))
+    assert [row.cinema_name for row in items if isinstance(row, Screening)] == [
+        "Biocafé Tellus",
+        "Biocafé Tellus",
+        "Rio",
+    ]
+
+
 def test_non_film_categories_are_skipped(items):
     assert not any("Nyårskonsert" in getattr(i, "title", "") for i in items)
     assert not any(getattr(i, "name", "") == "Grand Hotell Spegelsalen" for i in items)
@@ -202,8 +222,6 @@ def test_dubbed_speech_sets_screening_audio_not_original_language(live):
 def test_halls_split_into_screens(live):
     [monster] = _screenings(live, "Monsterfabriken")
     assert (monster.cinema_name, monster.screen) == ("Sjöängen", "Stora salongen")
-    [kevlar] = _screenings(live, "Kevlarsjäl")
-    assert (kevlar.cinema_name, kevlar.screen) == ("Bio Göta Lejon", "Götasalen")
 
 
 def test_one_cinema_name_per_organizer_and_city(live):
