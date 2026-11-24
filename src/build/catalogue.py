@@ -619,6 +619,10 @@ def read_catalogue(out_dir: Path, *, path: Path = DB_FILE, today: date | None = 
         if value["date"] >= sd.today.isoformat()
     ]
     sd.venues = {(v.city, v.name): v for v in map(Venue.from_dict, data["venues"])}
+    metropol = ("Karlshamn", "Metropol Kultur")
+    # Tickster publishes the address on its venue listing, not the individual film events.
+    if (venue := sd.venues.get(metropol)) and not venue.address:
+        sd.venues[metropol] = replace(venue, address="Norra Fogdelyckegatan 24")
     for name in ("poster_keys", "tmdb_ids", "film_slugs"):
         setattr(sd, name, {-int(key): value for key, value in data[name].items()})
     sd.film_aliases = data["film_aliases"]
