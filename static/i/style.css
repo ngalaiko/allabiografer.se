@@ -68,14 +68,6 @@ h2 { font-size: var(--cap-height-13); font-weight: 600; margin-bottom: 7px; }
 .program { --frame: 20px; --schedule-top: 0px; --poster-column: 135px; --cinema-column: 310px; --schedule-start: calc(var(--poster-column) + var(--cinema-column)); --day-width: 200px; --sheet-width: calc(var(--schedule-start) + var(--day-count) * var(--day-width)); padding: 20px 20px 0; cursor: default; width: max-content; position: relative; }
 .program::before { content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 20px; z-index: 50; background: var(--background); }
 .program::after { content: ""; position: fixed; top: 0; left: 0; width: 20px; height: 100vh; z-index: 55; background: var(--background); }
-.festival-banner { --link: var(--selected-text); --hover: var(--selected-text); position: sticky; left: var(--frame); width: calc(100vw - 2 * var(--frame)); margin-bottom: 12px; background: var(--selected); border: 1px solid var(--selected-border); border-left: 3px solid var(--selected-text); display: grid; grid-template-columns: 1fr auto; }
-.festival-banner[hidden] { display: none; }
-.festival-banner.sticky { top: var(--frame); z-index: 52; box-shadow: 0 12px var(--background); }
-.festival-banner a { display: block; padding: 10px 12px; }
-.festival-banner button { align-self: center; margin-right: 8px; padding: 8px; border: 0; background: none; color: var(--selected-text); cursor: pointer; }
-.festival-banner button:hover { background: var(--selected-border); }
-.festival-banner strong { font-weight: 600; }
-.festival-banner strong, .festival-banner span { white-space: nowrap; }
 .schedule-header { position: sticky; top: calc(var(--frame) + var(--schedule-top)); z-index: 50; width: var(--sheet-width); display: grid; grid-template-columns: var(--schedule-start) 1fr; background: var(--schedule-surface); }
 .schedule-breadcrumbs { position: sticky; left: 20px; z-index: 60; width: var(--schedule-start); min-height: var(--schedule-nav-height); display: flex; align-items: center; gap: 5px; padding: 5px; background: var(--schedule-surface); border: 1px solid var(--border-color); }
 .breadcrumb-content { display: contents; }

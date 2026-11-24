@@ -838,9 +838,6 @@ def _make_env() -> Environment:
     env.globals["newsletter_preferences_version"] = hashlib.sha256(
         Path("static/i/newsletter-preferences.js").read_bytes()
     ).hexdigest()[:12]
-    env.globals["festival_banner_version"] = hashlib.sha256(
-        Path("static/i/festival-banner.js").read_bytes()
-    ).hexdigest()[:12]
     env.globals["font_versions"] = {
         weight: hashlib.sha256(Path(f"static/i/FiraSans-{weight}.woff2").read_bytes()).hexdigest()[:12]
         for weight in ("Regular", "SemiBold")

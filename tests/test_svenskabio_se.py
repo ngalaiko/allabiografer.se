@@ -7,10 +7,10 @@ from store import Film, Screening
 from store.version import Language
 
 
-def _card(id, day, hall):
+def _card(id, day, hall, booking="card-link"):
     c = "em-block-showtime-movie-card"
     return f'''<article class="{c}" data-showtime-id="{id}_sv">
-      <a class="{c}__card-link" href="https://svenskabio.se/secure-redirect/?url=https://biljetter.svenskabio.se/seat-plan/{id}"></a>
+      <a class="{c}__{booking}" href="https://svenskabio.se/secure-redirect/?url=https://biljetter.svenskabio.se/seat-plan/{id}"></a>
       <time class="{c}__time" datetime="{day}T18:30:00+01:00">18:30</time>
       <span class="{c}__screen">{hall}</span>
       <h2 class="{c}__title"><a href="https://svenskabio.se/filmer/example/">Example</a></h2>
@@ -31,7 +31,7 @@ def test_operator_programme_walks_dates_and_keeps_simultaneous_shows(monkeypatch
             "dateOptions": [{"value": x} for x in ("all", first, second)],
             "html": _card(3145, first, "Salong 2") + _card(3146, first, "Salong 7"),
         },
-        second: {"date": second, "html": _card(3314, second, "Salong 8")},
+        second: {"date": second, "html": _card(3314, second, "Salong 8", "tickets")},
     }
 
     programmes = {

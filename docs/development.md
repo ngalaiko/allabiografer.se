@@ -418,19 +418,11 @@ explicit no subtitles remains distinct. The standard presentation has no label.
 
 ## Festivals
 
-Festival planners live at `/festival/{slug}/{year}/`. Editions are defined in
-[`src/parse/festivals.py`](../src/parse/festivals.py); their screenings are stored
-in the `festivals` and `festival_screenings` tables, independently of the regular
-two-week cinema programme. Times include explicit UTC offsets.
-
-Refresh programmes with `mise run parse:festivals` (also included in
-`mise run parse`), then build normally. Importers read public APIs selected by
-each edition's `source`:
-
-- `stockholm`: dated screenings with a festival section. End times use film
-  runtimes and exclude talks and travel.
-- `prisma` (Göteborg Film Festival): films and short-film packages; happenings
-  are excluded.
+Festival planners live at `/festival/{slug}/{year}/`. Editions and their
+screenings are stored in the `festivals` and `festival_screenings` tables,
+independently of the regular two-week cinema programme. Times include explicit
+UTC offsets. The 2026 Stockholm and Göteborg Prisma editions are no longer
+refreshed or published; their stored screenings are retained.
 
 The planner supports selections, a personal calendar, overlap warnings, shared
 URLs, and downloaded iCal files. Selections are stored in the URL and locally

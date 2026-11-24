@@ -66,7 +66,10 @@ def _programme(
             raise ValueError(f"svenskabio: missing advertised programme for {day}")
         for card in cards:
             when = datetime.fromisoformat(card.select_one(f"{_CARD}__time")["datetime"])
-            wrapper = card.select_one(f"{_CARD}__card-link")["href"]
+            booking = card.select_one(f"a{_CARD}__tickets[href]") or card.select_one(f"a{_CARD}__card-link[href]")
+            if booking is None:
+                raise ValueError(f"svenskabio: missing booking link for {venue.name} on {day}")
+            wrapper = booking["href"]
             (ticket,) = parse_qs(urlsplit(wrapper).query)["url"]
             show_id = card["data-showtime-id"].removesuffix("_sv")
             if (
