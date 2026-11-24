@@ -8,18 +8,17 @@ from bs4 import BeautifulSoup
 from parse import _http
 from parse.parsers import _films
 from store import Film, Screening, Venue
-from store.version import Presentation, PresentationSystem
 
 _SOURCE = "kulturiskovde_se"
 _VENUE = Venue(name="Biograf Odeon", city="Skövde", address="Trädgårdsgatan 9")
-_SERIES = {31841: PresentationSystem.CHILDRENS_CINEMA, 31784: None}
+_SERIES = (31841, 31784)
 _MONTHS = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"]
 
 
 def parse() -> Iterator[Screening | Venue | Film]:
     yield _VENUE
     with _http.session() as session:
-        for series, label in _SERIES.items():
+        for series in _SERIES:
             url = f"https://tix.se/sv/skovde/buyingflow/tickets/{series}/"
             response = session.get(url, timeout=30)
             response.raise_for_status()
@@ -44,5 +43,4 @@ def parse() -> Iterator[Screening | Venue | Film]:
                     cinema_name=_VENUE.name,
                     screen="Odeon",
                     ticket_url=url,
-                    presentation=Presentation(experiences=frozenset({label}) if label else frozenset()),
                 )

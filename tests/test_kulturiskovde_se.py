@@ -4,7 +4,6 @@ import requests
 
 from parse.parsers.kulturiskovde_se import parse
 from store import Film, Screening, Venue
-from store.version import PresentationSystem
 
 
 def test_odeon_publishes_only_public_film_series_rows(monkeypatch):
@@ -38,7 +37,7 @@ def test_odeon_publishes_only_public_film_series_rows(monkeypatch):
     assert (venue.city, venue.name) == ("Skövde", "Biograf Odeon")
     assert {item.title for item in items if isinstance(item, Film)} == {"Bajsfilmen", "Diktatorns tårta"}
     shows = [item for item in items if isinstance(item, Screening)]
-    assert [(s.title, s.date, s.time, s.screen, s.ticket_url, s.presentation.experiences) for s in shows] == [
-        ("Bajsfilmen", date(2026, 11, 20), time(10), "Odeon", base + "31841/", {PresentationSystem.CHILDRENS_CINEMA}),
-        ("Diktatorns tårta", date(2026, 11, 24), time(14), "Odeon", base + "31784/", set()),
+    assert [(s.title, s.date, s.time, s.screen, s.ticket_url) for s in shows] == [
+        ("Bajsfilmen", date(2026, 11, 20), time(10), "Odeon", base + "31841/"),
+        ("Diktatorns tårta", date(2026, 11, 24), time(14), "Odeon", base + "31784/"),
     ]

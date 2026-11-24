@@ -57,49 +57,37 @@ def catalogue(db):
     return read_catalogue(Path("unused"), path=db)
 
 
-def test_biopasset_applies_only_to_the_tagged_screening(db):
+def test_royal_vip_applies_only_to_salong_2(db):
     source = "filmstaden_se"
     film = add(db, source)
     show = next(s for s in read_screenings(path=db) if s.film_key == film.key)
     show = replace(show, city="Norrtälje", cinema_name="Royal Norrtälje")
-    tagged = replace(show, screen="Salong 2", raw_attributes=("Biopasset 5",))
+    vip = replace(show, screen="Salong 2")
     ordinary = replace(show, time=time(20), screen="Salong 1")
-    write_screenings([tagged, ordinary], path=db, source=source)
+    write_screenings([vip, ordinary], path=db, source=source)
 
     reconcile(path=db)
 
-    assert {
-        s.time: (sorted(s.presentation.experiences), sorted(s.presentation.auditorium))
-        for s in catalogue(db).screenings
-    } == {
-        time(18, 30): (["Biopasset"], ["VIP"]),
-        time(20): ([], []),
+    assert {s.time: sorted(s.presentation.auditorium) for s in catalogue(db).screenings} == {
+        time(18, 30): ["VIP"],
+        time(20): [],
     }
 
 
-def test_audited_labels_follow_session_attributes(db):
-    expected = {}
-    for source in ("bio_se", "filmstaden_se"):
-        film = add(db, source, title=source)
-        show = next(s for s in read_screenings(path=db) if s.film_key == film.key)
-        if source == "bio_se":
-            show = replace(show, city="Lidköping", cinema_name="Lidköping Folkan")
-            attributes = ("Föreställning där Cineville-kortet gäller", "Frallfika ingår")
-            expected[source, time(18, 30)] = (["Cineville", "Frallfika ingår"], [])
-        else:
-            attributes = ("Syntolkning via app",)
-            expected[source, time(18, 30)] = ([], ["Syntolkning via app"])
-        expected[source, time(20)] = ([], [])
-        write_screenings(
-            [replace(show, raw_attributes=attributes), replace(show, time=time(20))], path=db, source=source
-        )
+def test_audio_description_via_app_is_screening_specific(db):
+    source = "filmstaden_se"
+    film = add(db, source)
+    show = next(s for s in read_screenings(path=db) if s.film_key == film.key)
+    write_screenings(
+        [replace(show, raw_attributes=("Syntolkning via app",)), replace(show, time=time(20))], path=db, source=source
+    )
 
     reconcile(path=db)
 
-    assert {
-        (s.source, s.time): (sorted(s.presentation.experiences), sorted(s.accessibility.features))
-        for s in catalogue(db).screenings
-    } == expected
+    assert {s.time: sorted(s.accessibility.features) for s in catalogue(db).screenings} == {
+        time(18, 30): ["Syntolkning via app"],
+        time(20): [],
+    }
 
 
 def test_hypnos_operator_listing_keeps_its_runtime_and_direct_booking(db):
@@ -136,36 +124,6 @@ def test_hypnos_operator_listing_keeps_its_runtime_and_direct_booking(db):
         (operator, direct, 133),
     ]
     assert sorted(sd.screenings[0].version.subtitles.languages) == ["Engelska"]
-
-
-def test_goteborg_audit_metadata_preserves_sessions_and_is_scoped(db):
-    from datetime import date
-
-    day = date(2026, 11, 21)
-    film = Film(key="bioroy_se:sense and sensibility", title="Sense and Sensibility", source="bioroy_se", runtime=131)
-    write_films([film], path=db)
-    tea = Screening(
-        tmdb_id=None,
-        date=day,
-        time=time(11, 30),
-        ticket_url="https://secure.tickster.com/7ba2gljn3tf3wh7",
-        cinema_name="Bio Roy",
-        city="Göteborg",
-        source="folkets_hus_och_parker",
-        title=film.title,
-        film_key=film.key,
-        raw_attributes=("Afternoon Tea",),
-    )
-    ordinary = replace(tea, time=time(19), ticket_url="https://example.com/regular", raw_attributes=())
-    write_screenings([tea, ordinary], path=db, source=tea.source)
-    reconcile(path=db, today=day)
-    sd = read_catalogue(Path("unused"), path=db, today=day)
-    shows = sorted(sd.screenings, key=lambda s: s.time)
-    assert [(s.time, s.ticket_url, sorted(s.presentation.experiences)) for s in shows] == [
-        (time(11, 30), tea.ticket_url, ["Afternoon Tea"]),
-        (time(19), ordinary.ticket_url, []),
-    ]
-    assert len({s.tmdb_id for s in shows}) == 1
 
 
 def test_dune_provider_corrections_join_existing_pages(db):

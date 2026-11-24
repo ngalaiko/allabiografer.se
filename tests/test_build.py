@@ -150,6 +150,10 @@ def test_schedule_pages_describe_their_screenings_and_formats(db, tmp_path):
         show_link = page.select_one('a[href="https://example.com/imax"]')
         assert show_link["title"] == "Salong 2"
         assert "Salong 2" in show_link["aria-label"]
+        assert "IMAX" in show_link["aria-label"]
+        assert "Dolby Atmos" in show_link["aria-label"]
+        assert "Premiär" not in page.get_text()
+        assert "Premiär" not in show_link["aria-label"]
         inline = json.loads(page.select_one('head script[type="application/ld+json"]').string)
         assert not any(node["@type"] == "ScreeningEvent" for node in inline["@graph"])
         alternate = page.select_one('head link[rel="alternate"][type="application/ld+json"]')
@@ -167,7 +171,7 @@ def test_schedule_pages_describe_their_screenings_and_formats(db, tmp_path):
         imax = events["https://example.com/imax"]
         assert imax["workPresented"] == {"@id": "https://allabiografer.se/film/filmen/#movie"}
         assert imax["videoFormat"] == "IMAX 3D"
-        assert imax["description"] == "Salong 2, Dolby Atmos, Premiär"
+        assert imax["description"] == "Salong 2, Dolby Atmos"
         assert imax["inLanguage"] == ["sv"]
         assert imax["subtitleLanguage"] == ["en", "fi"]
         assert not {"videoFormat", "inLanguage", "subtitleLanguage"} & events["https://example.com/unknown"].keys()

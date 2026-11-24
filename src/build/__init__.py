@@ -64,6 +64,18 @@ from store.version import (
     subtitles_label,
 )
 
+_FORMAT_SYSTEMS = frozenset(
+    {
+        PresentationSystem.IMAX,
+        PresentationSystem.DOLBY_CINEMA,
+        PresentationSystem.FOUR_DX,
+        PresentationSystem.SCREENX,
+        PresentationSystem.D_BOX,
+        PresentationSystem.ISENSE,
+        PresentationSystem.INFINITY_VISION,
+    }
+)
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -762,15 +774,7 @@ def _programme_nodes(
             ticket_url=s.ticket_url,
         )
         p = s.presentation
-        systems = {
-            PresentationSystem.IMAX,
-            PresentationSystem.DOLBY_CINEMA,
-            PresentationSystem.FOUR_DX,
-            PresentationSystem.SCREENX,
-            PresentationSystem.ISENSE,
-            PresentationSystem.INFINITY_VISION,
-        }
-        formats = sorted(p.experiences & systems)
+        formats = sorted(p.experiences & _FORMAT_SYSTEMS)
         if p.dimension != Dimension.UNKNOWN:
             formats.append(p.dimension)
         if p.medium != ProjectionMedium.UNKNOWN:
@@ -779,7 +783,7 @@ def _programme_nodes(
         if formats:
             event["videoFormat"] = " ".join(formats)
         details = [s.screen] if s.screen else []
-        details.extend(sorted(p.experiences - systems | p.sound | p.auditorium))
+        details.extend(sorted(p.sound | p.auditorium))
         if details:
             event["description"] = ", ".join(details)
         if s.version.audio.languages and s.version.audio.kind != AudioKind.SILENT:
@@ -952,8 +956,8 @@ def _variant_profile(screening: Screening) -> tuple:
         audio.kind if audio.kind != AudioKind.UNKNOWN else None,
         frozenset(audio.languages) or None,
         frozenset(subtitle_languages) if subtitle_languages is not None else None,
-        version.edition,
-        frozenset(presentation.experiences),
+        version.edition if version.edition != "Inspelad repris" else None,
+        presentation.experiences & _FORMAT_SYSTEMS,
         presentation.dimension if presentation.dimension != Dimension.UNKNOWN else None,
         presentation.medium,
         frozenset(presentation.projection),

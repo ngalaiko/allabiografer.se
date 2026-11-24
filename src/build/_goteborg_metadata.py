@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from store.version import AgeRating, Language, PresentationSystem, ProjectionAttribute, ProjectionMedium
+from store.version import AgeRating, Language, ProjectionAttribute, ProjectionMedium
 
 if TYPE_CHECKING:
     from build import SiteData
@@ -80,19 +80,13 @@ def apply_metadata(sd: SiteData) -> None:
             show = _language(show, _FLIRT_AUDIO, fallback=True)
             show = replace(show, presentation=replace(presentation, medium=ProjectionMedium.MM_35))
         elif show.cinema_name == "Bio Roy" and show.source == "folkets_hus_och_parker":
-            labels = {label.casefold() for label in show.raw_attributes}
             synopsis = film.overview.casefold() if film else ""
-            experiences = presentation.experiences
             projection = presentation.projection
-            if "afternoon tea" in labels:
-                experiences |= {PresentationSystem.AFTERNOON_TEA}
-            if "teater" in labels and "produktionen spelades in live" in synopsis:
-                experiences |= {PresentationSystem.RECORDED_THEATRE}
             if show.film_key == "bioroy_se:citizen kane" and tmdb_id == 15 and film:
                 sd.movies[show.tmdb_id] = replace(movie, title_sv=film.title)
                 if "vi visar" in synopsis and "4k-kopia" in synopsis:
                     projection |= {ProjectionAttribute.K4}
-            show = replace(show, presentation=replace(presentation, experiences=experiences, projection=projection))
+            show = replace(show, presentation=replace(presentation, projection=projection))
         elif (
             key == ("Göteborg Hagabion", "bio_se", "bio_se:silent friend")
             and show.ticket_url == "https://bio.se/bokning/cinemaId/17705/sessionId/14092"
