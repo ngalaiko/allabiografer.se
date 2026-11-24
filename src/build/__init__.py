@@ -778,6 +778,10 @@ def _programme_nodes(
         formats.extend(sorted(p.projection))
         if formats:
             event["videoFormat"] = " ".join(formats)
+        details = [s.screen] if s.screen else []
+        details.extend(sorted(p.experiences - systems | p.sound | p.auditorium))
+        if details:
+            event["description"] = ", ".join(details)
         if s.version.audio.languages and s.version.audio.kind != AudioKind.SILENT:
             event["inLanguage"] = sorted(language.tag for language in s.version.audio.languages)
         if s.version.subtitles.languages:
@@ -1190,6 +1194,7 @@ def _prepare_programme_blocks(
     movie_score: dict[tuple[int, str, str, int | None], float] = defaultdict(float)
     movie_earliest: dict[tuple[int, str, str, int | None], tuple[date, time]] = {}
     block_profiles: dict[tuple[int, str, str, int | None], tuple] = {}
+    screens = {(s.city, s.cinema_name, s.date, s.time, s.ticket_url): s.screen for s in filtered if s.screen}
     for s in filtered:
         day_idx = day_indices[s.date]
         block_key = (s.tmdb_id, *variants[id(s)], _screening_runtime(sd, s))
@@ -1294,6 +1299,7 @@ def _prepare_programme_blocks(
                     dt = datetime.combine(days[day_idx], time(*map(int, p["label"].split(":"))), tzinfo=SWEDEN_TZ)
                     p["past"] = dt < now
                     p["start"] = dt.isoformat()
+                    p["screen"] = screens.get((cinema_city, cinema_name, dt.date(), dt.time(), p["url"]))
                 h = _cell_min_height(positions)
                 if h > max_h:
                     max_h = h

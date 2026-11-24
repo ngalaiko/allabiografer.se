@@ -111,6 +111,8 @@ class PresentationSystem(StrEnum):
     CLASSIC = "Klassiker"
     FILM_INTRODUCTION = "Filmintroduktion"
     CHILDRENS_CINEMA = "Barnbio"
+    ARTHOUSE = "Arthouse"
+    LUX_AUDIENCE_AWARD = "LUX Audience Award"
 
 
 class Dimension(StrEnum):

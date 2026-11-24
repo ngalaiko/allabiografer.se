@@ -11,6 +11,7 @@ from store.version import (
     AccessibilityFeature,
     AudioKind,
     AudioVersion,
+    AuditoriumAttribute,
     Language,
     PresentationSystem,
     ProjectionAttribute,
@@ -321,6 +322,26 @@ def apply_programme_corrections(sd: "SiteData") -> None:
             re.fullmatch(r"Biopasset(?: [0-9]+)?", attribute, re.IGNORECASE) for attribute in show.raw_attributes
         ):
             experiences |= {PresentationSystem.BIOPASSET}
+
+        if show.source == "cinemascenen_se" and ticket in {
+            "https://secure.tickster.com/ty30b4nt1uytg16",
+            "https://secure.tickster.com/yfp7aafy78vne1m",
+        }:
+            experiences |= {PresentationSystem.ARTHOUSE, PresentationSystem.LUX_AUDIENCE_AWARD}
+
+        if (show.source, show.city, show.cinema_name, show.screen) == (
+            "filmstaden_se",
+            "Norrtälje",
+            "Royal Norrtälje",
+            "Salong 2",
+        ):
+            # Royal's programme identifies Salong 2 as its VIP auditorium.
+            show = replace(
+                show,
+                presentation=replace(
+                    show.presentation, auditorium=show.presentation.auditorium | {AuditoriumAttribute.VIP}
+                ),
+            )
 
         if show.source == "filmstaden_se" and "Syntolkning via app" in show.raw_attributes:
             features = show.accessibility.features - {AccessibilityFeature.AUDIO_DESCRIPTION}

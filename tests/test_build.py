@@ -34,6 +34,7 @@ from store.version import (
     Language,
     Presentation,
     PresentationSystem,
+    SoundAttribute,
     SubtitleVersion,
 )
 
@@ -118,6 +119,7 @@ def test_schedule_pages_describe_their_screenings_and_formats(db, tmp_path):
                 tmdb_id=42,
                 date=day,
                 ticket_url="https://example.com/imax",
+                screen="Salong 2",
                 version=ContentVersion(
                     audio=AudioVersion(AudioKind.DUBBED, frozenset({Language.SWEDISH})),
                     subtitles=SubtitleVersion(frozenset({Language.FINNISH, Language.ENGLISH})),
@@ -125,6 +127,7 @@ def test_schedule_pages_describe_their_screenings_and_formats(db, tmp_path):
                 presentation=Presentation(
                     experiences=frozenset({PresentationSystem.IMAX, PresentationSystem.PREMIERE}),
                     dimension=Dimension.THREE_D,
+                    sound=frozenset({SoundAttribute.DOLBY_ATMOS}),
                 ),
             ),
             screening(tmdb_id=42, date=day, ticket_url="https://example.com/unknown"),
@@ -144,6 +147,9 @@ def test_schedule_pages_describe_their_screenings_and_formats(db, tmp_path):
         "film/filmen": {"goteborg"},
     }.items():
         page = BeautifulSoup((out / path / "index.html").read_text(), "html.parser")
+        show_link = page.select_one('a[href="https://example.com/imax"]')
+        assert show_link["title"] == "Salong 2"
+        assert "Salong 2" in show_link["aria-label"]
         inline = json.loads(page.select_one('head script[type="application/ld+json"]').string)
         assert not any(node["@type"] == "ScreeningEvent" for node in inline["@graph"])
         alternate = page.select_one('head link[rel="alternate"][type="application/ld+json"]')
@@ -161,6 +167,7 @@ def test_schedule_pages_describe_their_screenings_and_formats(db, tmp_path):
         imax = events["https://example.com/imax"]
         assert imax["workPresented"] == {"@id": "https://allabiografer.se/film/filmen/#movie"}
         assert imax["videoFormat"] == "IMAX 3D"
+        assert imax["description"] == "Salong 2, Dolby Atmos, Premiär"
         assert imax["inLanguage"] == ["sv"]
         assert imax["subtitleLanguage"] == ["en", "fi"]
         assert not {"videoFormat", "inLanguage", "subtitleLanguage"} & events["https://example.com/unknown"].keys()

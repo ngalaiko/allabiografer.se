@@ -61,15 +61,19 @@ def test_biopasset_applies_only_to_the_tagged_screening(db):
     source = "filmstaden_se"
     film = add(db, source)
     show = next(s for s in read_screenings(path=db) if s.film_key == film.key)
-    tagged = replace(show, raw_attributes=("Biopasset 5",))
-    ordinary = replace(show, time=time(20), raw_attributes=())
+    show = replace(show, city="Norrtälje", cinema_name="Royal Norrtälje")
+    tagged = replace(show, screen="Salong 2", raw_attributes=("Biopasset 5",))
+    ordinary = replace(show, time=time(20), screen="Salong 1")
     write_screenings([tagged, ordinary], path=db, source=source)
 
     reconcile(path=db)
 
-    assert {s.time: sorted(s.presentation.experiences) for s in catalogue(db).screenings} == {
-        time(18, 30): ["Biopasset"],
-        time(20): [],
+    assert {
+        s.time: (sorted(s.presentation.experiences), sorted(s.presentation.auditorium))
+        for s in catalogue(db).screenings
+    } == {
+        time(18, 30): (["Biopasset"], ["VIP"]),
+        time(20): ([], []),
     }
 
 
