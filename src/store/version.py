@@ -98,6 +98,7 @@ class PresentationSystem(StrEnum):
     BOOK_CLUB = "Bokklubb"
     BIOPASSET = "Biopasset"
     CINEVILLE = "Cineville"
+    ROLL_AND_COFFEE_INCLUDED = "Frallfika ingår"
     NEW_FINNISH_FILM = "Ny finsk film"
     QA = "Frågestund"
     DIRECTOR_QA = "Regissörssamtal (teckenspråkstolkat)"
@@ -151,6 +152,7 @@ class Presentation:
 
 class AccessibilityFeature(StrEnum):
     AUDIO_DESCRIPTION = "Syntolkning"
+    AUDIO_DESCRIPTION_VIA_APP = "Syntolkning via app"
 
 
 @dataclass(frozen=True, slots=True)

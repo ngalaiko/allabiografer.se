@@ -7,7 +7,15 @@ from datetime import date, time
 from typing import TYPE_CHECKING
 
 from store import Venue
-from store.version import AudioKind, AudioVersion, Language, PresentationSystem, ProjectionAttribute, SubtitleVersion
+from store.version import (
+    AccessibilityFeature,
+    AudioKind,
+    AudioVersion,
+    Language,
+    PresentationSystem,
+    ProjectionAttribute,
+    SubtitleVersion,
+)
 
 if TYPE_CHECKING:
     from build import SiteData
@@ -293,6 +301,16 @@ def apply_programme_corrections(sd: "SiteData") -> None:
             show = replace(show, ticket_url="https://regionmuseet.se/kalender/karlek-over-tanger-2/")
 
         if (
+            (show.city, show.cinema_name, show.film_key)
+            == ("Ystad", "Biografteatern Scala", "bioguiden_se:a talent for murder")
+            and show.date in {date(2026, 11, 25), date(2026, 11, 26)}
+            and show.time == time(19)
+            and ticket
+            == "https://www.bioguiden.se/biografer.aspx?cityid=121&theatreid=06162d84-474a-4f9a-abc5-c7ce7b7a79aa"
+        ):
+            show = replace(show, ticket_url="https://bioscala.se/bokning?id=519")
+
+        if (
             show.source == "filmstaden_se"
             and ticket.startswith(_FILMSTADEN)
             and (label := _SVENSKA_BIO_LABELS.get(ticket.removeprefix(_FILMSTADEN).rstrip("/")))
@@ -303,6 +321,15 @@ def apply_programme_corrections(sd: "SiteData") -> None:
             re.fullmatch(r"Biopasset(?: [0-9]+)?", attribute, re.IGNORECASE) for attribute in show.raw_attributes
         ):
             experiences |= {PresentationSystem.BIOPASSET}
+
+        if show.source == "filmstaden_se" and "Syntolkning via app" in show.raw_attributes:
+            features = show.accessibility.features - {AccessibilityFeature.AUDIO_DESCRIPTION}
+            show = replace(
+                show,
+                accessibility=replace(
+                    show.accessibility, features=features | {AccessibilityFeature.AUDIO_DESCRIPTION_VIA_APP}
+                ),
+            )
 
         if date(2026, 11, 19) <= show.date <= date(2026, 11, 21):
             if ticket in _AUDITED_RUNTIMES:
@@ -386,10 +413,16 @@ def apply_programme_corrections(sd: "SiteData") -> None:
             experiences |= frozenset(_NORDISK_LABELS[a] for a in show.raw_attributes if a in _NORDISK_LABELS)
         if (
             show.source == "bio_se"
-            and show.cinema_name in {_ELEKTRA, "Uppsala Fyrisbiografen"}
+            and show.cinema_name in {_ELEKTRA, "Uppsala Fyrisbiografen", "Lidköping Folkan"}
             and "Föreställning där Cineville-kortet gäller" in show.raw_attributes
         ):
             experiences |= {PresentationSystem.CINEVILLE}
+        if (
+            show.source == "bio_se"
+            and show.cinema_name == "Lidköping Folkan"
+            and "Frallfika ingår" in show.raw_attributes
+        ):
+            experiences |= {PresentationSystem.ROLL_AND_COFFEE_INCLUDED}
 
         if (film and film.key in {"bio_se:palestina 36", "filmstaden_se:julkul med greta bioupplevelsen"}) or (
             film

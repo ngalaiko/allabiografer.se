@@ -73,6 +73,31 @@ def test_biopasset_applies_only_to_the_tagged_screening(db):
     }
 
 
+def test_audited_labels_follow_session_attributes(db):
+    expected = {}
+    for source in ("bio_se", "filmstaden_se"):
+        film = add(db, source, title=source)
+        show = next(s for s in read_screenings(path=db) if s.film_key == film.key)
+        if source == "bio_se":
+            show = replace(show, city="Lidköping", cinema_name="Lidköping Folkan")
+            attributes = ("Föreställning där Cineville-kortet gäller", "Frallfika ingår")
+            expected[source, time(18, 30)] = (["Cineville", "Frallfika ingår"], [])
+        else:
+            attributes = ("Syntolkning via app",)
+            expected[source, time(18, 30)] = ([], ["Syntolkning via app"])
+        expected[source, time(20)] = ([], [])
+        write_screenings(
+            [replace(show, raw_attributes=attributes), replace(show, time=time(20))], path=db, source=source
+        )
+
+    reconcile(path=db)
+
+    assert {
+        (s.source, s.time): (sorted(s.presentation.experiences), sorted(s.accessibility.features))
+        for s in catalogue(db).screenings
+    } == expected
+
+
 def test_hypnos_operator_listing_keeps_its_runtime_and_direct_booking(db):
     day = datetime.now(SWEDEN_TZ).date() + timedelta(days=1)
     title = "La Chimera"
