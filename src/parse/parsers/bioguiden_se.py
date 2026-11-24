@@ -1,5 +1,6 @@
 """Bioguiden — selected cinema programmes not supplied by our other sources."""
 
+import logging
 import re
 from collections.abc import Iterator
 from dataclasses import replace
@@ -12,6 +13,8 @@ from parse import _http
 from parse.parsers import _films
 from parse.parsers._tmdb_cache import lookup as _tmdb
 from store import Film, Screening, Venue
+
+log = logging.getLogger(__name__)
 
 _SOURCE = "bioguiden_se"
 _BASE = "https://www.bioguiden.se/"
@@ -292,6 +295,7 @@ _START = re.compile(r"\b\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}\b")
 def parse() -> Iterator[Screening | Venue | Film]:
     session = _http.session()
     films: set[str] = set()
+    empty_count = 0
     for url, venue in _SITES.items():
         response = session.get(url, timeout=30)
         response.raise_for_status()
@@ -299,9 +303,27 @@ def parse() -> Iterator[Screening | Venue | Film]:
         selected = soup.select_one("#SearchTheatreDropDown option[selected]")
         query = parse_qs(urlsplit(url).query)
         expected = f"{query['cityid'][0]}|{query['theatreid'][0]}"
+        matches_selection = selected is not None and selected.get("value") == expected
         programme = soup.select_one("#SearchResultDetails")
         cinema = soup.select_one("#biografinfo h2")
-        if cinema is None or not selected or selected.get("value") != expected or programme is None:
+        if cinema is not None and programme is None and soup.select_one("#NoResultsLiteral") is not None:
+            # Unlisted cinemas can leave the dropdown on the last venue visited.
+            # In that case identify the requested cinema by its own details instead.
+            address = soup.select_one("#biografadress address")
+            if matches_selection or (
+                cinema.get_text(" ", strip=True).split(",", 1)[0] == venue.name
+                and address is not None
+                and next(address.stripped_strings, "") == venue.address
+                and selected is not None
+                and soup.select_one(f'#SearchTheatreDropDown option[value="{expected}"]') is None
+            ):
+                empty_count += 1
+                if empty_count * 2 > len(_SITES):
+                    raise ValueError("Bioguiden: more than half of cinema programmes are empty")
+                log.warning("Bioguiden: no programme for %s (%s) at %s", venue.name, venue.city, url)
+                yield venue
+                continue
+        if cinema is None or not matches_selection or programme is None:
             raise ValueError(f"Bioguiden: missing cinema programme at {url}")
         # Rows use either the source's full/short cinema name, our canonical name, or an auditorium.
         cinema_name = cinema.get_text(" ", strip=True)

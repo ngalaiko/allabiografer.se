@@ -16,6 +16,7 @@ from store.version import AudioKind, Dimension
 _FIXTURES = Path(__file__).parent / "fixtures" / "bioguiden_se"
 _SITES = bioguiden_se._SITES
 _LYCKSELE, _VISIR = list(_SITES)[:2]
+_NO_RESULTS = '<div id="NoResultsLiteral">Inga filmer kunde hittas</div>'
 
 
 @pytest.fixture
@@ -205,7 +206,34 @@ def test_remaining_programmes_distinguish_cinema_aliases_from_named_halls(pages,
     assert child_film.ticket_url == "https://www.tickster.com/sv/events/ZF6B63PNJZ9X6FR"
 
 
-@pytest.mark.parametrize("failure", ["http", "wrong_cinema", "missing_programme", "missing_showtimes", "invalid_time"])
+@pytest.mark.parametrize("fallback_selection", [False, True])
+def test_empty_programme_does_not_block_other_cinemas(pages, fallback_selection):
+    soup = BeautifulSoup(pages[_LYCKSELE], "html.parser")
+    soup.select_one("#SearchResultDetails").replace_with(BeautifulSoup(_NO_RESULTS, "html.parser"))
+    if fallback_selection:
+        soup.select_one("#SearchTheatreDropDown option[selected]")["value"] = "11|4395ab77-fc3f-4da5-9e62-cd6ddea0cf1d"
+    pages[_LYCKSELE] = soup.encode()
+
+    items = list(bioguiden_se.parse())
+
+    assert {item.city for item in items if isinstance(item, Venue)} == {"Lycksele", "Leksand"}
+    screenings = [item for item in items if isinstance(item, Screening)]
+    assert len(screenings) == 12
+    assert {item.city for item in screenings} == {"Leksand"}
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        "http",
+        "wrong_cinema",
+        "wrong_empty_cinema",
+        "mostly_empty",
+        "missing_programme",
+        "missing_showtimes",
+        "invalid_time",
+    ],
+)
 def test_failed_second_cinema_preserves_the_stored_programme(pages, monkeypatch, tmp_path, failure):
     db = tmp_path / "programme.db"
     previous = Screening(
@@ -223,6 +251,17 @@ def test_failed_second_cinema_preserves_the_stored_programme(pages, monkeypatch,
         del pages[_VISIR]
     elif failure == "wrong_cinema":
         pages[_VISIR] = pages[_LYCKSELE]
+    elif failure == "wrong_empty_cinema":
+        soup = BeautifulSoup(pages[_VISIR], "html.parser")
+        soup.select_one("#SearchResultDetails").replace_with(BeautifulSoup(_NO_RESULTS, "html.parser"))
+        soup.select_one("#SearchTheatreDropDown option[selected]")["value"] = ""
+        soup.select_one("#biografadress address").string = "Wrong street 99"
+        pages[_VISIR] = soup.encode()
+    elif failure == "mostly_empty":
+        for url, html in pages.items():
+            soup = BeautifulSoup(html, "html.parser")
+            soup.select_one("#SearchResultDetails").replace_with(BeautifulSoup(_NO_RESULTS, "html.parser"))
+            pages[url] = soup.encode()
     elif failure == "missing_programme":
         pages[_VISIR] = pages[_VISIR].replace(b'id="SearchResultDetails"', b'id="changed"')
     elif failure == "missing_showtimes":
