@@ -135,6 +135,7 @@ class ProjectionAttribute(StrEnum):
 
 class SoundAttribute(StrEnum):
     DOLBY_ATMOS = "Dolby Atmos"
+    SURROUND_7_1 = "7.1-ljud"
 
 
 class AuditoriumAttribute(StrEnum):

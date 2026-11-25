@@ -29,8 +29,8 @@ _NOT_A_FILM = "Inte en film"
 _LABEL_MAX = 40
 # Match the same physical cinemas published by Nortic and their own websites.
 _CINEMA_NAMES = {2126: "Biocafé Tellus", 31791: "Hypnos Theatre", 50407: "Bio Göta Lejon"}
-# Nortic owns Tellus and Ellös; Hypnos publishes its own programme.
-_OTHER_PROGRAMME_IDS = {2126, 31791, 39360}
+# Nortic owns Tellus and Ellös; Hypnos and Rio Tomelilla publish their own programmes.
+_OTHER_PROGRAMME_IDS = {2126, 3070, 31791, 39360}
 
 
 def _ticket_url(payment_link: str) -> str:

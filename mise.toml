@@ -106,6 +106,9 @@ run = "uv run --group parse parse kulturiskovde_se"
 [tasks."parse:roxy_bio"]
 run = "uv run --group parse parse roxy_bio"
 
+[tasks."parse:riobiotomelilla_se"]
+run = "uv run --group parse parse riobiotomelilla_se"
+
 [tasks.build]
 description = "Build the static site"
 run = "uv run --group build build www/allabiografer.se"
