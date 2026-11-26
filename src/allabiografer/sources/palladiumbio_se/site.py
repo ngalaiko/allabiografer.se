@@ -2,17 +2,20 @@
 
 import logging
 import re
-from collections.abc import Iterable, Iterator
 from datetime import date, time
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
 from allabiografer import normalize as _version
 from allabiografer.dates import infer_year
-from allabiografer.model import Film
 from allabiografer.sources import _films
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
+
+    from allabiografer.model import Film
 
 log = logging.getLogger(__name__)
 

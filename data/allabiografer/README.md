@@ -6,7 +6,7 @@ assets/<sha256>                  raw bytes: HTML, API responses, images
 schema/<Schema.org type>/<id>.jsonld
 ```
 
-Run `uv run --group parse --group build allabiografer`, optionally limited to the feeds of `--cinema <MovieTheater ID>` (repeatable). It prints the merged `Dataset` and the website directory. `--fresh` ignores the previous result; `--render-only` renders the latest result without fetching.
+Run `nix run .#run`, optionally limited to the feeds of `-- --cinema <MovieTheater ID>` (repeatable). It prints the merged `Dataset` and the website directory. `--fresh` ignores the previous result; `--render-only` renders the latest result without fetching.
 
 ## Registry
 

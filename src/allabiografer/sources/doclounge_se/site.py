@@ -4,13 +4,16 @@ import itertools
 import json
 import logging
 import re
-from collections.abc import Iterator
 from datetime import date, time
+from typing import TYPE_CHECKING
 from urllib.parse import quote, urlparse
 
 from bs4 import BeautifulSoup
 
 from allabiografer import normalize as _version
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 log = logging.getLogger(__name__)
 

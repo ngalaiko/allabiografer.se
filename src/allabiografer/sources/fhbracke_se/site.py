@@ -2,12 +2,15 @@
 
 import logging
 import re
-from collections.abc import Iterator
 from datetime import date, time
+from typing import TYPE_CHECKING
 
 from bs4 import BeautifulSoup
 
 from allabiografer.dates import infer_year
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 log = logging.getLogger(__name__)
 

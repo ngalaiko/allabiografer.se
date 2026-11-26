@@ -1,14 +1,17 @@
 """BioSverige (Videvox Cinecore) schedule API shared by its cinema sites."""
 
 import re
-from collections.abc import Iterator
 from datetime import date, datetime, time
+from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
-
-import requests
 
 from allabiografer import normalize as _version
 from allabiografer.sources import _tickster
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    import requests
 
 _TZ = ZoneInfo("Europe/Stockholm")
 

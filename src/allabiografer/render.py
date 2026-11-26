@@ -7,10 +7,9 @@ translates the merged Schema.org graph into the page data they render from.
 import hashlib
 import re
 from datetime import date, datetime
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from . import session as http
-from .graph import Graph
 from .model import Screening, Venue
 from .model.movie import Movie
 from .model.version import (
@@ -27,6 +26,11 @@ from .posters import poster as _poster
 from .posters import stored_downloads
 from .site import pages
 from .sources._shared import STOCKHOLM
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from .graph import Graph
 
 FILM = "allabiografer:film"
 ALIAS = "allabiografer:film-alias"

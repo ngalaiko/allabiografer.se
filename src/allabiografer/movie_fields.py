@@ -7,12 +7,16 @@ runtimes onto ISO 8601 minutes and people onto `Person` lists.
 
 import re
 import unicodedata
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
-from allabiografer.model import Film
 from allabiografer.model.version import Language
 from allabiografer.normalize import languages as _spoken
 from allabiografer.rating import age_rating
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from allabiografer.model import Film
 
 # Schema.org Movie properties sources may state; the merge owns identifier, url and sameAs.
 PROPERTIES = (

@@ -15,12 +15,15 @@ import re
 from collections import defaultdict
 from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.parse import urlencode
 
-from .graph import Graph
 from .movie_fields import normalise
 from .movie_matching import _close, _facts, _people, _relation, references, title_keys, work_title
 from .posters import poster, stored_downloads
+
+if TYPE_CHECKING:
+    from .graph import Graph
 
 API = "https://api.themoviedb.org/3"
 IMAGES = "https://image.tmdb.org/t/p/original"

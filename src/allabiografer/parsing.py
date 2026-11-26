@@ -4,13 +4,17 @@ import tempfile
 from datetime import date
 from importlib import import_module
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from allabiografer.model import Dimension, Presentation, PresentationSystem, ProjectionMedium
-from allabiografer.model.version import ContentVersion
 
-from .graph import Graph
 from .movie_fields import normalise
 from .schedule import PREFIX
+
+if TYPE_CHECKING:
+    from allabiografer.model.version import ContentVersion
+
+    from .graph import Graph
 
 # Picture and projection formats. Sound, seating and programme labels are not video formats.
 _SYSTEMS = (

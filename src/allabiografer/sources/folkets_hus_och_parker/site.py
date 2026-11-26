@@ -5,13 +5,16 @@ import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime
+from typing import TYPE_CHECKING
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from zoneinfo import ZoneInfo
 
 from allabiografer import normalize as _version
-from allabiografer.model import Film
 from allabiografer.model.version import Language
 from allabiografer.sources import _films
+
+if TYPE_CHECKING:
+    from allabiografer.model import Film
 
 log = logging.getLogger(__name__)
 

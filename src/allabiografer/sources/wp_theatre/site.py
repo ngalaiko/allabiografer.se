@@ -6,8 +6,8 @@ for full screening data (dates, times, venues, ticket links).
 
 import logging
 import re
-from collections.abc import Iterator
 from datetime import date, time
+from typing import TYPE_CHECKING
 
 from bs4 import BeautifulSoup
 
@@ -16,6 +16,9 @@ from allabiografer.dates import infer_year
 from allabiografer.model import Film, Screening
 from allabiografer.model.version import subtitles_label
 from allabiografer.sources import _films
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 log = logging.getLogger(__name__)
 

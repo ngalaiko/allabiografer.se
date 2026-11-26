@@ -3,12 +3,15 @@
 import html
 import logging
 import re
-from collections.abc import Iterator
 from datetime import date, datetime, time
+from typing import TYPE_CHECKING
 
 from allabiografer import normalize as _version
 from allabiografer.model import Film, Venue
 from allabiografer.sources import _films
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 log = logging.getLogger(__name__)
 

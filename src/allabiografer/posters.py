@@ -17,7 +17,7 @@ def portrait(graph: Graph, entity: dict) -> bool:
     try:
         with Image.open(io.BytesIO(graph.content(entity))) as found:
             width, height = found.size
-    except (UnidentifiedImageError, OSError, ValueError):
+    except UnidentifiedImageError, OSError, ValueError:
         return False
     return height >= width * POSTER_RATIO and width >= MIN_POSTER_WIDTH
 

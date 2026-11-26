@@ -1,8 +1,8 @@
 """Showtimes for cinemas that have moved to Svenska Bio's own website."""
 
 import re
-from collections.abc import Iterator
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 from urllib.parse import parse_qs, urlsplit
 
 from bs4 import BeautifulSoup
@@ -10,6 +10,9 @@ from bs4 import BeautifulSoup
 from allabiografer import normalize as _version
 from allabiografer.model import Film, Screening, Venue
 from allabiografer.sources import _films
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 _SOURCE = "svenskabio_se"
 _CINEMAS = (

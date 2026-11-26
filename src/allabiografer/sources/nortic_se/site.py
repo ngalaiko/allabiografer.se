@@ -4,10 +4,13 @@ import html
 import logging
 import re
 from collections import Counter
+from typing import TYPE_CHECKING
 
 from allabiografer import normalize as _version
-from allabiografer.model import Film
 from allabiografer.sources import _films
+
+if TYPE_CHECKING:
+    from allabiografer.model import Film
 
 log = logging.getLogger(__name__)
 

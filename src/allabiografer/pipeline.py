@@ -13,11 +13,11 @@ import tempfile
 import traceback
 import uuid
 from collections import defaultdict
-from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, date, datetime
 from importlib import import_module
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from allabiografer import session as _http
 
@@ -30,6 +30,9 @@ from .render import render as render_site
 from .schedule import Feed, checked, feeds
 from .site.pages import BASE_URL as SITE
 from .sources._shared import STOCKHOLM
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 def timestamp() -> str:

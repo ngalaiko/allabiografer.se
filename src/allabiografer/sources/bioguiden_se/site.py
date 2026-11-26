@@ -2,15 +2,18 @@
 
 import logging
 import re
-from collections.abc import Iterator
 from dataclasses import replace
 from datetime import date, time
+from typing import TYPE_CHECKING
 from urllib.parse import parse_qs, urljoin, urlsplit
 
 from bs4 import BeautifulSoup
 
 from allabiografer.model import Film, Screening, Venue, film_key
 from allabiografer.sources import _films
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 log = logging.getLogger(__name__)
 

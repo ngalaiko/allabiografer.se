@@ -6,11 +6,10 @@ import json
 import mimetypes
 import os
 import tempfile
+from compression import zstd
 from os.path import relpath
 from pathlib import Path
 from urllib.parse import quote, unquote
-
-from compression import zstd
 
 CONTEXT = "https://schema.org"
 # The repository's data directory; pass another to work elsewhere.

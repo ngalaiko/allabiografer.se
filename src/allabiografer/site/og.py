@@ -70,7 +70,7 @@ def write_card(
         try:
             with Image.open(io.BytesIO(poster)) as source:
                 artwork = ImageOps.exif_transpose(source).convert("RGB")
-        except (FileNotFoundError, UnidentifiedImageError, OSError):
+        except FileNotFoundError, UnidentifiedImageError, OSError:
             pass
     if year is not None:
         title = f"{title} {year}"

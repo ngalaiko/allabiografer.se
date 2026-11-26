@@ -2,8 +2,8 @@
 
 import logging
 import re
-from collections.abc import Iterator
 from datetime import UTC, date, datetime, time
+from typing import TYPE_CHECKING
 from urllib.parse import parse_qs, urlsplit, urlunsplit
 from zoneinfo import ZoneInfo
 
@@ -13,6 +13,9 @@ from allabiografer import normalize as _version
 from allabiografer.dates import infer_year
 from allabiografer.model import Film, Screening
 from allabiografer.sources import _films
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 log = logging.getLogger(__name__)
 

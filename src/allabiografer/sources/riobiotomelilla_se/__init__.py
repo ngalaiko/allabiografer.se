@@ -1,8 +1,11 @@
 """Rio Tomelilla's capture format."""
 
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 BASE = "https://riobiotomelilla.se"
 STOCKHOLM = ZoneInfo("Europe/Stockholm")

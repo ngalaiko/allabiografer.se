@@ -1,5 +1,5 @@
 {
-  description = "Development tools for allabiografer.se";
+  description = "allabiografer.se";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/da6dc0e7b26060f2f71ce3ef7088fb56ee44fa36";
 
@@ -9,28 +9,60 @@
       systems = [
         "x86_64-linux"
         "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
       ];
+      forAll = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
+      tools = pkgs: [
+        pkgs.uv
+        pkgs.python314
+        pkgs.nodejs
+        pkgs.git-lfs
+      ];
+      # uv runs the locked dependencies on Nix's Python; it never downloads its own.
+      env = pkgs: {
+        UV_PYTHON = "${pkgs.python314}/bin/python3";
+        UV_PYTHON_DOWNLOADS = "never";
+      };
+      task =
+        pkgs: name: text:
+        pkgs.writeShellApplication {
+          inherit name;
+          runtimeInputs = tools pkgs;
+          runtimeEnv = env pkgs;
+          text = ''
+            export PYTHONPATH="$PWD/src''${PYTHONPATH:+:$PYTHONPATH}"
+            ${text}
+          '';
+        };
+      apps =
+        pkgs:
+        builtins.mapAttrs
+          (name: text: {
+            type = "app";
+            program = "${task pkgs name text}/bin/${name}";
+          })
+          {
+            lint = ''uv run --locked --group dev ruff check src tests "$@"'';
+            format = ''uv run --locked --group dev ruff format src tests "$@"'';
+            test = ''
+              uv run --locked --group dev --group parse --group build pytest "$@"
+              node --test tests/allabiografer/site/*.test.cjs
+            '';
+            # Fetch, parse, merge, enrich and render; flags pass through (--cinema, --fresh, --render-only).
+            run = ''uv run --locked --group parse --group build allabiografer "$@"'';
+            serve = ''python3 -m http.server "''${1:-8000}" --bind 127.0.0.1 -d data/allabiografer/www'';
+          };
     in
     {
-      devShells = nixpkgs.lib.genAttrs systems (
-        system:
-        let
-          pkgs = import nixpkgs { inherit system; };
-        in
-        {
-          default = pkgs.mkShell {
-            packages = with pkgs; [
-              uv
-              git-lfs
-              mise
-              nodejs
-            ];
+      apps = forAll apps;
 
-            FONTCONFIG_FILE = pkgs.makeFontsConf {
-              fontDirectories = [ pkgs.dejavu_fonts ];
-            };
-          };
-        }
-      );
+      devShells = forAll (pkgs: {
+        default = pkgs.mkShell {
+          packages = tools pkgs;
+          env = env pkgs;
+          FONTCONFIG_FILE = pkgs.makeFontsConf { fontDirectories = [ pkgs.dejavu_fonts ]; };
+        };
+      });
     };
 }

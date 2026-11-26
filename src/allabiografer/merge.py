@@ -17,11 +17,15 @@ import json
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from .graph import Graph
 from .movie_matching import groups
 from .sources._shared import STOCKHOLM
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from .graph import Graph
 
 FILM = "allabiografer:film"
 ALIAS = "allabiografer:film-alias"

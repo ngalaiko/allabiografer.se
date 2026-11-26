@@ -187,7 +187,7 @@ class Programme:
         self._session = session
 
     @classmethod
-    def fetch(cls, url: str, session: _Session, pages: int = _PAGES) -> "Programme":
+    def fetch(cls, url: str, session: _Session, pages: int = _PAGES) -> Programme:
         """Every listed showing; empty when the organiser page is unreachable."""
         events: list[Event] = []
         for _ in range(pages):

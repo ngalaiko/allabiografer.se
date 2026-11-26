@@ -23,6 +23,7 @@ from datetime import date, datetime, time, timedelta
 from html import escape
 from itertools import combinations
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
@@ -30,7 +31,6 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from PIL import Image, UnidentifiedImageError
 
 from allabiografer.model import Film, Screening, Venue, title_key
-from allabiografer.model.movie import Movie
 from allabiografer.model.version import (
     Accessibility,
     AudioKind,
@@ -48,6 +48,9 @@ from allabiografer.model.version import (
 
 from .markdown import link, page_link, write_page, write_programme
 from .og import write_card
+
+if TYPE_CHECKING:
+    from allabiografer.model.movie import Movie
 
 _FORMAT_SYSTEMS = frozenset(
     {
@@ -392,7 +395,7 @@ def _poster_bytes(sd: SiteData, movie_id: int) -> bytes | None:
     source = sd.posters.get(movie_id)
     try:
         return sd.graph.content(source) if source is not None else None
-    except (OSError, ValueError):
+    except OSError, ValueError:
         return None
 
 

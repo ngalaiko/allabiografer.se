@@ -30,7 +30,7 @@ def movie_data(path, film):
         for script in read_page(path).select('script[type="application/ld+json"]'):
             try:
                 graph = json.loads(script.get_text())["@graph"]
-            except (ValueError, TypeError, KeyError):
+            except ValueError, TypeError, KeyError:
                 continue
             for node in graph:
                 if node.get("@type") == "Movie" and node.get("url") == film.url:
