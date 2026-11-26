@@ -222,6 +222,21 @@ def test_empty_programme_does_not_block_other_cinemas(pages, fallback_selection)
     assert {item.city for item in screenings} == {"Leksand"}
 
 
+def test_soraker_empty_programme_accepts_bioguiden_name(pages, monkeypatch):
+    url = "https://www.bioguiden.se/biografer.aspx?cityid=202&theatreid=175b7dda-690f-4546-a589-70900b209bcf"
+    pages[url] = (
+        '<select id="SearchTheatreDropDown"><option selected value="">Välj biograf</option></select>'
+        '<div id="biografinfo"><h2>Folkets Hus Bio, Söråker</h2>'
+        '<div id="biografadress"><address>Folkets Husvägen 4<br>86035<br>Söråker</address></div></div>' + _NO_RESULTS
+    ).encode()
+    monkeypatch.setattr(bioguiden_se, "_SITES", {_VISIR: _SITES[_VISIR], url: _SITES[url]})
+
+    items = list(bioguiden_se.parse())
+
+    assert Venue(name="Timrå Söråkers Folkets Hus", city="Söråker", address="Folkets Husvägen 4") in items
+    assert {item.city for item in items if isinstance(item, Screening)} == {"Leksand"}
+
+
 @pytest.mark.parametrize(
     "failure",
     [

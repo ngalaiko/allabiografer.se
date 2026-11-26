@@ -289,6 +289,7 @@ _SITES = {
         name="Sibbhults Folkets Hus", city="Sibbhult", address="Möllegatan 3"
     ),
 }
+_EMPTY_PROGRAMME_NAME_ALIASES = {"175b7dda-690f-4546-a589-70900b209bcf": "Folkets Hus Bio"}
 _START = re.compile(r"\b\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}\b")
 
 
@@ -302,7 +303,8 @@ def parse() -> Iterator[Screening | Venue | Film]:
         soup = BeautifulSoup(response.content, "html.parser")
         selected = soup.select_one("#SearchTheatreDropDown option[selected]")
         query = parse_qs(urlsplit(url).query)
-        expected = f"{query['cityid'][0]}|{query['theatreid'][0]}"
+        theatre_id = query["theatreid"][0]
+        expected = f"{query['cityid'][0]}|{theatre_id}"
         matches_selection = selected is not None and selected.get("value") == expected
         programme = soup.select_one("#SearchResultDetails")
         cinema = soup.select_one("#biografinfo h2")
@@ -311,7 +313,8 @@ def parse() -> Iterator[Screening | Venue | Film]:
             # In that case identify the requested cinema by its own details instead.
             address = soup.select_one("#biografadress address")
             if matches_selection or (
-                cinema.get_text(" ", strip=True).split(",", 1)[0] == venue.name
+                cinema.get_text(" ", strip=True).split(",", 1)[0]
+                in {venue.name, _EMPTY_PROGRAMME_NAME_ALIASES.get(theatre_id)}
                 and address is not None
                 and next(address.stripped_strings, "") == venue.address
                 and selected is not None
