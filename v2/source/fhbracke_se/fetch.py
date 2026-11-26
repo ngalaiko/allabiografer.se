@@ -5,6 +5,7 @@ from functools import partial
 from parse.parsers import _tickster
 from parse.parsers import fhbracke_se as site
 
+from .._shared import single
 from ..tickster_se.pages import Pages, year_for_month
 
 SOURCE = "fhbracke_se"
@@ -53,6 +54,7 @@ def broadcast_page(pages, show, event, html):
 
 
 def fetch_pages(session, inputs, today, *, selectors=None):
+    single(selectors)
     session.headers["User-Agent"] = "Mozilla/5.0"
     pages = Pages(inputs, session)
     for show, event, broadcast in programme_rows(pages, today):

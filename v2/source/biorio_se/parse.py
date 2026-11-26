@@ -33,7 +33,7 @@ def rows(inputs, today):
                 fields["version"] = "Director's Cut"
             details[slug] = fields
         yield (
-            ("bio-rio", "Bio Rio", "Hornstulls strand 3"),
+            (None, "Bio Rio", "Hornstulls strand 3"),
             show["id"],
             datetime.combine(day, clock, STOCKHOLM),
             f"{_SITE}/sv/boka/{show['id']}",

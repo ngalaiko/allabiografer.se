@@ -51,7 +51,7 @@ def rows(inputs, today):
                     year=film.release_date,
                 )
             yield (
-                ("capitol", "Capitol", "Sankt Eriksgatan 82"),
+                (None, "Capitol", "Sankt Eriksgatan 82"),
                 film_id(show.ticket_url),
                 datetime.combine(day, show.time, STOCKHOLM),
                 show.ticket_url,

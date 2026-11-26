@@ -30,7 +30,7 @@ def rows(inputs, today):
                 continue
             seen.add(show)
             yield (
-                ("biograf-odeon-skovde", _VENUE.name, _VENUE.address, _VENUE.city),
+                (None, _VENUE.name, _VENUE.address, _VENUE.city),
                 show,
                 start,
                 ticket,

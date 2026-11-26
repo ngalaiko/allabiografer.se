@@ -3,7 +3,6 @@ import json
 import pytest
 
 from v2.graph import DATA
-from v2.pipeline import SINGLE
 from v2.schedule import Route, routes
 
 
@@ -17,9 +16,7 @@ def test_registry_has_one_unique_route_per_cinema():
     assert all_routes["Cinemascenen (Hudiksvall)"].venue_id == "hudiksvall"
     assert all_routes["Ale Medborgarhusets Bio"] == Route("Ale Medborgarhusets Bio", "bio_se", "16484")
     assert all_routes["Biograf Odeon"].adapter == "kulturiskovde_se"
-    for route in all_routes.values():
-        if route.adapter in SINGLE:
-            assert route.venue_id == SINGLE[route.adapter]
+    assert all_routes["Bio Rio"] == Route("Bio Rio", "biorio_se", None)
 
 
 def test_missing_or_duplicate_schedule_bindings_are_rejected(tmp_path):

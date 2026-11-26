@@ -2,13 +2,14 @@
 
 from urllib.parse import urljoin
 
-from .._shared import capture, film_id
+from .._shared import capture, film_id, single
 
 PROGRAMME = "https://www.bioaspen.se/visningar/filmer/"
 SOURCE = "bioaspen_se"
 
 
 def fetch_pages(session, inputs, today, *, selectors=None):
+    single(selectors)
     url = PROGRAMME
     visited = set()
     movies = {}

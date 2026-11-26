@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from .._shared import saved
+from .._shared import saved, single
 from . import BASE, response_rows
 
 
@@ -14,6 +14,7 @@ def capture(session, path: Path, endpoint: str, **params) -> list[dict]:
 
 
 def fetch_pages(session, inputs, today, *, selectors=None):
+    single(selectors)
     rows = capture(
         session,
         inputs / "programme.json",

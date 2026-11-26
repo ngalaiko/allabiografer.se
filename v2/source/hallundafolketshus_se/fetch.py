@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 
 from parse.parsers import hallundafolketshus_se as site
 
+from .._shared import single
 from ..tickster_se.pages import Pages, year_for_month
 
 SOURCE = "hallundafolketshus_se"
@@ -20,6 +21,7 @@ def articles(pages, today):
 
 
 def fetch_pages(session, inputs, today, *, selectors=None):
+    single(selectors)
     session.headers["User-Agent"] = "Mozilla/5.0"
     pages = Pages(inputs, session)
     for _, _, ticket in articles(pages, today):

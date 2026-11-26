@@ -59,7 +59,7 @@ def parse_capture(graph: Graph, adapter: str, captured: Path) -> Path:
         identifier = cinema["identifier"]
         if identifier["propertyID"] != PREFIX + adapter:
             raise ValueError(f"{captured}: {identifier['propertyID']} is not {adapter}")
-        cinemas[identifier["value"]] = graph.resolve(captured, cinema)
+        cinemas[identifier.get("value")] = graph.resolve(captured, cinema)
     today = date.fromisoformat(dataset["temporalCoverage"])
     rows = import_module(f".source.{adapter}.parse", __package__).rows
     movies = {}

@@ -10,7 +10,7 @@ from .._shared import STOCKHOLM, facts, stable_key
 from ..tickster_se.pages import Pages, source_movie
 from .fetch import articles
 
-VENUE = ("hallunda-folkets-hus", site._CINEMA, site._ADDRESS, site._CITY)
+VENUE = (None, site._CINEMA, site._ADDRESS, site._CITY)
 
 
 def rows(inputs, today):

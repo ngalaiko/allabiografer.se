@@ -2,13 +2,14 @@
 
 from urllib.parse import urljoin, urlsplit
 
-from .._shared import capture, film_id
+from .._shared import capture, film_id, single
 
 BASE = "https://biofagelbla.se"
 SOURCE = "biofagelbla_se"
 
 
 def fetch_pages(session, inputs, today, *, selectors=None):
+    single(selectors)
     page = capture(session, f"{BASE}/program/", inputs / "programme.html")
     cards = page.select('.js-movie-listing-by-date article a[href*="showtime="]')
     movies = {}

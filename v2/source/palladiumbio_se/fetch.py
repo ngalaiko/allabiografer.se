@@ -4,10 +4,11 @@ from urllib.parse import urljoin
 
 from parse.parsers.palladiumbio_se import _URL
 
-from .._shared import capture, stable_key
+from .._shared import capture, single, stable_key
 
 
 def fetch_pages(session, inputs, today, *, selectors=None):
+    single(selectors)
     page = capture(session, _URL, inputs / "programme.html")
     urls = dict.fromkeys(urljoin(_URL, a["href"]) for a in page.select("table.tableBioprogram td.title a[href]"))
     for url in urls:

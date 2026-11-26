@@ -11,7 +11,7 @@ from .._shared import STOCKHOLM, facts, stable_key
 from ..tickster_se.pages import Pages, source_movie
 from .fetch import broadcast_page, programme_rows
 
-VENUE = ("bracke-bio", site._CINEMA, site._ADDRESS, site._CITY)
+VENUE = (None, site._CINEMA, site._ADDRESS, site._CITY)
 
 
 def rows(inputs, today):

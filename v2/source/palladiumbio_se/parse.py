@@ -44,7 +44,7 @@ def rows(inputs, today):
         if image := _poster(posters, film.title, programme) or _hero(detail):
             fields["image"] = image
         yield (
-            ("filmhuset-palladium-arvika", _CINEMA, _ADDRESS, _CITY),
+            (None, _CINEMA, _ADDRESS, _CITY),
             show,
             start,
             ticket,

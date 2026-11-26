@@ -2,10 +2,11 @@
 
 from parse.parsers.biorio_se import _API, _SHOWTIMES_URL
 
-from .._shared import saved
+from .._shared import saved, single
 
 
 def fetch_pages(session, inputs, today, *, selectors=None):
+    single(selectors)
     response = session.get(_SHOWTIMES_URL, timeout=30)
     response.raise_for_status()
     saved(session, inputs / "showtimes.json", response)

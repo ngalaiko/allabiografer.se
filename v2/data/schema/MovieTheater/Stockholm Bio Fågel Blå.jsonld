@@ -14,8 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:biofagelbla_se",
-      "value": "bio-fagel-bla"
+      "propertyID": "allabiografer:schedule:biofagelbla_se"
     }
   ],
   "url": "https://biofagelbla.se"

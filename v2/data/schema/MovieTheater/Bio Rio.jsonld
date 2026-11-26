@@ -14,8 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:biorio_se",
-      "value": "bio-rio"
+      "propertyID": "allabiografer:schedule:biorio_se"
     }
   ],
   "url": "https://www.biorio.se"

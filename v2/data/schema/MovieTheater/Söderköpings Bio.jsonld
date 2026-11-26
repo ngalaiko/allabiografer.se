@@ -14,8 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:soderkopingsbio_se",
-      "value": "soderkopings-bio"
+      "propertyID": "allabiografer:schedule:soderkopingsbio_se"
     }
   ],
   "url": "https://soderkopingsbio.se"

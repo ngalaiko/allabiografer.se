@@ -3,7 +3,7 @@
 from parse.parsers import _biosverige_api, _tickster
 from parse.parsers.soderkopingsbio_se import _SITE, _TICKSTER
 
-from .._shared import capture_json
+from .._shared import capture_json, single
 from ..tickster_se.pages import Pages
 
 SOURCE = "soderkopingsbio_se"
@@ -24,6 +24,7 @@ def showings(pages, schedule, today):
 
 
 def fetch_pages(session, inputs, today, *, selectors=None):
+    single(selectors)
     schedule = capture_json(
         session,
         f"{_SITE}/api/eventschedules",

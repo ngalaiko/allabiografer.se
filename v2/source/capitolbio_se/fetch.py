@@ -4,10 +4,11 @@ from datetime import timedelta
 
 from parse.parsers.capitolbio_se import _DAYS, _SITE, _showtimes
 
-from .._shared import capture, film_id
+from .._shared import capture, film_id, single
 
 
 def fetch_pages(session, inputs, today, *, selectors=None):
+    single(selectors)
     films = set()
     for offset in range(_DAYS):
         day = today + timedelta(days=offset)

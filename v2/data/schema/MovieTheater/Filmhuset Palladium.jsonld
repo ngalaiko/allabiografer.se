@@ -14,8 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:palladiumbio_se",
-      "value": "filmhuset-palladium-arvika"
+      "propertyID": "allabiografer:schedule:palladiumbio_se"
     }
   ],
   "url": "https://palladiumbio.se/"

@@ -14,8 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:wp_theatre",
-      "value": "capitol-goteborg"
+      "propertyID": "allabiografer:schedule:wp_theatre"
     }
   ],
   "url": "https://www.capitolgbg.se/"

@@ -28,7 +28,7 @@ def rows(inputs, today):
         if equivalent := REVIEWED_CREDITS.get((film.title.casefold(), film.release_date)):
             fields["sameAs"] = equivalent
         yield (
-            ("hypnos-theatre", _CINEMA, _ADDRESS, _CITY),
+            (None, _CINEMA, _ADDRESS, _CITY),
             key,
             start,
             show.ticket_url,

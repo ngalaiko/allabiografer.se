@@ -39,7 +39,7 @@ def rows(inputs, today):
         if film.genres:
             fields["genre"] = list(film.genres)
         yield (
-            ("kiviks-bio", _CINEMA, _ADDRESS, _CITY),
+            (None, _CINEMA, _ADDRESS, _CITY),
             show,
             start,
             url,

@@ -34,7 +34,7 @@ def rows(inputs, today):
                 continue
             seen.add(key)
             yield (
-                ("capitol-goteborg", site["name"], site["address"], site["city"]),
+                (None, site["name"], site["address"], site["city"]),
                 key,
                 start,
                 show.ticket_url,

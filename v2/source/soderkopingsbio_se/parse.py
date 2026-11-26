@@ -10,7 +10,7 @@ from .._shared import STOCKHOLM, facts, stable_key
 from ..tickster_se.pages import Pages, source_movie
 from .fetch import SCHEDULE, showings
 
-VENUE = ("soderkopings-bio", _CINEMA, _ADDRESS, _CITY)
+VENUE = (None, _CINEMA, _ADDRESS, _CITY)
 
 
 def rows(inputs, today):

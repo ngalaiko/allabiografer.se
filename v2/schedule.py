@@ -14,7 +14,7 @@ PREFIX = "allabiografer:schedule:"
 class Route:
     cinema: str
     adapter: str
-    venue_id: str
+    venue_id: str | None
 
 
 def routes(data: Path = DATA) -> dict[str, Route]:
@@ -28,11 +28,10 @@ def routes(data: Path = DATA) -> dict[str, Route]:
             raise ValueError(f"{path}: expected exactly one schedule identifier")
         binding = identifiers[0]
         adapter = binding["propertyID"].removeprefix(PREFIX)
-        venue_id = binding["value"]
-        if (
-            not re.fullmatch(r"[a-z][a-z0-9_]*", adapter)
-            or not isinstance(venue_id, str)
-            or not re.fullmatch(r"[a-zA-Z0-9_-]+", venue_id)
+        # Single-cinema adapters need no venue ID.
+        venue_id = binding.get("value")
+        if not re.fullmatch(r"[a-z][a-z0-9_]*", adapter) or (
+            venue_id is not None and not (isinstance(venue_id, str) and re.fullmatch(r"[a-zA-Z0-9_-]+", venue_id))
         ):
             raise ValueError(f"{path}: invalid schedule binding")
         package = Path(__file__).parent / "source" / adapter

@@ -57,7 +57,7 @@ def rows(inputs, today):
         fields, label = movies[key]
         found = _label_facts(session.get("f_label"), label)
         yield (
-            ("bio-borgen-osby", _CINEMA, _ADDRESS, _CITY),
+            (None, _CINEMA, _ADDRESS, _CITY),
             show,
             start,
             ticket,

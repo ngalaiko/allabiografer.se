@@ -14,8 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:hallundafolketshus_se",
-      "value": "hallunda-folkets-hus"
+      "propertyID": "allabiografer:schedule:hallundafolketshus_se"
     }
   ],
   "url": "https://www.hallundafolketshus.se"

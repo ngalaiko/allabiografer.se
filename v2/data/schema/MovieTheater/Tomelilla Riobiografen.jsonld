@@ -14,8 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:riobiotomelilla_se",
-      "value": "riobiografen-tomelilla"
+      "propertyID": "allabiografer:schedule:riobiotomelilla_se"
     }
   ],
   "url": "https://riobiotomelilla.se"

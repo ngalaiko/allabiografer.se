@@ -2,7 +2,7 @@
 
 from parse.parsers.roxy_bio import _BASE, _showtimes
 
-from .._shared import capture_json
+from .._shared import capture_json, single
 
 
 def response_rows(payload, capture):
@@ -12,6 +12,7 @@ def response_rows(payload, capture):
 
 
 def fetch_pages(session, inputs, today, *, selectors=None):
+    single(selectors)
     programme = capture_json(
         session,
         f"{_BASE}/webservices/show_times/getShowTimesDays",

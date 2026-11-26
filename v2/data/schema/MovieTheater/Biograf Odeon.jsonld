@@ -16,8 +16,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:kulturiskovde_se",
-      "value": "biograf-odeon-skovde"
+      "propertyID": "allabiografer:schedule:kulturiskovde_se"
     }
   ],
   "url": "https://www.skovde.se/uppleva-gora/boka-lokal-och-anlaggning/motes-och-konferenslokaler"

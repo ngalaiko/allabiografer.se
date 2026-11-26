@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from .._shared import facts, movie_fields
 from . import BASE, STOCKHOLM, response_rows
 
-VENUE = ("riobiografen-tomelilla",)
+VENUE = (None,)
 
 
 def rows(inputs, today):

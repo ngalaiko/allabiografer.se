@@ -14,8 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioaspen_se",
-      "value": "aspen"
+      "propertyID": "allabiografer:schedule:bioaspen_se"
     }
   ],
   "url": "https://www.bioaspen.se"

@@ -46,7 +46,7 @@ def rows(inputs, today):
                 fields["contentRating"] = rating
             movies[movie_id] = fields
         yield (
-            ("roxy-bio-kristianstad", _VENUE.name, _VENUE.address, _VENUE.city),
+            (None, _VENUE.name, _VENUE.address, _VENUE.city),
             show,
             start,
             f"{_BASE}/#/book/{show}",

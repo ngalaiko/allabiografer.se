@@ -14,8 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:kiviksbio_se",
-      "value": "kiviks-bio"
+      "propertyID": "allabiografer:schedule:kiviksbio_se"
     }
   ],
   "url": "https://www.kiviksbio.se/"

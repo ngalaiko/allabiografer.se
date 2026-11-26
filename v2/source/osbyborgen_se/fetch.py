@@ -2,10 +2,11 @@
 
 from parse.parsers.osbyborgen_se import _URL, _film_url, _sessions
 
-from .._shared import capture, stable_key
+from .._shared import capture, single, stable_key
 
 
 def fetch_pages(session, inputs, today, *, selectors=None):
+    single(selectors)
     programme = inputs / "programme.html"
     capture(session, _URL, programme)
     sessions = _sessions(programme.read_text(encoding="utf-8"))

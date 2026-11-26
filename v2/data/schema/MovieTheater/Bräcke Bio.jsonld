@@ -14,8 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:fhbracke_se",
-      "value": "bracke-bio"
+      "propertyID": "allabiografer:schedule:fhbracke_se"
     }
   ],
   "url": "https://fhbracke.se/bio/"

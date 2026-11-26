@@ -3,7 +3,8 @@
 Fetch adapters expose `fetch_pages(session, inputs, today, *, selectors=None)` and
 write captures into `inputs` by file name. Parse adapters expose `rows(inputs, today)`
 yielding `(venue, show_id, start, ticket, version, presentation, movie_id, capture, movie)`,
-where `venue[0]` is the adapter's venue ID and `capture` names the file the movie came from.
+where `venue[0]` is the adapter's venue ID (None for single-cinema adapters)
+and `capture` names the file the movie came from.
 """
 
 import json
@@ -56,6 +57,12 @@ def film_id(url):
 
 def read_page(path):
     return BeautifulSoup(path.read_text(encoding="utf-8"), "html.parser")
+
+
+def single(selectors):
+    """Reject selections other than an adapter's only cinema, whose venue ID is None."""
+    if selectors is not None and selectors != {None}:
+        raise ValueError(f"Single-cinema adapter cannot select {sorted(map(str, selectors))}")
 
 
 def facts(*, format="", language="", subtitles="", source_texts=(), audio_role_text=""):

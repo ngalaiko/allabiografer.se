@@ -70,7 +70,9 @@ def test_registry_links_and_source_identifiers():
         assert entity["identifier"], path
         for identifier in entity["identifier"]:
             assert identifier["@type"] == "PropertyValue"
-            key = (identifier["propertyID"], identifier["value"])
-            assert all(part.strip() for part in key), path
+            # Single-cinema adapters omit the venue ID.
+            key = (identifier["propertyID"], identifier.get("value"))
+            assert key[0].strip(), path
+            assert key[1] is None or key[1].strip(), path
             assert key not in bindings, key
             bindings.add(key)

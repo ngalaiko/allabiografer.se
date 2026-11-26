@@ -6,6 +6,9 @@ from .._shared import capture, stable_key
 
 
 def fetch_pages(session, inputs, today, *, selectors=None):
+    # The programme covers every venue; parse keeps the selected ones.
+    if selectors is not None and any(not selector for selector in selectors):
+        raise ValueError("Doc Lounge selections need venue IDs")
     path = inputs / "programme.html"
     capture(session, _URL, path)
     html = path.read_text(encoding="utf-8")

@@ -90,4 +90,4 @@ def screenings(inputs, today):
 
 
 def rows(inputs, today):
-    return single_venue_rows("aspen", screenings(inputs, today))
+    return single_venue_rows(None, screenings(inputs, today))

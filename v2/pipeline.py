@@ -26,27 +26,6 @@ from .source._shared import STOCKHOLM
 
 REPOSITORY = "https://github.com/ngalaiko/allabiografer.se"
 
-# Adapters for one cinema: the venue ID is fixed and selection needs no API parameter.
-SINGLE = {
-    "bioaspen_se": "aspen",
-    "biofagelbla_se": "bio-fagel-bla",
-    "biorio_se": "bio-rio",
-    "capitolbio_se": "capitol",
-    "fhbracke_se": "bracke-bio",
-    "hallundafolketshus_se": "hallunda-folkets-hus",
-    "hypnostheatre_com": "hypnos-theatre",
-    "kiviksbio_se": "kiviks-bio",
-    "kulturiskovde_se": "biograf-odeon-skovde",
-    "osbyborgen_se": "bio-borgen-osby",
-    "palladiumbio_se": "filmhuset-palladium-arvika",
-    "riobiotomelilla_se": "riobiografen-tomelilla",
-    "roxy_bio": "roxy-bio-kristianstad",
-    "soderkopingsbio_se": "soderkopings-bio",
-    "wp_theatre": "capitol-goteborg",
-}
-# Adapters whose one feed covers every venue; parse keeps only the selected ones.
-SHARED_FEED = {"nortic_se", "doclounge_se"}
-
 
 def timestamp() -> str:
     return datetime.now(UTC).isoformat()
@@ -110,7 +89,8 @@ def instrument(path: str) -> dict:
 
 def binding(graph: Graph, route: Route) -> dict:
     return graph.ref(graph.path("MovieTheater", route.cinema)) | {
-        "identifier": {"@type": "PropertyValue", "propertyID": PREFIX + route.adapter, "value": route.venue_id}
+        "identifier": {"@type": "PropertyValue", "propertyID": PREFIX + route.adapter}
+        | ({"value": route.venue_id} if route.venue_id is not None else {})
     }
 
 
@@ -127,13 +107,7 @@ def fetch(graph: Graph, adapter: str, selected: list[Route], day: date) -> Path:
     ):
         inputs = Path(scratch)
         recorder = Recorder(session)
-        if adapter in SINGLE:
-            checked(selectors, {SINGLE[adapter]})
-            module.fetch_pages(recorder, inputs, day)
-        elif adapter in SHARED_FEED:
-            module.fetch_pages(recorder, inputs, day)
-        else:
-            module.fetch_pages(recorder, inputs, day, selectors=selectors)
+        module.fetch_pages(recorder, inputs, day, selectors=selectors)
         downloads = []
         for path in sorted(item for item in inputs.iterdir() if item.is_file()):
             url, content_type = recorder.origins.get(path.name, ("", ""))

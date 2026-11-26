@@ -94,6 +94,15 @@ def test_run_records_actions_and_links_screenings_to_the_registry(tmp_path, monk
     assert graph.resolve(parts[1], screenings[0]["location"]) == graph.path("MovieTheater", route.cinema).resolve()
 
 
+def test_single_cinema_adapters_reject_other_selections():
+    from v2.source._shared import single
+
+    single(None)
+    single({None})
+    with pytest.raises(ValueError, match="Single-cinema"):
+        single({"other"})
+
+
 def test_failed_adapter_is_recorded_and_others_still_merge(tmp_path, monkeypatch):
     shutil.copytree(DATA / "schema" / "MovieTheater", tmp_path / "schema" / "MovieTheater")
     graph = Graph(tmp_path)
