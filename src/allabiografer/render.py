@@ -113,29 +113,27 @@ def site_data(graph: Graph, merged: Path, out: Path, *, today: date | None = Non
     downloaded = stored_downloads(graph)
     session = http.session()
     identities, images, screenings = {}, {}, []
-    for reference in dataset["hasPart"]:
-        path = graph.resolve(merged, reference)
-        entity = graph.read(path)
+    for entity in graph.parts(merged).values():
         if entity["@type"] == "Movie":
             slug = next(item["value"] for item in entity["identifier"] if item["propertyID"] == FILM)
             identifier = _identity(slug)
-            identities[path] = identifier
+            identities[entity["@id"]] = identifier
             sd.movies[identifier] = _movie(identifier, entity)
             sd.film_slugs[identifier] = slug
             sd.tmdb_ids[identifier] = None
-            images[identifier] = (path, entity.get("image"))
+            images[identifier] = (merged, entity.get("image"))
             for item in entity["identifier"]:
                 if item["propertyID"] == ALIAS:
                     sd.film_aliases[item["value"]] = slug
-        else:
-            screenings.append((path, entity))
+        elif entity["@type"] == "ScreeningEvent":
+            screenings.append(entity)
 
-    for path, entity in screenings:
+    for entity in screenings:
         start = datetime.fromisoformat(entity["startDate"]).astimezone(STOCKHOLM)
         if start.date() < sd.today:
             continue
-        identifier = identities[graph.resolve(path, entity["workPresented"])]
-        venue = venues[graph.resolve(path, entity["location"])]
+        identifier = identities[entity["workPresented"]["@id"]]
+        venue = venues[graph.resolve(merged, entity["location"])]
         version, presentation = _version(entity)
         sd.screenings.append(
             Screening(

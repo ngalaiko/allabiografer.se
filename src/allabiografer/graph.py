@@ -35,6 +35,12 @@ def media_type(name: str, header: str = "") -> str:
     return declared or mimetypes.guess_type(name)[0] or "application/octet-stream"
 
 
+def fragment(kind: str, *values) -> str:
+    """A stable fragment identifier for a part, from the values that identify it."""
+    digest = hashlib.sha256(json.dumps(values, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+    return f"{kind}-{digest[:16]}"
+
+
 def ni(digest: bytes) -> str:
     return NI_PREFIX + base64.urlsafe_b64encode(digest).rstrip(b"=").decode()
 
@@ -44,12 +50,17 @@ class Graph:
 
     Entities written with `put` are named by the hash of their content, so they are
     immutable and shared between runs. Links between entities are relative paths.
+
+    A Dataset's parts (Movies, ScreeningEvents, nested Datasets) live in one compressed
+    JSON-LD document, its `distribution`. Parts carry `#fragment` identifiers; their links
+    resolve against the Dataset entity, as if the document were stored in its place.
     """
 
     def __init__(self, root: Path = DATA):
         self.root = root
         self.assets = root / "assets"
         self.schema = root / "schema"
+        self._parts: dict[Path, dict[str, dict]] = {}
 
     def path(self, kind: str, id_: str) -> Path:
         return self.schema / kind / f"{id_}.jsonld"
@@ -60,8 +71,44 @@ class Graph:
 
     @staticmethod
     def resolve(origin: Path, reference: dict | str) -> Path:
+        """The entity a link points to; a fragment names a part within it."""
         iri = reference["@id"] if isinstance(reference, dict) else reference
-        return (origin.parent / unquote(iri)).resolve()
+        path = iri.partition("#")[0]
+        return (origin.parent / unquote(path)).resolve() if path else origin
+
+    def part_ref(self, dataset: Path, fragment: str) -> dict[str, str]:
+        """Link to a part of `dataset` from any entity in schema/<type>/."""
+        return {"@id": f"{self.ref(dataset)['@id']}#{fragment}"}
+
+    def find(self, origin: Path, reference: dict | str) -> tuple[Path, dict]:
+        """The Dataset a part link points into, and the part."""
+        iri = reference["@id"] if isinstance(reference, dict) else reference
+        dataset = self.resolve(origin, iri)
+        return dataset, self.parts(dataset)[iri.partition("#")[2]]
+
+    def put_dataset(self, fields: dict, parts: list[dict]) -> Path:
+        """Write a Dataset whose parts live in one compressed JSON-LD document."""
+        document = {"@context": CONTEXT, "@type": "Dataset", **fields, "hasPart": parts}
+        data = (json.dumps(document, ensure_ascii=False, sort_keys=True) + "\n").encode()
+        download = self.put_bytes(data, "application/ld+json", name="dataset.jsonld")
+        return self.put("Dataset", {**fields, "distribution": self.ref(download)})
+
+    def parts(self, dataset: Path) -> dict[str, dict]:
+        """A Dataset's parts by fragment, those of nested Datasets included."""
+        if dataset not in self._parts:
+            entity = self.read(dataset)
+            distribution = entity.get("distribution")
+            if not isinstance(distribution, dict):
+                raise ValueError(f"{dataset} keeps no parts; start with --fresh")
+            document = json.loads(self.content(self.read(self.resolve(dataset, distribution))))
+            found, pending = {}, list(document["hasPart"])
+            while pending:
+                part = pending.pop()
+                found[part["@id"].removeprefix("#")] = part
+                if part["@type"] == "Dataset":
+                    pending += part.get("hasPart", [])
+            self._parts[dataset] = found
+        return self._parts[dataset]
 
     @staticmethod
     def read(path: Path) -> dict:

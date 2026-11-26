@@ -228,47 +228,21 @@ def enrich_dataset(graph: Graph, merged: Path, fetch: Fetch, session=None) -> tu
     """
     downloaded = stored_downloads(graph)
     dataset = graph.read(merged)
-    entities = {graph.resolve(merged, reference): None for reference in dataset["hasPart"]}
-    for path in entities:
-        entities[path] = graph.read(path)
+    parts = list(graph.parts(merged).values())
     # Past films keep their pages' history; only films with screenings are looked up.
-    showing = {
-        graph.resolve(path, entity["workPresented"])
-        for path, entity in entities.items()
-        if entity["@type"] == "ScreeningEvent"
-    }
-    parts, replaced, count = [], {}, 0
-    for path, entity in entities.items():
-        checked = (
-            _without_unusable_poster(graph, path, entity, session, downloaded)
-            if entity["@type"] == "Movie" and path in showing
-            else entity
-        )
-        if entity["@type"] == "Movie" and path in showing and needs(checked):
-            entity = checked
-            tmdb_id = _identify(fetch, entity)
-            detail = _detail(fetch, tmdb_id) if tmdb_id is not None else {}
-            if "id" in detail:
-                found = tmdb_movie(detail)
-                fields = {k: v for k, v in enrich_film(entity, found).items() if k not in ("@context", "@id", "@type")}
-                new = graph.put("Movie", fields)
-                if new != path:
-                    replaced[path] = new
-                    count += 1
-                path = new
-        parts.append(path)
-    # Screenings point at films; repoint those whose film changed.
-    final = []
-    for path in parts:
-        entity = graph.read(path)
-        if entity["@type"] == "ScreeningEvent":
-            work = graph.resolve(path, entity["workPresented"])
-            if work in replaced:
-                fields = {k: v for k, v in entity.items() if k not in ("@context", "@id", "@type")}
-                path = graph.put("ScreeningEvent", fields | {"workPresented": graph.ref(replaced[work])})
-        final.append(path)
-    fields = {k: v for k, v in dataset.items() if k not in ("@context", "@id", "@type", "hasPart")}
-    return (
-        graph.put("Dataset", fields | {"hasPart": [graph.ref(path) for path in sorted(set(final), key=str)]}),
-        count,
-    )
+    showing = {part["workPresented"]["@id"] for part in parts if part["@type"] == "ScreeningEvent"}
+    enriched, count = [], 0
+    for part in parts:
+        if part["@type"] == "Movie" and part["@id"] in showing:
+            checked = _without_unusable_poster(graph, merged, part, session, downloaded)
+            if needs(checked):
+                tmdb_id = _identify(fetch, checked)
+                detail = _detail(fetch, tmdb_id) if tmdb_id is not None else {}
+                if "id" in detail:
+                    filled = enrich_film(checked, tmdb_movie(detail))
+                    if filled != part:
+                        part, count = filled, count + 1
+        enriched.append(part)
+    # Films keep their fragment identifiers, so screenings need no repointing.
+    fields = {k: v for k, v in dataset.items() if k not in ("@context", "@id", "@type", "distribution")}
+    return graph.put_dataset(fields, enriched), count

@@ -102,11 +102,10 @@ def test_run_records_actions_and_links_screenings_to_the_registry(graph, monkeyp
         assert graph.read(graph.resolve(action_path, module["isPartOf"]))["@type"] == "SoftwareSourceCode"
     merged = graph.read(result)
     assert merged["temporalCoverage"] == date(2026, 11, 26).isoformat()
-    parts = [graph.resolve(result, reference) for reference in merged["hasPart"]]
-    screenings = [graph.read(path) for path in parts if path.parent.name == "ScreeningEvent"]
+    screenings = [part for part in graph.parts(result).values() if part["@type"] == "ScreeningEvent"]
     assert len(screenings) == 1
     assert screenings[0]["inLanguage"] == ["sv"]
-    assert graph.resolve(parts[1], screenings[0]["location"]) == graph.path("MovieTheater", feed.cinema).resolve()
+    assert graph.resolve(result, screenings[0]["location"]) == graph.path("MovieTheater", feed.cinema).resolve()
 
 
 def test_source_snapshot_is_deterministic_and_restorable(tmp_path):

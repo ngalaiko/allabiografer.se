@@ -31,6 +31,8 @@ Generated and not checked in. Each run is an action:
 | enrich | `CreateAction` | merged `Dataset`, TMDB capture | merged `Dataset` with filled films |
 | render | `CreateAction` | merged `Dataset` | `www/` |
 
+A `Dataset` produced by parse, merge or enrich keeps its parts in one document: its `distribution` is a `DataDownload` of `application/ld+json+zstd` whose `hasPart` holds the `Movie`s, `ScreeningEvent`s and nested per-feed `Dataset`s. Parts carry `#fragment` identifiers and link to each other by them (`"workPresented": {"@id": "#film-…"}`); their links to entities resolve against the `Dataset` entity, and links into another dataset read `../Dataset/<hash>.jsonld#fragment`. Unchanged inputs give the same document and entity, so reruns write only what changed. After a run, `allabiografer.prune` deletes what the latest run (`--keep N` runs) no longer reaches; the registry is never pruned.
+
 A run is an `UpdateAction` over the previous result (`targetCollection`) for the selected feeds (`object`): fetch and parse per adapter, then one merge. Each feed's screenings come from the newest parse covering it, so feeds not run, or whose adapter failed, keep their previous screenings. A show listed by several feeds of one cinema appears once, from the cinema's own feed. Screenings before the run day drop out.
 
 Source `Movie`s pass through `movie_fields.normalise`, so every adapter writes one vocabulary: `genre` from a fixed Swedish list (programme labels such as "Jul" or "Live på bio" drop), `contentRating` as "Barntillåten" or "Från 7/11/15/18 år", `inLanguage` as BCP 47 tags, `duration` in minutes, people as `Person`s and trailers as `VideoObject`s. Unrated and implausible values drop.

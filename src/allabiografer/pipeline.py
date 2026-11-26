@@ -26,6 +26,7 @@ from .code import source_code
 from .graph import DATA, Graph, media_type
 from .merge import merge_datasets
 from .parsing import parse_capture
+from .prune import prune
 from .render import render as render_site
 from .schedule import Feed, checked, feeds
 from .site.pages import BASE_URL as SITE
@@ -253,6 +254,7 @@ def main() -> None:
     )
     cli.add_argument("--fresh", action="store_true", help="Ignore the previous run's result")
     cli.add_argument("--render-only", action="store_true", help="Render the latest result without fetching")
+    cli.add_argument("--keep", type=int, default=1, help="Completed runs kept in the store afterwards")
     cli.add_argument("--data", type=Path, default=DATA)
     args = cli.parse_args()
     graph = Graph(args.data.resolve())
@@ -270,6 +272,9 @@ def main() -> None:
     result, failures = run(graph, selected, previous=None if args.fresh else latest(graph))
     print(result)
     print(render(graph, result))
+    # Earlier runs and what only they reach are no longer needed: the result carries the state.
+    entities, assets = prune(graph, args.keep)
+    print(f"Pruned {entities} entities and {assets} assets")
     if failures:
         sys.exit(f"{len(failures)} adapter(s) failed: {', '.join(sorted(failures))}")
 

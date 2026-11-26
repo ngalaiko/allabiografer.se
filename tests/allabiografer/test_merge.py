@@ -1,24 +1,11 @@
 from datetime import date
 
+from conftest import contents
+from conftest import slug as films_of_name
+
 from allabiografer.merge import FILM, merge_datasets
 
 DAY = date(2026, 12, 1)
-
-
-def contents(graph, dataset):
-    films, screenings = {}, []
-    for reference in graph.read(dataset)["hasPart"]:
-        path = graph.resolve(dataset, reference)
-        entity = graph.read(path)
-        if entity["@type"] == "Movie":
-            films[path] = entity
-        else:
-            screenings.append(entity | {"film": films_of(graph, path, entity)})
-    return films, screenings
-
-
-def films_of(graph, path, screening):
-    return films_of_name(graph.read(graph.resolve(path, screening["workPresented"])))
 
 
 def test_feeds_not_rerun_keep_previous_screenings(graph, parsed):
@@ -68,10 +55,6 @@ def test_past_screenings_drop_and_failed_runs_need_no_input(graph, parsed):
     films, screenings = contents(graph, later)
     assert screenings == []
     assert [films_of_name(film) for film in films.values()] == ["heat"]
-
-
-def films_of_name(film):
-    return next(item["value"] for item in film["identifier"] if item["propertyID"] == FILM)
 
 
 def test_slugs_are_stable_and_never_reassigned(graph, parsed):

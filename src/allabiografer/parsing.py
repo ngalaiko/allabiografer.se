@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from allabiografer.model import Dimension, Presentation, PresentationSystem, ProjectionMedium
 
+from .graph import fragment
 from .movie_fields import normalise
 from .schedule import PREFIX
 
@@ -69,8 +70,8 @@ def parse_capture(graph: Graph, adapter: str, captured: Path) -> Path:
         feeds[identifier.get("value")] = (path, feed, graph.resolve(path, feed["about"]))
     today = date.fromisoformat(dataset["temporalCoverage"])
     rows = import_module(f".sources.{adapter}.parse", __package__).rows
-    movies = {}
-    screenings = {path: [] for path, _, _ in feeds.values()}
+    movies: dict[str, dict] = {}
+    screenings: dict[Path, dict[str, dict]] = {path: {} for path, _, _ in feeds.values()}
     with tempfile.TemporaryDirectory() as scratch:
         inputs = Path(scratch)
         for name, path in downloads.items():
@@ -84,53 +85,47 @@ def parse_capture(graph: Graph, adapter: str, captured: Path) -> Path:
                 movie = normalise(movie)
                 if isinstance(image := movie.get("image"), str) and image in downloads:
                     movie["image"] = graph.ref(downloads[image])
-                movies[movie_id] = graph.put(
-                    "Movie",
-                    {
-                        "identifier": {"@type": "PropertyValue", "propertyID": PREFIX + adapter, "value": movie_id},
-                        **movie,
-                        "isBasedOn": graph.ref(downloads[capture]),
-                    },
-                )
-            screenings[feed_path].append(
-                graph.put(
-                    "ScreeningEvent",
-                    {
-                        "identifier": {"@type": "PropertyValue", "propertyID": PREFIX + adapter, "value": show_id},
-                        "name": movie["name"],
-                        "startDate": start.isoformat(),
-                        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-                        "workPresented": graph.ref(movies[movie_id]),
-                        "location": graph.ref(cinema),
-                        "offers": {"@type": "Offer", "url": ticket},
-                        **screening_fields(version, presentation),
-                        # Programmes published by someone other than the cinema name their organiser.
-                        **({"organizer": feed["publisher"]} if "publisher" in feed else {}),
-                    },
-                )
-            )
+                movies[movie_id] = {
+                    "@id": "#" + fragment("movie", movie_id),
+                    "@type": "Movie",
+                    "identifier": {"@type": "PropertyValue", "propertyID": PREFIX + adapter, "value": movie_id},
+                    **movie,
+                    "isBasedOn": graph.ref(downloads[capture]),
+                }
+            screening = {
+                "@type": "ScreeningEvent",
+                "identifier": {"@type": "PropertyValue", "propertyID": PREFIX + adapter, "value": show_id},
+                "name": movie["name"],
+                "startDate": start.isoformat(),
+                "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+                "workPresented": {"@id": movies[movie_id]["@id"]},
+                "location": graph.ref(cinema),
+                "offers": {"@type": "Offer", "url": ticket},
+                **screening_fields(version, presentation),
+                # Programmes published by someone other than the cinema name their organiser.
+                **({"organizer": feed["publisher"]} if "publisher" in feed else {}),
+            }
+            key = fragment("screening", screening)
+            screenings[feed_path][key] = {"@id": f"#{key}", **screening}
     # One snapshot per registry feed, empty ones included: an empty programme replaces the previous one.
     snapshots = [
-        graph.put(
-            "Dataset",
-            {
-                "name": feed["name"],
-                "isBasedOn": graph.ref(path),
-                "about": graph.ref(cinema),
-                "temporalCoverage": dataset["temporalCoverage"],
-                "hasPart": [graph.ref(item) for item in sorted(set(screenings[path]), key=str)],
-            },
-        )
+        {
+            "@id": "#" + fragment("feed", feed["name"], str(path)),
+            "@type": "Dataset",
+            "name": feed["name"],
+            "isBasedOn": graph.ref(path),
+            "about": graph.ref(cinema),
+            "temporalCoverage": dataset["temporalCoverage"],
+            "hasPart": [screenings[path][key] for key in sorted(screenings[path])],
+        }
         for path, feed, cinema in sorted(feeds.values(), key=lambda item: str(item[0]))
     ]
-    return graph.put(
-        "Dataset",
+    return graph.put_dataset(
         {
             "name": f"{adapter} screenings",
             "temporalCoverage": dataset["temporalCoverage"],
             "isBasedOn": graph.ref(captured),
             "about": dataset["about"],
-            "hasPart": [graph.ref(path) for path in sorted(movies.values(), key=str)]
-            + [graph.ref(path) for path in snapshots],
         },
+        [movies[key] for key in sorted(movies)] + snapshots,
     )

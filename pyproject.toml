@@ -9,6 +9,7 @@ dependencies = [
 
 [project.scripts]
 allabiografer = "allabiografer.pipeline:main"
+allabiografer-prune = "allabiografer.prune:main"
 
 [build-system]
 requires = ["hatchling"]

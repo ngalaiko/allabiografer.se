@@ -43,9 +43,7 @@ def portrait(graph):
 
 def films(graph, dataset):
     found = {}
-    for reference in graph.read(dataset)["hasPart"]:
-        path = graph.resolve(dataset, reference)
-        entity = graph.read(path)
+    for entity in graph.parts(dataset).values():
         if entity["@type"] == "Movie":
             found[entity["name"]] = entity
     return found
@@ -83,14 +81,8 @@ def test_only_films_missing_critical_details_are_filled_and_stated_values_stay(g
     # The cinema's own runtime is kept.
     assert dune["duration"] == "PT155M"
     assert films(graph, enriched)["Heat"] == films(graph, merged)["Heat"]
-    screenings = [
-        graph.read(graph.resolve(enriched, ref))
-        for ref in graph.read(enriched)["hasPart"]
-        if "ScreeningEvent" in ref["@id"]
-    ]
-    works = {
-        graph.read(graph.resolve(graph.path("ScreeningEvent", "_"), s["workPresented"]))["name"] for s in screenings
-    }
+    parts = graph.parts(enriched)
+    works = {parts[s["workPresented"]["@id"][1:]]["name"] for s in parts.values() if s["@type"] == "ScreeningEvent"}
     assert works == {"Dune: Part Three", "Heat"}
 
 
