@@ -100,6 +100,19 @@ def _people(movie: dict, role: str) -> set[str]:
     return names
 
 
+_REFERENCE = re.compile(r"https?://(?:www\.)?(?:themoviedb\.org/movie/(\d+)|imdb\.com/title/(tt\d+))")
+
+
+def references(movie: dict) -> set[str]:
+    """Stated database identities: "tmdb:<id>" and "imdb:<id>" from `sameAs`."""
+    links = movie.get("sameAs") or []
+    found = set()
+    for link in links if isinstance(links, list) else [links]:
+        if isinstance(link, str) and (m := _REFERENCE.match(link)):
+            found.add(f"tmdb:{m[1]}" if m[1] else f"imdb:{m[2]}")
+    return found
+
+
 def _facts(movie: dict) -> dict:
     published = (movie.get("datePublished") or "")[:4]
     stated = _TITLE_YEAR.search(movie.get("name") or "")
@@ -112,6 +125,8 @@ def _facts(movie: dict) -> dict:
         # Transliterations vary ("Koreeda", "Kore-eda"); surnames still agree.
         "directors": {name.split()[-1] for name in _people(movie, "director")},
         "plot": plot if len(plot) >= _MIN_PLOT else set(),
+        "tmdb": {ref for ref in references(movie) if ref.startswith("tmdb:")},
+        "imdb": {ref for ref in references(movie) if ref.startswith("imdb:")},
     }
 
 
@@ -126,6 +141,10 @@ def _overlap(a: set, b: set) -> float:
 
 def _relation(a: dict, b: dict) -> str:
     """'same' when strong evidence agrees, 'different' when it contradicts, else 'unknown'."""
+    # A database identity stated by both sources decides.
+    for database in ("tmdb", "imdb"):
+        if a[database] and b[database]:
+            return "same" if a[database] & b[database] else "different"
     if a["year"] and b["year"] and abs(a["year"] - b["year"]) > 1:
         return "different"
     if a["directors"] and b["directors"]:
@@ -267,6 +286,14 @@ def groups(movies: dict[str, dict]) -> list[list[str]]:
         for title in titles[key]:
             by_title[title].append(key)
     for keys in by_title.values():
+        for key in keys[1:]:
+            blocks.join(keys[0], key)
+    # A stated identity joins records whatever their titles; the split below still applies.
+    by_reference = defaultdict(list)
+    for key in sorted(movies):
+        for reference in references(movies[key]):
+            by_reference[reference].append(key)
+    for keys in by_reference.values():
         for key in keys[1:]:
             blocks.join(keys[0], key)
     works = [work for block in blocks.groups() for work in _split(block, info)]

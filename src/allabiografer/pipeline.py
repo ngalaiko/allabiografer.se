@@ -2,8 +2,9 @@
 
 A run is an UpdateAction: its `object` lists the registry DataFeeds run and its
 `targetCollection` the previous result. It fans out to a DownloadAction (fetch) and
-CreateAction (parse) per adapter, then fans in to one CreateAction (merge). Each step's
-`object` links its inputs and `result` the Dataset it produced.
+CreateAction (parse) per adapter, then fans in to one CreateAction (merge). A DownloadAction
+captures TMDB answers for films missing critical details, and a CreateAction (enrich) fills
+them from that capture. Each step's `object` links its inputs and `result` the Dataset it produced.
 """
 
 import argparse
@@ -20,6 +21,7 @@ from pathlib import Path
 
 from allabiografer import session as _http
 
+from . import enrich as tmdb
 from .code import source_code
 from .graph import DATA, Graph, media_type
 from .merge import merge_datasets
@@ -147,6 +149,37 @@ def merge(graph: Graph, previous: Path | None, parsed: list[Path], day: date) ->
     return dataset
 
 
+def enrich(graph: Graph, merged: Path) -> Path:
+    """Capture TMDB answers for films missing critical details, then fill them from the capture."""
+    fields = {
+        "name": "Fetch TMDB",
+        "object": graph.ref(merged),
+        "instrument": instrument(graph, "src/allabiografer/enrich.py"),
+    }
+    with action(graph, "DownloadAction", fields) as outcome, _http.session() as session:
+        downloads: list[Path] = []
+        tmdb.enrich_dataset(graph, merged, tmdb.recording(graph, session, downloads))
+        capture = graph.put(
+            "Dataset",
+            {
+                "name": "TMDB capture",
+                "about": graph.ref(merged),
+                "distribution": [graph.ref(path) for path in dict.fromkeys(downloads)],
+            },
+        )
+        outcome["result"] = graph.ref(capture)
+    fields = {
+        "name": "Enrich",
+        "object": [graph.ref(merged), graph.ref(capture)],
+        "instrument": instrument(graph, "src/allabiografer/enrich.py"),
+    }
+    with action(graph, "CreateAction", fields) as outcome:
+        enriched, count = tmdb.enrich_dataset(graph, merged, tmdb.replaying(graph, capture))
+        print(f"Enriched {count} films from TMDB")
+        outcome["result"] = graph.ref(enriched)
+    return enriched
+
+
 def render(graph: Graph, merged: Path) -> Path:
     """Write the static site for `merged` to <data>/www, replacing the previous one."""
     out = graph.root / "www"
@@ -200,6 +233,11 @@ def run(graph: Graph, selected: list[Feed], *, previous: Path | None) -> tuple[P
         if not parsed and previous is None:
             raise RuntimeError("Every adapter failed")
         result = merge(graph, previous, parsed, day)
+        try:
+            result = enrich(graph, result)
+        except Exception as error:
+            failures["tmdb"] = "".join(traceback.format_exception_only(error)).strip()
+            print(f"tmdb: {failures['tmdb']}", file=sys.stderr)
         outcome["result"] = graph.ref(result)
     return result, failures
 

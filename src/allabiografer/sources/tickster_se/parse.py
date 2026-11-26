@@ -5,7 +5,7 @@ import re
 from bs4 import BeautifulSoup
 
 from allabiografer.model import title_key
-from allabiografer.movie_fields import details_fields
+from allabiografer.movie_fields import details_fields, imdb_links
 from allabiografer.sources import _tickster
 from allabiografer.sources.tickster_se.site import _NOT_A_SHOWING, _PREFIX, _SCREEN, _SUFFIX, _runtime
 
@@ -61,7 +61,9 @@ def rows(inputs, today):
         if slug not in films or (overview and not films[slug][1].get("description")):
             films[slug] = (
                 pages.filename(item.url),
-                details_fields(title, event.url, {"overview": overview, "runtime": _runtime(overview)}),
+                details_fields(title, event.url, {"overview": overview, "runtime": _runtime(overview)})
+                # The organiser's IMDb link sits in the event facts beside the description.
+                | ({"sameAs": links} if (links := imdb_links(html)) else {}),
             )
         street = location.select_one("[itemprop=streetAddress]")
         address = (street.get("content") or street.get_text(" ", strip=True)) if street else ""

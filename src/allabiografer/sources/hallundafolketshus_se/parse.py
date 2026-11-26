@@ -3,7 +3,7 @@
 from datetime import datetime
 from urllib.parse import urljoin
 
-from allabiografer.movie_fields import details_fields
+from allabiografer.movie_fields import details_fields, imdb_links
 from allabiografer.sources import _tickster
 from allabiografer.sources.hallundafolketshus_se import site as site
 
@@ -18,6 +18,7 @@ def rows(inputs, today):
     pages = Pages(inputs)
     for (raw, day, time, url, *_), html, ticket in articles(pages, today):
         event = _tickster.fetch_event(ticket, pages) if ticket else None
+        booking = (html or "") + (pages.text(ticket, optional=True) if ticket else "")
         title = site._title(raw, event.title if event else "")
         audio, subtitles = site._stated_version(html) if html else ("", "")
         if event:
@@ -37,5 +38,5 @@ def rows(inputs, today):
             *facts(language=audio, subtitles=subtitles),
             stable_key(title.casefold()),
             pages.filename(url if html else site._URL),
-            details_fields(title, url, details),
+            details_fields(title, url, details) | ({"sameAs": links} if (links := imdb_links(booking)) else {}),
         )

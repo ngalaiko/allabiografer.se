@@ -4,7 +4,7 @@ import json
 import re
 from datetime import datetime, timedelta
 
-from allabiografer.movie_fields import film_fields
+from allabiografer.movie_fields import film_fields, imdb_links
 from allabiografer.sources.capitolbio_se.site import _DAYS, _details, _page, _showtimes
 
 from .._shared import STOCKHOLM, film_id
@@ -50,7 +50,7 @@ def rows(inputs, today):
                                 # Capitol publishes landscape stills, no posters.
                                 "image": item.get("image") or "",
                             }
-                details[slug] = film_fields(film, credits=credits, **extra)
+                details[slug] = film_fields(film, credits=credits, same_as=imdb_links(html), **extra)
                 details[slug]["name"] = title
             yield (
                 (None, "Capitol", "Sankt Eriksgatan 82"),

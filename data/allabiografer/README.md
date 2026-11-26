@@ -27,11 +27,15 @@ Generated and not checked in. Each run is an action:
 | fetch | `DownloadAction` | registry feeds | `Dataset` of `DataDownload`s |
 | parse | `CreateAction` | fetch `Dataset` | `Dataset` of `Movie`s and, per feed, a `Dataset` of `ScreeningEvent`s |
 | merge | `CreateAction` | previous merged `Dataset`, new parse `Dataset`s | merged `Dataset` |
+| fetch TMDB | `DownloadAction` | merged `Dataset` | `Dataset` of TMDB responses (`DataDownload`s) |
+| enrich | `CreateAction` | merged `Dataset`, TMDB capture | merged `Dataset` with filled films |
 | render | `CreateAction` | merged `Dataset` | `www/` |
 
 A run is an `UpdateAction` over the previous result (`targetCollection`) for the selected feeds (`object`): fetch and parse per adapter, then one merge. Each feed's screenings come from the newest parse covering it, so feeds not run, or whose adapter failed, keep their previous screenings. A show listed by several feeds of one cinema appears once, from the cinema's own feed. Screenings before the run day drop out.
 
 Source `Movie`s pass through `movie_fields.normalise`, so every adapter writes one vocabulary: `genre` from a fixed Swedish list (programme labels such as "Jul" or "Live på bio" drop), `contentRating` as "Barntillåten" or "Från 7/11/15/18 år", `inLanguage` as BCP 47 tags, `duration` in minutes, people as `Person`s and trailers as `VideoObject`s. Unrated and implausible values drop.
+
+Sources that state a TMDB or IMDb identity carry it in `sameAs`; matching treats a shared identity as the same film and different ones as different films. Showing films missing a poster, description or director are looked up on TMDB: by stated identity, else the one search result whose title matches and whose year or director confirm it. TMDB fills missing properties only. The token is read from `TMDB_ACCESS_TOKEN` or `~/.config/allabiografer/tmdb-token`. A TMDB failure is reported; the run keeps the unenriched result.
 
 Each `Movie` in a merged `Dataset` has a stable slug, its `allabiografer:film` identifier, and `url` `https://allabiografer.se/film/<slug>/`. Grouping is re-evaluated every run. A group reuses the oldest identity among its members, slugs are never reassigned, and slugs of joined films remain as `allabiografer:film-alias`.
 

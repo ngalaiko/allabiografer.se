@@ -88,3 +88,15 @@ def test_reviewed_pairs_from_captured_listings():
     different = {frozenset(pair) for pair in fixture["different"]}
     assert len(same & found) >= 0.95 * len(same)
     assert not different & found
+
+
+def test_stated_tmdb_and_imdb_references_decide():
+    tmdb = "https://www.themoviedb.org/movie/{}".format
+    movies = {
+        "roxy": film("Dune: Part Three", sameAs=[tmdb(1170608)]),
+        "rio": film("Dune - Del tre", sameAs=[tmdb(1170608)]),
+        "imdb": film("Dune 3", sameAs=["https://www.imdb.com/title/tt31378509"]),
+        "both": film("Dune: Part Three", sameAs=[tmdb(1170608), "https://www.imdb.com/title/tt31378509"]),
+        "remake": film("Dune: Part Three", sameAs=[tmdb(999)]),
+    }
+    assert groups(movies) == [["both", "imdb", "rio", "roxy"], ["remake"]]

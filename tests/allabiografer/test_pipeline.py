@@ -73,13 +73,28 @@ def test_run_records_actions_and_links_screenings_to_the_registry(graph, monkeyp
     monkeypatch.setattr(pipeline._http, "session", lambda: nullcontext(SimpleNamespace(headers={})))
     monkeypatch.setattr(pipeline, "datetime", SimpleNamespace(now=lambda tz: datetime(2026, 11, 26, tzinfo=tz)))
 
+    def recording(graph, session, downloads):
+        def fetch(path, params):
+            downloads.append(graph.put_bytes(b"{}", "application/json", name=path, url=pipeline.tmdb.url(path, params)))
+            return {}
+
+        return fetch
+
+    monkeypatch.setattr(pipeline.tmdb, "recording", recording)
+
     result, failures = pipeline.run(graph, [feed], previous=None)
 
     assert failures == {}
     actions = [
         graph.read(path) for kind in ("DownloadAction", "CreateAction") for path in graph.schema.glob(f"{kind}/*")
     ]
-    assert sorted(action["name"] for action in actions) == ["Fetch bio_se", "Merge", "Parse bio_se"]
+    assert sorted(action["name"] for action in actions) == [
+        "Enrich",
+        "Fetch TMDB",
+        "Fetch bio_se",
+        "Merge",
+        "Parse bio_se",
+    ]
     assert pipeline.latest(graph) == result
     assert {action["actionStatus"] for action in actions} == {"https://schema.org/CompletedActionStatus"}
     for action_path in graph.schema.glob("*Action/*"):

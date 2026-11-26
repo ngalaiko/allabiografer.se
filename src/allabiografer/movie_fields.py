@@ -117,6 +117,14 @@ _SPELLINGS: dict[str, tuple[str, ...]] = {
 }
 
 _DURATION = re.compile(r"PT(?:(\d+)H)?(?:(\d+)M)?")
+_IMDB = re.compile(r"https?://(?:www\.|m\.)?imdb\.com/title/(tt\d{7,8})")
+
+
+def imdb_links(html: str) -> list[str]:
+    """Canonical IMDb title URLs linked from a page."""
+    return [f"https://www.imdb.com/title/{found}" for found in dict.fromkeys(_IMDB.findall(html))]
+
+
 _DATE = re.compile(r"(?:1[89]|20)\d{2}(?:-\d{2}-\d{2})?")
 _TAGS = {language.tag for language in Language}
 
