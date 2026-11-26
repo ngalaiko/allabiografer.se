@@ -57,6 +57,7 @@ class Language(StrEnum):
     LATVIAN = "Lettiska", "lv"
     LITHUANIAN = "Litauiska", "lt"
     SOMALI = "Somaliska", "so"
+    DARI = "Dari", "prs"
 
 
 class AudioKind(StrEnum):

@@ -100,7 +100,11 @@ def test_search_accepts_one_consistent_result_only(graph, parsed):
     lang = {"id": 19, "title": "Metropolis", "original_title": "Metropolis", "release_date": "1927-01-10"}
     remake = {"id": 10, "title": "Metropolis", "original_title": "Metropolis", "release_date": "2001-05-26"}
     detail = DUNE | {"id": 19, "title": "Metropolis", "original_title": "Metropolis", "runtime": 153}
-    answers = {"/search/movie": {"results": [lang, remake]}, "/movie/19": detail}
+    answers = {
+        "/search/movie": {"results": [lang, remake]},
+        "/movie/19": detail | {"release_date": "1927-01-10"},
+        "/movie/10": detail | {"id": 10, "release_date": "2001-05-26", "runtime": 107},
+    }
 
     enriched, count = enrich_dataset(graph, merged, fake(answers)[0])
 
@@ -121,3 +125,108 @@ def test_a_banner_counts_as_no_poster(graph, parsed):
 
     assert count == 1
     assert films(graph, enriched)["Dune: Part Three"]["image"] == "https://image.tmdb.org/t/p/original/sv.jpg"
+
+
+def identify(graph, parsed, movie, results, details, languages=None):
+    """The TMDB id enrichment links `movie` to, given search results and detail responses."""
+    listed = {"a": (movie, [("Bio Rio", "2026-12-16T18:00:00+01:00")])}
+    merged = merge_datasets(graph, None, [parsed(graph, "x", ["Bio Rio"], listed)], DAY)
+    released = {found["id"]: found["release_date"] for found in results}
+    crew = {tmdb_id: [{"job": "Director", "name": d[3]}] if d[3] else [] for tmdb_id, d in details.items()}
+    answers = {"/search/movie": {"results": results}} | {
+        f"/movie/{tmdb_id}": DUNE
+        | {"id": tmdb_id, "title": title, "original_title": original, "runtime": runtime, "overview": ""}
+        | {"release_date": released[tmdb_id], "credits": {"crew": crew[tmdb_id], "cast": []}}
+        | {"original_language": (languages or {}).get(tmdb_id, "en")}
+        for tmdb_id, (title, original, runtime, _) in details.items()
+    }
+    enriched, _ = enrich_dataset(graph, merged, fake(answers)[0])
+    links = next(iter(films(graph, enriched).values())).get("sameAs", [])
+    found = [link.rsplit("/", 1)[1] for link in links if "themoviedb" in link]
+    return int(found[0]) if found else None
+
+
+def result(tmdb_id, title, year, original=None):
+    return {"id": tmdb_id, "title": title, "original_title": original or title, "release_date": f"{year}-01-01"}
+
+
+def test_a_unique_title_matches_unless_contradicted(graph, parsed):
+    # The Death of Robin Hood: a title, nothing else.
+    robin = [result(1284465, "The Death of Robin Hood", 2026), result(10786, "Robin and Marian", 1976)]
+    details = {1284465: ("The Death of Robin Hood", "The Death of Robin Hood", 123, "Michael Sarnoski")}
+    assert identify(graph, parsed, {"name": "The Death of Robin Hood"}, robin, details) == 1284465
+    # The listing states another director.
+    assert (
+        identify(graph, parsed, {"name": "The Death of Robin Hood", "director": ["Ava Berg"]}, robin, details) is None
+    )
+
+
+def test_namesakes_split_on_what_the_listing_states(graph, parsed):
+    ida = [result(209274, "Ida", 2013), result(744382, "Ida", 2018), result(1118367, "Ida", 2023)]
+    details = {209274: ("Ida", "Ida", 82, None), 744382: ("Ida", "Ida", 10, None), 1118367: ("Ida", "Ida", 83, None)}
+    # 80 minutes fits two features; nothing tells them apart.
+    assert identify(graph, parsed, {"name": "Ida", "duration": "PT80M"}, ida, details) is None
+    # Bio.se states the original language: Polish, which only Pawlikowski's Ida is in.
+    spoken = {"name": "Ida", "duration": "PT80M", "inLanguage": ["pl"]}
+    languages = {209274: "pl", 744382: "fr", 1118367: "fr"}
+    assert identify(graph, parsed, spoken, ida, details, languages) == 209274
+    assert (
+        identify(graph, parsed, {"name": "Ida", "duration": "PT80M", "datePublished": "2013"}, ida, details) == 209274
+    )
+    rose = [result(1176962, "Rose", 2026), result(16323, "The Rose", 1979)]
+    details = {1176962: ("Rose", "Rose", 94, None), 16323: ("The Rose", "The Rose", 125, None)}
+    assert identify(graph, parsed, {"name": "Rose", "duration": "PT94M"}, rose, details) == 1176962
+
+
+def test_titles_match_across_spellings_and_languages(graph, parsed):
+    capra = [result(1585, "Livet är underbart", 1946, "It's a Wonderful Life")]
+    details = {1585: ("Livet är underbart", "It's a Wonderful Life", 131, "Frank Capra")}
+    # Listings type a typographic apostrophe.
+    movie = {"name": "It\u2019s a Wonderful Life", "director": ["Frank Capra"]}
+    assert identify(graph, parsed, movie, capra, details) == 1585
+
+
+def test_a_title_alone_is_not_enough_when_namesakes_remain(graph, parsed):
+    # Bio.se's Black Jack is Colin Nutley's 1990 film; TMDB has several namesakes and none share a fact.
+    jacks = [result(69567, "Black Jack", 1979), result(339471, "Black Jack", 1950)]
+    details = {69567: ("Black Jack", "Black Jack", 105, "Ken Loach"), 339471: ("Black Jack", "Black Jack", 90, None)}
+    assert identify(graph, parsed, {"name": "Black Jack", "duration": "PT111M"}, jacks, details) is None
+    # A stage recording of the same name, without runtime or plot to agree with the listing.
+    boots = [result(16367, "Kinky Boots", 2005), result(1798125, "Kinky Boots", 2020)]
+    details = {
+        16367: ("Kinky Boots", "Kinky Boots", 107, "Julian Jarrold"),
+        1798125: ("Kinky Boots", "Kinky Boots", 0, None),
+    }
+    assert identify(graph, parsed, {"name": "Kinky Boots", "duration": "PT135M"}, boots, details) is None
+
+
+def test_a_shared_director_outweighs_runtime_and_undated_duplicates(graph, parsed):
+    # Fågel Blå lists It's a Wonderful Life at 131 minutes; TMDB says 111.
+    capra = [result(1585, "It's a Wonderful Life", 1946), {"id": 1258547, "title": "It's a Wonderful Life"}]
+    details = {1585: ("It's a Wonderful Life", "It's a Wonderful Life", 111, "Frank Capra")}
+    capra[1]["release_date"] = ""
+    details[1258547] = ("It's a Wonderful Life", "It's a Wonderful Life", 0, None)
+    movie = {"name": "It's a Wonderful Life", "director": ["Frank Capra"], "duration": "PT131M"}
+    assert identify(graph, parsed, movie, capra, details) == 1585
+
+
+def test_a_title_found_in_any_language_counts(graph, parsed):
+    listed = {
+        "a": ({"name": "The Neverending Story", "datePublished": "1984"}, [("Bio Rio", "2026-12-16T18:00:00+01:00")])
+    }
+    merged = merge_datasets(graph, None, [parsed(graph, "x", ["Bio Rio"], listed)], DAY)
+    found = {"id": 34584, "original_title": "Die unendliche Geschichte", "release_date": "1984-03-16"}
+    answers = {
+        # Swedish results title it in Swedish, English ones in English.
+        ("/search/movie", "sv-SE"): {"results": [found | {"title": "Den oändliga historien"}]},
+        ("/search/movie", "en-US"): {"results": [found | {"title": "The NeverEnding Story"}]},
+        ("/movie/34584", "sv-SE"): DUNE | found | {"title": "Den oändliga historien", "runtime": 94},
+    }
+
+    def fetch(path, params):
+        return answers.get((path, params.get("language")), {"results": []})
+
+    enriched, count = enrich_dataset(graph, merged, fetch)
+
+    assert count == 1
+    assert "https://www.themoviedb.org/movie/34584" in films(graph, enriched)["The Neverending Story"]["sameAs"]

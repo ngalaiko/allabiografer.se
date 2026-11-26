@@ -12,13 +12,14 @@ them, so its result follows from stored inputs alone.
 import json
 import os
 import re
+from collections import defaultdict
 from collections.abc import Callable
 from pathlib import Path
 from urllib.parse import urlencode
 
 from .graph import Graph
 from .movie_fields import normalise
-from .movie_matching import _close, _people, fold, references, title_keys, work_title
+from .movie_matching import _close, _facts, _people, _relation, references, title_keys, work_title
 from .posters import poster, stored_downloads
 
 API = "https://api.themoviedb.org/3"
@@ -91,37 +92,50 @@ def _identify(fetch: Fetch, film: dict) -> int | None:
         found = fetch(f"/find/{imdb[0]}", {"external_source": "imdb_id"}).get("movie_results") or []
         return found[0]["id"] if len(found) == 1 else None
     keys = title_keys(film)
-    year, minutes, surnames = _year(film), _minutes(film), _surnames(film)
-    seen = {}
+    # Each result under every title it was found by: Swedish, English and original.
+    seen, titles = {}, defaultdict(set)
     for query in dict.fromkeys(filter(None, (work_title(film.get("name") or ""), film.get("alternateName")))):
-        params = {"query": query, "language": "sv-SE", "include_adult": "false"}
-        for result in fetch("/search/movie", params).get("results") or []:
-            seen.setdefault(result["id"], result)
-    namesakes = [
-        result
-        for result in seen.values()
-        if title_keys({"name": result.get("title"), "alternateName": result.get("original_title")}) & keys
-    ]
-    # Remakes, adaptations and stage recordings share titles: with namesakes, a year or a
-    # director must confirm the choice; a unique title needs only a consistent runtime.
-    accepted = []
+        for language in ("sv-SE", "en-US"):
+            params = {"query": query, "language": language, "include_adult": "false"}
+            for result in fetch("/search/movie", params).get("results") or []:
+                seen.setdefault(result["id"], result)
+                titles[result["id"]] |= title_keys(
+                    {"name": result.get("title"), "alternateName": result.get("original_title")}
+                )
+    # As in merging: one title is one work unless what is stated contradicts it.
+    namesakes = [result for tmdb_id, result in seen.items() if titles[tmdb_id] & keys]
+    listing = _facts(film)
+    # As in merging: one title is one work, split where stated facts contradict.
+    consistent, confirmed = [], []
     for result in namesakes:
-        released = re.match(r"\d{4}", result.get("release_date") or "")
-        if not released or (year and abs(int(released[0]) - year) > 1):
-            continue
         detail = _detail(fetch, result["id"])
         if "id" not in detail:
             continue
-        directors = {fold(c["name"]).split()[-1] for c in detail["credits"]["crew"] if c["job"] == "Director"}
-        if surnames and directors and not surnames & directors:
+        candidate = _facts(tmdb_movie(detail))
+        relation = _relation(listing, candidate)
+        runtimes = listing["runtime"], candidate["runtime"]
+        # A matching director or plot outweighs a runtime: listings count intervals and extras.
+        if relation == "different" or (relation != "same" and all(runtimes) and not _close(*runtimes)):
             continue
-        if minutes and detail.get("runtime") and not _close(minutes, detail["runtime"]):
-            continue
-        strong = bool(year) or bool(surnames & directors)
-        timed = bool(minutes and detail.get("runtime"))
-        if strong or (len(namesakes) == 1 and timed):
-            accepted.append(result["id"])
-    return accepted[0] if len(accepted) == 1 else None
+        consistent.append(result["id"])
+        # Remakes and stage recordings share a title; among namesakes, a fact must agree. A listing's
+        # language confirms but never rules out: cinemas state the screening's, which may be a dub.
+        if (
+            relation == "same"
+            or (listing["year"] and candidate["year"])
+            or (all(runtimes) and _exact(*runtimes))
+            or (candidate["year"] and detail.get("original_language") in (film.get("inLanguage") or []))
+        ):
+            confirmed.append(result["id"])
+    if len(consistent) == 1 and len(namesakes) == 1:
+        return consistent[0]
+    # Entries without a year are drafts and duplicates; they never outweigh a confirmed film.
+    return confirmed[0] if len(confirmed) == 1 else None
+
+
+def _exact(a: int, b: int) -> bool:
+    """Runtimes that single out one cut: listings round by a minute."""
+    return abs(a - b) <= 1
 
 
 def tmdb_movie(detail: dict) -> dict:
