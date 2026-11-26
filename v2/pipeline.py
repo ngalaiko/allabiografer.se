@@ -18,13 +18,12 @@ from pathlib import Path
 
 from parse import _http
 
+from .code import source_code
 from .graph import DATA, Graph, media_type
 from .merge import merge_datasets
 from .parse import parse_capture
 from .schedule import PREFIX, Route, checked, routes
 from .source._shared import STOCKHOLM
-
-REPOSITORY = "https://github.com/ngalaiko/allabiografer.se"
 
 
 def timestamp() -> str:
@@ -78,13 +77,9 @@ def action(graph: Graph, kind: str, fields: dict) -> Iterator[dict]:
     )
 
 
-def instrument(path: str) -> dict:
-    return {
-        "@type": "SoftwareSourceCode",
-        "name": path,
-        "codeRepository": REPOSITORY,
-        "programmingLanguage": "Python",
-    }
+def instrument(graph: Graph, path: str) -> dict:
+    """The module a step runs, as part of the snapshot of all pipeline code."""
+    return graph.ref(graph.put("SoftwareSourceCode", {"name": path, "isPartOf": graph.ref(source_code(graph))}))
 
 
 def binding(graph: Graph, route: Route) -> dict:
@@ -99,7 +94,11 @@ def fetch(graph: Graph, adapter: str, selected: list[Route], day: date) -> Path:
     module = import_module(f".source.{adapter}.fetch", __package__)
     cinemas = [binding(graph, route) for route in selected]
     selectors = {route.venue_id for route in selected}
-    fields = {"name": f"Fetch {adapter}", "object": cinemas, "instrument": instrument(f"v2/source/{adapter}/fetch.py")}
+    fields = {
+        "name": f"Fetch {adapter}",
+        "object": cinemas,
+        "instrument": instrument(graph, f"v2/source/{adapter}/fetch.py"),
+    }
     with (
         action(graph, "DownloadAction", fields) as outcome,
         tempfile.TemporaryDirectory() as scratch,
@@ -131,7 +130,7 @@ def parse(graph: Graph, adapter: str, captured: Path) -> Path:
     fields = {
         "name": f"Parse {adapter}",
         "object": graph.ref(captured),
-        "instrument": instrument(f"v2/source/{adapter}/parse.py"),
+        "instrument": instrument(graph, f"v2/source/{adapter}/parse.py"),
     }
     with action(graph, "CreateAction", fields) as outcome:
         dataset = parse_capture(graph, adapter, captured)
@@ -143,7 +142,7 @@ def merge(graph: Graph, parsed: list[Path]) -> Path:
     fields = {
         "name": "Merge",
         "object": [graph.ref(path) for path in parsed],
-        "instrument": instrument("v2/merge.py"),
+        "instrument": instrument(graph, "v2/merge.py"),
     }
     with action(graph, "CreateAction", fields) as outcome:
         dataset = merge_datasets(graph, parsed)

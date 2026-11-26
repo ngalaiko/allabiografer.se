@@ -85,6 +85,9 @@ def test_run_records_actions_and_links_screenings_to_the_registry(tmp_path, monk
     ]
     assert sorted(action["name"] for action in actions) == ["Fetch bio_se", "Merge", "Parse bio_se"]
     assert {action["actionStatus"] for action in actions} == {"https://schema.org/CompletedActionStatus"}
+    for action_path in graph.schema.glob("*Action/*"):
+        module = graph.read(graph.resolve(action_path, graph.read(action_path)["instrument"]))
+        assert graph.read(graph.resolve(action_path, module["isPartOf"]))["@type"] == "SoftwareSourceCode"
     merged = graph.read(result)
     assert merged["temporalCoverage"] == date(2026, 11, 26).isoformat()
     parts = [graph.resolve(result, reference) for reference in merged["hasPart"]]
@@ -92,6 +95,25 @@ def test_run_records_actions_and_links_screenings_to_the_registry(tmp_path, monk
     assert len(screenings) == 1
     assert screenings[0]["inLanguage"] == ["sv"]
     assert graph.resolve(parts[1], screenings[0]["location"]) == graph.path("MovieTheater", route.cinema).resolve()
+
+
+def test_source_snapshot_is_deterministic_and_restorable(tmp_path):
+    import io
+    import tarfile
+
+    from v2.code import ROOT, archive, source_code
+
+    assert archive() == archive()
+    graph = Graph(tmp_path)
+    code = graph.read(source_code(graph))
+    assert code["version"].removesuffix("-dirty").isalnum()
+    snapshot = graph.read(graph.resolve(graph.path("SoftwareSourceCode", "_"), code["encoding"]))
+    with tarfile.open(fileobj=io.BytesIO(graph.content(snapshot))) as tar:
+        pipeline_file = tar.extractfile("v2/pipeline.py").read()
+        names = tar.getnames()
+    assert pipeline_file == (ROOT / "v2" / "pipeline.py").read_bytes()
+    assert "uv.lock" in names
+    assert not any("/data/" in name or "test_" in name for name in names)
 
 
 def test_single_cinema_adapters_reject_other_selections():

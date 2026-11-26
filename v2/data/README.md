@@ -34,3 +34,5 @@ Entities other than actions are named by the SHA-256 of their content, so identi
 `ScreeningEvent` links `workPresented` to a `Movie` and `location` to a registry `MovieTheater`. `inLanguage` and `subtitleLanguage` are BCP 47 tags; an empty `subtitleLanguage` means the source states there are none. `videoFormat` lists picture and projection formats only: `2D`, `3D`, `IMAX`, `Dolby Cinema`, `4DX`, `ScreenX`, `35 mm`, `70 mm`.
 
 Merge reconciles movies across sources: a merged `Movie` lists its source records in `isBasedOn`.
+
+Each action's `instrument` is a `SoftwareSourceCode` entity naming the module it ran. That module is `isPartOf` a snapshot of all pipeline code. The snapshot records the git commit as `version`, suffixed `-dirty` when the source files differ from it. Its `encoding` is a deterministic tar of `v2/`, `src/`, `pyproject.toml`, and `uv.lock`, stored as an asset, so a run can be traced to the exact bytes it executed even when uncommitted.
