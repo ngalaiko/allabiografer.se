@@ -1,6 +1,4 @@
 import io
-import json
-import re
 import shutil
 from datetime import date
 
@@ -12,6 +10,7 @@ from allabiografer.parsing import PREFIX
 from allabiografer.render import render
 
 DAY = date(2026, 12, 1)
+STATIC = DATA.parents[1] / "static" / "i"
 
 
 def parsed(graph, adapter, cinemas, films):
@@ -26,11 +25,14 @@ def parsed(graph, adapter, cinemas, films):
         parts.append(movie)
         for cinema, start in shows:
             screening = {
+                "identifier": {"propertyID": PREFIX + adapter, "value": f"{movie_id}-{start}"},
                 "name": fields["name"],
                 "startDate": start,
                 "workPresented": graph.ref(movie),
                 "location": graph.ref(graph.path("MovieTheater", cinema)),
                 "offers": {"@type": "Offer", "url": "https://example.org/tickets"},
+                "inLanguage": ["en"],
+                "subtitleLanguage": ["sv"],
             }
             parts.append(graph.put("ScreeningEvent", screening))
     return graph.put(
@@ -38,21 +40,16 @@ def parsed(graph, adapter, cinemas, films):
     )
 
 
-def jsonld(page):
-    found = re.search(r'<script type="application/ld\+json">(.*?)</script>', page.read_text(), re.DOTALL)
-    return json.loads(found[1].replace("<\\/", "</"))
-
-
-def test_render_writes_pages_from_the_merged_dataset(tmp_path):
-    shutil.copytree(DATA / "schema" / "MovieTheater", tmp_path / "schema" / "MovieTheater")
-    shutil.copytree(DATA / "schema" / "City", tmp_path / "schema" / "City")
+def test_render_writes_v1_pages_from_the_merged_dataset(tmp_path):
+    for kind in ("MovieTheater", "City"):
+        shutil.copytree(DATA / "schema" / kind, tmp_path / "schema" / kind)
     graph = Graph(tmp_path)
     buffer = io.BytesIO()
     Image.new("RGB", (1000, 1500), "teal").save(buffer, "PNG")
     poster = graph.put_bytes(buffer.getvalue(), "image/png", name="poster.png")
     films = {
         "a": (
-            {"name": "Dune", "image": graph.ref(poster)},
+            {"name": "Dune", "image": graph.ref(poster), "genre": ["Drama"], "duration": "PT150M"},
             [("Bio Rio", "2026-12-02T18:00:00+01:00"), ("Aspen", "2026-12-03T20:00:00+01:00")],
         ),
         "b": ({"name": "Gammal film"}, [("Aspen", "2026-11-20T20:00:00+01:00")]),
@@ -62,18 +59,22 @@ def test_render_writes_pages_from_the_merged_dataset(tmp_path):
 
     render(graph, merged, out, today=DAY)
 
-    assert (out / "index.html").is_file()
-    film = out / "film" / "dune" / "index.html"
-    assert "18:00" in film.read_text()
-    assert jsonld(film)["@id"] == "https://allabiografer.se/film/dune/"
-    assert len(jsonld(film)["subjectOf"]) == 2
-    assert (out / "stad" / "stockholm" / "bio-rio" / "index.html").is_file()
-    # Past screenings and films without upcoming ones are not published.
+    # v1's styles and scripts are published unchanged.
+    assert (out / "i" / "style.css").read_bytes() == (STATIC / "style.css").read_bytes()
+    cinema = (out / "stad" / "stockholm" / "bio-rio" / "index.html").read_text()
+    assert 'class="schedule-film"' in cinema
+    assert ">18:00<" in cinema
+    assert "Engelskt tal • Svensk text" in cinema
+    assert (out / "film" / "dune" / "index.html").is_file()
+    assert (out / "stad" / "stockholm" / "genre" / "drama" / "index.html").is_file()
+    # Films without upcoming screenings are not published.
     assert not (out / "film" / "gammal-film").exists()
-    # The resized poster lives in the asset store; the site links to it.
-    (link,) = (out / "assets").iterdir()
-    assert link.is_symlink()
-    assert link.resolve().parent == (tmp_path / "assets").resolve()
-    with Image.open(link) as image:
-        assert (image.format, image.width) == ("WEBP", 500)
-    assert f"/assets/{link.name}" in film.read_text()
+    # No iCalendar feeds; Schema.org JSON-LD only.
+    assert not list(out.rglob("*.ics"))
+    assert (out / "film" / "dune" / "index.jsonld").is_file()
+    # Resized posters stay in the asset store; the site links to them.
+    posters = sorted((out / "posters").iterdir())
+    assert len(posters) == 4
+    assert all(link.is_symlink() and link.resolve().parent == (tmp_path / "assets").resolve() for link in posters)
+    with Image.open(next(link for link in posters if "-" not in link.stem)) as image:
+        assert (image.format, image.size) == ("WEBP", (250, 354))

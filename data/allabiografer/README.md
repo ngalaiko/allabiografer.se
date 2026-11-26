@@ -46,6 +46,6 @@ Each action's `instrument` is a `SoftwareSourceCode` entity naming the module it
 
 ## Website
 
-`www/` is the static site rendered from the latest merged `Dataset`, regenerated on every run and not checked in. It has the home page, a page per city, cinema, and film, and redirects from film slug aliases. Each page embeds its entities as JSON-LD.
+`www/` is the allabiografer.se site rendered from the latest merged `Dataset`, regenerated on every run and not checked in. Rendering is v1's: `src/allabiografer/site/` holds copies of `src/build`'s page code, templates, styles, scripts and fonts, so the pages look the same. `render.py` only translates the merged graph into v1's page data. Each programme has an `index.md` and an `index.jsonld`; there are no iCalendar feeds or festival pages.
 
-Posters are resized to 500 px WebP and stored as `ImageObject`s in `assets/`; source URLs are downloaded into the store first. `www/assets/<sha256>` are symlinks to those assets, so image bytes are stored once; a deploy must copy them as files.
+Posters are cropped and resized to v1's WebP widths and stored as `ImageObject`s in `assets/`; source URLs are downloaded into the store first. `www/posters/` holds symlinks to those assets, so image bytes are stored once; a deploy must copy them as files.

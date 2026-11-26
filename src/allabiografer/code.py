@@ -20,9 +20,10 @@ def files(root: Path = ROOT) -> list[Path]:
     """Source files, relative to `root`, excluding tests, caches, and data."""
     found = [root / name for name in MANIFESTS]
     for directory in SOURCES:
-        for path in (root / directory).rglob("*.py"):
+        # Templates, styles and scripts shape the output as much as the Python does.
+        for path in (item for item in (root / directory).rglob("*") if item.is_file()):
             relative = path.relative_to(root)
-            if "__pycache__" in relative.parts:
+            if "__pycache__" in relative.parts or path.suffix == ".pyc":
                 continue
             if path.name.startswith("test_") or path.name == "conftest.py":
                 continue

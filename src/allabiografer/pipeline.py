@@ -24,9 +24,9 @@ from .code import source_code
 from .graph import DATA, Graph, media_type
 from .merge import merge_datasets
 from .parsing import parse_capture
-from .render import SITE
 from .render import render as render_site
 from .schedule import PREFIX, Route, checked, routes
+from .site.pages import BASE_URL as SITE
 from .sources._shared import STOCKHOLM
 
 
