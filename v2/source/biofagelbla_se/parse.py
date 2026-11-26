@@ -7,7 +7,7 @@ from urllib.parse import parse_qs, urlsplit
 
 from parse.parsers.biofagelbla_se import _RUNTIME
 
-from .._shared import STOCKHOLM, film_id, parse_main, read_page
+from .._shared import STOCKHOLM, film_id, read_page, single_venue_rows
 
 BASE = "https://biofagelbla.se"
 SOURCE = "biofagelbla_se"
@@ -84,5 +84,5 @@ def screenings(inputs, today):
         yield show_id, start, ticket, audio, subtitles, movie, title, *details[movie]
 
 
-if __name__ == "__main__":
-    parse_main(SOURCE, "bio-fagel-bla", "Stockholm Bio Fågel Blå", "Skeppargatan 60", screenings)
+def rows(inputs, today):
+    return single_venue_rows("bio-fagel-bla", screenings(inputs, today))

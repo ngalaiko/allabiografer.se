@@ -2,9 +2,9 @@
 
 import json
 
-from parse.parsers.kraftenifinspang_se import _SOURCE, _showtimes
+from parse.parsers.kraftenifinspang_se import _showtimes
 
-from .._shared import catalogue_main, movie_fields, stable_key
+from .._shared import facts, movie_fields, stable_key
 
 
 def rows(inputs, today):
@@ -13,7 +13,7 @@ def rows(inputs, today):
     while True:
         capture = f"events-{page:03d}.json"
         data = json.loads((inputs / capture).read_bytes())
-        for venue, film, start, _, audio, subtitles in _showtimes(data["events"], today):
+        for venue, film, start, fmt, audio, subtitles in _showtimes(data["events"], today):
             cinema = f"finspang-{stable_key(venue.city, venue.name)}"
             show = stable_key(cinema, film.key, start.isoformat())
             if not film.title or show in seen:
@@ -24,8 +24,7 @@ def rows(inputs, today):
                 show,
                 start,
                 film.url,
-                audio,
-                subtitles,
+                *facts(format=fmt, language=audio, subtitles=subtitles),
                 stable_key(film.key),
                 capture,
                 movie_fields(film.title, film.url, film.overview, None),
@@ -33,7 +32,3 @@ def rows(inputs, today):
         if page >= data["total_pages"]:
             return
         page += 1
-
-
-if __name__ == "__main__":
-    catalogue_main(_SOURCE, rows)

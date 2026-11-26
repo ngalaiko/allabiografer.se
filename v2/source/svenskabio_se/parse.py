@@ -5,7 +5,7 @@ from html import unescape
 
 from parse.parsers.svenskabio_se import _CINEMAS, _dates, _showtimes
 
-from .._shared import STOCKHOLM, catalogue_main, movie_fields, read_page, stable_key
+from .._shared import STOCKHOLM, movie_fields, read_page, stable_key
 from .fetch import venue_id
 
 _MOVIE_FIELDS = (
@@ -70,13 +70,9 @@ def rows(inputs, today):
                     f"{cinema_id}-{show_id}",
                     start,
                     show.ticket_url,
-                    show.version.audio.languages,
-                    show.version.subtitles.languages,
+                    show.version,
+                    show.presentation,
                     movie_id,
                     based_on,
                     fields,
                 )
-
-
-if __name__ == "__main__":
-    catalogue_main("svenskabio_se", rows)

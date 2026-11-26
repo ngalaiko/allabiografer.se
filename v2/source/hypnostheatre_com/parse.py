@@ -4,7 +4,7 @@ from datetime import datetime
 
 from parse.parsers.hypnostheatre_com import _ADDRESS, _CINEMA, _CITY, _showtimes
 
-from .._shared import STOCKHOLM, catalogue_main, movie_fields, stable_key
+from .._shared import STOCKHOLM, movie_fields, stable_key
 
 REVIEWED_CREDITS = {
     ("die hard", "1988"): "https://biografspegeln.se/program/die-hard",
@@ -32,13 +32,9 @@ def rows(inputs, today):
             key,
             start,
             show.ticket_url,
-            show.version.audio.languages,
-            show.version.subtitles.languages,
+            show.version,
+            show.presentation,
             movie_id,
             capture,
             fields,
         )
-
-
-if __name__ == "__main__":
-    catalogue_main("hypnostheatre_com", rows)

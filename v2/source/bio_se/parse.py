@@ -5,7 +5,7 @@ from datetime import datetime
 
 from parse.parsers.bio_se import _cinema_url, _showtimes, _venue
 
-from .._shared import STOCKHOLM, catalogue_main, film_id, movie_fields, stable_key
+from .._shared import STOCKHOLM, facts, film_id, movie_fields, stable_key
 from .fetch import OTHER_PROGRAMME_IDS, programme_city, venue_id
 
 # Cinemateket's 5 December programme distinguishes these same-title films.
@@ -24,7 +24,7 @@ def rows(inputs, today):
             continue  # Replaying an older capture must still respect current timetable ownership.
         cinema = cinemas[cinema_id]
         venue = _venue(cinema)
-        for film, day, clock, ticket, hall, _, audio, subtitles, *_ in _showtimes(
+        for film, day, clock, ticket, hall, fmt, audio, subtitles, source_texts, *_ in _showtimes(
             json.loads(path.read_bytes()), _cinema_url(cinema)
         ):
             if day < today:
@@ -48,8 +48,7 @@ def rows(inputs, today):
                 show_id,
                 start,
                 ticket,
-                audio,
-                subtitles,
+                *facts(format=fmt, language=audio, subtitles=subtitles, source_texts=source_texts),
                 movie_id,
                 path.name,
                 movie_fields(
@@ -61,7 +60,3 @@ def rows(inputs, today):
                     year=year,
                 ),
             )
-
-
-if __name__ == "__main__":
-    catalogue_main("bio_se", rows)

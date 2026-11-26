@@ -5,8 +5,7 @@ from urllib.parse import urljoin
 
 from parse.parsers import hallundafolketshus_se as site
 
-from .._shared import fetch_main
-from ..tickster_se.pages import Pages, capture_day, year_for_month
+from ..tickster_se.pages import Pages, year_for_month
 
 SOURCE = "hallundafolketshus_se"
 
@@ -20,13 +19,9 @@ def articles(pages, today):
             yield row, html, urljoin(url, link) if link else ""
 
 
-def fetch_pages(session, inputs):
+def fetch_pages(session, inputs, today, *, selectors=None):
     session.headers["User-Agent"] = "Mozilla/5.0"
     pages = Pages(inputs, session)
-    for _, _, ticket in articles(pages, capture_day(inputs)):
+    for _, _, ticket in articles(pages, today):
         if ticket:
             pages.text(ticket, optional=True)
-
-
-if __name__ == "__main__":
-    fetch_main(SOURCE, fetch_pages)

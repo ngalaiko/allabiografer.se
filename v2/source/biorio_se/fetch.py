@@ -2,20 +2,16 @@
 
 from parse.parsers.biorio_se import _API, _SHOWTIMES_URL
 
-from .._shared import fetch_main
+from .._shared import saved
 
 
-def fetch_pages(session, inputs):
+def fetch_pages(session, inputs, today, *, selectors=None):
     response = session.get(_SHOWTIMES_URL, timeout=30)
     response.raise_for_status()
-    (inputs / "showtimes.json").write_bytes(response.content)
+    saved(session, inputs / "showtimes.json", response)
     for slug in sorted(
         {s["movie"]["slug"] for s in response.json()["showtimes"] if (s.get("movie") or {}).get("slug")}
     ):
         response = session.get(f"{_API}/movies/{slug}", timeout=30)
         response.raise_for_status()
-        (inputs / f"movie-{slug}.json").write_bytes(response.content)
-
-
-if __name__ == "__main__":
-    fetch_main("biorio_se", fetch_pages)
+        saved(session, inputs / f"movie-{slug}.json", response)

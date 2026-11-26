@@ -8,9 +8,8 @@ from parse.parsers import _tickster
 from parse.parsers.tickster_se import _NOT_A_SHOWING, _PREFIX, _SCREEN, _SUFFIX, _runtime
 from store import title_key
 
-from ...schedule import selected_venues
-from .._shared import catalogue_main, stable_key
-from .fetch import SOURCE, candidates
+from .._shared import facts, stable_key
+from .fetch import candidates
 from .pages import Pages, source_movie
 
 _EXTRA_PREFIX = re.compile(r"^(Extravisning|Live på bio)\s*[:-]\s*", re.IGNORECASE)
@@ -22,7 +21,7 @@ def rows(inputs, today):
     screenings = []
     films = {}
     seen = set()
-    for site, item in candidates(pages, today, selected_venues(inputs)):
+    for site, item in candidates(pages, today):
         html = pages.text(item.url, optional=True)
         soup = BeautifulSoup(html, "html.parser")
         if not any(tag.get_text(strip=True).casefold() == "bio" for tag in soup.select("a[rel=tag]")):
@@ -66,10 +65,8 @@ def rows(inputs, today):
         street = location.select_one("[itemprop=streetAddress]")
         address = (street.get("content") or street.get_text(" ", strip=True)) if street else ""
         venue = (site.organiser.split("/", 1)[0], site.name, address, site.city)
-        screenings.append((venue, stable_key(event.url), event.start, event.url, audio, subtitles, slug))
+        screenings.append(
+            (venue, stable_key(event.url), event.start, event.url, *facts(language=audio, subtitles=subtitles), slug)
+        )
     for row in screenings:
         yield (*row, *films[row[-1]])
-
-
-if __name__ == "__main__":
-    catalogue_main(SOURCE, rows)

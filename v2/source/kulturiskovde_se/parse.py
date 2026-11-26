@@ -2,9 +2,9 @@
 
 from datetime import datetime
 
-from parse.parsers.kulturiskovde_se import _SERIES, _SOURCE, _VENUE, _showtimes
+from parse.parsers.kulturiskovde_se import _SERIES, _VENUE, _showtimes
 
-from .._shared import STOCKHOLM, catalogue_main, read_page, stable_key
+from .._shared import STOCKHOLM, facts, read_page, stable_key
 from .fetch import TICKETS
 
 # Tix event IDs identify the reviewed December 2026 bookings, not future screenings with the same title.
@@ -34,13 +34,8 @@ def rows(inputs, today):
                 show,
                 start,
                 ticket,
-                "",
-                "",
+                *facts(),
                 stable_key(title.casefold()),
                 capture,
                 {"name": title, **({"sameAs": MOVIE_LINKS[event]} if event in MOVIE_LINKS else {})},
             )
-
-
-if __name__ == "__main__":
-    catalogue_main(_SOURCE, rows)

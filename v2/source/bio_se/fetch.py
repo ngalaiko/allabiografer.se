@@ -3,7 +3,7 @@
 from parse.parsers.bio_se import _API, _OTHER_PROGRAMME_IDS, _venue
 
 from ...schedule import checked
-from .._shared import capture_json, fetch_cities_main
+from .._shared import capture_json
 
 DISTRICTS = {"Älvsjö", "Årsta", "Bromma", "Hägersten", "Johanneshov", "Kista", "Skärholmen"}
 OTHER_PROGRAMME_IDS = _OTHER_PROGRAMME_IDS | {2407, 2411, 2065}  # Bio Roy, Vingen, and Spegeln.
@@ -19,7 +19,7 @@ def venue_id(cinema_id):
     return str(cinema_id)
 
 
-def fetch_pages(session, inputs, cities=(), *, selectors=None):
+def fetch_pages(session, inputs, today, *, selectors=None):
     session.headers["Accept"] = "application/json"
     payload = capture_json(session, f"{_API}/cinemas", inputs / "cinemas.json")
     checked(selectors, {venue_id(cinema["id"]) for cinema in payload["cinemas"]})
@@ -29,7 +29,6 @@ def fetch_pages(session, inputs, cities=(), *, selectors=None):
         venue = _venue(cinema)
         if (
             venue is None
-            or (cities and programme_city(venue) not in cities)
             or cinema["id"] in OTHER_PROGRAMME_IDS
             or venue.name in {"Stockholm Bio Aspen", "Stockholm Bio Fågel Blå", "Stockholm Bio Rio", "Biocafé Tellus"}
         ):
@@ -37,7 +36,3 @@ def fetch_pages(session, inputs, cities=(), *, selectors=None):
         capture_json(
             session, f"{_API}/cinemas/films", inputs / f"programme-{cinema['id']}.json", body={"cinemaId": cinema["id"]}
         )
-
-
-if __name__ == "__main__":
-    fetch_cities_main("bio_se", fetch_pages)

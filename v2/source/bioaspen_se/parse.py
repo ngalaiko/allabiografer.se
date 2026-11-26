@@ -6,7 +6,7 @@ from urllib.parse import urljoin, urlsplit
 
 from parse.parsers.bioaspen_se import _RUNTIME
 
-from .._shared import STOCKHOLM, film_id, parse_main, read_page
+from .._shared import STOCKHOLM, film_id, read_page, single_venue_rows
 
 BASE = "https://www.bioaspen.se"
 SOURCE = "bioaspen_se"
@@ -89,5 +89,5 @@ def screenings(inputs, today):
             yield *row, url, title, description, runtime, people
 
 
-if __name__ == "__main__":
-    parse_main(SOURCE, "aspen", "Aspen", "Hägerstensvägen 100A", screenings)
+def rows(inputs, today):
+    return single_venue_rows("aspen", screenings(inputs, today))

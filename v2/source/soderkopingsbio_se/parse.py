@@ -6,9 +6,9 @@ from datetime import datetime
 from parse.parsers import _biosverige_api
 from parse.parsers.soderkopingsbio_se import _ADDRESS, _CINEMA, _CITY, _MOVIE_PAGE, _TICKETS
 
-from .._shared import STOCKHOLM, catalogue_main, stable_key
+from .._shared import STOCKHOLM, facts, stable_key
 from ..tickster_se.pages import Pages, source_movie
-from .fetch import SCHEDULE, SOURCE, showings
+from .fetch import SCHEDULE, showings
 
 VENUE = ("soderkopings-bio", _CINEMA, _ADDRESS, _CITY)
 
@@ -27,8 +27,13 @@ def rows(inputs, today):
         slug = movie.get("slug")
         url = _MOVIE_PAGE + slug if slug else ""
         fields = source_movie(title, url, _biosverige_api.film_details(movie))
-        yield VENUE, show_id, start, ticket, audio, subtitles, stable_key(slug or title), SCHEDULE, fields
-
-
-if __name__ == "__main__":
-    catalogue_main(SOURCE, rows)
+        yield (
+            VENUE,
+            show_id,
+            start,
+            ticket,
+            *facts(language=audio, subtitles=subtitles),
+            stable_key(slug or title),
+            SCHEDULE,
+            fields,
+        )

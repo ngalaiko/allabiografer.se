@@ -3,17 +3,12 @@
 from parse.parsers.bioguiden_se import _SITES
 
 from ...schedule import checked
-from .._shared import capture, fetch_cities_main, stable_key
+from .._shared import capture, stable_key
 
 
-def fetch_pages(session, inputs, cities=(), *, selectors=None):
+def fetch_pages(session, inputs, today, *, selectors=None):
     checked(selectors, {stable_key(url) for url in _SITES})
-    for url, venue in _SITES.items():
+    for url in _SITES:
         if selectors is not None and stable_key(url) not in selectors:
             continue
-        if not cities or venue.city in cities:
-            capture(session, url, inputs / f"programme-{stable_key(url)}.html")
-
-
-if __name__ == "__main__":
-    fetch_cities_main("bioguiden_se", fetch_pages)
+        capture(session, url, inputs / f"programme-{stable_key(url)}.html")

@@ -1,10 +1,8 @@
 """Capture Roxy Bio's My Cloud Cinema schedule and movie API responses."""
 
-from datetime import datetime
+from parse.parsers.roxy_bio import _BASE, _showtimes
 
-from parse.parsers.roxy_bio import _BASE, _SOURCE, _showtimes
-
-from .._shared import STOCKHOLM, capture_json, fetch_main
+from .._shared import capture_json
 
 
 def response_rows(payload, capture):
@@ -13,8 +11,7 @@ def response_rows(payload, capture):
     return payload["data"]
 
 
-def fetch_pages(session, inputs):
-    today = datetime.fromtimestamp(int(inputs.parents[1].name), STOCKHOLM).date()
+def fetch_pages(session, inputs, today, *, selectors=None):
     programme = capture_json(
         session,
         f"{_BASE}/webservices/show_times/getShowTimesDays",
@@ -32,7 +29,3 @@ def fetch_pages(session, inputs):
         )
         if not any(int(row["movie_id"]) == movie_id for row in response_rows(data, name)):
             raise ValueError(f"Roxy Bio details missing in {name}")
-
-
-if __name__ == "__main__":
-    fetch_main(_SOURCE, fetch_pages)

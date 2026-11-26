@@ -1,14 +1,11 @@
 """Capture the paginated Kraften i Finspång calendar API responses."""
 
-from datetime import datetime
+from parse.parsers.kraftenifinspang_se import _URL
 
-from parse.parsers.kraftenifinspang_se import _SOURCE, _URL
-
-from .._shared import STOCKHOLM, capture_json, fetch_main
+from .._shared import capture_json
 
 
-def fetch_pages(session, inputs):
-    today = datetime.fromtimestamp(int(inputs.parents[1].name), STOCKHOLM).date()
+def fetch_pages(session, inputs, today, *, selectors=None):
     page = 1
     while True:
         data = capture_json(
@@ -20,7 +17,3 @@ def fetch_pages(session, inputs):
         if page >= data["total_pages"]:
             return
         page += 1
-
-
-if __name__ == "__main__":
-    fetch_main(_SOURCE, fetch_pages)

@@ -7,9 +7,9 @@ from parse.parsers import _tickster
 from parse.parsers import fhbracke_se as site
 from store import title_key
 
-from .._shared import STOCKHOLM, catalogue_main, stable_key
+from .._shared import STOCKHOLM, facts, stable_key
 from ..tickster_se.pages import Pages, source_movie
-from .fetch import SOURCE, broadcast_page, programme_rows
+from .fetch import broadcast_page, programme_rows
 
 VENUE = ("bracke-bio", site._CINEMA, site._ADDRESS, site._CITY)
 
@@ -44,13 +44,8 @@ def rows(inputs, today):
             show_id,
             start,
             ticket,
-            audio,
-            subtitles,
+            *facts(language=audio, subtitles=subtitles),
             stable_key(broadcast, title_key(title)),
             pages.filename(url if html else site._URL),
             source_movie(title, url, details),
         )
-
-
-if __name__ == "__main__":
-    catalogue_main(SOURCE, rows)

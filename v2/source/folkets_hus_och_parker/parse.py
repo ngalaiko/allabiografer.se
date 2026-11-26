@@ -5,7 +5,7 @@ import re
 
 from parse.parsers.folkets_hus_och_parker import _PRIVATE_HIRE, _SITES, _film, _start
 
-from .._shared import STOCKHOLM, catalogue_main, movie_fields, stable_key
+from .._shared import STOCKHOLM, facts, movie_fields, stable_key
 
 
 def rows(inputs, today):
@@ -51,13 +51,8 @@ def rows(inputs, today):
                     key,
                     start,
                     ticket,
-                    info.get("audioLanguage") or "",
-                    info.get("textLanguage") or "",
+                    *facts(language=info.get("audioLanguage") or "", subtitles=info.get("textLanguage") or ""),
                     f"{site.source}-{feature['id']}",
                     path.name,
                     fields,
                 )
-
-
-if __name__ == "__main__":
-    catalogue_main("folkets_hus_och_parker", rows)

@@ -2,12 +2,8 @@
 
 from parse.parsers.hypnostheatre_com import _URL
 
-from .._shared import capture, fetch_main
+from .._shared import capture
 
 
-def fetch_pages(session, inputs):
+def fetch_pages(session, inputs, today, *, selectors=None):
     capture(session, _URL, inputs / "programme.html")
-
-
-if __name__ == "__main__":
-    fetch_main("hypnostheatre_com", fetch_pages)

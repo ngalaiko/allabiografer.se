@@ -1,11 +1,10 @@
 """Save Tickster and linked cinema HTML for later replay through the v1 parsers."""
 
 import logging
-from datetime import datetime
 
 import requests
 
-from .._shared import STOCKHOLM, movie_fields, stable_key
+from .._shared import movie_fields, saved, stable_key
 
 log = logging.getLogger(__name__)
 
@@ -28,7 +27,7 @@ class Pages:
         if self.session is not None and not path.exists():
             try:
                 response = self.session.get(url, timeout=timeout)
-                path.write_bytes(response.content)
+                saved(self.session, path, response)
                 response.raise_for_status()
             except requests.RequestException as error:
                 failure.write_text(f"{url}: {error}\n", encoding="utf-8")
@@ -48,10 +47,6 @@ class Pages:
                 raise
             log.warning("Unavailable page %s: %s", url, error)
             return ""
-
-
-def capture_day(inputs):
-    return datetime.fromtimestamp(int(inputs.parents[1].name), STOCKHOLM).date()
 
 
 def year_for_month(today, month):

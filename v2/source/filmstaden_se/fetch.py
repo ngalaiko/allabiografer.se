@@ -3,14 +3,14 @@
 from parse.parsers.filmstaden_se import _API
 
 from ...schedule import checked
-from .._shared import capture_json, fetch_cities_main
+from .._shared import capture_json
 
 
 def venue_id(ncg_id):
     return ncg_id.lower()
 
 
-def fetch_pages(session, inputs, cities=(), *, selectors=None):
+def fetch_pages(session, inputs, today, *, selectors=None):
     cinemas = capture_json(session, f"{_API}/cinema/sv/1/1024", inputs / "cinemas.json")
     films = set()
     checked(selectors, {venue_id(cinema["ncgId"]) for cinema in cinemas["items"]})
@@ -18,7 +18,7 @@ def fetch_pages(session, inputs, cities=(), *, selectors=None):
         if selectors is not None and venue_id(cinema["ncgId"]) not in selectors:
             continue
         city = ((cinema.get("address") or {}).get("city") or {}).get("name")
-        if not city or (cities and city not in cities) or cinema["ncgId"] in {"NCG26999", "NCG12567"}:
+        if not city or cinema["ncgId"] in {"NCG26999", "NCG12567"}:
             continue
         cinema_id = cinema["ncgId"]
         page = 1
@@ -35,7 +35,3 @@ def fetch_pages(session, inputs, cities=(), *, selectors=None):
             page += 1
     for movie in sorted(films):
         capture_json(session, f"{_API}/movie/sv/{movie}", inputs / f"movie-{movie}.json")
-
-
-if __name__ == "__main__":
-    fetch_cities_main("filmstaden_se", fetch_pages)

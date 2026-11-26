@@ -1,66 +1,33 @@
-"""Convert a saved Rio Tomelilla capture to JSON-LD without network access."""
+"""Replay Rio Tomelilla's saved programme and movie details."""
 
-import argparse
-import hashlib
 import re
-from datetime import UTC, datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-from parse import _version
+from .._shared import facts, movie_fields
+from . import BASE, STOCKHOLM, response_rows
 
-from ...schedule import schedule_identifier
-from ...schema import Catalogue, entity_path, link, write
-from .._shared import movie_fields
-from . import BASE, SOURCE, STOCKHOLM, new_source, response_rows
+VENUE = ("riobiografen-tomelilla",)
 
 
-def poster_asset(root: Path, capture: Path) -> Path:
-    data = capture.read_bytes()
-    path = root / "assets" / hashlib.sha256(data).hexdigest()
-    path.parent.mkdir(exist_ok=True)
-    try:
-        with path.open("xb") as asset:
-            asset.write(data)
-    except FileExistsError:
-        pass  # An existing object has the same content address.
-    return path
-
-
-def parse(fetch_dir: Path) -> Path:
-    inputs = fetch_dir / "sources" / SOURCE
-    root = fetch_dir.parents[1]
-    output = new_source(root, "parse")
-    output.mkdir(parents=True)
-    catalogue = Catalogue(output)
-    city = output / entity_path("City", "tomelilla")
-    cinema = output / entity_path("MovieTheater", "riobiografen-tomelilla")
-    try:
-        rows = [
-            row
-            for row in response_rows(inputs / "programme.json")
-            if not row["show_locked"]
-            and row["title"].strip()
-            and not row["title"].strip().casefold().startswith("filmquiz")
-        ]
-        catalogue.node(city, name="Tomelilla")
-        catalogue.node(
-            cinema,
-            name="Tomelilla Riobiografen",
-            identifier=schedule_identifier(SOURCE, cinema.stem),
-            containedInPlace=link(city, cinema.parent),
-            address={"@type": "PostalAddress", "streetAddress": "Norregatan 3", "addressCountry": "SE"},
-        )
-        movies = {}
-        for row in rows:
-            movies.setdefault(row["movie_id"], row)
-        for movie_id, row in movies.items():
-            detail_file = f"movie-details-{movie_id}.json"
-            detail = next(item for item in response_rows(inputs / detail_file) if item["movie_id"] == movie_id)
+def rows(inputs, today):
+    movies = {}
+    for row in response_rows(inputs / "programme.json"):
+        title = row["title"].strip()
+        if row["show_locked"] or not title or title.casefold().startswith("filmquiz"):
+            continue
+        start = datetime.fromisoformat(row["show_time"]).astimezone(STOCKHOLM)
+        if start.date() < today:
+            continue
+        movie_id = str(row["movie_id"])
+        capture = f"movie-details-{movie_id}.json"
+        if movie_id not in movies:
+            detail = next(item for item in response_rows(inputs / capture) if str(item["movie_id"]) == movie_id)
             description = BeautifulSoup(detail.get("description") or "", "html.parser").get_text(" ", strip=True)
             fields = movie_fields(
-                row["title"].strip(),
+                title,
                 f"{BASE}/#/movie/{movie_id}",
                 description,
                 detail.get("running_time") or row.get("running_time"),
@@ -74,56 +41,18 @@ def parse(fetch_dir: Path) -> Path:
                 fields.setdefault("sameAs", f"https://www.imdb.com/title/{imdb}")
             if rating := detail.get("rating_name") or row.get("rating_name"):
                 fields["contentRating"] = rating
-            movie = output / entity_path("Movie", str(movie_id))
             if poster := detail.get("movie_poster"):
-                asset = poster_asset(root, inputs / f"poster-{movie_id}{Path(poster).suffix}")
-                fields["image"] = link(asset, movie.parent)
-            catalogue.node(
-                movie,
-                identifier=str(movie_id),
-                isBasedOn=link(inputs / detail_file, movie.parent),
-                **fields,
-            )
-        for row in rows:
-            screening_id = row["show_time_id"]
-            start = datetime.fromisoformat(row["show_time"])
-            fields = {}
-            if runtime := row.get("running_time"):
-                fields["endDate"] = (start + timedelta(minutes=runtime)).astimezone(STOCKHOLM).isoformat()
-            if audio := _version.languages(row.get("audio_lang") or ""):
-                fields["inLanguage"] = sorted(audio)
-            if subtitles := _version.languages(row.get("subtitle_lang") or ""):
-                fields["subtitleLanguage"] = sorted(subtitles)
-            screening = output / entity_path("ScreeningEvent", str(screening_id))
-            movie = output / entity_path("Movie", str(row["movie_id"]))
-            catalogue.node(
-                screening,
-                name=row["title"].strip(),
-                startDate=start.astimezone(STOCKHOLM).isoformat(),
-                workPresented=link(movie, screening.parent),
-                location=link(cinema, screening.parent),
-                offers={"@type": "Offer", "url": f"{BASE}/#/book/{screening_id}"},
-                **fields,
-            )
-        return catalogue.finish(
-            name="Rio Tomelilla source catalogue",
-            dateCreated=datetime.now(UTC).isoformat(),
-            based_on=sorted(inputs.iterdir()),
+                # A capture name: the pipeline links it to the stored ImageObject.
+                fields["image"] = f"poster-{movie_id}{Path(poster).suffix}"
+            movies[movie_id] = fields
+        show_id = str(row["show_time_id"])
+        yield (
+            VENUE,
+            show_id,
+            start,
+            f"{BASE}/#/book/{show_id}",
+            *facts(language=row.get("audio_lang") or "", subtitles=row.get("subtitle_lang") or ""),
+            movie_id,
+            capture,
+            movies[movie_id],
         )
-    except Exception as error:
-        write(output / "error.json", {"error": str(error)})
-        raise
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("fetch", type=Path, help="Fetch directory printed by fetch.py")
-    args = parser.parse_args()
-    fetch_dir = args.fetch.resolve()
-    if fetch_dir.parent.name != "fetch" or not (fetch_dir / "sources" / SOURCE).is_dir():
-        parser.error(f"expected a fetch/<timestamp> directory containing sources/{SOURCE}")
-    print(parse(fetch_dir).as_uri())
-
-
-if __name__ == "__main__":
-    main()

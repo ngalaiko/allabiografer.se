@@ -4,10 +4,10 @@ from urllib.parse import urljoin
 
 from parse.parsers.wp_theatre import _SITES
 
-from .._shared import capture, fetch_main, film_id
+from .._shared import capture, film_id
 
 
-def fetch_pages(session, inputs):
+def fetch_pages(session, inputs, today, *, selectors=None):
     (site,) = _SITES
     page = capture(session, site["url"], inputs / "programme.html")
     urls = {urljoin(site["url"], a["href"]) for a in page.select('.wp_theatre_event_title a[href*="/produktion/"]')}
@@ -15,7 +15,3 @@ def fetch_pages(session, inputs):
         raise ValueError("Missing Capitol Göteborg programme")
     for url in sorted(urls):
         capture(session, url, inputs / f"movie-{film_id(url)}.html")
-
-
-if __name__ == "__main__":
-    fetch_main("wp_theatre", fetch_pages)

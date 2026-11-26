@@ -5,7 +5,7 @@ from datetime import datetime
 
 from parse.parsers.biorio_se import _CANCELLED, _SITE, _label, _release_date, _show_date, _show_time
 
-from .._shared import STOCKHOLM, catalogue_main, movie_fields
+from .._shared import STOCKHOLM, facts, movie_fields
 
 
 def rows(inputs, today):
@@ -37,13 +37,8 @@ def rows(inputs, today):
             show["id"],
             datetime.combine(day, clock, STOCKHOLM),
             f"{_SITE}/sv/boka/{show['id']}",
-            _label(show.get("audio")),
-            _label(show.get("subtitles")),
+            *facts(language=_label(show.get("audio")), subtitles=_label(show.get("subtitles"))),
             slug,
             capture,
             details[slug],
         )
-
-
-if __name__ == "__main__":
-    catalogue_main("biorio_se", rows)

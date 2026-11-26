@@ -6,9 +6,9 @@ from urllib.parse import urljoin
 from parse.parsers import _tickster
 from parse.parsers import hallundafolketshus_se as site
 
-from .._shared import STOCKHOLM, catalogue_main, stable_key
+from .._shared import STOCKHOLM, facts, stable_key
 from ..tickster_se.pages import Pages, source_movie
-from .fetch import SOURCE, articles
+from .fetch import articles
 
 VENUE = ("hallunda-folkets-hus", site._CINEMA, site._ADDRESS, site._CITY)
 
@@ -33,13 +33,8 @@ def rows(inputs, today):
             stable_key(url, start.isoformat()),
             start,
             event.url if event else ticket or url,
-            audio,
-            subtitles,
+            *facts(language=audio, subtitles=subtitles),
             stable_key(title.casefold()),
             pages.filename(url if html else site._URL),
             source_movie(title, url, details),
         )
-
-
-if __name__ == "__main__":
-    catalogue_main(SOURCE, rows)

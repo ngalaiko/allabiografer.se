@@ -7,7 +7,7 @@ from requests import Response
 from parse.parsers.bioguiden_se import _SITES, _parse_pages
 from store import Film, Venue
 
-from .._shared import STOCKHOLM, catalogue_main, movie_fields, stable_key
+from .._shared import STOCKHOLM, movie_fields, stable_key
 
 
 def rows(inputs, today):
@@ -34,13 +34,9 @@ def rows(inputs, today):
                 stable_key(venue_key, item.film_key, start.isoformat(), item.screen),
                 start,
                 item.ticket_url,
-                "",
-                "",
+                item.version,
+                item.presentation,
                 stable_key(film.key),
                 f"programme-{venue_key}.html",
                 movie_fields(film.title, film.url, film.overview, film.runtime),
             )
-
-
-if __name__ == "__main__":
-    catalogue_main("bioguiden_se", rows)

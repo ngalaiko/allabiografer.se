@@ -8,7 +8,6 @@ from parse.parsers.kiviksbio_se import (
     _ADDRESS,
     _CINEMA,
     _CITY,
-    _SOURCE,
     _URL,
     _directors,
     _overview,
@@ -17,7 +16,7 @@ from parse.parsers.kiviksbio_se import (
 )
 
 from .._regional import year_from_capture
-from .._shared import STOCKHOLM, catalogue_main, film_id, movie_fields, stable_key
+from .._shared import STOCKHOLM, film_id, movie_fields, stable_key
 
 
 def rows(inputs, today):
@@ -44,13 +43,9 @@ def rows(inputs, today):
             show,
             start,
             url,
-            "",
-            _subtitles(detail)["version"].subtitles.languages,
+            _subtitles(detail)["version"],
+            _subtitles(detail)["presentation"],
             stable_key(film.key),
             capture,
             fields,
         )
-
-
-if __name__ == "__main__":
-    catalogue_main(_SOURCE, rows)

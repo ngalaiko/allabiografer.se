@@ -5,7 +5,7 @@ from datetime import datetime
 
 from parse.parsers.filmstaden_se import _CINEMA_STATUS, _film, _screening
 
-from .._shared import STOCKHOLM, catalogue_main, movie_fields
+from .._shared import STOCKHOLM, movie_fields
 from .fetch import venue_id
 
 
@@ -53,13 +53,9 @@ def rows(inputs, today):
                 show_id,
                 start,
                 show.ticket_url,
-                show.version.audio.languages,
-                show.version.subtitles.languages,
+                show.version,
+                show.presentation,
                 movie_id,
                 capture,
                 films[movie_id],
             )
-
-
-if __name__ == "__main__":
-    catalogue_main("filmstaden_se", rows)

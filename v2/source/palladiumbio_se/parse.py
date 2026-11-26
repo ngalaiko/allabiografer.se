@@ -8,7 +8,6 @@ from parse.parsers.palladiumbio_se import (
     _ADDRESS,
     _CINEMA,
     _CITY,
-    _SOURCE,
     _URL,
     _hero,
     _overview,
@@ -18,7 +17,7 @@ from parse.parsers.palladiumbio_se import (
 )
 
 from .._regional import year_from_capture
-from .._shared import STOCKHOLM, catalogue_main, movie_fields, stable_key
+from .._shared import STOCKHOLM, facts, movie_fields, stable_key
 
 
 def rows(inputs, today):
@@ -49,13 +48,8 @@ def rows(inputs, today):
             show,
             start,
             ticket,
-            audio,
-            subtitles,
+            *facts(language=audio, subtitles=subtitles),
             stable_key(film.key),
             capture,
             fields,
         )
-
-
-if __name__ == "__main__":
-    catalogue_main(_SOURCE, rows)

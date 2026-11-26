@@ -19,7 +19,7 @@ from parse.parsers.nortic_se import (
     _title,
 )
 
-from .._shared import STOCKHOLM, catalogue_main, movie_fields, stable_key
+from .._shared import STOCKHOLM, facts, movie_fields, stable_key
 
 _VENUE_ALIASES = {
     "d97e37737b8573ad9ae80537": "e381546df50c3bd3bfeada04",
@@ -45,7 +45,7 @@ def rows(inputs, today):
         title, _ = _title(event["title"])
         if event.get("category") == "Opera":
             title = _COMPOSER.sub("", title)
-        title, _, _, subtitles = _version.split_title(title)
+        title, fmt, _, subtitles = _version.split_title(title)
         film = _film(event, title)
         desc = _text(event.get("description"))
         audio, stated_subtitles = _version.from_text(desc)
@@ -72,13 +72,12 @@ def rows(inputs, today):
                 show_id,
                 start,
                 ticket,
-                audio if _DUBBED.search(desc) or _SPEECH.search(desc) else "",
-                subtitles or stated_subtitles,
+                *facts(
+                    format=fmt,
+                    language=audio if _DUBBED.search(desc) or _SPEECH.search(desc) else "",
+                    subtitles=subtitles or stated_subtitles,
+                ),
                 stable_key(film.key),
                 capture,
                 movie_fields(film.title, film.url, film.overview, film.runtime, alternate=film.title_original),
             )
-
-
-if __name__ == "__main__":
-    catalogue_main("nortic_se", rows)

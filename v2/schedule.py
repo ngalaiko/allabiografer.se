@@ -5,9 +5,9 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from .graph import DATA
+
 PREFIX = "allabiografer:schedule:"
-DATA = Path(__file__).resolve().parent / "data"
-SELECTION = "selection.json"
 
 
 @dataclass(frozen=True)
@@ -17,11 +17,8 @@ class Route:
     venue_id: str
 
 
-def schedule_identifier(source: str, venue_id: str) -> list[dict[str, str]]:
-    return [{"@type": "PropertyValue", "propertyID": f"{PREFIX}{source}", "value": venue_id}]
-
-
 def routes(data: Path = DATA) -> dict[str, Route]:
+    """Every registry cinema's single schedule binding, keyed by MovieTheater ID."""
     result = {}
     used = set()
     for path in sorted((data / "schema" / "MovieTheater").glob("*.jsonld")):
@@ -49,38 +46,6 @@ def routes(data: Path = DATA) -> dict[str, Route]:
     if not result:
         raise ValueError(f"No cinemas under {data}")
     return result
-
-
-def selection(inputs: Path) -> list[dict] | None:
-    path = inputs / SELECTION
-    return json.loads(path.read_bytes()) if path.is_file() else None
-
-
-_LEGACY_PREFIXES = {
-    "bio_se": "bio-se-",
-    "bioguiden_se": "bioguiden-",
-    "biosverige_se": "biosverige-",
-    "cinemascenen_se": "cinemascenen-",
-    "doclounge_se": "doclounge-",
-    "filmstaden_se": "filmstaden-",
-    "nfbio_se": "nfbio-",
-    "nortic_se": "nortic-",
-    "svenskabio_se": "svenskabio-",
-}
-
-
-def local_venue_id(source: str, venue: str) -> str:
-    return venue.removeprefix(_LEGACY_PREFIXES.get(source, ""))
-
-
-def selected_venues(inputs: Path) -> set[str] | None:
-    selected = selection(inputs)
-    if selected is None:
-        return None
-    venues = {
-        venue for route in selected for venue in ((route["venue_id"],) if "venue_id" in route else route["venue_ids"])
-    }
-    return {local_venue_id(inputs.name, venue) for venue in venues}
 
 
 def checked(selectors: set[str] | None, known) -> None:

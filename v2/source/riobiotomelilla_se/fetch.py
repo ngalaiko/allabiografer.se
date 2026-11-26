@@ -1,25 +1,24 @@
-"""Fetch Rio Tomelilla's programme, movie details, and posters to disk."""
+"""Fetch Rio Tomelilla's programme, movie details, and posters."""
 
-from datetime import datetime
 from pathlib import Path
 
-from .._shared import fetch_main
-from . import BASE, SOURCE, STOCKHOLM, response_rows
+from .._shared import saved
+from . import BASE, response_rows
 
 
 def capture(session, path: Path, endpoint: str, **params) -> list[dict]:
     response = session.get(f"{BASE}/webservices/{endpoint}", params={"cinema_id": 8, **params}, timeout=30)
     response.raise_for_status()
-    path.write_bytes(response.content)
+    saved(session, path, response)
     return response_rows(path)
 
 
-def fetch_pages(session, inputs: Path) -> None:
+def fetch_pages(session, inputs, today, *, selectors=None):
     rows = capture(
         session,
         inputs / "programme.json",
         "show_times/getShowTimesDays",
-        date=datetime.now(STOCKHOLM).date().isoformat(),
+        date=today.isoformat(),
         number_of_days=35,
     )
     for movie_id in dict.fromkeys(row["movie_id"] for row in rows):
@@ -32,8 +31,4 @@ def fetch_pages(session, inputs: Path) -> None:
             response.raise_for_status()
             if not response.headers.get("Content-Type", "").lower().startswith("image/"):
                 raise ValueError(f"Poster for movie {movie_id} is not an image")
-            (inputs / f"poster-{movie_id}{Path(poster).suffix}").write_bytes(response.content)
-
-
-if __name__ == "__main__":
-    fetch_main(SOURCE, fetch_pages)
+            saved(session, inputs / f"poster-{movie_id}{Path(poster).suffix}", response)

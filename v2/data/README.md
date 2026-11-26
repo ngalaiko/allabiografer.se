@@ -1,15 +1,36 @@
-# Cinema registry
+# Data
 
-Store JSON-LD as `schema/<Schema.org type>/<id>.jsonld`, relative to this directory or a job's output directory. Registry IDs use Swedish names; disambiguate shared cinema names with the locality in parentheses. Use relative, URL-encoded links.
+```text
+assets/<sha256>                  raw bytes: HTML, API responses, images
+schema/<Schema.org type>/<id>.jsonld
+```
 
-`containedInPlace` connects `MovieTheater` → `City` → `AdministrativeArea` (län) → `Country/Sverige.jsonld`. County names and codes are from [SCB](https://www.scb.se/hitta-statistik/regional-statistik-och-kartor/regionala-indelningar/lan-och-kommuner/lan-och-kommuner-i-kodnummerordning/). Locality assignments use [GeoNames](https://www.geonames.org/) (CC BY 4.0), with ambiguous names checked against venue locations.
+Run `python -m v2.pipeline --all`, or pass cinema IDs (`MovieTheater` filename stems). The command prints the merged `Dataset`.
 
-Use `MovieTheater.url` for the venue or operator’s public website. Omit it when unknown; do not substitute a ticketing or scraper URL. Initial links come from published venue pages, Bio.se’s website field, and Bioguiden’s venue homepage links.
+## Registry
 
-The seed comes from the latest local parse catalogue for each source with saved output, plus Filmhuset Palladium from its adapter. Snapshot coverage is not exhaustive: venues without screenings in those captures may be absent. The Finspång calendar source has no verified venue binding.
+Checked in: `MovieTheater`, `City`, `AdministrativeArea` (län), and `Country`. IDs are Swedish names; shared cinema names get the locality in parentheses. `containedInPlace` links each cinema to its city, county, and `Country/Sverige.jsonld`. County names and codes are from [SCB](https://www.scb.se/hitta-statistik/regional-statistik-och-kartor/regionala-indelningar/lan-och-kommuner/lan-och-kommuner-i-kodnummerordning/); locality assignments use [GeoNames](https://www.geonames.org/) (CC BY 4.0), with ambiguous names checked against venue locations.
 
-Parse and merge jobs index their output at `schema/Dataset/catalogue.jsonld`. Replay raw captures from `fetch/` to regenerate older parse outputs in this layout.
+`MovieTheater.url` is the venue or operator's public website, omitted when unknown. Each cinema has one `PropertyValue` identifier: `allabiografer:schedule:<adapter>` with the adapter's venue ID, shared by fetch and parse.
 
-Each cinema has one `PropertyValue` identifier: `propertyID` is `allabiografer:schedule:<adapter>` and `value` is the adapter’s stable venue ID, shared by fetch and parse. The adapter translates between that ID and any upstream API parameters. Parse uses source-local filenames; merge prefixes cinema filenames with the adapter from `propertyID`.
+The seed comes from parsed captures and adapter configuration, so venues absent from those may be missing. The Finspång calendar source has no verified venue binding.
 
-Run `python -m v2.fetch 'Ale Medborgarhusets Bio'` (repeat cinema IDs as needed) or `python -m v2.fetch --all`. IDs are `MovieTheater` filename stems. Parse the printed fetch directory with the corresponding adapter. Each source's `selection.json` records the bindings for replay. Nortic provides one shared feed; its parser keeps only selected venues.
+## Pipeline output
+
+Generated and not checked in. Each run is an action:
+
+| Step | Action | `object` | `result` |
+|---|---|---|---|
+| fetch | `DownloadAction` | registry cinemas | `Dataset` of `DataDownload`s |
+| parse | `CreateAction` | fetch `Dataset` | `Dataset` of `Movie`s and `ScreeningEvent`s |
+| merge | `CreateAction` | parse `Dataset`s | merged `Dataset` |
+
+Actions record `startTime`, `endTime`, `actionStatus`, and `error` for failures. A failing adapter does not stop the others; the run exits non-zero after merging the rest.
+
+Entities other than actions are named by the SHA-256 of their content, so identical outputs are shared between runs. Links are relative paths.
+
+`DataDownload` and `ImageObject` describe stored bytes. `contentUrl` is an [RFC 6920](https://www.rfc-editor.org/rfc/rfc6920) `ni:///sha-256;…` URI. `sha256` names the file under `assets/`. Bytes are zstd-compressed when that saves at least 10%; `encodingFormat` then carries the registered `+zstd` suffix, e.g. `text/html+zstd`.
+
+`ScreeningEvent` links `workPresented` to a `Movie` and `location` to a registry `MovieTheater`. `inLanguage` and `subtitleLanguage` are BCP 47 tags; an empty `subtitleLanguage` means the source states there are none. `videoFormat` lists picture and projection formats only: `2D`, `3D`, `IMAX`, `Dolby Cinema`, `4DX`, `ScreenX`, `35 mm`, `70 mm`.
+
+Merge reconciles movies across sources: a merged `Movie` lists its source records in `isBasedOn`.

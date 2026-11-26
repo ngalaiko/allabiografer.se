@@ -1,17 +1,12 @@
-"""Rio Tomelilla's on-disk capture format."""
+"""Rio Tomelilla's capture format."""
 
 import json
 from pathlib import Path
-from time import time
 from zoneinfo import ZoneInfo
 
 BASE = "https://riobiotomelilla.se"
 STOCKHOLM = ZoneInfo("Europe/Stockholm")
 SOURCE = "riobiotomelilla_se"
-
-
-def new_source(root: Path, stage: str) -> Path:
-    return root / stage / str(int(time())) / "sources" / SOURCE
 
 
 def response_rows(path: Path) -> list[dict]:

@@ -9,7 +9,7 @@ from requests import ConnectionError as RequestConnectionError
 from parse.parsers import _biosverige_api, _tickster
 from parse.parsers.biosverige_se import _SITES
 
-from .._shared import STOCKHOLM, catalogue_main, movie_fields, stable_key
+from .._shared import STOCKHOLM, facts, movie_fields, stable_key
 
 
 def tickster_path(inputs, url):
@@ -98,13 +98,8 @@ def rows(inputs, today):
                 show_id,
                 start,
                 booking or (event.url if event else site.tickets),
-                audio,
-                subtitles,
+                *facts(language=audio, subtitles=subtitles),
                 movie_id,
                 path.name,
                 movies[movie_id],
             )
-
-
-if __name__ == "__main__":
-    catalogue_main("biosverige_se", rows)

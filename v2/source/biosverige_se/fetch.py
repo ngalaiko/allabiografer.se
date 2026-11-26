@@ -1,12 +1,10 @@
 """Capture all BioSverige schedule APIs and the Tickster pages they need."""
 
-from datetime import datetime
-
 from parse.parsers import _tickster
 from parse.parsers.biosverige_se import _SITES
 
 from ...schedule import checked
-from .._shared import STOCKHOLM, capture_json, fetch_cities_main, stable_key
+from .._shared import capture_json, saved, stable_key
 from .parse import schedule_rows, tickster_path, venue_id
 
 
@@ -19,19 +17,16 @@ class CaptureTickster:
         response = self.session.get(url, timeout=timeout)
         response.raise_for_status()
         response.encoding = "utf-8"
-        tickster_path(self.inputs, url).write_bytes(response.content)
+        saved(self.session, tickster_path(self.inputs, url), response)
         return response
 
 
-def fetch_pages(session, inputs, cities=(), *, selectors=None):
-    today = datetime.fromtimestamp(int(inputs.parents[1].name), STOCKHOLM).date()
+def fetch_pages(session, inputs, today, *, selectors=None):
     params = {"StartDate": today.isoformat(), "Limit": 500, "Months": 12, "Days": 365}
     tickets = CaptureTickster(session, inputs)
     checked(selectors, {venue_id(site.url) for site in _SITES})
     for site in _SITES:
         if selectors is not None and venue_id(site.url) not in selectors:
-            continue
-        if cities and site.city not in cities:
             continue
         path = inputs / f"schedule-{stable_key(site.url)}.json"
         items = capture_json(session, f"{site.url}/api/eventschedules", path, params=params)
@@ -43,7 +38,3 @@ def fetch_pages(session, inputs, cities=(), *, selectors=None):
             # Ambiguous same-day title matches cause Programme.find to read event details.
             for _, title, start, *_ in upcoming:
                 programme.find(title, start.date(), start.time())
-
-
-if __name__ == "__main__":
-    fetch_cities_main("biosverige_se", fetch_pages)

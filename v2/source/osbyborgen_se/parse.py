@@ -8,7 +8,6 @@ from parse.parsers.osbyborgen_se import (
     _ADDRESS,
     _CINEMA,
     _CITY,
-    _SOURCE,
     _URL,
     _detail,
     _film,
@@ -19,7 +18,7 @@ from parse.parsers.osbyborgen_se import (
 )
 
 from .._regional import year_from_capture
-from .._shared import STOCKHOLM, catalogue_main, movie_fields, stable_key
+from .._shared import STOCKHOLM, movie_fields, stable_key
 
 
 def rows(inputs, today):
@@ -56,19 +55,15 @@ def rows(inputs, today):
                 fields["contentRating"] = film.age_rating
             movies[key] = fields, detail.get("f_label")
         fields, label = movies[key]
-        version = _label_facts(session.get("f_label"), label)["version"]
+        found = _label_facts(session.get("f_label"), label)
         yield (
             ("bio-borgen-osby", _CINEMA, _ADDRESS, _CITY),
             show,
             start,
             ticket,
-            version.audio.languages,
-            "",
+            found["version"],
+            found["presentation"],
             key,
             capture,
             fields,
         )
-
-
-if __name__ == "__main__":
-    catalogue_main(_SOURCE, rows)

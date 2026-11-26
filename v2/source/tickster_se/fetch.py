@@ -6,8 +6,7 @@ from parse.parsers import _tickster
 from parse.parsers.tickster_se import _BASE, _NOT_A_SHOWING, _SITES
 
 from ...schedule import checked
-from .._shared import fetch_main
-from .pages import Pages, capture_day
+from .pages import Pages
 
 SOURCE = "tickster_se"
 
@@ -35,11 +34,7 @@ def candidates(pages, today, selectors=None):
                     yield site, item
 
 
-def fetch_pages(session, inputs, *, selectors=None):
+def fetch_pages(session, inputs, today, *, selectors=None):
     pages = Pages(inputs, session)
-    for _, item in candidates(pages, capture_day(inputs), selectors):
+    for _, item in candidates(pages, today, selectors):
         pages.text(item.url, optional=True)
-
-
-if __name__ == "__main__":
-    fetch_main(SOURCE, fetch_pages)

@@ -2,12 +2,8 @@
 
 from parse.parsers.nortic_se import _API
 
-from .._shared import capture_json, fetch_main
+from .._shared import capture_json
 
 
-def fetch_pages(session, inputs):
+def fetch_pages(session, inputs, today, *, selectors=None):
     capture_json(session, _API, inputs / "events.json")
-
-
-if __name__ == "__main__":
-    fetch_main("nortic_se", fetch_pages)

@@ -2,13 +2,13 @@
 
 from urllib.parse import urljoin
 
-from .._shared import capture, fetch_main, film_id
+from .._shared import capture, film_id
 
 PROGRAMME = "https://www.bioaspen.se/visningar/filmer/"
 SOURCE = "bioaspen_se"
 
 
-def fetch_pages(session, inputs):
+def fetch_pages(session, inputs, today, *, selectors=None):
     url = PROGRAMME
     visited = set()
     movies = {}
@@ -25,7 +25,3 @@ def fetch_pages(session, inputs):
         url = urljoin(url, following["href"]) if following else ""
     for movie in movies:
         capture(session, movie, inputs / f"movie-{film_id(movie)}.html")
-
-
-if __name__ == "__main__":
-    fetch_main(SOURCE, fetch_pages)

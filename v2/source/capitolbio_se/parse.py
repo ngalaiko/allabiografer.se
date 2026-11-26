@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from parse.parsers.capitolbio_se import _DAYS, _details, _page, _showtimes
 
-from .._shared import STOCKHOLM, catalogue_main, film_id, movie_fields
+from .._shared import STOCKHOLM, film_id, movie_fields
 
 
 def rows(inputs, today):
@@ -55,13 +55,9 @@ def rows(inputs, today):
                 film_id(show.ticket_url),
                 datetime.combine(day, show.time, STOCKHOLM),
                 show.ticket_url,
-                show.version.audio.languages,
-                show.version.subtitles.languages,
+                show.version,
+                show.presentation,
                 slug,
                 capture,
                 details[slug],
             )
-
-
-if __name__ == "__main__":
-    catalogue_main("capitolbio_se", rows)

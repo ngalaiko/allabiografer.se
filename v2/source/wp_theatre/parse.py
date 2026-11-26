@@ -5,7 +5,7 @@ from datetime import datetime
 from parse.parsers.wp_theatre import _SITES, _parse_production
 from store import Film
 
-from .._shared import STOCKHOLM, catalogue_main, movie_fields, stable_key
+from .._shared import STOCKHOLM, movie_fields, stable_key
 
 
 def rows(inputs, today):
@@ -38,13 +38,9 @@ def rows(inputs, today):
                 key,
                 start,
                 show.ticket_url,
-                show.version.audio.languages,
-                show.version.subtitles.languages,
+                show.version,
+                show.presentation,
                 path.stem.removeprefix("movie-"),
                 path.name,
                 fields,
             )
-
-
-if __name__ == "__main__":
-    catalogue_main("wp_theatre", rows)

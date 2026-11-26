@@ -5,9 +5,9 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup
 
-from parse.parsers.roxy_bio import _BASE, _SOURCE, _VENUE, _showtimes
+from parse.parsers.roxy_bio import _BASE, _VENUE, _showtimes
 
-from .._shared import STOCKHOLM, catalogue_main, movie_fields
+from .._shared import STOCKHOLM, facts, movie_fields
 from .fetch import response_rows
 
 
@@ -50,13 +50,8 @@ def rows(inputs, today):
             show,
             start,
             f"{_BASE}/#/book/{show}",
-            row.get("audio_lang") or "",
-            row.get("subtitle_lang") or "",
+            *facts(language=row.get("audio_lang") or "", subtitles=row.get("subtitle_lang") or ""),
             str(movie_id),
             capture,
             movies[movie_id],
         )
-
-
-if __name__ == "__main__":
-    catalogue_main(_SOURCE, rows)

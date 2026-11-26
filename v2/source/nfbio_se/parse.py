@@ -5,7 +5,7 @@ from datetime import datetime
 from parse.parsers.nfbio_se import _CINEMAS, _enrich, _parse_listing
 from store import Film
 
-from .._shared import STOCKHOLM, catalogue_main, movie_fields, stable_key
+from .._shared import STOCKHOLM, movie_fields, stable_key
 from .fetch import venue_id
 
 
@@ -45,13 +45,9 @@ def rows(inputs, today):
                 key,
                 start,
                 item.ticket_url,
-                item.version.audio.languages,
-                item.version.subtitles.languages,
+                item.version,
+                item.presentation,
                 movie_id,
                 capture,
                 fields,
             )
-
-
-if __name__ == "__main__":
-    catalogue_main("nfbio_se", rows)
