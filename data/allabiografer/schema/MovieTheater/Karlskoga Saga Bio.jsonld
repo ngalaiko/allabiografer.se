@@ -13,12 +13,5 @@
     "addressLocality": "Karlskoga",
     "postalCode": "691 32"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "8776"
-    }
-  ],
   "url": "http://karlskogabio.nu/"
 }

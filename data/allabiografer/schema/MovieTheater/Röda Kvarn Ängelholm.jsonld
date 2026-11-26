@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Ängelholm",
     "postalCode": "262 37"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg42235"
-    }
-  ]
+  }
 }

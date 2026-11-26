@@ -11,12 +11,5 @@
     "streetAddress": "Göteborgsvägen 11A",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:svenskabio_se",
-      "value": "4"
-    }
-  ],
   "url": "https://svenskabio.se/uddevalla/biostaden/"
 }

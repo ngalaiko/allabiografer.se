@@ -12,12 +12,5 @@
     "addressLocality": "Katthammarsvik",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "80bd17f4130329336539467c"
-    }
-  ],
   "url": "https://bygdegardarna.se/ostergarn/bio/"
 }

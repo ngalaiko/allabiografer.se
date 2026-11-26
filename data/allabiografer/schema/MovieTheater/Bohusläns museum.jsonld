@@ -11,12 +11,5 @@
     "streetAddress": "Museigatan 1",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:nortic_se",
-      "value": "a7ccf853023570a34bee6bbc"
-    }
-  ],
   "url": "https://www.bohuslansmuseum.se/"
 }

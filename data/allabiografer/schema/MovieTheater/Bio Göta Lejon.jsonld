@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Götene",
     "postalCode": "533 80"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "50407"
-    }
-  ]
+  }
 }

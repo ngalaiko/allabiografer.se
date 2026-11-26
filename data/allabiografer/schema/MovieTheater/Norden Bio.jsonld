@@ -13,12 +13,5 @@
     "addressLocality": "Kälarne",
     "postalCode": "844 61"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "e85e5e082bfc396b673abd05"
-    }
-  ],
   "url": "https://www.laget.se/KalarneIK-Skidor-NordenBio"
 }

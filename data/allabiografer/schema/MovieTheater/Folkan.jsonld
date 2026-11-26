@@ -13,12 +13,5 @@
     "addressLocality": "Gusum",
     "postalCode": "615 71"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "813733883cd1bab030286684"
-    }
-  ],
   "url": "http://www.gusum.info/bio"
 }

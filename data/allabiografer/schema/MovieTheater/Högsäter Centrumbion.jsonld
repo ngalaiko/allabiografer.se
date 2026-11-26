@@ -13,12 +13,5 @@
     "addressLocality": "Högsäter",
     "postalCode": "450 63"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "34212"
-    }
-  ],
   "url": "https://hogsater.com/bio/"
 }

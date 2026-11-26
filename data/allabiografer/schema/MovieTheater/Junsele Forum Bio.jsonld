@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Junsele",
     "postalCode": "880 37"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "17554"
-    }
-  ]
+  }
 }

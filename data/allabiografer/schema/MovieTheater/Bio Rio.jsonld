@@ -11,11 +11,5 @@
     "streetAddress": "Hornstulls strand 3",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:biorio_se"
-    }
-  ],
   "url": "https://www.biorio.se"
 }

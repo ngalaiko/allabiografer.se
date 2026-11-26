@@ -11,12 +11,5 @@
     "streetAddress": "Kungsgatan 1",
     "addressCountry": "SE",
     "addressLocality": "Markaryd"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2133"
-    }
-  ]
+  }
 }

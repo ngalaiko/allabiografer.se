@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Västerås Folkets Bio Elektra",
+  "about": {
+    "@id": "../MovieTheater/V%C3%A4ster%C3%A5s%20Folkets%20Bio%20Elektra.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "41855"
+  }
+}

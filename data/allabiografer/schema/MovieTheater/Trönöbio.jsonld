@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Trönödal",
     "postalCode": "826 95"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "36a7054f46731f3774c3ba6b"
-    }
-  ]
+  }
 }

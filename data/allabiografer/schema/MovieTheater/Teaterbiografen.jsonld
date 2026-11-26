@@ -13,12 +13,5 @@
     "addressLocality": "Sunne",
     "postalCode": "686 21"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "5645189afa7ceee4994ddaea"
-    }
-  ],
   "url": "http://www.teaterbiografen.se"
 }

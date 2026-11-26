@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Gällivare Folkets Hus",
+  "about": {
+    "@id": "../MovieTheater/G%C3%A4llivare%20Folkets%20Hus.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "28330"
+  }
+}

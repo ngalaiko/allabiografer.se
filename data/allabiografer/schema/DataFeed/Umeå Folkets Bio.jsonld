@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Umeå Folkets Bio",
+  "about": {
+    "@id": "../MovieTheater/Ume%C3%A5%20Folkets%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "13192"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Röda Kvarn",
+  "about": {
+    "@id": "../MovieTheater/R%C3%B6da%20Kvarn%20%28Helsingborg%29.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:folkets_hus_och_parker",
+    "value": "biorodakvarn_se"
+  }
+}

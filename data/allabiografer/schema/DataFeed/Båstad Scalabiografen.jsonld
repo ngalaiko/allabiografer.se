@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Båstad Scalabiografen",
+  "about": {
+    "@id": "../MovieTheater/B%C3%A5stad%20Scalabiografen.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "13228"
+  }
+}

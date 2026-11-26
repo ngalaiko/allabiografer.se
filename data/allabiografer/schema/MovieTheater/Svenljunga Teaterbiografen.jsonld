@@ -13,12 +13,5 @@
     "addressLocality": "Svenljunga",
     "postalCode": "512 51"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "4455"
-    }
-  ],
   "url": "http://svenljungakulturhus.se/bio.html"
 }

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Tranemo Bio Tranan",
+  "about": {
+    "@id": "../MovieTheater/Tranemo%20Bio%20Tranan.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "b83753c016b84159e15df419"
+  }
+}

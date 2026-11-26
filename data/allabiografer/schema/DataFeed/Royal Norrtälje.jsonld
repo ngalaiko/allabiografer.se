@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Royal Norrtälje",
+  "about": {
+    "@id": "../MovieTheater/Royal%20Norrt%C3%A4lje.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:filmstaden_se",
+    "value": "ncg29746"
+  }
+}

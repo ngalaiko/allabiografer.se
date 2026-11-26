@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Skutskär Rio Bio",
+  "about": {
+    "@id": "../MovieTheater/Skutsk%C3%A4r%20Rio%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "21536"
+  }
+}

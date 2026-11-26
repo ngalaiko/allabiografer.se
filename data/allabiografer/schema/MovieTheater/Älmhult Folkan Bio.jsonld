@@ -13,12 +13,5 @@
     "addressLocality": "Älmhult",
     "postalCode": "343 31"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "18721"
-    }
-  ],
   "url": "https://folketshusalmhult.se"
 }

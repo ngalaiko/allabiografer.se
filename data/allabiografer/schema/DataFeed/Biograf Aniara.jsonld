@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Biograf Aniara",
+  "about": {
+    "@id": "../MovieTheater/Biograf%20Aniara.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:tickster_se",
+    "value": "z46gh66v0v951ac"
+  }
+}

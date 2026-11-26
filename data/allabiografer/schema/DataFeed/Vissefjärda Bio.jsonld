@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Vissefjärda Bio",
+  "about": {
+    "@id": "../MovieTheater/Vissefj%C3%A4rda%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "3c323d1bc6a2fd0311c92952"
+  }
+}

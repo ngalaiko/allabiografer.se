@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Bengtsfors Odeon",
+  "about": {
+    "@id": "../MovieTheater/Bengtsfors%20Odeon.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "2246"
+  }
+}

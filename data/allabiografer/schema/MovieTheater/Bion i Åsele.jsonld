@@ -13,12 +13,5 @@
     "addressLocality": "Åsele",
     "postalCode": "910 60"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "22c83989c02eea7cc2b0924d"
-    }
-  ],
   "url": "http://www.bioniasele.se/"
 }

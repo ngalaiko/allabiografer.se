@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Tibro Biograf Vintergatan",
+  "about": {
+    "@id": "../MovieTheater/Tibro%20Biograf%20Vintergatan.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "3651"
+  }
+}

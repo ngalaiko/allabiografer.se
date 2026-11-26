@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Partille",
     "postalCode": "433 28"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "25c9cf7ebc3eabaf13fc8f9d"
-    }
-  ]
+  }
 }

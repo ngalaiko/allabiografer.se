@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Gnosjö",
     "postalCode": "335 32"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "00d89475d80984c94d6a288c"
-    }
-  ]
+  }
 }

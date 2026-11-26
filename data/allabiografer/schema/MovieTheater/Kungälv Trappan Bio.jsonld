@@ -13,12 +13,5 @@
     "addressLocality": "Kungälv",
     "postalCode": "442 31"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "21821"
-    }
-  ],
   "url": "https://www.trappanbio.se/"
 }

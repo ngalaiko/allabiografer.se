@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Bio Monitor",
+  "about": {
+    "@id": "../MovieTheater/Bio%20Monitor.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:biosverige_se",
+    "value": "1cabd3848325e5794511e779"
+  }
+}

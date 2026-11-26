@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Filmstaden Umeå",
+  "about": {
+    "@id": "../MovieTheater/Filmstaden%20Ume%C3%A5.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:filmstaden_se",
+    "value": "ncg18509"
+  }
+}

@@ -13,12 +13,5 @@
     "addressLocality": "Västra Frölunda",
     "postalCode": "421 46"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "40528"
-    }
-  ],
   "url": "https://www.frolundabion.nu"
 }

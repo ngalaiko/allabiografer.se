@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Biostaden Nyköping",
+  "about": {
+    "@id": "../MovieTheater/Biostaden%20Nyk%C3%B6ping.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:filmstaden_se",
+    "value": "ncg42974"
+  }
+}

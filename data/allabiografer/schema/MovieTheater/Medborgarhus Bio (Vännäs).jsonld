@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Vännäs",
     "postalCode": "911 81"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "b459fd8dc91fe17ae270d652"
-    }
-  ]
+  }
 }

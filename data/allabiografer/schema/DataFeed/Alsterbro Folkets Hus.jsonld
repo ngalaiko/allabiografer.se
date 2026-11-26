@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Alsterbro Folkets Hus",
+  "about": {
+    "@id": "../MovieTheater/Alsterbro%20Folkets%20Hus.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "2042"
+  }
+}

@@ -13,12 +13,5 @@
     "addressLocality": "Degerhamn",
     "postalCode": "380 65"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "31617"
-    }
-  ],
   "url": "https://www.facebook.com/grasgardsbygdegard/"
 }

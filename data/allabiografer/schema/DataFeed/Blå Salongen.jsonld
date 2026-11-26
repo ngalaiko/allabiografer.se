@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Blå Salongen",
+  "about": {
+    "@id": "../MovieTheater/Bl%C3%A5%20Salongen.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:nortic_se",
+    "value": "8d01eed6cab83bd17e929348"
+  }
+}

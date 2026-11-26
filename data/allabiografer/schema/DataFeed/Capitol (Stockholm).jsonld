@@ -1,0 +1,13 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Capitol",
+  "about": {
+    "@id": "../MovieTheater/Capitol%20%28Stockholm%29.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:capitolbio_se"
+  }
+}

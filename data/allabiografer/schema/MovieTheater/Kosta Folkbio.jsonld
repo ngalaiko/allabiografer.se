@@ -11,12 +11,5 @@
     "streetAddress": "Stora Vägen 47",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "5d429db63a501a508836729d"
-    }
-  ],
   "url": "https://folketshuskosta.se"
 }

@@ -13,12 +13,5 @@
     "addressLocality": "Arboga",
     "postalCode": "732 30"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "42384"
-    }
-  ],
   "url": "https://www.arbogabio.se"
 }

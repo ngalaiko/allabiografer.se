@@ -11,11 +11,5 @@
     "streetAddress": "Hantverksgatan 27",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:fhbracke_se"
-    }
-  ],
   "url": "https://fhbracke.se/bio/"
 }

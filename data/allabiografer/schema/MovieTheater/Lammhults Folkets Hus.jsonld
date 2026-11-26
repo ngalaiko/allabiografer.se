@@ -13,12 +13,5 @@
     "addressLocality": "Lammhult",
     "postalCode": "363 44"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2430"
-    }
-  ],
   "url": "http://lammhultsfolketshus.com/"
 }

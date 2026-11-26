@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Falun",
     "postalCode": "791 71"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg90949"
-    }
-  ]
+  }
 }

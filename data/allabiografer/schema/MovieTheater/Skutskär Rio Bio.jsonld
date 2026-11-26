@@ -13,12 +13,5 @@
     "addressLocality": "Skutskär",
     "postalCode": "814 31"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "21536"
-    }
-  ],
   "url": "https://fh-skutskar.se/"
 }

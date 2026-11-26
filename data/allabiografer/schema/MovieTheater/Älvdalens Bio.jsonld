@@ -10,12 +10,5 @@
     "@type": "PostalAddress",
     "streetAddress": "Dalgatan 104",
     "addressCountry": "SE"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "c0e8ce7fcf36762f5cab5ba0"
-    }
-  ]
+  }
 }

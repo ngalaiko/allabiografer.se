@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Solna",
     "postalCode": "169 79"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg41487"
-    }
-  ]
+  }
 }

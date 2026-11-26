@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Orsa Röda Kvarn",
+  "about": {
+    "@id": "../MovieTheater/Orsa%20R%C3%B6da%20Kvarn.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "2283"
+  }
+}

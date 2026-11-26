@@ -13,12 +13,5 @@
     "addressLocality": "Trosa",
     "postalCode": "619 34"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "10"
-    }
-  ],
   "url": "https://trosabio.se"
 }

@@ -10,12 +10,5 @@
     "@type": "PostalAddress",
     "streetAddress": "Hovrättstorget 1",
     "addressCountry": "SE"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:nortic_se",
-      "value": "103d1801e787a0a4232fa1ac"
-    }
-  ]
+  }
 }

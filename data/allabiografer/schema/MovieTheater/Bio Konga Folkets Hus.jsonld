@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Konga",
     "postalCode": "362 40"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "85eda82cb137d2cab4bbfbdc"
-    }
-  ]
+  }
 }

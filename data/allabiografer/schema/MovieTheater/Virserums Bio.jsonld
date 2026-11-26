@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Virserum",
     "postalCode": "577 71"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "181835fd016f5ea7161fa51f"
-    }
-  ]
+  }
 }

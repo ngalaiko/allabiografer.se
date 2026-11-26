@@ -13,12 +13,5 @@
     "addressLocality": "Jonsered",
     "postalCode": "433 75"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "9979"
-    }
-  ],
   "url": "http://www.gotabio.se/"
 }

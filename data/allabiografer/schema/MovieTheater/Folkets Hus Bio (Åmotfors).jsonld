@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Åmotfors",
     "postalCode": "673 34"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "c95d17cc8228530e49630b29"
-    }
-  ]
+  }
 }

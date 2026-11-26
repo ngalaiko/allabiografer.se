@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Skövde",
     "postalCode": "541 28"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg26114"
-    }
-  ]
+  }
 }

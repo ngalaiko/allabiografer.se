@@ -13,12 +13,5 @@
     "addressLocality": "Rimforsa",
     "postalCode": "590 43"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2186"
-    }
-  ],
   "url": "http://rimforsabio.se/"
 }

@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Ödeshög",
     "postalCode": "599 31"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "0dd50902a85bba39ced3a55b"
-    }
-  ]
+  }
 }

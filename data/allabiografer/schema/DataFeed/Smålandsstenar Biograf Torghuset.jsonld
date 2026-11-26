@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Smålandsstenar Biograf Torghuset",
+  "about": {
+    "@id": "../MovieTheater/Sm%C3%A5landsstenar%20Biograf%20Torghuset.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "2135"
+  }
+}

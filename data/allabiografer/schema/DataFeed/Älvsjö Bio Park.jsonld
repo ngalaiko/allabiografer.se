@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Älvsjö Bio Park",
+  "about": {
+    "@id": "../MovieTheater/%C3%84lvsj%C3%B6%20Bio%20Park.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "25838"
+  }
+}

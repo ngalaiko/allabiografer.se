@@ -13,12 +13,5 @@
     "addressLocality": "Arbrå",
     "postalCode": "820 10"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "2c64cb7044470e78a660b302"
-    }
-  ],
   "url": "http://www.sagahuset.se/"
 }

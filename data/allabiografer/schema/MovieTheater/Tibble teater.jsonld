@@ -10,12 +10,5 @@
     "@type": "PostalAddress",
     "streetAddress": "Attundavägen 1",
     "addressCountry": "SE"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:nortic_se",
-      "value": "b793be0d469a1b20ae7ae617"
-    }
-  ]
+  }
 }

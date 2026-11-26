@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Saga",
+  "about": {
+    "@id": "../MovieTheater/Saga%20%28Landsbro%29.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "c67a3ecea17a2c222cd19e07"
+  }
+}

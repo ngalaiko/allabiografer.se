@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Bålsta",
     "postalCode": "746 33"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "31430"
-    }
-  ]
+  }
 }

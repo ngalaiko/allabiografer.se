@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Motala",
     "postalCode": "591 22"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg87903"
-    }
-  ]
+  }
 }

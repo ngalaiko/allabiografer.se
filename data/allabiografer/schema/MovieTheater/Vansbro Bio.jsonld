@@ -13,12 +13,5 @@
     "addressLocality": "Vansbro",
     "postalCode": "786 31"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "28616"
-    }
-  ],
   "url": "https://www.facebook.com/vansbrobio/"
 }

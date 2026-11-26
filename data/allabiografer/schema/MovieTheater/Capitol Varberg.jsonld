@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Varberg",
     "postalCode": "432 41"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg55105"
-    }
-  ]
+  }
 }

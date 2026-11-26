@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Salenbio på Sälfjällstorget",
+  "about": {
+    "@id": "../MovieTheater/Salenbio%20p%C3%A5%20S%C3%A4lfj%C3%A4llstorget.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:filmstaden_se",
+    "value": "ncg22838"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Cinemascenen",
+  "about": {
+    "@id": "../MovieTheater/Cinemascenen%20%28S%C3%B6derhamn%29.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:cinemascenen_se",
+    "value": "soderhamn"
+  }
+}

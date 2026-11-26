@@ -6,13 +6,6 @@
   "containedInPlace": {
     "@id": "../City/Emmaboda.jsonld"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:tickster_se",
-      "value": "mxrn1p8013ak53k"
-    }
-  ],
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Nygatan 8",

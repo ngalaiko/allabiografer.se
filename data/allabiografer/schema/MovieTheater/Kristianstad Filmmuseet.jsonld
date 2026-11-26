@@ -12,12 +12,5 @@
     "addressLocality": "Kristianstad",
     "addressCountry": "SE",
     "postalCode": "291 22"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "2e564faccbfc315e2690aa93"
-    }
-  ]
+  }
 }

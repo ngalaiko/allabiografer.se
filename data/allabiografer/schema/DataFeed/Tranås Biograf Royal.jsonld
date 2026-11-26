@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Tranås Biograf Royal",
+  "about": {
+    "@id": "../MovieTheater/Tran%C3%A5s%20Biograf%20Royal.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "7627"
+  }
+}

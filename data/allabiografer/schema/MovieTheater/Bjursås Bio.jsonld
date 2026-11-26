@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Bjursås",
     "postalCode": "790 21"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "1b659e981619c1d72add9bef"
-    }
-  ]
+  }
 }

@@ -10,12 +10,5 @@
     "@type": "PostalAddress",
     "streetAddress": "Vattenledningsvägen 46",
     "addressCountry": "SE"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:nortic_se",
-      "value": "5abe9f74b43fc5a465bff57e"
-    }
-  ]
+  }
 }

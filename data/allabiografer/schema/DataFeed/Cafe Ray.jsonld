@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Cafe Ray",
+  "about": {
+    "@id": "../MovieTheater/Cafe%20Ray.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:nortic_se",
+    "value": "a3c2e5af9f1a63e5d65a936b"
+  }
+}

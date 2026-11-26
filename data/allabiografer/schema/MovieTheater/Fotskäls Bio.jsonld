@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Fotskäl",
     "postalCode": "519 96"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "13356"
-    }
-  ]
+  }
 }

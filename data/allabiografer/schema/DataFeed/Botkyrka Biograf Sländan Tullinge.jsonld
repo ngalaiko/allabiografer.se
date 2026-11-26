@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Botkyrka Biograf Sländan Tullinge",
+  "about": {
+    "@id": "../MovieTheater/Botkyrka%20Biograf%20Sl%C3%A4ndan%20Tullinge.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "6700"
+  }
+}

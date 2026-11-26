@@ -11,12 +11,5 @@
     "streetAddress": "Banérsgatan 3",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "7c7f277f413b053dd22bf877"
-    }
-  ],
   "url": "http://www.mohedabio.se"
 }

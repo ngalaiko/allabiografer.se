@@ -12,12 +12,5 @@
     "addressLocality": "Malung",
     "addressCountry": "SE",
     "postalCode": "782 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "57878d5cf59b0e874492bfbf"
-    }
-  ]
+  }
 }

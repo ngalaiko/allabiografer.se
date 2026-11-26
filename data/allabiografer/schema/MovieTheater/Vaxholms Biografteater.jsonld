@@ -13,12 +13,5 @@
     "addressLocality": "Vaxholm",
     "postalCode": "185 32"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "15845"
-    }
-  ],
   "url": "http://vaxholmsbiograf.se/"
 }

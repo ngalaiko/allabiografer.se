@@ -13,12 +13,5 @@
     "addressLocality": "Delsbo",
     "postalCode": "824 71"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "3412"
-    }
-  ],
   "url": "https://www.sveabio.se"
 }

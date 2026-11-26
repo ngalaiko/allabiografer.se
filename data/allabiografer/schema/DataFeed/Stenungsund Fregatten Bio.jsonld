@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Stenungsund Fregatten Bio",
+  "about": {
+    "@id": "../MovieTheater/Stenungsund%20Fregatten%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "29262"
+  }
+}

@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Stockholm",
     "postalCode": "169 86"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg95905"
-    }
-  ]
+  }
 }

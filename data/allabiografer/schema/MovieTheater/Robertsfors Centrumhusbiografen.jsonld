@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Robertsfors",
     "postalCode": "915 31"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "43467"
-    }
-  ]
+  }
 }

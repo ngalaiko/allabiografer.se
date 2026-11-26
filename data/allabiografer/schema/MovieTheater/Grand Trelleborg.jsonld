@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Trelleborg",
     "postalCode": "231 42"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg83696"
-    }
-  ]
+  }
 }

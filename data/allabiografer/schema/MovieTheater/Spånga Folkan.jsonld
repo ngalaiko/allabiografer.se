@@ -10,12 +10,5 @@
     "@type": "PostalAddress",
     "streetAddress": "Spångavägen 353",
     "addressCountry": "SE"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:nortic_se",
-      "value": "e381546df50c3bd3bfeada04"
-    }
-  ]
+  }
 }

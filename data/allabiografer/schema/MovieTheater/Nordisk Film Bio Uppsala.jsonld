@@ -11,12 +11,5 @@
     "streetAddress": "Marknadsgatan 1",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:nfbio_se",
-      "value": "f835a347aee8775f31b6b2ff"
-    }
-  ],
   "url": "https://www.nfbio.se/biograf/uppsala?city=uppsala"
 }

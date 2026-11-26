@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Kristinehamn",
     "postalCode": "618 21"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "fed7451822f0ecec123d42f3"
-    }
-  ]
+  }
 }

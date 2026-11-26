@@ -11,12 +11,5 @@
     "streetAddress": "Svens 1118",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "5372377ffbd42f704c00b1f3"
-    }
-  ],
   "url": "https://www.bergmancenter.se/"
 }

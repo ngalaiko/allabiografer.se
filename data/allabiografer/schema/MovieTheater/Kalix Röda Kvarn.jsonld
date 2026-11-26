@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Kalix",
     "postalCode": "952 33"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "39765"
-    }
-  ]
+  }
 }

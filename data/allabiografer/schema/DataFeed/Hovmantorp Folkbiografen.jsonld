@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Hovmantorp Folkbiografen",
+  "about": {
+    "@id": "../MovieTheater/Hovmantorp%20Folkbiografen.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "2136"
+  }
+}

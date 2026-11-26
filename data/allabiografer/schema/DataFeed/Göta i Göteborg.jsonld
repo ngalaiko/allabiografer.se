@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Göta i Göteborg",
+  "about": {
+    "@id": "../MovieTheater/G%C3%B6ta%20i%20G%C3%B6teborg.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:filmstaden_se",
+    "value": "ncg55655"
+  }
+}

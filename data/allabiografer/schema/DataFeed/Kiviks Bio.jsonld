@@ -1,0 +1,13 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Kiviks Bio",
+  "about": {
+    "@id": "../MovieTheater/Kiviks%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:kiviksbio_se"
+  }
+}

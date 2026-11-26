@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Överkalix",
     "postalCode": "956 31"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "edb6aa033ac480a13042dd5f"
-    }
-  ]
+  }
 }

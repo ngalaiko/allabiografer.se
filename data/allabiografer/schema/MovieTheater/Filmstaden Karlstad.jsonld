@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Karlstad",
     "postalCode": "651 10"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg85838"
-    }
-  ]
+  }
 }

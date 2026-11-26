@@ -13,12 +13,5 @@
     "addressLocality": "Gullspång",
     "postalCode": "547 31"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "28432"
-    }
-  ],
   "url": "https://www.centrumbion.se"
 }

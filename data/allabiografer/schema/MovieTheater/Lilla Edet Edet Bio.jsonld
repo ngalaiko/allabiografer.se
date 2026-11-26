@@ -13,12 +13,5 @@
     "addressLocality": "Lilla Edet",
     "postalCode": "463 31"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "5069"
-    }
-  ],
   "url": "https://edetbio.se"
 }

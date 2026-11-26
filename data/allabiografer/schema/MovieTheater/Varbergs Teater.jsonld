@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Varberg",
     "postalCode": "432 80"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "ebd12718021d0a4d286aca7f"
-    }
-  ]
+  }
 }

@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Eksjö"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2151"
-    }
-  ],
   "url": "http://www.metropol.st/"
 }

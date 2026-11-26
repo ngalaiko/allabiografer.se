@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Saga Vänersborg",
+  "about": {
+    "@id": "../MovieTheater/Saga%20V%C3%A4nersborg.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:filmstaden_se",
+    "value": "ncg33942"
+  }
+}

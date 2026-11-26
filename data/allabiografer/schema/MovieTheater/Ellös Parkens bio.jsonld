@@ -10,12 +10,5 @@
     "@type": "PostalAddress",
     "streetAddress": "Glimsåsvägen 11",
     "addressCountry": "SE"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:nortic_se",
-      "value": "159fc343ffbf855db71cf520"
-    }
-  ]
+  }
 }

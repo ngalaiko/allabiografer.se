@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Valsjövallen",
+  "about": {
+    "@id": "../MovieTheater/Valsj%C3%B6vallen.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "792e0fc18933d3feb282afdd"
+  }
+}

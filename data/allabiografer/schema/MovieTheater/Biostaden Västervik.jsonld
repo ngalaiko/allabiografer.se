@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Västervik",
     "postalCode": "593 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg45841"
-    }
-  ]
+  }
 }

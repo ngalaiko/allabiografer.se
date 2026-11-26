@@ -13,12 +13,5 @@
     "addressLocality": "Dalstorp",
     "postalCode": "514 60"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "39533"
-    }
-  ],
   "url": "https://sites.google.com/view/kopia-av-dalstorps-bio/startsida"
 }

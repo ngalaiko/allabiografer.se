@@ -13,12 +13,5 @@
     "addressLocality": "Stockholm",
     "postalCode": "111 57"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2035"
-    }
-  ],
   "url": "https://kulturhusetstadsteatern.se/film/klarabiografen"
 }

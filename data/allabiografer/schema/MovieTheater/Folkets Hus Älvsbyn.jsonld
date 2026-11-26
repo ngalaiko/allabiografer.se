@@ -6,13 +6,6 @@
   "containedInPlace": {
     "@id": "../City/%C3%84lvsbyn.jsonld"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:tickster_se",
-      "value": "tntfe5rzu5zybfl"
-    }
-  ],
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Medborgargatan 2",

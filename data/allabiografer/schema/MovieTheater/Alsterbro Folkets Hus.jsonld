@@ -6,13 +6,6 @@
   "containedInPlace": {
     "@id": "../City/Alsterbro.jsonld"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2042"
-    }
-  ],
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Parkvägen 11",

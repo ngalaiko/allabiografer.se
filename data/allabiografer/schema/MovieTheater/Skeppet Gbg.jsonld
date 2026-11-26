@@ -10,12 +10,5 @@
     "@type": "PostalAddress",
     "streetAddress": "Amerikagatan 2",
     "addressCountry": "SE"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:doclounge_se",
-      "value": "4749e9acda48db897e9f3e58"
-    }
-  ]
+  }
 }

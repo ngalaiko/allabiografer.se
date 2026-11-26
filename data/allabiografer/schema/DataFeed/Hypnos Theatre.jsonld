@@ -1,0 +1,13 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Hypnos Theatre",
+  "about": {
+    "@id": "../MovieTheater/Hypnos%20Theatre.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:hypnostheatre_com"
+  }
+}

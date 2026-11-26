@@ -13,12 +13,5 @@
     "addressLocality": "Johanneshov",
     "postalCode": "121 55"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "13762"
-    }
-  ],
   "url": "https://reflexen.nu"
 }

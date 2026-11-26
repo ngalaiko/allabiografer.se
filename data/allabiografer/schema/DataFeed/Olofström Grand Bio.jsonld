@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Olofström Grand Bio",
+  "about": {
+    "@id": "../MovieTheater/Olofstr%C3%B6m%20Grand%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "6746"
+  }
+}

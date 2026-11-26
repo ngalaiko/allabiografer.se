@@ -13,12 +13,5 @@
     "addressLocality": "Umeå",
     "postalCode": "901 09"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg18509"
-    }
-  ],
   "url": "https://www.filmstaden.se/umea/biograf/filmstaden-umea/"
 }

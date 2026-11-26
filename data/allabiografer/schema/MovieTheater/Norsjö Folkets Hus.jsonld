@@ -11,12 +11,5 @@
     "streetAddress": "Nygatan 32",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "1ca1d84a3a86e332261b408b"
-    }
-  ],
   "url": "http://www.norsjofolketshus.se/"
 }

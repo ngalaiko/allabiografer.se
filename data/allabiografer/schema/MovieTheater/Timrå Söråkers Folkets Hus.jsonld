@@ -13,12 +13,5 @@
     "addressLocality": "Söråker",
     "postalCode": "860 35"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "5b79fbab01ab198ebe28c2e8"
-    }
-  ],
   "url": "http://www.sorakersfolketshus.se"
 }

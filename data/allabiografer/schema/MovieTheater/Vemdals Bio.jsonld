@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Vemdalen",
     "postalCode": "846 71"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "ab55ba332fe9b3e7e2e7ce82"
-    }
-  ]
+  }
 }

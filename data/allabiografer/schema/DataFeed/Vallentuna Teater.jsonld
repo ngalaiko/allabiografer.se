@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Vallentuna Teater",
+  "about": {
+    "@id": "../MovieTheater/Vallentuna%20Teater.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:nortic_se",
+    "value": "d57d9649e349368fe2ac4e7a"
+  }
+}

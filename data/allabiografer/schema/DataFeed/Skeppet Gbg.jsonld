@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Skeppet Gbg",
+  "about": {
+    "@id": "../MovieTheater/Skeppet%20Gbg.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:doclounge_se",
+    "value": "4749e9acda48db897e9f3e58"
+  }
+}

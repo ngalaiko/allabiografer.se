@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Kramfors Biograf City",
+  "about": {
+    "@id": "../MovieTheater/Kramfors%20Biograf%20City.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "27362"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Malungs Bio",
+  "about": {
+    "@id": "../MovieTheater/Malungs%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "57878d5cf59b0e874492bfbf"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Biostaden Eskilstuna",
+  "about": {
+    "@id": "../MovieTheater/Biostaden%20Eskilstuna.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:svenskabio_se",
+    "value": "3"
+  }
+}

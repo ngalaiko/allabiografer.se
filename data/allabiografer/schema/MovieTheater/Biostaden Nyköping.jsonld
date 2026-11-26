@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Nyköping",
     "postalCode": "611 38"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg42974"
-    }
-  ]
+  }
 }

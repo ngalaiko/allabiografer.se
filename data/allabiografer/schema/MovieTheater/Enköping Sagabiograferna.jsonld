@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Enköping",
     "postalCode": "745 31"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "31438"
-    }
-  ]
+  }
 }

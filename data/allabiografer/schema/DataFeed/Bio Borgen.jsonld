@@ -1,0 +1,13 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Bio Borgen",
+  "about": {
+    "@id": "../MovieTheater/Bio%20Borgen.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:osbyborgen_se"
+  }
+}

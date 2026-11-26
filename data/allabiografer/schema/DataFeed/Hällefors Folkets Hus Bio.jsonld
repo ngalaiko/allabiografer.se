@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Hällefors Folkets Hus Bio",
+  "about": {
+    "@id": "../MovieTheater/H%C3%A4llefors%20Folkets%20Hus%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "e00cad53bcac1434e1e459ab"
+  }
+}

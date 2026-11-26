@@ -13,12 +13,5 @@
     "addressLocality": "Hovmantorp",
     "postalCode": "365 42"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2136"
-    }
-  ],
   "url": "http://bio.hovmantorpsfh.se/#/home"
 }

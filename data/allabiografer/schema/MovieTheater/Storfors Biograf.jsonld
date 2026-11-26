@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Storfors",
     "postalCode": "688 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "74d561e5a7d2987e77b4f8fb"
-    }
-  ]
+  }
 }

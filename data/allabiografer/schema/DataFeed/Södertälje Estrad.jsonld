@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Södertälje Estrad",
+  "about": {
+    "@id": "../MovieTheater/S%C3%B6dert%C3%A4lje%20Estrad.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "17127"
+  }
+}

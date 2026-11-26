@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Uppsala Fyrisbiografen",
+  "about": {
+    "@id": "../MovieTheater/Uppsala%20Fyrisbiografen.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "7"
+  }
+}

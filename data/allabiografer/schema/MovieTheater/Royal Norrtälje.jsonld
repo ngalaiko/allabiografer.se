@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Norrtälje",
     "postalCode": "761 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg29746"
-    }
-  ]
+  }
 }

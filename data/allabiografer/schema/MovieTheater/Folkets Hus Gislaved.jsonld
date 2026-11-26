@@ -11,12 +11,5 @@
     "streetAddress": "Danska vägen 6 A",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:biosverige_se",
-      "value": "ec05e249c678839b6ba556c5"
-    }
-  ],
   "url": "https://gislaved.biosverige.se"
 }

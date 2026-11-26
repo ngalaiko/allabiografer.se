@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Värnamo",
     "postalCode": "331 34"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg57716"
-    }
-  ]
+  }
 }

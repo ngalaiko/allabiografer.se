@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Bio Roy",
+  "about": {
+    "@id": "../MovieTheater/Bio%20Roy.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:folkets_hus_och_parker",
+    "value": "bioroy_se"
+  }
+}

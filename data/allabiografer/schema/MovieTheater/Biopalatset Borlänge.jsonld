@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Borlänge",
     "postalCode": "781 22"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg41400"
-    }
-  ]
+  }
 }

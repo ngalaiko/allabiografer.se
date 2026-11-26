@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Strömsnäsbruk",
     "postalCode": "287 31"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "0dde483d595ddd2fd080d5a6"
-    }
-  ]
+  }
 }

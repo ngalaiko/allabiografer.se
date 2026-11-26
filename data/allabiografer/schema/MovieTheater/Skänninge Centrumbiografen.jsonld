@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Skänninge",
     "postalCode": "596 31"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "6420"
-    }
-  ]
+  }
 }

@@ -13,12 +13,5 @@
     "addressLocality": "Eskilstuna",
     "postalCode": "632 18"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2813"
-    }
-  ],
   "url": "https://rio.se"
 }

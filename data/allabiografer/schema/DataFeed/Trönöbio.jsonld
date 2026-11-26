@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Trönöbio",
+  "about": {
+    "@id": "../MovieTheater/Tr%C3%B6n%C3%B6bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "36a7054f46731f3774c3ba6b"
+  }
+}

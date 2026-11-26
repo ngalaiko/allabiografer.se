@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Vilhelmina Folkets Hus",
+  "about": {
+    "@id": "../MovieTheater/Vilhelmina%20Folkets%20Hus.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:tickster_se",
+    "value": "cm4wj7hhvxmhhb8"
+  }
+}

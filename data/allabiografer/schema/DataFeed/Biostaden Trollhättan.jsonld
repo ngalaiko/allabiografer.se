@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Biostaden Trollhättan",
+  "about": {
+    "@id": "../MovieTheater/Biostaden%20Trollh%C3%A4ttan.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:filmstaden_se",
+    "value": "ncg40599"
+  }
+}

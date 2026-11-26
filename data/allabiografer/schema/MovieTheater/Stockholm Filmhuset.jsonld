@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Stockholm",
     "postalCode": "115 53"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "5738"
-    }
-  ]
+  }
 }

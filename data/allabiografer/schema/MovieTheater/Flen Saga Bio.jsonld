@@ -13,12 +13,5 @@
     "addressLocality": "Flen",
     "postalCode": "642 35"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2110"
-    }
-  ],
   "url": "http://www.bioiflen.se/"
 }

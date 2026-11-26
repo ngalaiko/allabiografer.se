@@ -1,0 +1,13 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Bräcke Bio",
+  "about": {
+    "@id": "../MovieTheater/Br%C3%A4cke%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:fhbracke_se"
+  }
+}

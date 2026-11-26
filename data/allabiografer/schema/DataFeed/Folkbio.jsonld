@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Folkbio",
+  "about": {
+    "@id": "../MovieTheater/Folkbio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "e85239a4c7983ce743aa0ba6"
+  }
+}

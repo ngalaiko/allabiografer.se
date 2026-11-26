@@ -6,13 +6,6 @@
   "containedInPlace": {
     "@id": "../City/Karlshamn.jsonld"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:tickster_se",
-      "value": "agd4gkadcmcxeeg"
-    }
-  ],
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Norra Fogdelyckegatan 24",

@@ -6,13 +6,6 @@
   "containedInPlace": {
     "@id": "../City/Vallentuna.jsonld"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:nortic_se",
-      "value": "d57d9649e349368fe2ac4e7a"
-    }
-  ],
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Gymnasievägen 4",

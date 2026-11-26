@@ -11,12 +11,5 @@
     "streetAddress": "Mejensjögatan 2",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:nortic_se",
-      "value": "999b6ec9f003f0c72262571a"
-    }
-  ],
   "url": "https://www.biorodakvarn.se/"
 }

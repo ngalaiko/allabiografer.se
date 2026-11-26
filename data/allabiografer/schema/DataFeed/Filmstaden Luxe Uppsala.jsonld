@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Filmstaden Luxe Uppsala",
+  "about": {
+    "@id": "../MovieTheater/Filmstaden%20Luxe%20Uppsala.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:filmstaden_se",
+    "value": "ncg16899"
+  }
+}

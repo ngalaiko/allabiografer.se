@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Höllviken",
     "postalCode": "236 32"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg61424"
-    }
-  ]
+  }
 }

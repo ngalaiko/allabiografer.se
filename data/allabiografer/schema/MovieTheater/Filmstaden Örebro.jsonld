@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Örebro",
     "postalCode": "702 10"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg69298"
-    }
-  ]
+  }
 }

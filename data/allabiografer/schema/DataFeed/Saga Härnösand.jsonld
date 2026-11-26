@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Saga Härnösand",
+  "about": {
+    "@id": "../MovieTheater/Saga%20H%C3%A4rn%C3%B6sand.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:filmstaden_se",
+    "value": "ncg48004"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Östersund Folkets Bio Regina",
+  "about": {
+    "@id": "../MovieTheater/%C3%96stersund%20Folkets%20Bio%20Regina.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "3214"
+  }
+}

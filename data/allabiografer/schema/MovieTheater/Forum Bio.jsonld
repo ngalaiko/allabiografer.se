@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Ljungaverk",
     "postalCode": "841 98"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "692d5d574d0993d0c6e9e92b"
-    }
-  ]
+  }
 }

@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Alvesta"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "12114"
-    }
-  ],
   "url": "http://kulturenshusalvesta.se"
 }

@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Skurup",
     "postalCode": "274 34"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2130"
-    }
-  ]
+  }
 }

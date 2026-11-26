@@ -13,12 +13,5 @@
     "addressLocality": "Stockholm",
     "postalCode": "111 57"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg27927"
-    }
-  ],
   "url": "https://www.filmstaden.se/stockholm/biograf/filmstaden-sergel/"
 }

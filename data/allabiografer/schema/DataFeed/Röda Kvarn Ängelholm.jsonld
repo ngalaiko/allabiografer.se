@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Röda Kvarn Ängelholm",
+  "about": {
+    "@id": "../MovieTheater/R%C3%B6da%20Kvarn%20%C3%84ngelholm.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:filmstaden_se",
+    "value": "ncg42235"
+  }
+}

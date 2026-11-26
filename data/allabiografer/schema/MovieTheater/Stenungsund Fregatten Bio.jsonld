@@ -13,12 +13,5 @@
     "addressLocality": "Stenungsund",
     "postalCode": "444 30"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "29262"
-    }
-  ],
   "url": "https://fregattenbio.se"
 }

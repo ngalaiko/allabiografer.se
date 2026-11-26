@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Biopalatset Borlänge",
+  "about": {
+    "@id": "../MovieTheater/Biopalatset%20Borl%C3%A4nge.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:filmstaden_se",
+    "value": "ncg41400"
+  }
+}

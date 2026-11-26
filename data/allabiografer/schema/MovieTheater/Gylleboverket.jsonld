@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Gärsnäs"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "12242"
-    }
-  ],
   "url": "https://gylleboverket.se"
 }

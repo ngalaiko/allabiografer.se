@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Sollefteå Saga",
+  "about": {
+    "@id": "../MovieTheater/Sollefte%C3%A5%20Saga.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "39782"
+  }
+}

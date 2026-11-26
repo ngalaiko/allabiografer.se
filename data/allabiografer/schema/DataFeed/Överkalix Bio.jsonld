@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Överkalix Bio",
+  "about": {
+    "@id": "../MovieTheater/%C3%96verkalix%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "edb6aa033ac480a13042dd5f"
+  }
+}

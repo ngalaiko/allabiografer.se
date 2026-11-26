@@ -13,12 +13,5 @@
     "addressLocality": "Lidköping",
     "postalCode": "531 30"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "42439"
-    }
-  ],
   "url": "https://www.lidkopingsfolketshus.se"
 }

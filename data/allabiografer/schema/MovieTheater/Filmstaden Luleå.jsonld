@@ -13,12 +13,5 @@
     "addressLocality": "Luleå",
     "postalCode": "971 10"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg17549"
-    }
-  ],
   "url": "https://www.filmstaden.se/lulea/biograf/filmstaden/"
 }

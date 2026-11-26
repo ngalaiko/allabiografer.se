@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Folkets Hus Säter",
+  "about": {
+    "@id": "../MovieTheater/Folkets%20Hus%20S%C3%A4ter.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:tickster_se",
+    "value": "57775z43gv88xrk"
+  }
+}

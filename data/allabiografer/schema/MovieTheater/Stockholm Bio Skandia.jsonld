@@ -13,12 +13,5 @@
     "addressLocality": "Stockholm",
     "postalCode": "111 36"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "33694"
-    }
-  ],
   "url": "https://bioskandia.se"
 }

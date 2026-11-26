@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Emmaboda Folkets Hus",
+  "about": {
+    "@id": "../MovieTheater/Emmaboda%20Folkets%20Hus.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:tickster_se",
+    "value": "mxrn1p8013ak53k"
+  }
+}

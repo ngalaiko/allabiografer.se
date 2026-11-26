@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Sala",
     "postalCode": "733 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "31435"
-    }
-  ]
+  }
 }

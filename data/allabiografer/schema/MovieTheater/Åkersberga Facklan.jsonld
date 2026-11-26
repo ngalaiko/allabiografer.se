@@ -13,12 +13,5 @@
     "addressLocality": "Åkersberga",
     "postalCode": "184 50"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2064"
-    }
-  ],
   "url": "http://biofacklan.se/"
 }

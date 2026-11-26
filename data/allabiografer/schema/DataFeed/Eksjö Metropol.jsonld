@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Eksjö Metropol",
+  "about": {
+    "@id": "../MovieTheater/Eksj%C3%B6%20Metropol.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "2151"
+  }
+}

@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Mora",
     "postalCode": "792 22"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg84918"
-    }
-  ]
+  }
 }

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Röda Kvarn",
+  "about": {
+    "@id": "../MovieTheater/R%C3%B6da%20Kvarn%20%28S%C3%A4vsj%C3%B6%29.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:nortic_se",
+    "value": "999b6ec9f003f0c72262571a"
+  }
+}

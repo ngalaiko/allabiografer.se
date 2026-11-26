@@ -13,12 +13,5 @@
     "addressLocality": "Älvsjö",
     "postalCode": "125 35"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "25838"
-    }
-  ],
   "url": "https://parkfolketshus.nu/biopark"
 }

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Hallstavik Bio Rosen",
+  "about": {
+    "@id": "../MovieTheater/Hallstavik%20Bio%20Rosen.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "32332"
+  }
+}

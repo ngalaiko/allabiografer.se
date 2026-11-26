@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Mariestad",
     "postalCode": "542 23"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg82450"
-    }
-  ]
+  }
 }

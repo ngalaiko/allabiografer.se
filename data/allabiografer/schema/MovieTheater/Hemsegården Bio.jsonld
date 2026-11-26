@@ -13,12 +13,5 @@
     "addressLocality": "Hemse",
     "postalCode": "623 50"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "3111"
-    }
-  ],
   "url": "http://hemsegarden.se/"
 }

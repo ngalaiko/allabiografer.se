@@ -11,12 +11,5 @@
     "streetAddress": "Hantverksgatan 2",
     "addressCountry": "SE",
     "addressLocality": "Oskarström"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2090"
-    }
-  ]
+  }
 }

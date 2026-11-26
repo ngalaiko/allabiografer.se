@@ -13,12 +13,5 @@
     "addressLocality": "Torsby",
     "postalCode": "685 30"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2237"
-    }
-  ],
   "url": "https://stjarnan.se/"
 }

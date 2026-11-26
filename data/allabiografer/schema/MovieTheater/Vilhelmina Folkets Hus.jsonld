@@ -6,13 +6,6 @@
   "containedInPlace": {
     "@id": "../City/Vilhelmina.jsonld"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:tickster_se",
-      "value": "cm4wj7hhvxmhhb8"
-    }
-  ],
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Tingsgatan 8",

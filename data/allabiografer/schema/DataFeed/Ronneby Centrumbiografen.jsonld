@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Ronneby Centrumbiografen",
+  "about": {
+    "@id": "../MovieTheater/Ronneby%20Centrumbiografen.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "12"
+  }
+}

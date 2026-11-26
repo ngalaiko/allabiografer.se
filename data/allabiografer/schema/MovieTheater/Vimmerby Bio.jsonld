@@ -11,12 +11,5 @@
     "streetAddress": "Sevedegatan 30",
     "addressCountry": "SE",
     "addressLocality": "Vimmerby"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2108"
-    }
-  ]
+  }
 }

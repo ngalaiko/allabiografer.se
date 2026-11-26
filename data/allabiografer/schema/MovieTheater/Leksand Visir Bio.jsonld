@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Leksand",
     "postalCode": "793 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "f3aeeb7170a2e6789a78fc80"
-    }
-  ]
+  }
 }

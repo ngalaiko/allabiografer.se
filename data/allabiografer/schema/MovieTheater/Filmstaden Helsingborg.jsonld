@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Helsingborg",
     "postalCode": "252 25"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg60142"
-    }
-  ]
+  }
 }

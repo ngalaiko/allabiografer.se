@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Sälen",
     "postalCode": "780 91"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg22838"
-    }
-  ]
+  }
 }

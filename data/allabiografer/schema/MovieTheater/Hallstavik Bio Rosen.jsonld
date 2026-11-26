@@ -13,12 +13,5 @@
     "addressLocality": "Hallstavik",
     "postalCode": "763 40"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "32332"
-    }
-  ],
   "url": "https://folketshushallstavik.se"
 }

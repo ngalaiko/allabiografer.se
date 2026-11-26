@@ -13,12 +13,5 @@
     "addressLocality": "Mölnbo",
     "postalCode": "153 60"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2052"
-    }
-  ],
   "url": "https://fhpmolnbo.se/bio.html"
 }

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Spegeln",
+  "about": {
+    "@id": "../MovieTheater/Spegeln.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:folkets_hus_och_parker",
+    "value": "biografspegeln_se"
+  }
+}

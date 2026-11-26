@@ -13,12 +13,5 @@
     "addressLocality": "Båstad",
     "postalCode": "269 33"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "13228"
-    }
-  ],
   "url": "https://www.scalabiografen.se/"
 }

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Mariannelunds Bio",
+  "about": {
+    "@id": "../MovieTheater/Mariannelunds%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:biosverige_se",
+    "value": "e6ec35790377ef57acff7732"
+  }
+}

@@ -13,12 +13,5 @@
     "addressLocality": "Kista",
     "postalCode": "164 91"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg48048"
-    }
-  ],
   "url": "https://www.filmstaden.se/stockholm/biograf/filmstaden-kista/"
 }

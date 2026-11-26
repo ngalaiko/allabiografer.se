@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Lidköping Röda Kvarn",
+  "about": {
+    "@id": "../MovieTheater/Lidk%C3%B6ping%20R%C3%B6da%20Kvarn.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "42439"
+  }
+}

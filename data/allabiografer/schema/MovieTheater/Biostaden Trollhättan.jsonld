@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Trollhättan",
     "postalCode": "461 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg40599"
-    }
-  ]
+  }
 }

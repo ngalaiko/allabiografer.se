@@ -11,11 +11,5 @@
     "streetAddress": "Norregatan 3",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:riobiotomelilla_se"
-    }
-  ],
   "url": "https://riobiotomelilla.se"
 }

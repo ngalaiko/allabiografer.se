@@ -11,11 +11,5 @@
     "streetAddress": "Skeppargatan 60",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:biofagelbla_se"
-    }
-  ],
   "url": "https://biofagelbla.se"
 }

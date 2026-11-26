@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Nybro Bio Folkan",
+  "about": {
+    "@id": "../MovieTheater/Nybro%20Bio%20Folkan.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "2282"
+  }
+}

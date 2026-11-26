@@ -13,12 +13,5 @@
     "addressLocality": "Laxå",
     "postalCode": "695 60"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "17"
-    }
-  ],
   "url": "http://www.laxabio.se"
 }

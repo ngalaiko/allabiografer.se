@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Härnösand",
     "postalCode": "871 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg48004"
-    }
-  ]
+  }
 }

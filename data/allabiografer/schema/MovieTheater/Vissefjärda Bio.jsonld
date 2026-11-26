@@ -13,12 +13,5 @@
     "addressLocality": "Vissefjärda",
     "postalCode": "361 54"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "3c323d1bc6a2fd0311c92952"
-    }
-  ],
   "url": "http://www.vfjardaforeningshus.se/"
 }

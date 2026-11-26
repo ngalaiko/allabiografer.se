@@ -13,12 +13,5 @@
     "addressLocality": "Norrköping",
     "postalCode": "602 33"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "5"
-    }
-  ],
   "url": "https://cnema.se"
 }

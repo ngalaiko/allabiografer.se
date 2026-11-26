@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Röda Kvarn",
+  "about": {
+    "@id": "../MovieTheater/R%C3%B6da%20Kvarn%20%28T%C3%B6reboda%29.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "df9db1cb7667fc058e4a0efa"
+  }
+}

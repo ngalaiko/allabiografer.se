@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Gideå",
     "postalCode": "896 93"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "13842"
-    }
-  ]
+  }
 }

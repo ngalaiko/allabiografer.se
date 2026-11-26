@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Övertorneå",
     "postalCode": "957 31"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "483d488612550854af3f63c4"
-    }
-  ]
+  }
 }

@@ -13,12 +13,5 @@
     "addressLocality": "Kalmar",
     "postalCode": "391 22"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg41085"
-    }
-  ],
   "url": "https://www.filmstaden.se/kalmar/biograf/biostaden-kalmar/"
 }

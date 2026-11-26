@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Hönö",
     "postalCode": "475 42"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "14836"
-    }
-  ]
+  }
 }

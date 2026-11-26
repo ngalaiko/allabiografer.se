@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Degerhamn Torngårds Bio",
+  "about": {
+    "@id": "../MovieTheater/Degerhamn%20Torng%C3%A5rds%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "31617"
+  }
+}

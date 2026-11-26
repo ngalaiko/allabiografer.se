@@ -13,12 +13,5 @@
     "addressLocality": "Bredaryd",
     "postalCode": "333 71"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2134"
-    }
-  ],
   "url": "http://rodakvarnbredaryd.se"
 }

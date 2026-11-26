@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Folkets Hus Bio",
+  "about": {
+    "@id": "../MovieTheater/Folkets%20Hus%20Bio%20%28%C3%85motfors%29.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "c95d17cc8228530e49630b29"
+  }
+}

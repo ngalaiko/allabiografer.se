@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Säffle",
     "postalCode": "661 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "29559"
-    }
-  ]
+  }
 }

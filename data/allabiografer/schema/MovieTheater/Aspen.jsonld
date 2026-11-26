@@ -11,11 +11,5 @@
     "streetAddress": "Hägerstensvägen 100A",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioaspen_se"
-    }
-  ],
   "url": "https://www.bioaspen.se"
 }

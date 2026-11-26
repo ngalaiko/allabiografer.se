@@ -1,5 +1,4 @@
 import json
-import shutil
 from contextlib import nullcontext
 from datetime import UTC, date, datetime
 from types import SimpleNamespace
@@ -7,11 +6,11 @@ from types import SimpleNamespace
 import pytest
 
 from allabiografer import pipeline
-from allabiografer.graph import DATA, Graph
+from allabiografer.graph import Graph
 from allabiografer.model import Dimension, Presentation, PresentationSystem
 from allabiografer.model.version import AudioVersion, ContentVersion, Language, SubtitleVersion
 from allabiografer.parsing import screening_fields
-from allabiografer.schedule import routes
+from allabiografer.schedule import feeds
 
 
 def test_assets_are_compressed_when_worthwhile_and_addressed_by_ni(tmp_path):
@@ -48,11 +47,8 @@ def test_screening_fields_use_bcp47_tags_and_video_formats_only():
     assert screening_fields(ContentVersion(), Presentation()) == {}
 
 
-def test_run_records_actions_and_links_screenings_to_the_registry(tmp_path, monkeypatch):
-    shutil.copytree(DATA / "schema" / "MovieTheater", tmp_path / "schema" / "MovieTheater")
-    shutil.copytree(DATA / "schema" / "City", tmp_path / "schema" / "City")
-    graph = Graph(tmp_path)
-    route = routes(tmp_path)["Ale Medborgarhusets Bio"]
+def test_run_records_actions_and_links_screenings_to_the_registry(graph, monkeypatch):
+    feed = feeds(graph.root)["Ale Medborgarhusets Bio"]
     cinemas = {"cinemas": [{"id": 16484}]}
     programme = {"movies": []}
 
@@ -77,7 +73,7 @@ def test_run_records_actions_and_links_screenings_to_the_registry(tmp_path, monk
     monkeypatch.setattr(pipeline._http, "session", lambda: nullcontext(SimpleNamespace(headers={})))
     monkeypatch.setattr(pipeline, "datetime", SimpleNamespace(now=lambda tz: datetime(2026, 11, 26, tzinfo=tz)))
 
-    result, failures = pipeline.run(graph, [route], previous=None)
+    result, failures = pipeline.run(graph, [feed], previous=None)
 
     assert failures == {}
     actions = [
@@ -95,7 +91,7 @@ def test_run_records_actions_and_links_screenings_to_the_registry(tmp_path, monk
     screenings = [graph.read(path) for path in parts if path.parent.name == "ScreeningEvent"]
     assert len(screenings) == 1
     assert screenings[0]["inLanguage"] == ["sv"]
-    assert graph.resolve(parts[1], screenings[0]["location"]) == graph.path("MovieTheater", route.cinema).resolve()
+    assert graph.resolve(parts[1], screenings[0]["location"]) == graph.path("MovieTheater", feed.cinema).resolve()
 
 
 def test_source_snapshot_is_deterministic_and_restorable(tmp_path):
@@ -126,13 +122,11 @@ def test_single_cinema_adapters_reject_other_selections():
         single({"other"})
 
 
-def test_failed_adapter_is_recorded_and_others_still_merge(tmp_path, monkeypatch):
-    shutil.copytree(DATA / "schema" / "MovieTheater", tmp_path / "schema" / "MovieTheater")
-    graph = Graph(tmp_path)
+def test_failed_adapter_is_recorded_and_others_still_merge(graph, monkeypatch):
 
     def fetch(graph, adapter, group, day):
         raise ValueError("source changed")
 
     monkeypatch.setattr(pipeline, "fetch", fetch)
     with pytest.raises(RuntimeError, match="Every adapter failed"):
-        pipeline.run(graph, [routes(tmp_path)["Ale Medborgarhusets Bio"]], previous=None)
+        pipeline.run(graph, [feeds(graph.root)["Ale Medborgarhusets Bio"]], previous=None)

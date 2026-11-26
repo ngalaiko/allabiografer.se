@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Vingåker",
     "postalCode": "643 21"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "71eb0d6ab73eec9c1194df88"
-    }
-  ]
+  }
 }

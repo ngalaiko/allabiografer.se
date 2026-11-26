@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Säffle Sagabiografen",
+  "about": {
+    "@id": "../MovieTheater/S%C3%A4ffle%20Sagabiografen.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "29559"
+  }
+}

@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Karlskrona",
     "postalCode": "371 33"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg52010"
-    }
-  ]
+  }
 }

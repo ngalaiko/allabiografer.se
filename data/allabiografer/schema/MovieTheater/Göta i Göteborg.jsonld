@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Göteborg",
     "postalCode": "411 34"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg55655"
-    }
-  ]
+  }
 }

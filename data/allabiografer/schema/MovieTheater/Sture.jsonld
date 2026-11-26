@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Stockholm",
     "postalCode": "111 45"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg58657"
-    }
-  ]
+  }
 }

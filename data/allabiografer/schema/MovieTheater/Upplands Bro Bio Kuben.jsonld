@@ -11,12 +11,5 @@
     "streetAddress": "Furuhällsplan 1",
     "addressCountry": "SE",
     "addressLocality": "Kungsängen"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "14798"
-    }
-  ]
+  }
 }

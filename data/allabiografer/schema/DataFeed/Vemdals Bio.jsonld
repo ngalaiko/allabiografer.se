@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Vemdals Bio",
+  "about": {
+    "@id": "../MovieTheater/Vemdals%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "ab55ba332fe9b3e7e2e7ce82"
+  }
+}

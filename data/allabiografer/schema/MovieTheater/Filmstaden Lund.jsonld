@@ -13,12 +13,5 @@
     "addressLocality": "Lund",
     "postalCode": "223 51"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg71027"
-    }
-  ],
   "url": "https://www.filmstaden.se/lund/biograf/filmstaden/"
 }

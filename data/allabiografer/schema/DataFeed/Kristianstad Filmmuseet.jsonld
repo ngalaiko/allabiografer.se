@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Kristianstad Filmmuseet",
+  "about": {
+    "@id": "../MovieTheater/Kristianstad%20Filmmuseet.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "2e564faccbfc315e2690aa93"
+  }
+}

@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Halmstad",
     "postalCode": "302 43"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg76784"
-    }
-  ]
+  }
 }

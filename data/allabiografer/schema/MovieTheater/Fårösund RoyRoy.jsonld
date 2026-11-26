@@ -13,12 +13,5 @@
     "addressLocality": "Fårösund",
     "postalCode": "624 62"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "16999"
-    }
-  ],
   "url": "https://www.royroy.se"
 }

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Sjöängen",
+  "about": {
+    "@id": "../MovieTheater/Sj%C3%B6%C3%A4ngen.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:nortic_se",
+    "value": "4dbbe32f1d1f5ba35009ce2d"
+  }
+}

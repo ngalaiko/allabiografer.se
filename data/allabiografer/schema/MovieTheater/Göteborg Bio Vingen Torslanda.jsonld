@@ -11,12 +11,5 @@
     "streetAddress": "Amhults Torg 7",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "eb236798900bb3ad5547f246"
-    }
-  ],
   "url": "http://www.vingen.se"
 }

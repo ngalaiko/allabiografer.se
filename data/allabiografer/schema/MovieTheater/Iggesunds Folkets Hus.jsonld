@@ -13,12 +13,5 @@
     "addressLocality": "Iggesund",
     "postalCode": "825 30"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "7228"
-    }
-  ],
   "url": "http://www.folkan.com"
 }

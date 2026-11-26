@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Uppsala",
     "postalCode": "753 20"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg16899"
-    }
-  ]
+  }
 }

@@ -13,12 +13,5 @@
     "addressLocality": "Bengtsfors",
     "postalCode": "666 31"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2246"
-    }
-  ],
   "url": "https://www.odeon.nu/lokaler/bio-teatersalong/"
 }

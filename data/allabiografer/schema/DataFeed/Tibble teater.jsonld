@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Tibble teater",
+  "about": {
+    "@id": "../MovieTheater/Tibble%20teater.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:nortic_se",
+    "value": "b793be0d469a1b20ae7ae617"
+  }
+}

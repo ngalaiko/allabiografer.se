@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Borås Bio Röda Kvarn",
+  "about": {
+    "@id": "../MovieTheater/Bor%C3%A5s%20Bio%20R%C3%B6da%20Kvarn.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "5570"
+  }
+}

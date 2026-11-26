@@ -11,12 +11,5 @@
     "streetAddress": "Boställevägen 6",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "c67a3ecea17a2c222cd19e07"
-    }
-  ],
   "url": "http://www.sagabiolandsbro.se"
 }

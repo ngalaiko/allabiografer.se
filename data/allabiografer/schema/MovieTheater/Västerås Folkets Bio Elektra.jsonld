@@ -13,12 +13,5 @@
     "addressLocality": "Västerås",
     "postalCode": "721 30"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "41855"
-    }
-  ],
   "url": "http://www.elektrabio.se/"
 }

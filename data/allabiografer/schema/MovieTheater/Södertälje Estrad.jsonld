@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Södertälje",
     "postalCode": "151 32"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "17127"
-    }
-  ]
+  }
 }

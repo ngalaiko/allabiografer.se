@@ -11,12 +11,5 @@
     "streetAddress": "Karlsgatan 7",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:folkets_hus_och_parker",
-      "value": "biorodakvarn_se"
-    }
-  ],
   "url": "https://www.biorodakvarn.se/"
 }

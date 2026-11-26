@@ -13,12 +13,5 @@
     "addressLocality": "Kramfors",
     "postalCode": "872 30"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "27362"
-    }
-  ],
   "url": "https://www.biografcity.se"
 }

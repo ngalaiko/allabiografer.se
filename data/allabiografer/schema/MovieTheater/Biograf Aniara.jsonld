@@ -6,13 +6,6 @@
   "containedInPlace": {
     "@id": "../City/Gnesta.jsonld"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:tickster_se",
-      "value": "z46gh66v0v951ac"
-    }
-  ],
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Västra Storgatan 15",

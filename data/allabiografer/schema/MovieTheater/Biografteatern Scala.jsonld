@@ -13,12 +13,5 @@
     "addressLocality": "Ystad",
     "postalCode": "271 34"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "6aa7197958ee34d731cbf064"
-    }
-  ],
   "url": "http://www.bioscala.se"
 }

@@ -50,9 +50,10 @@ def test_registry_links_and_source_identifiers():
         assert path.stem == entity["name"]
         assert container(path, entity) in counties
 
-    bindings = set()
     for path in cinemas:
         entity = read_entity(path, "MovieTheater")
+        # IDs disambiguate shared names with the locality; names are as displayed.
+        assert "(" not in entity["name"], path
         assert container(path, entity) in cities
         address = entity["address"]
         assert address["@type"] == "PostalAddress"
@@ -68,12 +69,20 @@ def test_registry_links_and_source_identifiers():
             assert url.scheme in {"http", "https"}, path
             assert url.hostname, path
             assert not any(char.isspace() for char in entity["url"]), path
-        assert entity["identifier"], path
-        for identifier in entity["identifier"]:
-            assert identifier["@type"] == "PropertyValue"
-            # Single-cinema adapters omit the venue ID.
-            key = (identifier["propertyID"], identifier.get("value"))
-            assert key[0].strip(), path
-            assert key[1] is None or key[1].strip(), path
-            assert key not in bindings, key
-            bindings.add(key)
+        # How a programme is collected belongs to its DataFeed, not the cinema.
+        assert "identifier" not in entity, path
+
+    covered = set()
+    for path in (SCHEMA / "DataFeed").glob("*.jsonld"):
+        entity = read_entity(path, "DataFeed")
+        cinema = (path.parent / unquote(entity["about"]["@id"])).resolve()
+        assert cinema in cinemas, path
+        assert "(" not in entity["name"], path
+        covered.add(cinema)
+        identifier = entity["identifier"]
+        assert identifier["@type"] == "PropertyValue"
+        assert identifier["propertyID"].startswith("allabiografer:schedule:"), path
+        if "publisher" in entity:
+            assert entity["publisher"]["@type"] == "Organization"
+            assert entity["publisher"]["name"].strip(), path
+    assert covered == cinemas

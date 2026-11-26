@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Bohusläns museum",
+  "about": {
+    "@id": "../MovieTheater/Bohusl%C3%A4ns%20museum.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:nortic_se",
+    "value": "a7ccf853023570a34bee6bbc"
+  }
+}

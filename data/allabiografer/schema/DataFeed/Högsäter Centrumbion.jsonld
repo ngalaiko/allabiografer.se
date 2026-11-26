@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Högsäter Centrumbion",
+  "about": {
+    "@id": "../MovieTheater/H%C3%B6gs%C3%A4ter%20Centrumbion.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "34212"
+  }
+}

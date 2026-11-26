@@ -1,0 +1,19 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Vaxholms Biografteaters Vänner",
+  "about": {
+    "@id": "../MovieTheater/Vaxholms%20Biografteater.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "20049"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Vaxholms Biografteaters Vänner",
+    "url": "https://vaxholmsbion.se"
+  }
+}

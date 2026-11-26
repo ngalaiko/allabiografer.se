@@ -12,12 +12,5 @@
     "addressLocality": "Söderhamn",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:cinemascenen_se",
-      "value": "soderhamn"
-    }
-  ],
   "url": "https://www.cinemascenen.se/soderhamn/"
 }

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Bio Casablanca",
+  "about": {
+    "@id": "../MovieTheater/Bio%20Casablanca.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:biosverige_se",
+    "value": "fdb21948a3cdd22d155b5688"
+  }
+}

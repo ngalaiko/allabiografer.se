@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Gäddede",
     "postalCode": "830 90"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "794d9ed7f68a4bb47aca2bd3"
-    }
-  ]
+  }
 }

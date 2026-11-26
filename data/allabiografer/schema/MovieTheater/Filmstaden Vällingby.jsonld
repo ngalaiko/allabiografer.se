@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Vällingby",
     "postalCode": "162 65"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg78594"
-    }
-  ]
+  }
 }

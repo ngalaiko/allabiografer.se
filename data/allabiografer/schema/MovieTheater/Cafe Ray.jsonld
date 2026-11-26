@@ -10,12 +10,5 @@
     "@type": "PostalAddress",
     "streetAddress": "Södra Storgatan 39A",
     "addressCountry": "SE"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:nortic_se",
-      "value": "a3c2e5af9f1a63e5d65a936b"
-    }
-  ]
+  }
 }

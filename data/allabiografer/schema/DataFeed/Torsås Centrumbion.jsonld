@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Torsås Centrumbion",
+  "about": {
+    "@id": "../MovieTheater/Tors%C3%A5s%20Centrumbion.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "13"
+  }
+}

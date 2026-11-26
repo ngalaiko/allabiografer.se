@@ -11,12 +11,5 @@
     "streetAddress": "Möllegatan 3",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "a0e7c4e0e0077f9d696c9eab"
-    }
-  ],
   "url": "http://www.sibbhultsfh.se"
 }

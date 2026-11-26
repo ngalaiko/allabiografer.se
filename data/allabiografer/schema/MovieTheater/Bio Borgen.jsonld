@@ -12,11 +12,5 @@
     "addressLocality": "Osby",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:osbyborgen_se"
-    }
-  ],
   "url": "https://osbyborgen.se/"
 }

@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Ludvika",
     "postalCode": "771 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg23111"
-    }
-  ]
+  }
 }

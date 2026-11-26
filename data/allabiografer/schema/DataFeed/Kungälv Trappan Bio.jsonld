@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Kungälv Trappan Bio",
+  "about": {
+    "@id": "../MovieTheater/Kung%C3%A4lv%20Trappan%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "21821"
+  }
+}

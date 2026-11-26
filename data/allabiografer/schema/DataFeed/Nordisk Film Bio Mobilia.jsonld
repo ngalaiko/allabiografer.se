@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Nordisk Film Bio Mobilia",
+  "about": {
+    "@id": "../MovieTheater/Nordisk%20Film%20Bio%20Mobilia.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:nfbio_se",
+    "value": "e9dae04966497b313dbaf357"
+  }
+}

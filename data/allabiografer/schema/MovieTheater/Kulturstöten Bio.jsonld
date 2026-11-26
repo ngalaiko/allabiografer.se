@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Falun",
     "postalCode": "791 62"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "ca294d3ab21daba720af630c"
-    }
-  ]
+  }
 }

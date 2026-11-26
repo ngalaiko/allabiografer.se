@@ -13,12 +13,5 @@
     "addressCountry": "SE",
     "postalCode": "523 34"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "31439"
-    }
-  ],
   "url": "https://www.folketshusulricehamn.se/bio/"
 }

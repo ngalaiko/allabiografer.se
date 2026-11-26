@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Djurås",
     "postalCode": "785 61"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "15380"
-    }
-  ]
+  }
 }

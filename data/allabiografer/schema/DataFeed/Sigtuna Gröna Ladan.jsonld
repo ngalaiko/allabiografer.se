@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Sigtuna Gröna Ladan",
+  "about": {
+    "@id": "../MovieTheater/Sigtuna%20Gr%C3%B6na%20Ladan.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "46303"
+  }
+}

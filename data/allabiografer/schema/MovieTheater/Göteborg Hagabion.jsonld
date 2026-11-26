@@ -13,12 +13,5 @@
     "addressLocality": "Göteborg",
     "postalCode": "413 04"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "17705"
-    }
-  ],
   "url": "https://hagabion.se/"
 }

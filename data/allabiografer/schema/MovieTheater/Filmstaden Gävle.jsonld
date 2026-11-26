@@ -13,12 +13,5 @@
     "addressLocality": "Gävle",
     "postalCode": "801 38"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg10840"
-    }
-  ],
   "url": "https://www.filmstaden.se/gavle/biograf/filmstaden/"
 }

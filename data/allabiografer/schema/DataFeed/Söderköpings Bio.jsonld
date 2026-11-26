@@ -1,0 +1,13 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Söderköpings Bio",
+  "about": {
+    "@id": "../MovieTheater/S%C3%B6derk%C3%B6pings%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:soderkopingsbio_se"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Hallunda Folkets Hus",
+  "about": {
+    "@id": "../MovieTheater/Hallunda%20Folkets%20Hus.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:hallundafolketshus_se"
+  }
+}

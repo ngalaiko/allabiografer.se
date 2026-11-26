@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Stockholm Filmhuset",
+  "about": {
+    "@id": "../MovieTheater/Stockholm%20Filmhuset.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "5738"
+  }
+}

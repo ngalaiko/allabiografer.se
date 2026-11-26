@@ -11,12 +11,5 @@
     "streetAddress": "Nya Torget",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "22547d588af982fb8c33365d"
-    }
-  ],
   "url": "http://www.sagatidaholm.se"
 }

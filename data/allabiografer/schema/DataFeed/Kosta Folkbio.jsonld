@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Kosta Folkbio",
+  "about": {
+    "@id": "../MovieTheater/Kosta%20Folkbio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "5d429db63a501a508836729d"
+  }
+}

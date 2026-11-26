@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Lysekil",
     "postalCode": "453 33"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "16850"
-    }
-  ]
+  }
 }

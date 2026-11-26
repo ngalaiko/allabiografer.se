@@ -11,11 +11,5 @@
     "streetAddress": "Ordensgatan 5",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:kiviksbio_se"
-    }
-  ],
   "url": "https://www.kiviksbio.se/"
 }

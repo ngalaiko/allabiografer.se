@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Sorsele",
     "postalCode": "920 70"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "f0bcf0072a5c88db79f83c93"
-    }
-  ]
+  }
 }

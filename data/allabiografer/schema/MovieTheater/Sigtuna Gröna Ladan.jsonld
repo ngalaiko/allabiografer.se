@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Sigtuna",
     "postalCode": "193 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "46303"
-    }
-  ]
+  }
 }

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Folkets Hus Smedjebacken",
+  "about": {
+    "@id": "../MovieTheater/Folkets%20Hus%20Smedjebacken.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:biosverige_se",
+    "value": "88c4dc3ed6b02c66accbb9b7"
+  }
+}

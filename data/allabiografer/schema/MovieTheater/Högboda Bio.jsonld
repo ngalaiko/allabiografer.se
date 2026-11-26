@@ -13,12 +13,5 @@
     "addressLocality": "Kil",
     "postalCode": "665 93"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "30378"
-    }
-  ],
   "url": "https://www.hogbodafolketshus.se"
 }

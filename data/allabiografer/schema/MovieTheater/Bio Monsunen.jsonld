@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Lövånger",
     "postalCode": "930 10"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "1f38f5c356b05a1cbf0e412c"
-    }
-  ]
+  }
 }

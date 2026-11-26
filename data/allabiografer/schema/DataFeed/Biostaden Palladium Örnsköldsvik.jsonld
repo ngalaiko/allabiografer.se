@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Biostaden Palladium Örnsköldsvik",
+  "about": {
+    "@id": "../MovieTheater/Biostaden%20Palladium%20%C3%96rnsk%C3%B6ldsvik.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:filmstaden_se",
+    "value": "ncg76006"
+  }
+}

@@ -13,12 +13,5 @@
     "addressLocality": "Blidö",
     "postalCode": "760 17"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "18311"
-    }
-  ],
   "url": "http://www.blidobio.se/"
 }

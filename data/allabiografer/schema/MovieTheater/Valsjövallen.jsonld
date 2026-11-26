@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Valsjöbyn",
     "postalCode": "830 67"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "792e0fc18933d3feb282afdd"
-    }
-  ]
+  }
 }

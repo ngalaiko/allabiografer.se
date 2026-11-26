@@ -13,12 +13,5 @@
     "addressLocality": "Tollered",
     "postalCode": "448 50"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "4443"
-    }
-  ],
   "url": "http://tolleredsbiograf.se"
 }

@@ -11,11 +11,5 @@
     "streetAddress": "Hamngatan 11",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:palladiumbio_se"
-    }
-  ],
   "url": "https://palladiumbio.se/"
 }

@@ -1,0 +1,13 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Filmhuset Palladium",
+  "about": {
+    "@id": "../MovieTheater/Filmhuset%20Palladium.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:palladiumbio_se"
+  }
+}

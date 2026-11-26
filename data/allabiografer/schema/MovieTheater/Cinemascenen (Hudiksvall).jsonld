@@ -12,12 +12,5 @@
     "addressLocality": "Hudiksvall",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:cinemascenen_se",
-      "value": "hudiksvall"
-    }
-  ],
   "url": "https://www.cinemascenen.se/hudiksvall/"
 }

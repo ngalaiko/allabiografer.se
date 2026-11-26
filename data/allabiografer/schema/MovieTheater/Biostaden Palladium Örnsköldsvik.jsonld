@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Örnsköldsvik",
     "postalCode": "891 29"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg76006"
-    }
-  ]
+  }
 }

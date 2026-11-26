@@ -13,12 +13,5 @@
     "addressLocality": "Piteå",
     "postalCode": "941 32"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "7040"
-    }
-  ],
   "url": "http://www.bio3an.se"
 }

@@ -13,12 +13,5 @@
     "addressLocality": "Gamleby",
     "postalCode": "594 30"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "11912"
-    }
-  ],
   "url": "http://www.gamleby.se/tjustbioprogram"
 }

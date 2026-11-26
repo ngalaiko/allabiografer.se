@@ -11,11 +11,5 @@
     "streetAddress": "Norra Grängesbergsgatan 15",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:hypnostheatre_com"
-    }
-  ],
   "url": "https://hypnostheatre.com/"
 }

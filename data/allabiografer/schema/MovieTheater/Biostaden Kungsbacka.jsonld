@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Kungsbacka",
     "postalCode": "434 32"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg95224"
-    }
-  ]
+  }
 }

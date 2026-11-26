@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Nossebro Biograf Stjärnan",
+  "about": {
+    "@id": "../MovieTheater/Nossebro%20Biograf%20Stj%C3%A4rnan.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "14335"
+  }
+}

@@ -11,11 +11,5 @@
     "streetAddress": "Borgvägen 1",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:hallundafolketshus_se"
-    }
-  ],
   "url": "https://www.hallundafolketshus.se"
 }

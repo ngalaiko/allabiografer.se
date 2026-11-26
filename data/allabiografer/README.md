@@ -7,13 +7,15 @@ assets/<sha256>                  raw bytes: HTML, API responses, images
 schema/<Schema.org type>/<id>.jsonld
 ```
 
-Run `uv run --group parse --group build allabiografer`, optionally limited with `--cinema <MovieTheater ID>` (repeatable). It prints the merged `Dataset` and the website directory. `--fresh` ignores the previous result; `--render-only` renders the latest result without fetching.
+Run `uv run --group parse --group build allabiografer`, optionally limited to the feeds of `--cinema <MovieTheater ID>` (repeatable). It prints the merged `Dataset` and the website directory. `--fresh` ignores the previous result; `--render-only` renders the latest result without fetching.
 
 ## Registry
 
-Checked in: `MovieTheater`, `City`, `AdministrativeArea` (län), and `Country`. IDs are Swedish names; shared cinema names get the locality in parentheses. `containedInPlace` links each cinema to its city, county, and `Country/Sverige.jsonld`. County names and codes are from [SCB](https://www.scb.se/hitta-statistik/regional-statistik-och-kartor/regionala-indelningar/lan-och-kommuner/lan-och-kommuner-i-kodnummerordning/); locality assignments use [GeoNames](https://www.geonames.org/) (CC BY 4.0), with ambiguous names checked against venue locations.
+Checked in: `MovieTheater`, `DataFeed`, `City`, `AdministrativeArea` (län), and `Country`. IDs are Swedish names; shared cinema names get the locality in parentheses. `containedInPlace` links each cinema to its city, county, and `Country/Sverige.jsonld`. County names and codes are from [SCB](https://www.scb.se/hitta-statistik/regional-statistik-och-kartor/regionala-indelningar/lan-och-kommuner/lan-och-kommuner-i-kodnummerordning/); locality assignments use [GeoNames](https://www.geonames.org/) (CC BY 4.0), with ambiguous names checked against venue locations.
 
-`MovieTheater.url` is the venue or operator's public website, omitted when unknown. Each cinema has one `PropertyValue` identifier: `allabiografer:schedule:<adapter>` with the adapter's venue ID, shared by fetch and parse.
+`MovieTheater.url` is the venue or operator's public website, omitted when unknown.
+
+A `DataFeed` is one published programme. Its `about` is the cinema the screenings take place in; its one `PropertyValue` identifier, `allabiografer:schedule:<adapter>` with the adapter's venue ID, tells fetch and parse where to read it. Each source listing belongs to one feed. Most cinemas have one feed; a cinema whose screenings are also published by an organiser, such as a film society, has one per publisher. Such feeds name the organiser as `publisher`, and their screenings carry it as `organizer`.
 
 The seed comes from parsed captures and adapter configuration, so venues absent from those may be missing. The Finspång calendar source has no verified venue binding.
 
@@ -23,12 +25,12 @@ Generated and not checked in. Each run is an action:
 
 | Step | Action | `object` | `result` |
 |---|---|---|---|
-| fetch | `DownloadAction` | registry cinemas | `Dataset` of `DataDownload`s |
-| parse | `CreateAction` | fetch `Dataset` | `Dataset` of `Movie`s and `ScreeningEvent`s |
+| fetch | `DownloadAction` | registry feeds | `Dataset` of `DataDownload`s |
+| parse | `CreateAction` | fetch `Dataset` | `Dataset` of `Movie`s and, per feed, a `Dataset` of `ScreeningEvent`s |
 | merge | `CreateAction` | previous merged `Dataset`, new parse `Dataset`s | merged `Dataset` |
 | render | `CreateAction` | merged `Dataset` | `www/` |
 
-A run is an `UpdateAction` over the previous result (`targetCollection`) for the selected cinemas (`object`): fetch and parse per adapter, then one merge. Each cinema's screenings come from the newest parse covering it, so cinemas not run, or whose adapter failed, keep their previous screenings. Screenings before the run day drop out.
+A run is an `UpdateAction` over the previous result (`targetCollection`) for the selected feeds (`object`): fetch and parse per adapter, then one merge. Each feed's screenings come from the newest parse covering it, so feeds not run, or whose adapter failed, keep their previous screenings. A show listed by several feeds of one cinema appears once, from the cinema's own feed. Screenings before the run day drop out.
 
 Each `Movie` in a merged `Dataset` has a stable slug, its `allabiografer:film` identifier, and `url` `https://allabiografer.se/film/<slug>/`. Grouping is re-evaluated every run. A group reuses the oldest identity among its members, slugs are never reassigned, and slugs of joined films remain as `allabiografer:film-alias`.
 

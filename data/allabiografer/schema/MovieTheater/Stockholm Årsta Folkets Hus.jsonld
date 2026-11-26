@@ -13,12 +13,5 @@
     "addressLocality": "Årsta",
     "postalCode": "120 53"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2230"
-    }
-  ],
   "url": "https://arstafolketshus.org/bio/"
 }

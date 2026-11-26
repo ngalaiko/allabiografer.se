@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Ersboda Folkets Hus",
+  "about": {
+    "@id": "../MovieTheater/Ersboda%20Folkets%20Hus.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:tickster_se",
+    "value": "1m4h76jn8pvw8b0"
+  }
+}

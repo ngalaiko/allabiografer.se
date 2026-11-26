@@ -12,12 +12,5 @@
     "addressLocality": "Ljungbyhed",
     "addressCountry": "SE",
     "postalCode": "264 52"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "9166b5f882d83068e24b1898"
-    }
-  ]
+  }
 }

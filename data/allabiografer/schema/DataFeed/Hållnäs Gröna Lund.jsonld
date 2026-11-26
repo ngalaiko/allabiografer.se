@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Hållnäs Gröna Lund",
+  "about": {
+    "@id": "../MovieTheater/H%C3%A5lln%C3%A4s%20Gr%C3%B6na%20Lund.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "34216"
+  }
+}

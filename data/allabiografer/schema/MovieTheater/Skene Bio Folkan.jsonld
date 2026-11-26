@@ -13,12 +13,5 @@
     "addressLocality": "Skene",
     "postalCode": "511 61"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "8"
-    }
-  ],
   "url": "https://www.kulturhusetskene.se"
 }

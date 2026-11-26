@@ -13,12 +13,5 @@
     "addressLocality": "Lycksele",
     "postalCode": "921 31"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "4e6f80e3731a3b1f772422c4"
-    }
-  ],
   "url": "http://www.mblycksele.se"
 }

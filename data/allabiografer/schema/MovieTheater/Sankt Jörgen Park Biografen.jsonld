@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Göteborg",
     "postalCode": "417 05"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "266acbad08891c2b9d0be28e"
-    }
-  ]
+  }
 }

@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Borås",
     "postalCode": "503 07"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg53640"
-    }
-  ]
+  }
 }

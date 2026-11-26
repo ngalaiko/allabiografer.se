@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Gideågården",
+  "about": {
+    "@id": "../MovieTheater/Gide%C3%A5g%C3%A5rden.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "13842"
+  }
+}

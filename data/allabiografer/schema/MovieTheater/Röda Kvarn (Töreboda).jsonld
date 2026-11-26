@@ -13,12 +13,5 @@
     "addressLocality": "Töreboda",
     "postalCode": "545 30"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "df9db1cb7667fc058e4a0efa"
-    }
-  ],
   "url": "https://www.biorodakvarn.se/"
 }

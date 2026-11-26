@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Visby Folkets Bio Betty",
+  "about": {
+    "@id": "../MovieTheater/Visby%20Folkets%20Bio%20Betty.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "14"
+  }
+}

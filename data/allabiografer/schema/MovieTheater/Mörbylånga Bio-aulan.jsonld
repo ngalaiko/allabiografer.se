@@ -13,12 +13,5 @@
     "addressLocality": "Mörbylånga",
     "postalCode": "386 50"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2137"
-    }
-  ],
   "url": "http://www.bioaulan.se/"
 }

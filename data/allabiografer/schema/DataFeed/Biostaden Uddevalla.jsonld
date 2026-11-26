@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Biostaden Uddevalla",
+  "about": {
+    "@id": "../MovieTheater/Biostaden%20Uddevalla.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:svenskabio_se",
+    "value": "4"
+  }
+}

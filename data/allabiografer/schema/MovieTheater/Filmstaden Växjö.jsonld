@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Växjö",
     "postalCode": "352 32"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg67397"
-    }
-  ]
+  }
 }

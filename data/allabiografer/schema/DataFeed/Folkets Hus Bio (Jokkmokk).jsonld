@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Folkets Hus Bio",
+  "about": {
+    "@id": "../MovieTheater/Folkets%20Hus%20Bio%20%28Jokkmokk%29.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "06256d3ae76c3f1bce8d2be5"
+  }
+}

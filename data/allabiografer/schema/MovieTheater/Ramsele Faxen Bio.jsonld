@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Ramsele",
     "postalCode": "880 40"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "11457"
-    }
-  ]
+  }
 }

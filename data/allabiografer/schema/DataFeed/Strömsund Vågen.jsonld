@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Strömsund Vågen",
+  "about": {
+    "@id": "../MovieTheater/Str%C3%B6msund%20V%C3%A5gen.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "31542"
+  }
+}

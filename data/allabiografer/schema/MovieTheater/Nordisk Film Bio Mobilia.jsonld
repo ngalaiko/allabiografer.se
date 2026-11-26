@@ -11,12 +11,5 @@
     "streetAddress": "Per Albin Hanssons väg 38C",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:nfbio_se",
-      "value": "e9dae04966497b313dbaf357"
-    }
-  ],
   "url": "https://www.nfbio.se/biograf/malmo?city=malmo"
 }

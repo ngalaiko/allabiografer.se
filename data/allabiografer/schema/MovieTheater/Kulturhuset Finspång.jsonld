@@ -6,13 +6,6 @@
   "containedInPlace": {
     "@id": "../City/Finsp%C3%A5ng.jsonld"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:tickster_se",
-      "value": "8efk0t38a63ealr"
-    }
-  ],
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Bergslagsvägen 29",

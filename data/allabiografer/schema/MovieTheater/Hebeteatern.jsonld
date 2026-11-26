@@ -12,12 +12,5 @@
     "addressLocality": "Trollhättan",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "1f707c38e890268f57542361"
-    }
-  ],
   "url": "https://www.trollhattan.fh.se"
 }

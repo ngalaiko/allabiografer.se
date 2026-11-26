@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Mölnlycke",
     "postalCode": "435 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "7872"
-    }
-  ]
+  }
 }

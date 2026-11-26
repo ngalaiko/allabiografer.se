@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Nossebro",
     "postalCode": "465 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "14335"
-    }
-  ]
+  }
 }

@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Östersund",
     "postalCode": "831 31"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg99097"
-    }
-  ]
+  }
 }

@@ -11,12 +11,5 @@
     "streetAddress": "Skolvägen 10",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "1804bc32e9f77835683f7259"
-    }
-  ],
   "url": "http://www.kumla.fh.se"
 }

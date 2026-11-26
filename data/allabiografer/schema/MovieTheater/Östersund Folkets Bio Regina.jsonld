@@ -13,12 +13,5 @@
     "addressLocality": "Östersund",
     "postalCode": "831 33"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "3214"
-    }
-  ],
   "url": "https://bioregina.se"
 }

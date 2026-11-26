@@ -13,12 +13,5 @@
     "addressLocality": "Umeå",
     "postalCode": "903 26"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "13192"
-    }
-  ],
   "url": "https://folketsbioumea.se"
 }

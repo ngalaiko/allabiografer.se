@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Folketshus",
+  "about": {
+    "@id": "../MovieTheater/Ulricehamn%20Folkan.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:nortic_se",
+    "value": "4182e2fcc942ecebf3eb2610"
+  }
+}

@@ -13,12 +13,5 @@
     "addressLocality": "Åmål",
     "postalCode": "662 31"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "13875"
-    }
-  ],
   "url": "https://www.amal.se/saga"
 }

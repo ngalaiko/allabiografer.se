@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Forshaga Folkets Hus Bio",
+  "about": {
+    "@id": "../MovieTheater/Forshaga%20Folkets%20Hus%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "a691e74b0db50547f6976c11"
+  }
+}

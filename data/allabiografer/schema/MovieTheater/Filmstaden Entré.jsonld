@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Malmö",
     "postalCode": "212 12"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg40223"
-    }
-  ]
+  }
 }

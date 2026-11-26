@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Falköping",
     "postalCode": "521 43"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "31441"
-    }
-  ]
+  }
 }

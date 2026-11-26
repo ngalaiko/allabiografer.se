@@ -13,12 +13,5 @@
     "addressLocality": "Alafors",
     "postalCode": "449 80"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "16484"
-    }
-  ],
   "url": "https://www.alefolketshus.se"
 }

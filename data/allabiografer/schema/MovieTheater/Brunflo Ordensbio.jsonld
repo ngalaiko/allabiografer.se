@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Brunflo"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2278"
-    }
-  ],
   "url": "http://privat.bahnhof.se/wb133081/bio.html"
 }

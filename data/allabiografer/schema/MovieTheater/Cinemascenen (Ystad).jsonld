@@ -12,12 +12,5 @@
     "addressLocality": "Ystad",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:cinemascenen_se",
-      "value": "ystad"
-    }
-  ],
   "url": "https://www.cinemascenen.se/ystad/"
 }

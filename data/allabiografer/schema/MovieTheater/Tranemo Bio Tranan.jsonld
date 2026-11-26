@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Tranemo",
     "postalCode": "514 80"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "b83753c016b84159e15df419"
-    }
-  ]
+  }
 }

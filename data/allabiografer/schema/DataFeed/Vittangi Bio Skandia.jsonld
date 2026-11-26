@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Vittangi Bio Skandia",
+  "about": {
+    "@id": "../MovieTheater/Vittangi%20Bio%20Skandia.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "9de69d90464c2a0806f90586"
+  }
+}

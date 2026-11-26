@@ -13,12 +13,5 @@
     "addressLocality": "Borrby",
     "postalCode": "276 30"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "eb31d1746568ad9573b921ed"
-    }
-  ],
   "url": "http://www.borrbybiograf.se"
 }

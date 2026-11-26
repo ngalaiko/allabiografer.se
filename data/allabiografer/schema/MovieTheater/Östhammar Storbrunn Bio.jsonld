@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Östhammar",
     "postalCode": "742 32"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "15844"
-    }
-  ]
+  }
 }

@@ -1,4 +1,4 @@
-"""Turn one adapter's fetch Dataset into ScreeningEvent and Movie entities."""
+"""Turn one adapter's fetch Dataset into Movie entities and, per registry DataFeed, a Dataset of its screenings."""
 
 import tempfile
 from datetime import date
@@ -54,25 +54,27 @@ def parse_capture(graph: Graph, adapter: str, captured: Path) -> Path:
     for reference in dataset["distribution"]:
         path = graph.resolve(captured, reference)
         downloads[graph.read(path)["name"]] = path
-    cinemas = {}
-    for cinema in dataset["about"]:
-        identifier = cinema["identifier"]
+    feeds = {}
+    for reference in dataset["about"]:
+        path = graph.resolve(captured, reference)
+        feed = graph.read(path)
+        identifier = feed["identifier"]
         if identifier["propertyID"] != PREFIX + adapter:
             raise ValueError(f"{captured}: {identifier['propertyID']} is not {adapter}")
-        cinemas[identifier.get("value")] = graph.resolve(captured, cinema)
+        feeds[identifier.get("value")] = (path, feed, graph.resolve(path, feed["about"]))
     today = date.fromisoformat(dataset["temporalCoverage"])
     rows = import_module(f".sources.{adapter}.parse", __package__).rows
     movies = {}
-    screenings = []
+    screenings = {path: [] for path, _, _ in feeds.values()}
     with tempfile.TemporaryDirectory() as scratch:
         inputs = Path(scratch)
         for name, path in downloads.items():
             (inputs / name).write_bytes(graph.content(graph.read(path)))
         for venue, show_id, start, ticket, version, presentation, movie_id, capture, movie in rows(inputs, today):
             # Adapters may yield programmes of venues outside the selection: shared feeds, old captures.
-            cinema = cinemas.get(venue[0])
-            if cinema is None:
+            if venue[0] not in feeds:
                 continue
+            feed_path, feed, cinema = feeds[venue[0]]
             if movie_id not in movies:
                 movie = dict(movie)
                 if not movie.get("url"):
@@ -87,7 +89,7 @@ def parse_capture(graph: Graph, adapter: str, captured: Path) -> Path:
                         "isBasedOn": graph.ref(downloads[capture]),
                     },
                 )
-            screenings.append(
+            screenings[feed_path].append(
                 graph.put(
                     "ScreeningEvent",
                     {
@@ -99,11 +101,25 @@ def parse_capture(graph: Graph, adapter: str, captured: Path) -> Path:
                         "location": graph.ref(cinema),
                         "offers": {"@type": "Offer", "url": ticket},
                         **screening_fields(version, presentation),
+                        # Programmes published by someone other than the cinema name their organiser.
+                        **({"organizer": feed["publisher"]} if "publisher" in feed else {}),
                     },
                 )
             )
-    seen = set()
-    unique = [path for path in screenings if not (path in seen or seen.add(path))]
+    # One snapshot per registry feed, empty ones included: an empty programme replaces the previous one.
+    snapshots = [
+        graph.put(
+            "Dataset",
+            {
+                "name": feed["name"],
+                "isBasedOn": graph.ref(path),
+                "about": graph.ref(cinema),
+                "temporalCoverage": dataset["temporalCoverage"],
+                "hasPart": [graph.ref(item) for item in sorted(set(screenings[path]), key=str)],
+            },
+        )
+        for path, feed, cinema in sorted(feeds.values(), key=lambda item: str(item[0]))
+    ]
     return graph.put(
         "Dataset",
         {
@@ -112,6 +128,6 @@ def parse_capture(graph: Graph, adapter: str, captured: Path) -> Path:
             "isBasedOn": graph.ref(captured),
             "about": dataset["about"],
             "hasPart": [graph.ref(path) for path in sorted(movies.values(), key=str)]
-            + [graph.ref(path) for path in sorted(unique, key=str)],
+            + [graph.ref(path) for path in snapshots],
         },
     )

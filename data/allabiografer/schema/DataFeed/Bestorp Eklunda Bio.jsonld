@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Bestorp Eklunda Bio",
+  "about": {
+    "@id": "../MovieTheater/Bestorp%20Eklunda%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "3b9c525dd0eb172ac8a794c0"
+  }
+}

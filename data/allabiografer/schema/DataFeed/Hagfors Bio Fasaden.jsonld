@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Hagfors Bio Fasaden",
+  "about": {
+    "@id": "../MovieTheater/Hagfors%20Bio%20Fasaden.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "2242"
+  }
+}

@@ -13,12 +13,5 @@
     "addressLocality": "Sollefteå",
     "postalCode": "881 31"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "39782"
-    }
-  ],
   "url": "https://biosolleftea.se"
 }

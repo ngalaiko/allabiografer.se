@@ -1,49 +1,8 @@
-import shutil
 from datetime import date
 
-import pytest
-
-from allabiografer.graph import DATA, Graph
 from allabiografer.merge import FILM, merge_datasets
-from allabiografer.parsing import PREFIX
 
 DAY = date(2026, 12, 1)
-
-
-@pytest.fixture
-def graph(tmp_path):
-    shutil.copytree(DATA / "schema" / "MovieTheater", tmp_path / "schema" / "MovieTheater")
-    return Graph(tmp_path)
-
-
-def parsed(graph, adapter, cinemas, films, *, day=DAY):
-    """A parse Dataset: `films` maps a movie ID to (fields, [(cinema, start)])."""
-    parts = []
-    about = [
-        graph.ref(graph.path("MovieTheater", cinema)) | {"identifier": {"propertyID": PREFIX + adapter}}
-        for cinema in cinemas
-    ]
-    for movie_id, (fields, shows) in films.items():
-        movie = graph.put(
-            "Movie", {"identifier": {"propertyID": PREFIX + adapter, "value": movie_id}, "isBasedOn": "x", **fields}
-        )
-        parts.append(movie)
-        for cinema, start in shows:
-            parts.append(
-                graph.put(
-                    "ScreeningEvent",
-                    {
-                        "name": fields["name"],
-                        "startDate": start,
-                        "workPresented": graph.ref(movie),
-                        "location": graph.ref(graph.path("MovieTheater", cinema)),
-                    },
-                )
-            )
-    return graph.put(
-        "Dataset",
-        {"temporalCoverage": day.isoformat(), "about": about, "hasPart": [graph.ref(path) for path in parts]},
-    )
 
 
 def contents(graph, dataset):
@@ -62,7 +21,7 @@ def films_of(graph, path, screening):
     return films_of_name(graph.read(graph.resolve(path, screening["workPresented"])))
 
 
-def test_cinemas_not_rerun_keep_previous_screenings(graph):
+def test_feeds_not_rerun_keep_previous_screenings(graph, parsed):
     first = merge_datasets(
         graph,
         None,
@@ -82,7 +41,7 @@ def test_cinemas_not_rerun_keep_previous_screenings(graph):
     ]
 
 
-def test_partial_rerun_of_a_source_keeps_its_other_cinemas_on_one_film(graph):
+def test_partial_rerun_of_a_source_keeps_its_other_feeds_on_one_film(graph, parsed):
     rio, aspen = ("Bio Rio", "2026-12-02T18:00:00+01:00"), ("Aspen", "2026-12-02T20:00:00+01:00")
     both = parsed(graph, "x", ["Bio Rio", "Aspen"], {"a": ({"name": "Dune"}, [rio, aspen])})
     first = merge_datasets(graph, None, [both], DAY)
@@ -98,7 +57,7 @@ def test_partial_rerun_of_a_source_keeps_its_other_cinemas_on_one_film(graph):
     ]
 
 
-def test_past_screenings_drop_and_failed_runs_need_no_input(graph):
+def test_past_screenings_drop_and_failed_runs_need_no_input(graph, parsed):
     first = merge_datasets(
         graph,
         None,
@@ -115,7 +74,7 @@ def films_of_name(film):
     return next(item["value"] for item in film["identifier"] if item["propertyID"] == FILM)
 
 
-def test_slugs_are_stable_and_never_reassigned(graph):
+def test_slugs_are_stable_and_never_reassigned(graph, parsed):
     dune = ("Bio Rio", "2026-12-02T18:00:00+01:00")
     first = merge_datasets(graph, None, [parsed(graph, "x", ["Bio Rio"], {"a": ({"name": "Dune"}, [dune])})], DAY)
     renamed = parsed(graph, "x", ["Bio Rio"], {"a": ({"name": "Dune: Part Two"}, [dune])})
@@ -130,7 +89,7 @@ def test_slugs_are_stable_and_never_reassigned(graph):
     assert film["name"] == "Dune: Part Two"
 
 
-def test_joined_films_keep_the_oldest_slug_and_alias_the_other(graph):
+def test_joined_films_keep_the_oldest_slug_and_alias_the_other(graph, parsed):
     plot = "En polis jagar en bankrånare genom Los Angeles medan båda försöker hålla ihop sina liv. " * 3
     rio = parsed(graph, "a", ["Bio Rio"], {"1": ({"name": "Heat", "description": plot}, [])})
     aspen = parsed(graph, "b", ["Aspen"], {"2": ({"name": "Heta nätter"}, [])})
@@ -146,3 +105,36 @@ def test_joined_films_keep_the_oldest_slug_and_alias_the_other(graph):
         (FILM, "heat"),
         ("allabiografer:film-alias", "heta-nätter"),
     ]
+
+
+def test_a_cinema_shows_every_feed_and_a_show_listed_twice_once(graph, parsed):
+    """Arboga Bio and Arboga Bio Kontrast publish separately; both play at Arboga Bio."""
+    own = ("Arboga Bio", "2026-12-02T18:00:00+01:00")
+    kontrast = ("Arboga Bio Kontrast", "2026-12-07T19:00:00+01:00")
+    both = [("Arboga Bio", "2026-12-03T19:00:00+01:00"), ("Arboga Bio Kontrast", "2026-12-03T19:00:00+01:00")]
+    films = {"a": ({"name": "Dune"}, [own]), "b": ({"name": "Bad Apples"}, [kontrast, *both])}
+    merged = merge_datasets(graph, None, [parsed(graph, "bio_se", ["Arboga Bio", "Arboga Bio Kontrast"], films)], DAY)
+
+    _, screenings = contents(graph, merged)
+    assert sorted((s["film"], s["startDate"], s["location"]["@id"], "organizer" in s) for s in screenings) == [
+        ("bad-apples", "2026-12-03T19:00:00+01:00", "../MovieTheater/Arboga%20Bio.jsonld", False),
+        ("bad-apples", "2026-12-07T19:00:00+01:00", "../MovieTheater/Arboga%20Bio.jsonld", True),
+        ("dune", "2026-12-02T18:00:00+01:00", "../MovieTheater/Arboga%20Bio.jsonld", False),
+    ]
+    assert graph.read(merged)["about"] == [{"@id": "../MovieTheater/Arboga%20Bio.jsonld"}]
+
+
+def test_a_failed_feed_keeps_its_screenings_without_touching_the_cinemas_other_feeds(graph, parsed):
+    own = {"a": ({"name": "Dune"}, [("Arboga Bio", "2026-12-02T18:00:00+01:00")])}
+    kontrast = {"b": ({"name": "Bad Apples"}, [("Arboga Bio Kontrast", "2026-12-07T19:00:00+01:00")])}
+    first = merge_datasets(
+        graph,
+        None,
+        [parsed(graph, "x", ["Arboga Bio"], own), parsed(graph, "y", ["Arboga Bio Kontrast"], kontrast)],
+        DAY,
+    )
+    # The cinema's own feed is re-run and now lists nothing; Kontrast's adapter failed.
+    second = merge_datasets(graph, first, [parsed(graph, "x", ["Arboga Bio"], {})], DAY)
+
+    _, screenings = contents(graph, second)
+    assert [s["film"] for s in screenings] == ["bad-apples"]

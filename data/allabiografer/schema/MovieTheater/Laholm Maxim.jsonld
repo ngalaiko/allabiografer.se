@@ -11,12 +11,5 @@
     "streetAddress": "Hästtorget 7",
     "addressCountry": "SE",
     "addressLocality": "Laholm"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2131"
-    }
-  ]
+  }
 }

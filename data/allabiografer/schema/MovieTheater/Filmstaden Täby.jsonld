@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Täby",
     "postalCode": "183 34"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg84379"
-    }
-  ]
+  }
 }

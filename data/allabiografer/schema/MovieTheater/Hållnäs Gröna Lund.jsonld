@@ -13,12 +13,5 @@
     "addressLocality": "Hållnäs",
     "postalCode": "819 64"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "34216"
-    }
-  ],
   "url": "https://www.hembygd.se/hallnas"
 }

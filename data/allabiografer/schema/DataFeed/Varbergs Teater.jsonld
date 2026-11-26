@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Varbergs Teater",
+  "about": {
+    "@id": "../MovieTheater/Varbergs%20Teater.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "ebd12718021d0a4d286aca7f"
+  }
+}

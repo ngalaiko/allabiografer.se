@@ -13,12 +13,5 @@
     "addressLocality": "Tännäs",
     "postalCode": "846 95"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "4183"
-    }
-  ],
   "url": "http://www.bionitannas.se"
 }

@@ -13,12 +13,5 @@
     "addressLocality": "Borås",
     "postalCode": "503 30"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "5570"
-    }
-  ],
   "url": "https://www.boras.se/rodakvarn"
 }

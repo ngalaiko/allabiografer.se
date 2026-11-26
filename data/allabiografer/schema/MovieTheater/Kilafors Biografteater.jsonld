@@ -13,12 +13,5 @@
     "addressLocality": "Kilafors",
     "postalCode": "823 30"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "11413"
-    }
-  ],
   "url": "http://kilaforsbio.se/kommandefilmer/"
 }

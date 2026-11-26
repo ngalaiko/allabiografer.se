@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Bromölla",
     "postalCode": "295 31"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg71313"
-    }
-  ]
+  }
 }

@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Skara",
     "postalCode": "532 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg71593"
-    }
-  ]
+  }
 }

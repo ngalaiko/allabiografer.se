@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Järpen Bion",
+  "about": {
+    "@id": "../MovieTheater/J%C3%A4rpen%20Bion.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:biosverige_se",
+    "value": "b27ae992225a7ab79202c537"
+  }
+}

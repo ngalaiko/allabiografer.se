@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Skarpnäcks Kulturhus",
+  "about": {
+    "@id": "../MovieTheater/Skarpn%C3%A4cks%20Kulturhus.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:tickster_se",
+    "value": "3gaa3vubd6a3yr5"
+  }
+}

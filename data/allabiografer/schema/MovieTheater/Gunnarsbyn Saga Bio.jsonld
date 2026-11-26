@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Gunnarsbyn",
     "postalCode": "961 97"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "3806d962bd125ea90b747d34"
-    }
-  ]
+  }
 }

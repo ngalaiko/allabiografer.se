@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Biostaden 2001 Borås",
+  "about": {
+    "@id": "../MovieTheater/Biostaden%202001%20Bor%C3%A5s.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:filmstaden_se",
+    "value": "ncg53640"
+  }
+}

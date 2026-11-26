@@ -13,12 +13,5 @@
     "addressLocality": "Skärholmen",
     "postalCode": "127 48"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "3653"
-    }
-  ],
   "url": "http://kulturhusetstadsteatern.se/Skarisbiografen/"
 }

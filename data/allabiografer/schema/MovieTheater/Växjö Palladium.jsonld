@@ -13,12 +13,5 @@
     "addressLocality": "Växjö",
     "postalCode": "352 31"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "11740"
-    }
-  ],
   "url": "https://www.folketsbiovaxjo.se"
 }

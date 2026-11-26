@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Löttorp Centrum Bio",
+  "about": {
+    "@id": "../MovieTheater/L%C3%B6ttorp%20Centrum%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "6880"
+  }
+}

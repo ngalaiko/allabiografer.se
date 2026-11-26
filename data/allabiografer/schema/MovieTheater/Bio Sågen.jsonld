@@ -13,12 +13,5 @@
     "addressCountry": "SE",
     "postalCode": "242 95"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "a7ed2301ae3d66085cace610"
-    }
-  ],
   "url": "https://bio.sagensvenskop.se/"
 }

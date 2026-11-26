@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Medborgarhus Bio",
+  "about": {
+    "@id": "../MovieTheater/Medborgarhus%20Bio%20%28Lycksele%29.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "4e6f80e3731a3b1f772422c4"
+  }
+}

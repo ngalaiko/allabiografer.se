@@ -13,12 +13,5 @@
     "addressLocality": "Boden",
     "postalCode": "961 35"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2207"
-    }
-  ],
   "url": "https://folketshusboden.se"
 }

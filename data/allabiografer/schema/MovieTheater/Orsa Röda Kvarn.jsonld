@@ -13,12 +13,5 @@
     "addressLocality": "Orsa",
     "postalCode": "794 30"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2283"
-    }
-  ],
   "url": "http://www.orsabio.se/"
 }

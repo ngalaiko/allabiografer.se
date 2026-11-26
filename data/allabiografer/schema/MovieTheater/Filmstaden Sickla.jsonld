@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Nacka",
     "postalCode": "131 34"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg66921"
-    }
-  ]
+  }
 }

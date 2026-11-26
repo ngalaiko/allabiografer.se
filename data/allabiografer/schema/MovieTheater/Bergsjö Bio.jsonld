@@ -13,12 +13,5 @@
     "addressLocality": "Bergsjö",
     "postalCode": "829 50"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2554"
-    }
-  ],
   "url": "https://www.facebook.com/BergsjoBio/"
 }

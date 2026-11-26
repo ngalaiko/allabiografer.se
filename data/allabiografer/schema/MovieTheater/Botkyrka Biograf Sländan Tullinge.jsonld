@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Tullinge",
     "postalCode": "146 37"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "6700"
-    }
-  ]
+  }
 }

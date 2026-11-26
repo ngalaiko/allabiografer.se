@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Röda Kvarn i Halmstad",
+  "about": {
+    "@id": "../MovieTheater/R%C3%B6da%20Kvarn%20i%20Halmstad.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:filmstaden_se",
+    "value": "ncg76784"
+  }
+}

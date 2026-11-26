@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Enköping Sagabiograferna",
+  "about": {
+    "@id": "../MovieTheater/Enk%C3%B6ping%20Sagabiograferna.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "31438"
+  }
+}

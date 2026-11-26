@@ -13,12 +13,5 @@
     "addressLocality": "Knivsta",
     "postalCode": "741 95"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "16600"
-    }
-  ],
   "url": "https://www.blawingen.nu/biograf/"
 }

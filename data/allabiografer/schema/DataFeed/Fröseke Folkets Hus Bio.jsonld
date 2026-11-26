@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Fröseke Folkets Hus Bio",
+  "about": {
+    "@id": "../MovieTheater/Fr%C3%B6seke%20Folkets%20Hus%20Bio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "348b43ae166d43f579acc72d"
+  }
+}

@@ -10,12 +10,5 @@
     "@type": "PostalAddress",
     "streetAddress": "Östra Parkgatan 2",
     "addressCountry": "SE"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:nortic_se",
-      "value": "413605fac8e88d629196a8d5"
-    }
-  ]
+  }
 }

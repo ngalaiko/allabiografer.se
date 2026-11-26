@@ -13,12 +13,5 @@
     "addressLocality": "Norrhult",
     "postalCode": "364 44"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "21023a61b30333e77755ac4d"
-    }
-  ],
   "url": "http://www.norrhultsfolketshus.se/"
 }

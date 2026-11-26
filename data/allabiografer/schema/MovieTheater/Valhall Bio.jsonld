@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Rossön",
     "postalCode": "883 95"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "ce73b395c2ddc02c131af7ec"
-    }
-  ]
+  }
 }

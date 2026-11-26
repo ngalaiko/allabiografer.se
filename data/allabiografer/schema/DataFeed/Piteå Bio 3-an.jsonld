@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Piteå Bio 3-an",
+  "about": {
+    "@id": "../MovieTheater/Pite%C3%A5%20Bio%203-an.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "7040"
+  }
+}

@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Ekerö",
     "postalCode": "178 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "10093"
-    }
-  ]
+  }
 }

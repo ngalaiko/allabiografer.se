@@ -10,12 +10,5 @@
     "@type": "PostalAddress",
     "streetAddress": "Sikforsvägen 19-21",
     "addressCountry": "SE"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "e00cad53bcac1434e1e459ab"
-    }
-  ]
+  }
 }

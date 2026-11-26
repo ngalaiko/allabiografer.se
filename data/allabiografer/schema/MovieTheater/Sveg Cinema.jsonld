@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Sveg",
     "postalCode": "842 32"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "bd811379b0ecab3b83a25fd3"
-    }
-  ]
+  }
 }

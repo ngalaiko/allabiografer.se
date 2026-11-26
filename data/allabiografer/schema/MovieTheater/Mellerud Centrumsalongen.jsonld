@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Mellerud",
     "postalCode": "464 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "2dfb584598c06ad0c353c0ee"
-    }
-  ]
+  }
 }

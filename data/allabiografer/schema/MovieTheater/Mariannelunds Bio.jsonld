@@ -11,12 +11,5 @@
     "streetAddress": "Östra Storgatan 6",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:biosverige_se",
-      "value": "e6ec35790377ef57acff7732"
-    }
-  ],
   "url": "https://mariannelundsbio.se"
 }

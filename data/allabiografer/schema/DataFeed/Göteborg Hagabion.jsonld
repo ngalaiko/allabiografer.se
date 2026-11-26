@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Göteborg Hagabion",
+  "about": {
+    "@id": "../MovieTheater/G%C3%B6teborg%20Hagabion.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "17705"
+  }
+}

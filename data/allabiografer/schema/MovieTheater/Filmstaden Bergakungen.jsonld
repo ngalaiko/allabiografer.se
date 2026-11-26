@@ -13,12 +13,5 @@
     "addressLocality": "Göteborg",
     "postalCode": "411 40"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg12773"
-    }
-  ],
   "url": "https://www.filmstaden.se/goteborg/biograf/filmstaden-bergakungen/"
 }

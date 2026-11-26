@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Åmsele",
     "postalCode": "922 75"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "6296"
-    }
-  ]
+  }
 }

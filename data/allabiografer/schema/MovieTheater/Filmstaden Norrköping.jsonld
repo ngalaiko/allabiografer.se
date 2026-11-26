@@ -13,12 +13,5 @@
     "addressLocality": "Norrköping",
     "postalCode": "600 02"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg31134"
-    }
-  ],
   "url": "https://www.filmstaden.se/norrkoping/biograf/filmstaden/"
 }

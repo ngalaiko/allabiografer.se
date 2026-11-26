@@ -13,12 +13,5 @@
     "addressLocality": "Berga",
     "postalCode": "579 40"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "19908"
-    }
-  ],
   "url": "https://www.bergastation.se/berga-bio/"
 }

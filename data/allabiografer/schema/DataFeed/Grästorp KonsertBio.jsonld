@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Grästorp KonsertBio",
+  "about": {
+    "@id": "../MovieTheater/Gr%C3%A4storp%20KonsertBio.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "7135"
+  }
+}

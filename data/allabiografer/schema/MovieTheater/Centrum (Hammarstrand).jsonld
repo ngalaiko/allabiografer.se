@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Hammarstrand",
     "postalCode": "844 32"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "a45178aa57e0d14541767bd9"
-    }
-  ]
+  }
 }

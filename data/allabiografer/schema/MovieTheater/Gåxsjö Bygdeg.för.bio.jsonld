@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Gåxsjö",
     "postalCode": "830 70"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "3a65cfd3851bbd9d1c5e7a00"
-    }
-  ]
+  }
 }

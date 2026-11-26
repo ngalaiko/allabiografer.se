@@ -1,0 +1,19 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Skövde Filmfestival",
+  "about": {
+    "@id": "../MovieTheater/Biograf%20Odeon.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "9080"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Skövde Filmfestival",
+    "url": "https://skovdefilmfestival.se"
+  }
+}

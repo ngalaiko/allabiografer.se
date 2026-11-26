@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Bergmancenter",
+  "about": {
+    "@id": "../MovieTheater/Bergmancenter.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "5372377ffbd42f704c00b1f3"
+  }
+}

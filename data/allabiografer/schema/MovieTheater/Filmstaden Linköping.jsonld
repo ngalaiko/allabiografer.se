@@ -13,12 +13,5 @@
     "addressLocality": "Linköping",
     "postalCode": "582 22"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:filmstaden_se",
-      "value": "ncg14483"
-    }
-  ],
   "url": "https://www.filmstaden.se/linkoping/biograf/filmstaden/"
 }

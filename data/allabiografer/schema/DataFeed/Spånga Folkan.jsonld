@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Spånga Folkan",
+  "about": {
+    "@id": "../MovieTheater/Sp%C3%A5nga%20Folkan.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:nortic_se",
+    "value": "e381546df50c3bd3bfeada04"
+  }
+}

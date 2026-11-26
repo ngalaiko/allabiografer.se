@@ -11,12 +11,5 @@
     "streetAddress": "Skolvägen 12",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "4d5082a6d67c53d28d08d0c4"
-    }
-  ],
   "url": "https://www.bioiullared.se"
 }

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Stockholm Bio Kaskad Blackeberg",
+  "about": {
+    "@id": "../MovieTheater/Stockholm%20Bio%20Kaskad%20Blackeberg.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "7137"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Ullareds Bygdegård",
+  "about": {
+    "@id": "../MovieTheater/Ullareds%20Bygdeg%C3%A5rd.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "4d5082a6d67c53d28d08d0c4"
+  }
+}

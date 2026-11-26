@@ -10,12 +10,5 @@
     "@type": "PostalAddress",
     "streetAddress": "Vattugatan 18",
     "addressCountry": "SE"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:nortic_se",
-      "value": "8d01eed6cab83bd17e929348"
-    }
-  ]
+  }
 }

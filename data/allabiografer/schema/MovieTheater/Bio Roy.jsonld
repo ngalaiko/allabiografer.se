@@ -11,12 +11,5 @@
     "streetAddress": "Kungsportsavenyen 45",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:folkets_hus_och_parker",
-      "value": "bioroy_se"
-    }
-  ],
   "url": "https://www.bioroy.se/"
 }

@@ -1,9 +1,9 @@
 """Update the merged screenings, as Schema.org actions over one data directory.
 
-A run is an UpdateAction: its `object` lists the cinemas run and its `targetCollection`
-the previous result. It fans out to a DownloadAction (fetch) and CreateAction (parse) per
-adapter, then fans in to one CreateAction (merge). Each step's `object` links its inputs
-and `result` the Dataset it produced.
+A run is an UpdateAction: its `object` lists the registry DataFeeds run and its
+`targetCollection` the previous result. It fans out to a DownloadAction (fetch) and
+CreateAction (parse) per adapter, then fans in to one CreateAction (merge). Each step's
+`object` links its inputs and `result` the Dataset it produced.
 """
 
 import argparse
@@ -25,7 +25,7 @@ from .graph import DATA, Graph, media_type
 from .merge import merge_datasets
 from .parsing import parse_capture
 from .render import render as render_site
-from .schedule import PREFIX, Route, checked, routes
+from .schedule import Feed, checked, feeds
 from .site.pages import BASE_URL as SITE
 from .sources._shared import STOCKHOLM
 
@@ -86,21 +86,14 @@ def instrument(graph: Graph, path: str) -> dict:
     return graph.ref(graph.put("SoftwareSourceCode", {"name": path, "isPartOf": graph.ref(source_code(graph))}))
 
 
-def binding(graph: Graph, route: Route) -> dict:
-    return graph.ref(graph.path("MovieTheater", route.cinema)) | {
-        "identifier": {"@type": "PropertyValue", "propertyID": PREFIX + route.adapter}
-        | ({"value": route.venue_id} if route.venue_id is not None else {})
-    }
-
-
-def fetch(graph: Graph, adapter: str, selected: list[Route], day: date) -> Path:
-    """Capture one adapter's programmes for the selected cinemas into a Dataset of DataDownloads."""
+def fetch(graph: Graph, adapter: str, selected: list[Feed], day: date) -> Path:
+    """Capture one adapter's selected feeds into a Dataset of DataDownloads."""
     module = import_module(f".sources.{adapter}.fetch", __package__)
-    cinemas = [binding(graph, route) for route in selected]
-    selectors = {route.venue_id for route in selected}
+    about = [graph.ref(graph.path("DataFeed", feed.name)) for feed in selected]
+    selectors = {feed.venue_id for feed in selected}
     fields = {
         "name": f"Fetch {adapter}",
-        "object": cinemas,
+        "object": about,
         "instrument": instrument(graph, f"src/allabiografer/sources/{adapter}/fetch.py"),
     }
     with (
@@ -122,7 +115,7 @@ def fetch(graph: Graph, adapter: str, selected: list[Route], day: date) -> Path:
             {
                 "name": f"{adapter} capture",
                 "temporalCoverage": day.isoformat(),
-                "about": cinemas,
+                "about": about,
                 "distribution": [graph.ref(path) for path in downloads],
             },
         )
@@ -179,19 +172,19 @@ def latest(graph: Graph) -> Path | None:
     return max(runs)[1] if runs else None
 
 
-def run(graph: Graph, selected: list[Route], *, previous: Path | None) -> tuple[Path, dict[str, str]]:
+def run(graph: Graph, selected: list[Feed], *, previous: Path | None) -> tuple[Path, dict[str, str]]:
     """Fan out into fetch and parse per adapter; fan in to one merge with the previous result.
 
-    A failing adapter is recorded as a failed action and reported; its cinemas keep their
+    A failing adapter is recorded as a failed action and reported; its feeds keep their
     previous screenings.
     """
     day = datetime.now(STOCKHOLM).date()
     by_adapter = defaultdict(list)
-    for route in selected:
-        by_adapter[route.adapter].append(route)
+    for feed in selected:
+        by_adapter[feed.adapter].append(feed)
     fields = {
         "name": "Run",
-        "object": [graph.ref(graph.path("MovieTheater", route.cinema)) for route in selected],
+        "object": [graph.ref(graph.path("DataFeed", feed.name)) for feed in selected],
         **({"targetCollection": graph.ref(previous)} if previous else {}),
         "instrument": instrument(graph, "src/allabiografer/pipeline.py"),
     }
@@ -213,7 +206,9 @@ def run(graph: Graph, selected: list[Route], *, previous: Path | None) -> tuple[
 
 def main() -> None:
     cli = argparse.ArgumentParser(description=__doc__)
-    cli.add_argument("--cinema", action="append", default=[], help="Limit to this cinema (MovieTheater filename stem)")
+    cli.add_argument(
+        "--cinema", action="append", default=[], help="Limit to this cinema's feeds (MovieTheater filename stem)"
+    )
     cli.add_argument("--fresh", action="store_true", help="Ignore the previous run's result")
     cli.add_argument("--render-only", action="store_true", help="Render the latest result without fetching")
     cli.add_argument("--data", type=Path, default=DATA)
@@ -225,11 +220,11 @@ def main() -> None:
         print(render(graph, previous))
         return
     try:
-        available = routes(graph.root)
-        checked(set(args.cinema), available)
+        available = list(feeds(graph.root).values())
+        checked(set(args.cinema), {feed.cinema for feed in available})
     except ValueError as error:
         cli.error(str(error))
-    selected = [available[cinema] for cinema in dict.fromkeys(args.cinema)] or list(available.values())
+    selected = [feed for feed in available if not args.cinema or feed.cinema in args.cinema]
     result, failures = run(graph, selected, previous=None if args.fresh else latest(graph))
     print(result)
     print(render(graph, result))

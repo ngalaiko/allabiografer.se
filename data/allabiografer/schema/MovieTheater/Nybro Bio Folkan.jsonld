@@ -13,12 +13,5 @@
     "addressLocality": "Nybro",
     "postalCode": "382 33"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "2282"
-    }
-  ],
   "url": "https://nybro.se/uppleva-gora/evenemang-kultur/film-nybro/folkan-bio/"
 }

@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Ytterhogdal",
     "postalCode": "842 71"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "ea2b96b91ded74523e3ded1f"
-    }
-  ]
+  }
 }

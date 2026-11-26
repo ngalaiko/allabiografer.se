@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Biocafé Tellus",
+  "about": {
+    "@id": "../MovieTheater/Biocaf%C3%A9%20Tellus.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:nortic_se",
+    "value": "5abe9f74b43fc5a465bff57e"
+  }
+}

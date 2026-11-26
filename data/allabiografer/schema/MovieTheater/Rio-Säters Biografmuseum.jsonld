@@ -12,12 +12,5 @@
     "addressLocality": "Säter",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "bd67d9d03f0ba672d74b4a5f"
-    }
-  ],
   "url": "http://biografmuseet.se/"
 }

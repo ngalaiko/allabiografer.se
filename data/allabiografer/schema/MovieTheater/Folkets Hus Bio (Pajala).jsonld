@@ -11,12 +11,5 @@
     "streetAddress": "Fridhemsvägen 1",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "44bf517ade8776071f30b35b"
-    }
-  ],
   "url": "https://www.yourvismawebsite.com/pajala-folkets-husforening"
 }

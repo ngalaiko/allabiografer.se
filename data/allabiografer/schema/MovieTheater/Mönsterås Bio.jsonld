@@ -13,12 +13,5 @@
     "addressLocality": "Mönsterås",
     "postalCode": "383 30"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bio_se",
-      "value": "31228"
-    }
-  ],
   "url": "https://www.monsterasbio.se"
 }

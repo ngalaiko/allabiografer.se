@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Gävle Bio 7-an",
+  "about": {
+    "@id": "../MovieTheater/G%C3%A4vle%20Bio%207-an.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "42051"
+  }
+}

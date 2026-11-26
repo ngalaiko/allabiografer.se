@@ -11,12 +11,5 @@
     "streetAddress": "Kungsgatan 66",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:svenskabio_se",
-      "value": "3"
-    }
-  ],
   "url": "https://svenskabio.se/eskilstuna/biostaden/"
 }

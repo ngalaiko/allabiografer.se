@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Bion i Åsele",
+  "about": {
+    "@id": "../MovieTheater/Bion%20i%20%C3%85sele.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bioguiden_se",
+    "value": "22c83989c02eea7cc2b0924d"
+  }
+}

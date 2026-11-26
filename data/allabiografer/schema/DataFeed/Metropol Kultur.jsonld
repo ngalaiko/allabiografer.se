@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Metropol Kultur",
+  "about": {
+    "@id": "../MovieTheater/Metropol%20Kultur.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:tickster_se",
+    "value": "agd4gkadcmcxeeg"
+  }
+}

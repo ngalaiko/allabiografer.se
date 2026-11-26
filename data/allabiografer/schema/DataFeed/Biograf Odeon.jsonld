@@ -1,0 +1,13 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Biograf Odeon",
+  "about": {
+    "@id": "../MovieTheater/Biograf%20Odeon.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:kulturiskovde_se"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Stockholm Bio Husby",
+  "about": {
+    "@id": "../MovieTheater/Stockholm%20Bio%20Husby.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "49422"
+  }
+}

@@ -12,12 +12,5 @@
     "addressLocality": "Strängnäs",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:cinemascenen_se",
-      "value": "strangnas"
-    }
-  ],
   "url": "https://www.cinemascenen.se/strangnas/"
 }

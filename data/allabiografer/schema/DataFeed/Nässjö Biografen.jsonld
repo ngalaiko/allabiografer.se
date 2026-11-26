@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Nässjö Biografen",
+  "about": {
+    "@id": "../MovieTheater/N%C3%A4ssj%C3%B6%20Biografen.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "31433"
+  }
+}

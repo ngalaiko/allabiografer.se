@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Horn",
     "postalCode": "590 42"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "0cccfadd068f7c0619b69387"
-    }
-  ]
+  }
 }

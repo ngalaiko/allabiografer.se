@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Vuollerim",
     "postalCode": "960 30"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "d68f9bfaede4083d38f7c5de"
-    }
-  ]
+  }
 }

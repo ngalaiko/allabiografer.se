@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Växjö Palladium",
+  "about": {
+    "@id": "../MovieTheater/V%C3%A4xj%C3%B6%20Palladium.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:bio_se",
+    "value": "11740"
+  }
+}

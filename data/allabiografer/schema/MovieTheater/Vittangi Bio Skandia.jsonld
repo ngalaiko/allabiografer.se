@@ -12,12 +12,5 @@
     "addressCountry": "SE",
     "addressLocality": "Vittangi",
     "postalCode": "980 10"
-  },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:bioguiden_se",
-      "value": "9de69d90464c2a0806f90586"
-    }
-  ]
+  }
 }

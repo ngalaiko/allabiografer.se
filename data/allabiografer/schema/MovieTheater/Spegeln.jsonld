@@ -11,12 +11,5 @@
     "streetAddress": "Stortorget 29",
     "addressCountry": "SE"
   },
-  "identifier": [
-    {
-      "@type": "PropertyValue",
-      "propertyID": "allabiografer:schedule:folkets_hus_och_parker",
-      "value": "biografspegeln_se"
-    }
-  ],
   "url": "https://biografspegeln.se/"
 }

@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "DataFeed",
+  "name": "Folkets Hus Älvsbyn",
+  "about": {
+    "@id": "../MovieTheater/Folkets%20Hus%20%C3%84lvsbyn.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "allabiografer:schedule:tickster_se",
+    "value": "tntfe5rzu5zybfl"
+  }
+}
