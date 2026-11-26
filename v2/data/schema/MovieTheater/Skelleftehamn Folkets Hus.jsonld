@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-12469"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "12469"
     }
   ],
   "url": "http://skelleftehamnfolketshus.se"

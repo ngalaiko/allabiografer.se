@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "filmstaden_se",
-      "value": "filmstaden-ncg18509"
+      "propertyID": "allabiografer:schedule:filmstaden_se",
+      "value": "ncg18509"
     }
   ],
   "url": "https://www.filmstaden.se/umea/biograf/filmstaden-umea/"

@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-49422"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "49422"
     }
   ],
   "url": "https://kulturhusetstadsteatern.se/bio/bio-husby"

@@ -6,6 +6,7 @@ from html import unescape
 from parse.parsers.svenskabio_se import _CINEMAS, _dates, _showtimes
 
 from .._shared import STOCKHOLM, catalogue_main, movie_fields, read_page, stable_key
+from .fetch import venue_id
 
 _MOVIE_FIELDS = (
     "name",
@@ -65,7 +66,7 @@ def rows(inputs, today):
                     movies[movie_id] = detail or path.name, fields
                 based_on, fields = movies[movie_id]
                 yield (
-                    (f"svenskabio-{cinema_id}", venue.name, venue.address, venue.city),
+                    (venue_id(cinema_id), venue.name, venue.address, venue.city),
                     f"{cinema_id}-{show_id}",
                     start,
                     show.ticket_url,

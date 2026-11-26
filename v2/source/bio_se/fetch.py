@@ -2,6 +2,7 @@
 
 from parse.parsers.bio_se import _API, _OTHER_PROGRAMME_IDS, _venue
 
+from ...schedule import checked
 from .._shared import capture_json, fetch_cities_main
 
 DISTRICTS = {"Älvsjö", "Årsta", "Bromma", "Hägersten", "Johanneshov", "Kista", "Skärholmen"}
@@ -14,10 +15,17 @@ def programme_city(venue):
     return "Stockholm" if venue.city in DISTRICTS else venue.city
 
 
-def fetch_pages(session, inputs, cities):
+def venue_id(cinema_id):
+    return str(cinema_id)
+
+
+def fetch_pages(session, inputs, cities=(), *, selectors=None):
     session.headers["Accept"] = "application/json"
     payload = capture_json(session, f"{_API}/cinemas", inputs / "cinemas.json")
+    checked(selectors, {venue_id(cinema["id"]) for cinema in payload["cinemas"]})
     for cinema in payload["cinemas"]:
+        if selectors is not None and venue_id(cinema["id"]) not in selectors:
+            continue
         venue = _venue(cinema)
         if (
             venue is None

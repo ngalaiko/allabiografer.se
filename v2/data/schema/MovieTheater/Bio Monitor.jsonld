@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "biosverige_se",
-      "value": "biosverige-1cabd3848325e5794511e779"
+      "propertyID": "allabiografer:schedule:biosverige_se",
+      "value": "1cabd3848325e5794511e779"
     }
   ],
   "url": "https://filipstad.biosverige.se"

@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-21821"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "21821"
     }
   ],
   "url": "https://www.trappanbio.se/"

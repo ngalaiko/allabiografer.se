@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-3e20ab9ea5f6caa8c3225b68"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "3e20ab9ea5f6caa8c3225b68"
     }
   ],
   "url": "http://www.folketshusvaggeryd.se"

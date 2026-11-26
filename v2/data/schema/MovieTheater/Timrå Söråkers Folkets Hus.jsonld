@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-5b79fbab01ab198ebe28c2e8"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "5b79fbab01ab198ebe28c2e8"
     }
   ],
   "url": "http://www.sorakersfolketshus.se"

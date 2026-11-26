@@ -14,7 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "folkets_hus_och_parker",
+      "propertyID": "allabiografer:schedule:folkets_hus_och_parker",
       "value": "biorodakvarn_se"
     }
   ],

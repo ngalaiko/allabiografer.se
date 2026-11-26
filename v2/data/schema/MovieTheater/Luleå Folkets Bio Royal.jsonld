@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-5318"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "5318"
     }
   ],
   "url": "http://royalbiografen.se/"

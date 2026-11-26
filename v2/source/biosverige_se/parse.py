@@ -35,6 +35,10 @@ def schedule_rows(items):
             yield item.get("id"), title, start, screen, language, subtitles, movie, ticket
 
 
+def venue_id(url):
+    return stable_key(url)
+
+
 def rows(inputs, today):
     for site in _SITES:
         site_id = stable_key(site.url)
@@ -90,7 +94,7 @@ def rows(inputs, today):
                         fields[key] = value
                 movies[movie_id] = fields
             yield (
-                (f"biosverige-{site_id}", site.name, site.address, site.city),
+                (venue_id(site.url), site.name, site.address, site.city),
                 show_id,
                 start,
                 booking or (event.url if event else site.tickets),

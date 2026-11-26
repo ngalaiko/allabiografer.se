@@ -15,8 +15,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "cinemascenen_se",
-      "value": "cinemascenen-katrineholm"
+      "propertyID": "allabiografer:schedule:cinemascenen_se",
+      "value": "katrineholm"
     }
   ],
   "url": "https://www.cinemascenen.se/katrineholm/"

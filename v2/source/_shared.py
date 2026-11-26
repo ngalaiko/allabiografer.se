@@ -14,6 +14,7 @@ from bs4 import BeautifulSoup
 
 from parse import _http, _version
 
+from ..schedule import schedule_identifier, selected_venues
 from ..schema import Catalogue, entity_path, link, write
 from .stockholm_movie_links import REVIEWED_MOVIE_LINKS
 
@@ -131,11 +132,14 @@ def catalogue_main(source, rows):
     catalogue = Catalogue(output)
 
     try:
+        cinema_ids = selected_venues(inputs)
         cities = set()
         movies = set()
         cinemas = set()
         for venue, show_id, start, ticket, audio, subtitles, slug, capture_name, movie_data in rows(inputs, today):
             cinema_id, cinema_name, address, *place = venue
+            if cinema_ids is not None and cinema_id not in cinema_ids:
+                continue
             city = place[0] if place else "Stockholm"
             if args.city and city not in args.city:
                 continue
@@ -149,6 +153,7 @@ def catalogue_main(source, rows):
                 catalogue.node(
                     cinema,
                     name=cinema_name,
+                    identifier=schedule_identifier(source, cinema_id),
                     containedInPlace=link(city_path, cinema.parent),
                     address={"@type": "PostalAddress", "streetAddress": address, "addressCountry": "SE"},
                 )

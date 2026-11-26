@@ -15,8 +15,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-2928"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "2928"
     }
   ],
   "url": "https://www.dalsed.se/uppleva-och-gora/bio/"

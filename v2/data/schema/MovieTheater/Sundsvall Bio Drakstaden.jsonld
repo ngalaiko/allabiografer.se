@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-18048"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "18048"
     }
   ],
   "url": "https://biodrakstaden.se/"

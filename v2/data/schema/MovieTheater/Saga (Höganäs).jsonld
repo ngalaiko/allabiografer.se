@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-dc8541861a0d1dcb5192720d"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "dc8541861a0d1dcb5192720d"
     }
   ],
   "url": "http://www.skanebiografer.se/saga/index.html"

@@ -15,8 +15,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-12242"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "12242"
     }
   ],
   "url": "https://gylleboverket.se"

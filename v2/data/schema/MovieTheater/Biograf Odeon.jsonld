@@ -16,12 +16,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-9080"
-    },
-    {
-      "@type": "PropertyValue",
-      "propertyID": "kulturiskovde_se",
+      "propertyID": "allabiografer:schedule:kulturiskovde_se",
       "value": "biograf-odeon-skovde"
     }
   ],

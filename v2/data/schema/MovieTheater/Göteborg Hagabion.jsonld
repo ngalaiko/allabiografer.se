@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-17705"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "17705"
     }
   ],
   "url": "https://hagabion.se/"

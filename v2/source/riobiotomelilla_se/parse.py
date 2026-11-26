@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 
 from parse import _version
 
+from ...schedule import schedule_identifier
 from ...schema import Catalogue, entity_path, link, write
 from .._shared import movie_fields
 from . import BASE, SOURCE, STOCKHOLM, new_source, response_rows
@@ -47,6 +48,7 @@ def parse(fetch_dir: Path) -> Path:
         catalogue.node(
             cinema,
             name="Tomelilla Riobiografen",
+            identifier=schedule_identifier(SOURCE, cinema.stem),
             containedInPlace=link(city, cinema.parent),
             address={"@type": "PostalAddress", "streetAddress": "Norregatan 3", "addressCountry": "SE"},
         )

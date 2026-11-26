@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-17"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "17"
     }
   ],
   "url": "http://www.laxabio.se"

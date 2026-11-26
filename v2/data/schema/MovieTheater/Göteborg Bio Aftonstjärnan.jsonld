@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-17706"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "17706"
     }
   ],
   "url": "https://bioaftonstjarnan.se"

@@ -15,8 +15,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-2151"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "2151"
     }
   ],
   "url": "http://www.metropol.st/"

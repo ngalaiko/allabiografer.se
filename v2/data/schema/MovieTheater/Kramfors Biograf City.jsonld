@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-27362"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "27362"
     }
   ],
   "url": "https://www.biografcity.se"

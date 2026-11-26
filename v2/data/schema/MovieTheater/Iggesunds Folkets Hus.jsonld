@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-7228"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "7228"
     }
   ],
   "url": "http://www.folkan.com"

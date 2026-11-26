@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "filmstaden_se",
-      "value": "filmstaden-ncg14483"
+      "propertyID": "allabiografer:schedule:filmstaden_se",
+      "value": "ncg14483"
     }
   ],
   "url": "https://www.filmstaden.se/linkoping/biograf/filmstaden/"

@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-2040"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "2040"
     }
   ],
   "url": "http://kino.nu"

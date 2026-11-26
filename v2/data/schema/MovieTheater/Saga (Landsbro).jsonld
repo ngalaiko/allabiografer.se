@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-c67a3ecea17a2c222cd19e07"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "c67a3ecea17a2c222cd19e07"
     }
   ],
   "url": "http://www.sagabiolandsbro.se"

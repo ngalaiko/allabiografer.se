@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-2137"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "2137"
     }
   ],
   "url": "http://www.bioaulan.se/"

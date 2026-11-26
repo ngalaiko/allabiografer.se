@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-5738"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "5738"
     }
   ]
 }

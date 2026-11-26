@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-3c323d1bc6a2fd0311c92952"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "3c323d1bc6a2fd0311c92952"
     }
   ],
   "url": "http://www.vfjardaforeningshus.se/"

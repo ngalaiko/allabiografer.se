@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "biosverige_se",
-      "value": "biosverige-e6ec35790377ef57acff7732"
+      "propertyID": "allabiografer:schedule:biosverige_se",
+      "value": "e6ec35790377ef57acff7732"
     }
   ],
   "url": "https://mariannelundsbio.se"

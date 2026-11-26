@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-348b43ae166d43f579acc72d"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "348b43ae166d43f579acc72d"
     }
   ],
   "url": "https://www.frosekebygden.se/"

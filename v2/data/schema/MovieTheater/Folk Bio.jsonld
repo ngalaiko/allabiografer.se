@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-21023a61b30333e77755ac4d"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "21023a61b30333e77755ac4d"
     }
   ],
   "url": "http://www.norrhultsfolketshus.se/"

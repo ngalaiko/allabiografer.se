@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-5645189afa7ceee4994ddaea"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "5645189afa7ceee4994ddaea"
     }
   ],
   "url": "http://www.teaterbiografen.se"

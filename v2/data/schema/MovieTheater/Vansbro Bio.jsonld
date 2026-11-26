@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-28616"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "28616"
     }
   ],
   "url": "https://www.facebook.com/vansbrobio/"

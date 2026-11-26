@@ -14,7 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "biofagelbla_se",
+      "propertyID": "allabiografer:schedule:biofagelbla_se",
       "value": "bio-fagel-bla"
     }
   ],

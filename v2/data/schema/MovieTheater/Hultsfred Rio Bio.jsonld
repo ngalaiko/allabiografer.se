@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-19597"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "19597"
     }
   ],
   "url": "https://riobiohultsfred.se/"

@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-c9191abe882ffbe7fee42033"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "c9191abe882ffbe7fee42033"
     }
   ],
   "url": "http://www.hebyfh.se"

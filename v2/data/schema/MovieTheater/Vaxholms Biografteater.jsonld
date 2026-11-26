@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-15845"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "15845"
     }
   ],
   "url": "http://vaxholmsbiograf.se/"

@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-31228"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "31228"
     }
   ],
   "url": "https://www.monsterasbio.se"

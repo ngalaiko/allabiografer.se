@@ -6,6 +6,7 @@ from datetime import datetime
 from parse.parsers.filmstaden_se import _CINEMA_STATUS, _film, _screening
 
 from .._shared import STOCKHOLM, catalogue_main, movie_fields
+from .fetch import venue_id
 
 
 def rows(inputs, today):
@@ -18,7 +19,7 @@ def rows(inputs, today):
         name = _CINEMA_STATUS.sub("", cinema["title"].strip())
         address = cinema["address"]
         city = address["city"]["name"]
-        venue = (f"filmstaden-{cinema_id.lower()}", name, address.get("streetAddress") or "", city)
+        venue = (venue_id(cinema_id), name, address.get("streetAddress") or "", city)
         for row in json.loads(path.read_bytes())["items"]:
             movie = row.get("movie") or {}
             if not row.get("time") or not movie.get("title") or not row.get("remoteEntityId"):

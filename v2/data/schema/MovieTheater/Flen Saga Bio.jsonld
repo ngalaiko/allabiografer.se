@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-2110"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "2110"
     }
   ],
   "url": "http://www.bioiflen.se/"

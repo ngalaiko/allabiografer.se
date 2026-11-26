@@ -14,7 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "roxy_bio",
+      "propertyID": "allabiografer:schedule:roxy_bio",
       "value": "roxy-bio-kristianstad"
     }
   ],

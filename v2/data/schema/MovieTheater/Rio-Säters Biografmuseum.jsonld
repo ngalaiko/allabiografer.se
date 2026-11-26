@@ -15,8 +15,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-bd67d9d03f0ba672d74b4a5f"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "bd67d9d03f0ba672d74b4a5f"
     }
   ],
   "url": "http://biografmuseet.se/"

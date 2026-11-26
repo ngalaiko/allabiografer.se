@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "nfbio_se",
-      "value": "nfbio-f835a347aee8775f31b6b2ff"
+      "propertyID": "allabiografer:schedule:nfbio_se",
+      "value": "f835a347aee8775f31b6b2ff"
     }
   ],
   "url": "https://www.nfbio.se/biograf/uppsala?city=uppsala"

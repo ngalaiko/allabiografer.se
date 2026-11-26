@@ -15,7 +15,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "osbyborgen_se",
+      "propertyID": "allabiografer:schedule:osbyborgen_se",
       "value": "bio-borgen-osby"
     }
   ],

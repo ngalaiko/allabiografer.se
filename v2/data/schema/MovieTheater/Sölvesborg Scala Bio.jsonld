@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-6755"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "6755"
     }
   ],
   "url": "http://www.scala.nu"

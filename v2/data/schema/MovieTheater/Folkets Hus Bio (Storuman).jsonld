@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-aa85bca977ef8f700ea92752"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "aa85bca977ef8f700ea92752"
     }
   ],
   "url": "https://www.facebook.com/storumansfolketshus"

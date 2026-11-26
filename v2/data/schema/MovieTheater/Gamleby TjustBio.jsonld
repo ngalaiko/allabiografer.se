@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-11912"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "11912"
     }
   ],
   "url": "http://www.gamleby.se/tjustbioprogram"

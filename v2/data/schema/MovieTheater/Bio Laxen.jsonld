@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "nortic_se",
-      "value": "nortic-4d2b13519e903ae2648e6818"
+      "propertyID": "allabiografer:schedule:nortic_se",
+      "value": "4d2b13519e903ae2648e6818"
     }
   ],
   "url": "https://morrumsfolketshus.se/"

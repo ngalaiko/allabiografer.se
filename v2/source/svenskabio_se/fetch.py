@@ -6,14 +6,22 @@ from requests import RequestException
 
 from parse.parsers.svenskabio_se import _CINEMAS, _FEED, _PARAMS, _dates, _showtimes
 
+from ...schedule import checked
 from .._shared import capture, capture_json, fetch_cities_main, stable_key
 
 log = logging.getLogger(__name__)
 
 
-def fetch_pages(session, inputs, cities):
+def venue_id(cinema_id):
+    return str(cinema_id)
+
+
+def fetch_pages(session, inputs, cities=(), *, selectors=None):
     movies = set()
+    checked(selectors, {venue_id(cinema_id) for _, cinema_id, _ in _CINEMAS})
     for city_id, cinema_id, venue in _CINEMAS:
+        if selectors is not None and venue_id(cinema_id) not in selectors:
+            continue
         if cities and venue.city not in cities:
             continue
         params = {**_PARAMS, "cityId": city_id, "cinemaIds": cinema_id}

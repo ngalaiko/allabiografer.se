@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-12320"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "12320"
     }
   ],
   "url": "https://angeredsbio.se/"

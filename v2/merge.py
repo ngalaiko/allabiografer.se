@@ -8,6 +8,7 @@ from urllib.parse import urljoin, urlsplit
 from urllib.request import url2pathname
 
 from .movie_matching import groups
+from .schedule import PREFIX, local_venue_id
 from .schema import CATALOGUE, Catalogue, reference
 
 TYPES = {"City", "MovieTheater", "Movie", "ScreeningEvent"}
@@ -99,6 +100,7 @@ def merge(catalogues: list[Path]) -> Path:
         sources.add(source)
         document = read(catalogue)
         members = {}
+        entities = {}
         for entry in document["mainEntity"]["itemListElement"]:
             iri = entry["@id"]
             member_type, _, filename = url2pathname(iri).removeprefix("../").partition("/")
@@ -111,17 +113,28 @@ def merge(catalogues: list[Path]) -> Path:
             ):
                 raise ValueError(f"Invalid entity path in {catalogue}: {iri}")
             key = original.relative_to(job)
-            # Movie and screening IDs belong to the source until identities are reconciled.
-            if member_type in {"Movie", "ScreeningEvent"}:
-                key = key.with_name(f"{source}-{key.name}")
-            destination = output / key
-            members[original.as_uri()] = destination
-        for uri, destination in members.items():
-            original = Path(url2pathname(urlsplit(uri).path))
             entity = read(original)
-            kind = destination.parent.name
-            if entity.get("@type") != kind or entity.get("@id") != "":
+            if entity.get("@type") != member_type or entity.get("@id") != "":
                 raise ValueError(f"Unexpected entity type or ID in {original}")
+            if member_type == "MovieTheater":
+                identifiers = [item for item in entity.get("identifier", []) if item["propertyID"].startswith(PREFIX)]
+                if identifiers:
+                    if len(identifiers) != 1 or identifiers[0]["value"] != key.stem:
+                        raise ValueError(f"Invalid schedule identifier in {original}")
+                    adapter = identifiers[0]["propertyID"].removeprefix(PREFIX)
+                    if adapter != source:
+                        raise ValueError(f"Schedule adapter {adapter!r} does not match {source!r} in {original}")
+                    key = key.with_name(f"{adapter}-{local_venue_id(adapter, key.stem)}.jsonld")
+                else:
+                    venue = local_venue_id(source, key.stem)
+                    key = key.with_name(f"{source}-{venue}.jsonld")
+            elif member_type in {"Movie", "ScreeningEvent"}:
+                key = key.with_name(f"{source}-{key.name}")
+            members[original.as_uri()] = output / key
+            entities[original] = entity
+        for original, entity in entities.items():
+            destination = members[original.as_uri()]
+            kind = destination.parent.name
             entity = rebase(entity, original, destination, members)
             if destination in graph and (kind != "City" or graph[destination] != entity):
                 raise ValueError(f"Conflicting {kind} ID: {destination.stem}")

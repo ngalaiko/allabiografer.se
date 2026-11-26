@@ -15,8 +15,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-2baa1f4a9dea7f691bafc0c2"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "2baa1f4a9dea7f691bafc0c2"
     }
   ],
   "url": "http://www.angefolketshus.se"

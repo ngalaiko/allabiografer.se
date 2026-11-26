@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-df9db1cb7667fc058e4a0efa"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "df9db1cb7667fc058e4a0efa"
     }
   ],
   "url": "https://www.biorodakvarn.se/"

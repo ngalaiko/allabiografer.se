@@ -6,6 +6,7 @@ from parse.parsers.nfbio_se import _CINEMAS, _enrich, _parse_listing
 from store import Film
 
 from .._shared import STOCKHOLM, catalogue_main, movie_fields, stable_key
+from .fetch import venue_id
 
 
 def rows(inputs, today):
@@ -40,7 +41,7 @@ def rows(inputs, today):
                 continue
             seen.add(key)
             yield (
-                (f"nfbio-{cinema_id}", cinema["name"], cinema["address"], cinema["city"]),
+                (venue_id(cinema["url"]), cinema["name"], cinema["address"], cinema["city"]),
                 key,
                 start,
                 item.ticket_url,

@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-0aae7ac89d4de13f0fd17762"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "0aae7ac89d4de13f0fd17762"
     }
   ],
   "url": "https://bygdegardarna.se/hoverberg/"

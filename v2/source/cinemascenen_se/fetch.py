@@ -7,15 +7,19 @@ from requests import RequestException
 
 from parse.parsers.cinemascenen_se import _SITES, _URL, _showtimes
 
+from ...schedule import checked
 from .._shared import capture, fetch_cities_main, stable_key
-from .parse import movie_url
+from .parse import movie_url, venue_id
 
 log = logging.getLogger(__name__)
 
 
-def fetch_pages(session, inputs, cities):
+def fetch_pages(session, inputs, cities=(), *, selectors=None):
     films = defaultdict(set)
+    checked(selectors, {venue_id(slug) for slug, _, _ in _SITES})
     for slug, city, _ in _SITES:
+        if selectors is not None and venue_id(slug) not in selectors:
+            continue
         if cities and city not in cities:
             continue
         path = inputs / f"programme-{slug}.html"

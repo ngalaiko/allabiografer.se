@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-2135"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "2135"
     }
   ],
   "url": "https://www.torghuset.se"

@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-22c83989c02eea7cc2b0924d"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "22c83989c02eea7cc2b0924d"
     }
   ],
   "url": "http://www.bioniasele.se/"

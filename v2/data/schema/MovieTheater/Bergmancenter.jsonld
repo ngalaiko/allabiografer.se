@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-5372377ffbd42f704c00b1f3"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "5372377ffbd42f704c00b1f3"
     }
   ],
   "url": "https://www.bergmancenter.se/"

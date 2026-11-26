@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "biosverige_se",
-      "value": "biosverige-88c4dc3ed6b02c66accbb9b7"
+      "propertyID": "allabiografer:schedule:biosverige_se",
+      "value": "88c4dc3ed6b02c66accbb9b7"
     }
   ],
   "url": "https://smedjebacken.biosverige.se"

@@ -8,16 +8,16 @@
   },
   "address": {
     "@type": "PostalAddress",
-    "streetAddress": "Folkets Hus, Nygatan 24",
-    "addressCountry": "SE",
+    "streetAddress": "Nygatan 24",
     "addressLocality": "Ulricehamn",
-    "postalCode": "523 30"
+    "addressCountry": "SE",
+    "postalCode": "523 34"
   },
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-31439"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "31439"
     }
   ],
   "url": "https://www.folketshusulricehamn.se/bio/"

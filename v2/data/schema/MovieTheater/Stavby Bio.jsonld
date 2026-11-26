@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-8568"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "8568"
     }
   ],
   "url": "http://www.stavby.se"

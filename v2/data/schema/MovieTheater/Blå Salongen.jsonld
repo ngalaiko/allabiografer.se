@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "nortic_se",
-      "value": "nortic-8d01eed6cab83bd17e929348"
+      "propertyID": "allabiografer:schedule:nortic_se",
+      "value": "8d01eed6cab83bd17e929348"
     }
   ]
 }

@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-32332"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "32332"
     }
   ],
   "url": "https://folketshushallstavik.se"

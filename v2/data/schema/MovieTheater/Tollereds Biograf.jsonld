@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-4443"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "4443"
     }
   ],
   "url": "http://tolleredsbiograf.se"

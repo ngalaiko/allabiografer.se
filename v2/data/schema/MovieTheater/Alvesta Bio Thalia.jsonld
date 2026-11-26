@@ -15,8 +15,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-12114"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "12114"
     }
   ],
   "url": "http://kulturenshusalvesta.se"

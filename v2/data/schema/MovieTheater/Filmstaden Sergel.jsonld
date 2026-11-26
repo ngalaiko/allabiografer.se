@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "filmstaden_se",
-      "value": "filmstaden-ncg27927"
+      "propertyID": "allabiografer:schedule:filmstaden_se",
+      "value": "ncg27927"
     }
   ],
   "url": "https://www.filmstaden.se/stockholm/biograf/filmstaden-sergel/"

@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-39782"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "39782"
     }
   ],
   "url": "https://biosolleftea.se"

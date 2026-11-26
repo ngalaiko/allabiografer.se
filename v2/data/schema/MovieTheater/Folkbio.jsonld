@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-e85239a4c7983ce743aa0ba6"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "e85239a4c7983ce743aa0ba6"
     }
   ],
   "url": "http://www.folketshusaseda.se"

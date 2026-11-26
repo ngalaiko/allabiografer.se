@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-4165a120c092aa682a8aa393"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "4165a120c092aa682a8aa393"
     }
   ],
   "url": "http://www.anebykonserthus.se"

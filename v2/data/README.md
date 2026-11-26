@@ -6,10 +6,10 @@ Store JSON-LD as `schema/<Schema.org type>/<id>.jsonld`, relative to this direct
 
 Use `MovieTheater.url` for the venue or operator’s public website. Omit it when unknown; do not substitute a ticketing or scraper URL. Initial links come from published venue pages, Bio.se’s website field, and Bioguiden’s venue homepage links.
 
-Each cinema `identifier` is a `PropertyValue`: `propertyID` names the source adapter and `value` is the source-local venue ID (the parsed cinema filename without `.jsonld`). The pair identifies at most one cinema. The venue ID is not necessarily a fetch selector.
-
 The seed comes from the latest local parse catalogue for each source with saved output, plus Filmhuset Palladium from its adapter. Snapshot coverage is not exhaustive: venues without screenings in those captures may be absent. The Finspång calendar source has no verified venue binding.
 
 Parse and merge jobs index their output at `schema/Dataset/catalogue.jsonld`. Replay raw captures from `fetch/` to regenerate older parse outputs in this layout.
 
-TODO: Wire the registry into the pipeline commands.
+Each cinema has one `PropertyValue` identifier: `propertyID` is `allabiografer:schedule:<adapter>` and `value` is the adapter’s stable venue ID, shared by fetch and parse. The adapter translates between that ID and any upstream API parameters. Parse uses source-local filenames; merge prefixes cinema filenames with the adapter from `propertyID`.
+
+Run `python -m v2.fetch 'Ale Medborgarhusets Bio'` (repeat cinema IDs as needed) or `python -m v2.fetch --all`. IDs are `MovieTheater` filename stems. Parse the printed fetch directory with the corresponding adapter. Each source's `selection.json` records the bindings for replay. Nortic provides one shared feed; its parser keeps only selected venues.

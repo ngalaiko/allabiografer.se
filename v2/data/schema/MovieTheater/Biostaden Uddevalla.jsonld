@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "svenskabio_se",
-      "value": "svenskabio-4"
+      "propertyID": "allabiografer:schedule:svenskabio_se",
+      "value": "4"
     }
   ],
   "url": "https://svenskabio.se/uddevalla/biostaden/"

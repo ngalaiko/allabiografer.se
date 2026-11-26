@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-a7ed2301ae3d66085cace610"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "a7ed2301ae3d66085cace610"
     }
   ],
   "url": "https://bio.sagensvenskop.se/"

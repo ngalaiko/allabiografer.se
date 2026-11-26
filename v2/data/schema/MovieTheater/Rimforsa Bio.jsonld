@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-2186"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "2186"
     }
   ],
   "url": "http://rimforsabio.se/"

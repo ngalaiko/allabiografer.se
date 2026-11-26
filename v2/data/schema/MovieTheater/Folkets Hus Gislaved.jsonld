@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "biosverige_se",
-      "value": "biosverige-ec05e249c678839b6ba556c5"
+      "propertyID": "allabiografer:schedule:biosverige_se",
+      "value": "ec05e249c678839b6ba556c5"
     }
   ],
   "url": "https://gislaved.biosverige.se"

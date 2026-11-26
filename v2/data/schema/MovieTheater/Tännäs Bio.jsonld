@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-4183"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "4183"
     }
   ],
   "url": "http://www.bionitannas.se"

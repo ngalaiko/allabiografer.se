@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "biosverige_se",
-      "value": "biosverige-fdb21948a3cdd22d155b5688"
+      "propertyID": "allabiografer:schedule:biosverige_se",
+      "value": "fdb21948a3cdd22d155b5688"
     }
   ],
   "url": "https://casablancabio.se"

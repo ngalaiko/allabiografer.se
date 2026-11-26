@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "filmstaden_se",
-      "value": "filmstaden-ncg29746"
+      "propertyID": "allabiografer:schedule:filmstaden_se",
+      "value": "ncg29746"
     }
   ]
 }

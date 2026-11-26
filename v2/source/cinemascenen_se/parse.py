@@ -14,6 +14,10 @@ def movie_url(url, slug):
     return parts._replace(query="").geturl() if parts.query == f"city={slug}" else url
 
 
+def venue_id(slug):
+    return slug
+
+
 def rows(inputs, today):
     movies = {}
     seen = set()
@@ -46,7 +50,7 @@ def rows(inputs, today):
                 movies[movie_id] = based_on, fields
             based_on, fields = movies[movie_id]
             yield (
-                (f"cinemascenen-{slug}", show.cinema_name, address, city),
+                (venue_id(slug), show.cinema_name, address, city),
                 show_id,
                 start,
                 show.ticket_url,

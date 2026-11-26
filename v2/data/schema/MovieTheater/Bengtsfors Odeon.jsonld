@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-2246"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "2246"
     }
   ],
   "url": "https://www.odeon.nu/lokaler/bio-teatersalong/"

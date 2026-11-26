@@ -14,7 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "wp_theatre",
+      "propertyID": "allabiografer:schedule:wp_theatre",
       "value": "capitol-goteborg"
     }
   ],

@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-2136"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "2136"
     }
   ],
   "url": "http://bio.hovmantorpsfh.se/#/home"

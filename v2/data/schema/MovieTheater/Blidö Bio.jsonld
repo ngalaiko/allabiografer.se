@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-18311"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "18311"
     }
   ],
   "url": "http://www.blidobio.se/"

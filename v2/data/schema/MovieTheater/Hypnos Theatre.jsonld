@@ -14,7 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "hypnostheatre_com",
+      "propertyID": "allabiografer:schedule:hypnostheatre_com",
       "value": "hypnos-theatre"
     }
   ],

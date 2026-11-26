@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-30378"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "30378"
     }
   ],
   "url": "https://www.hogbodafolketshus.se"

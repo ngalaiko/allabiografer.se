@@ -8,6 +8,7 @@ from parse.parsers import _tickster
 from parse.parsers.tickster_se import _NOT_A_SHOWING, _PREFIX, _SCREEN, _SUFFIX, _runtime
 from store import title_key
 
+from ...schedule import selected_venues
 from .._shared import catalogue_main, stable_key
 from .fetch import SOURCE, candidates
 from .pages import Pages, source_movie
@@ -21,7 +22,7 @@ def rows(inputs, today):
     screenings = []
     films = {}
     seen = set()
-    for site, item in candidates(pages, today):
+    for site, item in candidates(pages, today, selected_venues(inputs)):
         html = pages.text(item.url, optional=True)
         soup = BeautifulSoup(html, "html.parser")
         if not any(tag.get_text(strip=True).casefold() == "bio" for tag in soup.select("a[rel=tag]")):

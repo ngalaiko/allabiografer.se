@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-2035"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "2035"
     }
   ],
   "url": "https://kulturhusetstadsteatern.se/film/klarabiografen"

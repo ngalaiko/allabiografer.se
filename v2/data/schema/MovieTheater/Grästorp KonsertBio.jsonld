@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-7135"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "7135"
     }
   ],
   "url": "http://konsertbiograstorp.se"

@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-6880"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "6880"
     }
   ],
   "url": "http://centrumbiolottorp.se"

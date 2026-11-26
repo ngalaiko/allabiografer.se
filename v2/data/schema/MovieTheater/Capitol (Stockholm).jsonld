@@ -14,7 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "capitolbio_se",
+      "propertyID": "allabiografer:schedule:capitolbio_se",
       "value": "capitol"
     }
   ],

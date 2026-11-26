@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "filmstaden_se",
-      "value": "filmstaden-ncg16299"
+      "propertyID": "allabiografer:schedule:filmstaden_se",
+      "value": "ncg16299"
     }
   ],
   "url": "https://www.filmstaden.se/stockholm/biograf/filmstaden-heron-city/"

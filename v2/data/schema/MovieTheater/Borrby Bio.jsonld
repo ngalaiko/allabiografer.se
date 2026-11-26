@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-eb31d1746568ad9573b921ed"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "eb31d1746568ad9573b921ed"
     }
   ],
   "url": "http://www.borrbybiograf.se"

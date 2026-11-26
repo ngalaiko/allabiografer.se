@@ -21,6 +21,11 @@ from parse.parsers.nortic_se import (
 
 from .._shared import STOCKHOLM, catalogue_main, movie_fields, stable_key
 
+_VENUE_ALIASES = {
+    "d97e37737b8573ad9ae80537": "e381546df50c3bd3bfeada04",
+    "28437ac4a171ab3665e2f2d2": "5abe9f74b43fc5a465bff57e",
+}
+
 
 def rows(inputs, today):
     capture = "events.json"
@@ -61,8 +66,9 @@ def rows(inputs, today):
             if show_id in seen:
                 continue
             seen.add(show_id)
+            venue_id = stable_key(city, cinema)
             yield (
-                (f"nortic-{stable_key(city, cinema)}", cinema, show.get("arenaAddress") or "", city),
+                (_VENUE_ALIASES.get(venue_id, venue_id), cinema, show.get("arenaAddress") or "", city),
                 show_id,
                 start,
                 ticket,

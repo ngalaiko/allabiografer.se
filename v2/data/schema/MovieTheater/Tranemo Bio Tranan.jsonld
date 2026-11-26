@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-b83753c016b84159e15df419"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "b83753c016b84159e15df419"
     }
   ]
 }

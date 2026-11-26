@@ -5,8 +5,9 @@ from datetime import datetime
 from parse.parsers import _tickster
 from parse.parsers.biosverige_se import _SITES
 
+from ...schedule import checked
 from .._shared import STOCKHOLM, capture_json, fetch_cities_main, stable_key
-from .parse import schedule_rows, tickster_path
+from .parse import schedule_rows, tickster_path, venue_id
 
 
 class CaptureTickster:
@@ -22,11 +23,14 @@ class CaptureTickster:
         return response
 
 
-def fetch_pages(session, inputs, cities):
+def fetch_pages(session, inputs, cities=(), *, selectors=None):
     today = datetime.fromtimestamp(int(inputs.parents[1].name), STOCKHOLM).date()
     params = {"StartDate": today.isoformat(), "Limit": 500, "Months": 12, "Days": 365}
     tickets = CaptureTickster(session, inputs)
+    checked(selectors, {venue_id(site.url) for site in _SITES})
     for site in _SITES:
+        if selectors is not None and venue_id(site.url) not in selectors:
+            continue
         if cities and site.city not in cities:
             continue
         path = inputs / f"schedule-{stable_key(site.url)}.json"

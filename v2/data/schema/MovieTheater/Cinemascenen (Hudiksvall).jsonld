@@ -15,8 +15,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "cinemascenen_se",
-      "value": "cinemascenen-hudiksvall"
+      "propertyID": "allabiografer:schedule:cinemascenen_se",
+      "value": "hudiksvall"
     }
   ],
   "url": "https://www.cinemascenen.se/hudiksvall/"

@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-2430"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "2430"
     }
   ],
   "url": "http://lammhultsfolketshus.com/"

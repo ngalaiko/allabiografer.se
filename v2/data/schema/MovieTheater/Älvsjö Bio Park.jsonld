@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-25838"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "25838"
     }
   ],
   "url": "https://parkfolketshus.nu/biopark"

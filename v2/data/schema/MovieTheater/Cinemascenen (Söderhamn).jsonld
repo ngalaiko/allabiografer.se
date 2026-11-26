@@ -15,8 +15,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "cinemascenen_se",
-      "value": "cinemascenen-soderhamn"
+      "propertyID": "allabiografer:schedule:cinemascenen_se",
+      "value": "soderhamn"
     }
   ],
   "url": "https://www.cinemascenen.se/soderhamn/"

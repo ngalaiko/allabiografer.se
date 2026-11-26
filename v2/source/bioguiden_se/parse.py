@@ -30,7 +30,7 @@ def rows(inputs, today):
             venue_key = stable_key(url)
             start = datetime.combine(item.date, item.time, STOCKHOLM)
             yield (
-                (f"bioguiden-{venue_key}", item.cinema_name, address, item.city),
+                (venue_key, item.cinema_name, address, item.city),
                 stable_key(venue_key, item.film_key, start.isoformat(), item.screen),
                 start,
                 item.ticket_url,

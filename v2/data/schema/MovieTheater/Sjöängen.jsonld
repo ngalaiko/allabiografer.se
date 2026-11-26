@@ -9,8 +9,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "nortic_se",
-      "value": "nortic-4dbbe32f1d1f5ba35009ce2d"
+      "propertyID": "allabiografer:schedule:nortic_se",
+      "value": "4dbbe32f1d1f5ba35009ce2d"
     }
   ],
   "address": {

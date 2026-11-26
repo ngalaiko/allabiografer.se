@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-3b9c525dd0eb172ac8a794c0"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "3b9c525dd0eb172ac8a794c0"
     }
   ],
   "url": "http://www.eklundabio.se"

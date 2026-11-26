@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-3111"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "3111"
     }
   ],
   "url": "http://hemsegarden.se/"

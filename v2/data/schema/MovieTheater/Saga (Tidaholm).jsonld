@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioguiden_se",
-      "value": "bioguiden-22547d588af982fb8c33365d"
+      "propertyID": "allabiografer:schedule:bioguiden_se",
+      "value": "22547d588af982fb8c33365d"
     }
   ],
   "url": "http://www.sagatidaholm.se"

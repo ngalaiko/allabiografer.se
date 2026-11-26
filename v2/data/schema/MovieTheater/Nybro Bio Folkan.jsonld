@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-2282"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "2282"
     }
   ],
   "url": "https://nybro.se/uppleva-gora/evenemang-kultur/film-nybro/folkan-bio/"

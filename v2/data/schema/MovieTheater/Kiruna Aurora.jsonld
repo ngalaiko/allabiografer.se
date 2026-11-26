@@ -9,8 +9,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-42239"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "42239"
     }
   ],
   "address": {

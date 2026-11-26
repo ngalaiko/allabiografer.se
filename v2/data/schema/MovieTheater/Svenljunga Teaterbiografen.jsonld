@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-4455"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "4455"
     }
   ],
   "url": "http://svenljungakulturhus.se/bio.html"

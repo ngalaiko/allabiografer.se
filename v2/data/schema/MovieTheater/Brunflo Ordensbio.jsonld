@@ -15,8 +15,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-2278"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "2278"
     }
   ],
   "url": "http://privat.bahnhof.se/wb133081/bio.html"

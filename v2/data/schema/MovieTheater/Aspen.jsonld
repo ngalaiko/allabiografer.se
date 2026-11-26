@@ -14,7 +14,7 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bioaspen_se",
+      "propertyID": "allabiografer:schedule:bioaspen_se",
       "value": "aspen"
     }
   ],

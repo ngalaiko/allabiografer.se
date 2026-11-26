@@ -14,8 +14,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "svenskabio_se",
-      "value": "svenskabio-3"
+      "propertyID": "allabiografer:schedule:svenskabio_se",
+      "value": "3"
     }
   ],
   "url": "https://svenskabio.se/eskilstuna/biostaden/"

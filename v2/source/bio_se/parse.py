@@ -6,7 +6,7 @@ from datetime import datetime
 from parse.parsers.bio_se import _cinema_url, _showtimes, _venue
 
 from .._shared import STOCKHOLM, catalogue_main, film_id, movie_fields, stable_key
-from .fetch import OTHER_PROGRAMME_IDS, programme_city
+from .fetch import OTHER_PROGRAMME_IDS, programme_city, venue_id
 
 # Cinemateket's 5 December programme distinguishes these same-title films.
 METROPOLIS = {"15619": ("1927", "Fritz Lang"), "43154": ("2001", "Rintarô")}
@@ -44,7 +44,7 @@ def rows(inputs, today):
             movie_id = film_id(film.url) if film.url else stable_key(film.key)
             year, director = METROPOLIS.get(movie_id, (film.release_date, ""))
             yield (
-                (f"bio-se-{cinema_id}", venue.name, venue.address, programme_city(venue)),
+                (venue_id(cinema_id), venue.name, venue.address, programme_city(venue)),
                 show_id,
                 start,
                 ticket,

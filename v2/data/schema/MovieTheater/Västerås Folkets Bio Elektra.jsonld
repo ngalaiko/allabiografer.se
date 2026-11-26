@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-41855"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "41855"
     }
   ],
   "url": "http://www.elektrabio.se/"

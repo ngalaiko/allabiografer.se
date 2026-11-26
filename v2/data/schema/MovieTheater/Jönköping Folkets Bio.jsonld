@@ -16,8 +16,8 @@
   "identifier": [
     {
       "@type": "PropertyValue",
-      "propertyID": "bio_se",
-      "value": "bio-se-7635"
+      "propertyID": "allabiografer:schedule:bio_se",
+      "value": "7635"
     }
   ],
   "url": "https://folketsbiojonkoping.se"
