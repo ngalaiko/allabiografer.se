@@ -35,6 +35,14 @@ def test_movies_use_the_captured_poster_not_the_listing_thumbnail(tmp_path):
     assert all("image" not in movie for name, movie in movies.items() if name != "Djävulen bär Prada 2")
 
 
+def test_movies_carry_the_film_pages_facts(tmp_path):
+    from allabiografer.sources.bioguiden_se.site import facts
+
+    found = facts((FIXTURES / "film.html").read_text())
+
+    assert found == {"directors": ["Steven Spielberg"], "title_original": "E.T. the Extra-Terrestrial"}
+
+
 def test_a_programme_with_nothing_selected_is_identified_by_its_address(tmp_path):
     overkalix = "https://www.bioguiden.se/biografer.aspx?cityid=91&theatreid=df7b68d4-44d9-4d99-b508-e4bf79b1444b"
     shutil.copy(FIXTURES / "unselected.html", tmp_path / f"programme-{stable_key(overkalix)}.html")

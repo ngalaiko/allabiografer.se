@@ -1,5 +1,6 @@
 """Replay Bioguiden programmes without network or TMDB."""
 
+from dataclasses import replace
 from datetime import datetime
 from urllib.parse import parse_qs, urlsplit
 
@@ -7,7 +8,7 @@ from requests import Response
 
 from allabiografer.model import Film, Venue
 from allabiografer.movie_fields import film_fields
-from allabiografer.sources.bioguiden_se.site import _SITES, _parse_pages
+from allabiografer.sources.bioguiden_se.site import _SITES, _parse_pages, facts
 
 from .._shared import STOCKHOLM, stable_key
 
@@ -41,5 +42,10 @@ def rows(inputs, today):
                 item.presentation,
                 stable_key(film.key),
                 f"programme-{venue_key}.html",
-                film_fields(film, image=poster.name if (poster := inputs / f"poster-{movie_id}.jpg").is_file() else ""),
+                film_fields(
+                    replace(film, **facts(page.read_text(encoding="utf-8")))
+                    if (page := inputs / f"film-{movie_id}.html").is_file()
+                    else film,
+                    image=poster.name if (poster := inputs / f"poster-{movie_id}.jpg").is_file() else "",
+                ),
             )

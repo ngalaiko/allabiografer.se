@@ -453,3 +453,26 @@ def poster(data: bytes) -> bytes | None:
         buffer = io.BytesIO()
         cropped.save(buffer, "JPEG", quality=92)
         return buffer.getvalue()
+
+
+# Film page facts, keyed like Film fields; "Ej angivet" means not stated.
+_FACTS = {"Regi": "directors", "Originaltitel": "title_original", "Genre": "genres", "Åldersgräns": "age_rating"}
+
+
+def facts(html: str) -> dict:
+    """Credits and facts from a film page's "Filminformation" list."""
+    found = {}
+    for item in BeautifulSoup(html, "html.parser").select("#filminformation li"):
+        label = item.find("b")
+        if label is None or label.get_text(strip=True) not in _FACTS:
+            continue
+        value = " ".join(item.get_text(" ", strip=True).split()).removeprefix(label.get_text(strip=True)).strip(" -")
+        if not value or value == "Ej angivet":
+            continue
+        field = _FACTS[label.get_text(strip=True)]
+        found[field] = (
+            [part.strip() for part in re.split(r",| och ", value) if part.strip()]
+            if field in ("directors", "genres")
+            else value
+        )
+    return found
