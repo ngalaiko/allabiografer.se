@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Mönsterås Bio",
+  "containedInPlace": {
+    "@id": "../City/M%C3%B6nster%C3%A5s.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Sandgatan 1",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-31228"
+    }
+  ],
+  "url": "https://www.monsterasbio.se"
+}

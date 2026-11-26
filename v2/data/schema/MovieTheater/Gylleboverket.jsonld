@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Gylleboverket",
+  "containedInPlace": {
+    "@id": "../City/G%C3%A4rsn%C3%A4s.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Östra Vemmerlöv 19",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-12242"
+    }
+  ],
+  "url": "https://gylleboverket.se"
+}

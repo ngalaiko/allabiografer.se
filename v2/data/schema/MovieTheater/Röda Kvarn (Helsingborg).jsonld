@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Röda Kvarn",
+  "containedInPlace": {
+    "@id": "../City/Helsingborg.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Karlsgatan 7",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "folkets_hus_och_parker",
+      "value": "biorodakvarn_se"
+    }
+  ],
+  "url": "https://www.biorodakvarn.se/"
+}

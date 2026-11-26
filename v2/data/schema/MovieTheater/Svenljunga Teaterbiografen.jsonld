@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Svenljunga Teaterbiografen",
+  "containedInPlace": {
+    "@id": "../City/Svenljunga.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Kinnagatan 4",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-4455"
+    }
+  ],
+  "url": "http://svenljungakulturhus.se/bio.html"
+}

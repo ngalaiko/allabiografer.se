@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Kristinehamns Bio",
+  "containedInPlace": {
+    "@id": "../City/Kristinehamn.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Broängsgatan 3",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-fed7451822f0ecec123d42f3"
+    }
+  ]
+}

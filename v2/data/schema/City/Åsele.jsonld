@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Åsele",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/V%C3%A4sterbottens%20l%C3%A4n.jsonld"
+  }
+}

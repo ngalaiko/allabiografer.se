@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Jönköping Teater",
+  "containedInPlace": {
+    "@id": "../City/J%C3%B6nk%C3%B6ping.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Hovrättstorget 1",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "nortic_se",
+      "value": "nortic-103d1801e787a0a4232fa1ac"
+    }
+  ]
+}

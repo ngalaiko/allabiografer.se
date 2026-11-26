@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Vallentuna Teater",
+  "containedInPlace": {
+    "@id": "../City/Vallentuna.jsonld"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "nortic_se",
+      "value": "nortic-d57d9649e349368fe2ac4e7a"
+    }
+  ],
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Gymnasievägen 4",
+    "addressLocality": "Vallentuna",
+    "addressCountry": "SE"
+  }
+}

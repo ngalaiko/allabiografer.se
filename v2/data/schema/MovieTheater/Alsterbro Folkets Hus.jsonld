@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Alsterbro Folkets Hus",
+  "containedInPlace": {
+    "@id": "../City/Alsterbro.jsonld"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-2042"
+    }
+  ],
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Parkvägen 11",
+    "addressLocality": "Alsterbro",
+    "addressCountry": "SE"
+  },
+  "url": "https://www.folketshusochparker.se/arrangor/alsterbro-byggnadsforening/"
+}

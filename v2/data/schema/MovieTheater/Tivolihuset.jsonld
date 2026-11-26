@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Tivolihuset",
+  "containedInPlace": {
+    "@id": "../City/H%C3%B6gan%C3%A4s.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Östra Parkgatan 2",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "nortic_se",
+      "value": "nortic-413605fac8e88d629196a8d5"
+    }
+  ]
+}

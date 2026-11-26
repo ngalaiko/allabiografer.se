@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Kiviks Bio",
+  "containedInPlace": {
+    "@id": "../City/Kivik.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Ordensgatan 5",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "kiviksbio_se",
+      "value": "kiviks-bio"
+    }
+  ],
+  "url": "https://www.kiviksbio.se/"
+}

@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Biostaden Eskilstuna",
+  "containedInPlace": {
+    "@id": "../City/Eskilstuna.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Kungsgatan 66",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "svenskabio_se",
+      "value": "svenskabio-3"
+    }
+  ],
+  "url": "https://svenskabio.se/eskilstuna/biostaden/"
+}

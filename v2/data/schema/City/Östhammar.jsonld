@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Östhammar",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/Uppsala%20l%C3%A4n.jsonld"
+  }
+}

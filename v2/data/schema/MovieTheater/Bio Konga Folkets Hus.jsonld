@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Bio Konga Folkets Hus",
+  "containedInPlace": {
+    "@id": "../City/Konga.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Ronnebyvägen 8",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-85eda82cb137d2cab4bbfbdc"
+    }
+  ]
+}

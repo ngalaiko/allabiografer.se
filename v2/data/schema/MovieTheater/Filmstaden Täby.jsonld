@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Filmstaden Täby",
+  "containedInPlace": {
+    "@id": "../City/Stockholm.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Täby Centrum, Plan 2",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "filmstaden_se",
+      "value": "filmstaden-ncg84379"
+    }
+  ]
+}

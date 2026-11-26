@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Teaterbiografen",
+  "containedInPlace": {
+    "@id": "../City/Sunne.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Kvarngatan 22",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-5645189afa7ceee4994ddaea"
+    }
+  ],
+  "url": "http://www.teaterbiografen.se"
+}

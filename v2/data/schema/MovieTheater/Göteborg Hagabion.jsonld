@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Göteborg Hagabion",
+  "containedInPlace": {
+    "@id": "../City/G%C3%B6teborg.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Linnégatan 21 Göteborg",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-17705"
+    }
+  ],
+  "url": "https://hagabion.se/"
+}

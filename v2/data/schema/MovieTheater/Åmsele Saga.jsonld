@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Åmsele Saga",
+  "containedInPlace": {
+    "@id": "../City/%C3%85msele.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Åmkroken 6",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-6296"
+    }
+  ]
+}

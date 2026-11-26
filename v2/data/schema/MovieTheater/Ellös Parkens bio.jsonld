@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Ellös Parkens bio",
+  "containedInPlace": {
+    "@id": "../City/Ell%C3%B6s.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Glimsåsvägen 11",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "nortic_se",
+      "value": "nortic-159fc343ffbf855db71cf520"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Nordisk Film Bio Mobilia",
+  "containedInPlace": {
+    "@id": "../City/Malm%C3%B6.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Per Albin Hanssons väg 38C",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "nfbio_se",
+      "value": "nfbio-e9dae04966497b313dbaf357"
+    }
+  ],
+  "url": "https://www.nfbio.se/biograf/malmo?city=malmo"
+}

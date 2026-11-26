@@ -1,0 +1,26 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Varbergs Teater",
+  "containedInPlace": {
+    "@id": "../City/Varberg.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Engelbrektsgatan 7",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-ebd12718021d0a4d286aca7f"
+    },
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-6bfa2cd28c1d8b6de4fce48b"
+    }
+  ]
+}

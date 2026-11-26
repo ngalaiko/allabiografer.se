@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Kristianstad Filmmuseet",
+  "containedInPlace": {
+    "@id": "../City/Kristianstad.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Östra Storgatan 53",
+    "addressLocality": "Kristianstad",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-2e564faccbfc315e2690aa93"
+    }
+  ]
+}

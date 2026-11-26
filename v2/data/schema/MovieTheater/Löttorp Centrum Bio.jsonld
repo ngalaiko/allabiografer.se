@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Löttorp Centrum Bio",
+  "containedInPlace": {
+    "@id": "../City/L%C3%B6ttorp.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Löttorpsvägen 21",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-6880"
+    }
+  ],
+  "url": "http://centrumbiolottorp.se"
+}

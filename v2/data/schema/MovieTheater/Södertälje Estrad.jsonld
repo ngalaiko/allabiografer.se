@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Södertälje Estrad",
+  "containedInPlace": {
+    "@id": "../City/S%C3%B6dert%C3%A4lje.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Nyköpingsv. 26 Södertälje",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-17127"
+    }
+  ]
+}

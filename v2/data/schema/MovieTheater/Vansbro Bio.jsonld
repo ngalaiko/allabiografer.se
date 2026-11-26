@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Vansbro Bio",
+  "containedInPlace": {
+    "@id": "../City/Vansbro.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Norra Allégatan 30",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-28616"
+    }
+  ],
+  "url": "https://www.facebook.com/vansbrobio/"
+}

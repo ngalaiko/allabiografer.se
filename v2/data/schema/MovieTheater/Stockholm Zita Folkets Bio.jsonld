@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Stockholm Zita Folkets Bio",
+  "containedInPlace": {
+    "@id": "../City/Stockholm.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Birger Jarlsgatan 37",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-2124"
+    }
+  ],
+  "url": "http://zita.se/"
+}

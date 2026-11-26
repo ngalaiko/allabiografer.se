@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Arjeplog Centrumbion",
+  "containedInPlace": {
+    "@id": "../City/Arjeplog.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Storgatan 4",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-111758daedc11905a0ad16ec"
+    }
+  ]
+}

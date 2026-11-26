@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Kalmar",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/Kalmar%20l%C3%A4n.jsonld"
+  }
+}

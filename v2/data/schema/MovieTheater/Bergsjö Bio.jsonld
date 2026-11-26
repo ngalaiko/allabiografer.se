@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Bergsjö Bio",
+  "containedInPlace": {
+    "@id": "../City/Bergsj%C3%B6.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Lönnebergsvägen 7",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-2554"
+    }
+  ],
+  "url": "https://www.facebook.com/BergsjoBio/"
+}

@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Överkalix Bio",
+  "containedInPlace": {
+    "@id": "../City/%C3%96verkalix.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Bulandsgatan 2",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-edb6aa033ac480a13042dd5f"
+    }
+  ]
+}

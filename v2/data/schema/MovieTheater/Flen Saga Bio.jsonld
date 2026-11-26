@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Flen Saga Bio",
+  "containedInPlace": {
+    "@id": "../City/Flen.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Stadshusgatan 7 Flen",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-2110"
+    }
+  ],
+  "url": "http://www.bioiflen.se/"
+}

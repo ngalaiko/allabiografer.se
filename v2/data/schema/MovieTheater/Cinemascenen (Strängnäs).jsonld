@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Cinemascenen",
+  "containedInPlace": {
+    "@id": "../City/Str%C3%A4ngn%C3%A4s.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Regementsgatan 3",
+    "addressLocality": "Strängnäs",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "cinemascenen_se",
+      "value": "cinemascenen-strangnas"
+    }
+  ],
+  "url": "https://www.cinemascenen.se/strangnas/"
+}

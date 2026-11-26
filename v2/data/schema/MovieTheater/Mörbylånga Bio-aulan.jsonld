@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Mörbylånga Bio-aulan",
+  "containedInPlace": {
+    "@id": "../City/M%C3%B6rbyl%C3%A5nga.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Ölandsgatan",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-2137"
+    }
+  ],
+  "url": "http://www.bioaulan.se/"
+}

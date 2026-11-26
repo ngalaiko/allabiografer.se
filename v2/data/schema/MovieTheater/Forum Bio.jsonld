@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Forum Bio",
+  "containedInPlace": {
+    "@id": "../City/Ljungaverk.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Folkets Husvägen 1",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-692d5d574d0993d0c6e9e92b"
+    }
+  ]
+}

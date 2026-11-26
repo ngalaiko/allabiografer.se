@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Tranemo Bio Tranan",
+  "containedInPlace": {
+    "@id": "../City/Tranemo.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Medborgarplatsen",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-b83753c016b84159e15df419"
+    }
+  ]
+}

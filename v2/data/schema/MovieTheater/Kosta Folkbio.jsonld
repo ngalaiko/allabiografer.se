@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Kosta Folkbio",
+  "containedInPlace": {
+    "@id": "../City/Kosta.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Stora Vägen 47",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-5d429db63a501a508836729d"
+    }
+  ],
+  "url": "https://folketshuskosta.se"
+}

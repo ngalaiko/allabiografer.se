@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Royal Köping",
+  "containedInPlace": {
+    "@id": "../City/K%C3%B6ping.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Västra Långgatan 3",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "filmstaden_se",
+      "value": "filmstaden-ncg33609"
+    }
+  ]
+}

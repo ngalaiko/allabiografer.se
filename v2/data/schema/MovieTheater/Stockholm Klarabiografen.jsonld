@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Stockholm Klarabiografen",
+  "containedInPlace": {
+    "@id": "../City/Stockholm.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "våning 2, Kulturhuset, Sergels torg",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-2035"
+    }
+  ],
+  "url": "https://kulturhusetstadsteatern.se/film/klarabiografen"
+}

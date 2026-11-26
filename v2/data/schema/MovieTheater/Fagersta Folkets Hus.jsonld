@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Fagersta Folkets Hus",
+  "containedInPlace": {
+    "@id": "../City/Fagersta.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Aspvägen 23 Fagersta",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-16870"
+    }
+  ],
+  "url": "https://www.fagerstafolketshus.se/"
+}

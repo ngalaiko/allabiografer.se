@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Centrum",
+  "containedInPlace": {
+    "@id": "../City/Vaggeryd.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Götaforsvägen 8",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-3e20ab9ea5f6caa8c3225b68"
+    }
+  ],
+  "url": "http://www.folketshusvaggeryd.se"
+}

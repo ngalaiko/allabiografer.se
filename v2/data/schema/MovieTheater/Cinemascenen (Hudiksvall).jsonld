@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Cinemascenen",
+  "containedInPlace": {
+    "@id": "../City/Hudiksvall.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Drottninggatan 1",
+    "addressLocality": "Hudiksvall",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "cinemascenen_se",
+      "value": "cinemascenen-hudiksvall"
+    }
+  ],
+  "url": "https://www.cinemascenen.se/hudiksvall/"
+}

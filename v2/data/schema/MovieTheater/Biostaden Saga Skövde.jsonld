@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Biostaden Saga Skövde",
+  "containedInPlace": {
+    "@id": "../City/Sk%C3%B6vde.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Kyrkogatan 14",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "filmstaden_se",
+      "value": "filmstaden-ncg26114"
+    }
+  ]
+}

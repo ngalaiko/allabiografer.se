@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Folkets Hus Bio",
+  "containedInPlace": {
+    "@id": "../City/Storuman.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Blåvägen 256",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-aa85bca977ef8f700ea92752"
+    }
+  ],
+  "url": "https://www.facebook.com/storumansfolketshus"
+}

@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Simrishamn Bio-Grand",
+  "containedInPlace": {
+    "@id": "../City/Simrishamn.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Storgatan 13",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-35287"
+    }
+  ]
+}

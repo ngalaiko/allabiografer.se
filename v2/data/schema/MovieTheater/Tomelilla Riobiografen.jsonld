@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Tomelilla Riobiografen",
+  "containedInPlace": {
+    "@id": "../City/Tomelilla.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Norregatan 3",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "riobiotomelilla_se",
+      "value": "riobiografen-tomelilla"
+    }
+  ],
+  "url": "https://riobiotomelilla.se"
+}

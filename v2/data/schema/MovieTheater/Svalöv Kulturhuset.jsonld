@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Svalöv Kulturhuset",
+  "containedInPlace": {
+    "@id": "../City/Sval%C3%B6v.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Svalegatan 22",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-25627"
+    }
+  ]
+}

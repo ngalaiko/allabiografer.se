@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Folkets Hus Älvsbyn",
+  "containedInPlace": {
+    "@id": "../City/%C3%84lvsbyn.jsonld"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "tickster_se",
+      "value": "tntfe5rzu5zybfl"
+    }
+  ],
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Medborgargatan 2",
+    "addressLocality": "Älvsbyn",
+    "addressCountry": "SE"
+  },
+  "url": "https://www.forumalvsbyn.se/kontakt/"
+}

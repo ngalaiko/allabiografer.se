@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Gränna",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/J%C3%B6nk%C3%B6pings%20l%C3%A4n.jsonld"
+  }
+}

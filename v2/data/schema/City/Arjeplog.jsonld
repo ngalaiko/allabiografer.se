@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Arjeplog",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/Norrbottens%20l%C3%A4n.jsonld"
+  }
+}

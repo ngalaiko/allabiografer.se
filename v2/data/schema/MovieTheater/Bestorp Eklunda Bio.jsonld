@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Bestorp Eklunda Bio",
+  "containedInPlace": {
+    "@id": "../City/Bestorp.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Bonäsvägen 19",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-3b9c525dd0eb172ac8a794c0"
+    }
+  ],
+  "url": "http://www.eklundabio.se"
+}

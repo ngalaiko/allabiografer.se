@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Rimforsa Bio",
+  "containedInPlace": {
+    "@id": "../City/Rimforsa.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Järnvägsgatan 8",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-2186"
+    }
+  ],
+  "url": "http://rimforsabio.se/"
+}

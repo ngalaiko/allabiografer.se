@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Folksalen",
+  "containedInPlace": {
+    "@id": "../City/%C3%96sterbymo.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Mosshultsvägen 3",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-50526ba5be5afbc60ba188df"
+    }
+  ]
+}

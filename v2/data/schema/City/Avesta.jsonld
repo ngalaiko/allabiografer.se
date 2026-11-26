@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Avesta",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/Dalarnas%20l%C3%A4n.jsonld"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Röda Kvarn",
+  "containedInPlace": {
+    "@id": "../City/S%C3%A4vsj%C3%B6.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Mejensjögatan 2",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "nortic_se",
+      "value": "nortic-999b6ec9f003f0c72262571a"
+    }
+  ],
+  "url": "https://www.biorodakvarn.se/"
+}

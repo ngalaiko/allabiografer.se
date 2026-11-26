@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Visby Folkets Bio Betty",
+  "containedInPlace": {
+    "@id": "../City/Visby.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Adelsgatan 39 Visby",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-14"
+    }
+  ],
+  "url": "http://folketsbiobetty.se/"
+}

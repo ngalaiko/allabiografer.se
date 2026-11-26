@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Alvesta Bio Thalia",
+  "containedInPlace": {
+    "@id": "../City/Alvesta.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Allbogatan 17",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-12114"
+    }
+  ],
+  "url": "http://kulturenshusalvesta.se"
+}

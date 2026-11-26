@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Strängnäs",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/S%C3%B6dermanlands%20l%C3%A4n.jsonld"
+  }
+}

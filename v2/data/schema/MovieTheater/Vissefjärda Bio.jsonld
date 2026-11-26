@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Vissefjärda Bio",
+  "containedInPlace": {
+    "@id": "../City/Vissefj%C3%A4rda.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Storgatan 31",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-3c323d1bc6a2fd0311c92952"
+    }
+  ],
+  "url": "http://www.vfjardaforeningshus.se/"
+}

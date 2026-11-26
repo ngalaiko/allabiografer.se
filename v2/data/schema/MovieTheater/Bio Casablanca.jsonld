@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Bio Casablanca",
+  "containedInPlace": {
+    "@id": "../City/Karlsborg.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Strandvägen 15",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "biosverige_se",
+      "value": "biosverige-fdb21948a3cdd22d155b5688"
+    }
+  ],
+  "url": "https://casablancabio.se"
+}

@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Filmstaden Bergakungen",
+  "containedInPlace": {
+    "@id": "../City/G%C3%B6teborg.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Skånegatan 16 B",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "filmstaden_se",
+      "value": "filmstaden-ncg12773"
+    }
+  ],
+  "url": "https://www.filmstaden.se/goteborg/biograf/filmstaden-bergakungen/"
+}

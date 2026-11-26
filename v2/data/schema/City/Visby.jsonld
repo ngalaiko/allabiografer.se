@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Visby",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/Gotlands%20l%C3%A4n.jsonld"
+  }
+}

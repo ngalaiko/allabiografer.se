@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Skeppet Gbg",
+  "containedInPlace": {
+    "@id": "../City/G%C3%B6teborg.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Amerikagatan 2",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "doclounge_se",
+      "value": "doclounge-4749e9acda48db897e9f3e58"
+    }
+  ]
+}

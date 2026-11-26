@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Bion i Åsele",
+  "containedInPlace": {
+    "@id": "../City/%C3%85sele.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Lillgatan 2",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-22c83989c02eea7cc2b0924d"
+    }
+  ],
+  "url": "http://www.bioniasele.se/"
+}

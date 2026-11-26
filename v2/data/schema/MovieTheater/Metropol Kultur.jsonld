@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Metropol Kultur",
+  "containedInPlace": {
+    "@id": "../City/Karlshamn.jsonld"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "tickster_se",
+      "value": "agd4gkadcmcxeeg"
+    }
+  ],
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Norra Fogdelyckegatan 24",
+    "addressLocality": "Karlshamn",
+    "addressCountry": "SE"
+  },
+  "url": "https://metropolkultur.se/"
+}

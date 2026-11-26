@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Hallunda Folkets Hus",
+  "containedInPlace": {
+    "@id": "../City/Norsborg.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Borgvägen 1",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "hallundafolketshus_se",
+      "value": "hallunda-folkets-hus"
+    }
+  ],
+  "url": "https://www.hallundafolketshus.se"
+}

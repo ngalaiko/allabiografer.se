@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Lund",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/Sk%C3%A5ne%20l%C3%A4n.jsonld"
+  }
+}

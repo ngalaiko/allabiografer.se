@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Forshaga Folkets Hus Bio",
+  "containedInPlace": {
+    "@id": "../City/Forshaga.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Vinkelgatan 18",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-a691e74b0db50547f6976c11"
+    }
+  ]
+}

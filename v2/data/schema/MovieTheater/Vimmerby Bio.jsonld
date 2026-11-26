@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Vimmerby Bio",
+  "containedInPlace": {
+    "@id": "../City/Vimmerby.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Sevedegatan 30",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-2108"
+    }
+  ]
+}

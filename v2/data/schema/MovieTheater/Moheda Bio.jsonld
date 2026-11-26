@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Moheda Bio",
+  "containedInPlace": {
+    "@id": "../City/Moheda.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Banérsgatan 3",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-7c7f277f413b053dd22bf877"
+    }
+  ],
+  "url": "http://www.mohedabio.se"
+}

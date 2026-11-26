@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Sjöängen",
+  "containedInPlace": {
+    "@id": "../City/Askersund.jsonld"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "nortic_se",
+      "value": "nortic-4dbbe32f1d1f5ba35009ce2d"
+    }
+  ],
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Drottning Kristinas väg 2",
+    "addressLocality": "Askersund",
+    "addressCountry": "SE"
+  },
+  "url": "https://sjoangen.askersund.se/"
+}

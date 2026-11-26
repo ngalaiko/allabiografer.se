@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Berga Bio",
+  "containedInPlace": {
+    "@id": "../City/Berga.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Järnvägsgatan 2A",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-19908"
+    }
+  ],
+  "url": "https://www.bergastation.se/berga-bio/"
+}

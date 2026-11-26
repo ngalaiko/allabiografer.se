@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Filmstaden Norrköping",
+  "containedInPlace": {
+    "@id": "../City/Norrk%C3%B6ping.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Drottninggatan 56",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "filmstaden_se",
+      "value": "filmstaden-ncg31134"
+    }
+  ],
+  "url": "https://www.filmstaden.se/norrkoping/biograf/filmstaden/"
+}

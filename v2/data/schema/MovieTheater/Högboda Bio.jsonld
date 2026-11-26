@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Högboda Bio",
+  "containedInPlace": {
+    "@id": "../City/Kil.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Bodavägen 25",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-30378"
+    }
+  ],
+  "url": "https://www.hogbodafolketshus.se"
+}

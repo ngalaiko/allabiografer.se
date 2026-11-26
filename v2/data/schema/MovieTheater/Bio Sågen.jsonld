@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Bio Sågen",
+  "containedInPlace": {
+    "@id": "../City/H%C3%B6rby.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Svensköp 6518",
+    "addressLocality": "Hörby",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-a7ed2301ae3d66085cace610"
+    }
+  ],
+  "url": "https://bio.sagensvenskop.se/"
+}

@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Surahammars Biograf",
+  "containedInPlace": {
+    "@id": "../City/Surahammar.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Köpmannagatan 26 Surahammar",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-5616"
+    }
+  ]
+}

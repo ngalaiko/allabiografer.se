@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Saga",
+  "containedInPlace": {
+    "@id": "../City/Stockholm.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Kungsgatan 24",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "filmstaden_se",
+      "value": "filmstaden-ncg50537"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Borgholm Folkan",
+  "containedInPlace": {
+    "@id": "../City/Borgholm.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Storgatan 39 , Borgholm",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-26986"
+    }
+  ],
+  "url": "http://www.folkanborgholm.se"
+}

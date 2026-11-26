@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Sölvesborg Scala Bio",
+  "containedInPlace": {
+    "@id": "../City/S%C3%B6lvesborg.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Stortorget 10",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-6755"
+    }
+  ],
+  "url": "http://www.scala.nu"
+}

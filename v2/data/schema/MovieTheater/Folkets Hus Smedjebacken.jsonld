@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Folkets Hus Smedjebacken",
+  "containedInPlace": {
+    "@id": "../City/Smedjebacken.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Vasagatan 11",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "biosverige_se",
+      "value": "biosverige-88c4dc3ed6b02c66accbb9b7"
+    }
+  ],
+  "url": "https://smedjebacken.biosverige.se"
+}

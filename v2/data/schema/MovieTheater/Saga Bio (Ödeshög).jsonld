@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Saga Bio",
+  "containedInPlace": {
+    "@id": "../City/%C3%96desh%C3%B6g.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Stråtomtagatan 6",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-0dd50902a85bba39ced3a55b"
+    }
+  ]
+}

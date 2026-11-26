@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Filmhuset Palladium",
+  "containedInPlace": {
+    "@id": "../City/Arvika.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Hamngatan 11",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "palladiumbio_se",
+      "value": "filmhuset-palladium-arvika"
+    }
+  ],
+  "url": "https://palladiumbio.se/"
+}

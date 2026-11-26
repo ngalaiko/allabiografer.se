@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Nordisk Film Bio Uppsala",
+  "containedInPlace": {
+    "@id": "../City/Uppsala.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Marknadsgatan 1",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "nfbio_se",
+      "value": "nfbio-f835a347aee8775f31b6b2ff"
+    }
+  ],
+  "url": "https://www.nfbio.se/biograf/uppsala?city=uppsala"
+}

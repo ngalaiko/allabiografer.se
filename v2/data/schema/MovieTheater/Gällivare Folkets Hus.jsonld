@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Gällivare Folkets Hus",
+  "containedInPlace": {
+    "@id": "../City/G%C3%A4llivare.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Hantverkargatan 5",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-28330"
+    }
+  ]
+}

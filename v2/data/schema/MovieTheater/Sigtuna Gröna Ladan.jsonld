@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Sigtuna Gröna Ladan",
+  "containedInPlace": {
+    "@id": "../City/Sigtuna.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Gröna Gränd 6",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-46303"
+    }
+  ]
+}

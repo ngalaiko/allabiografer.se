@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Spegeln",
+  "containedInPlace": {
+    "@id": "../City/Malm%C3%B6.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Stortorget 29",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "folkets_hus_och_parker",
+      "value": "biografspegeln_se"
+    }
+  ],
+  "url": "https://biografspegeln.se/"
+}

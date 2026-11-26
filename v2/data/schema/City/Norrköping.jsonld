@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Norrköping",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/%C3%96sterg%C3%B6tlands%20l%C3%A4n.jsonld"
+  }
+}

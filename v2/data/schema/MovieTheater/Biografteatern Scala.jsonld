@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Biografteatern Scala",
+  "containedInPlace": {
+    "@id": "../City/Ystad.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Stora Östergatan 12",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-6aa7197958ee34d731cbf064"
+    }
+  ],
+  "url": "http://www.bioscala.se"
+}

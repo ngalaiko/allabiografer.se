@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Uppsala Fyrisbiografen",
+  "containedInPlace": {
+    "@id": "../City/Uppsala.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "S:t Olofsgatan 10",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-7"
+    }
+  ],
+  "url": "https://www.fyrisbiografen.se"
+}

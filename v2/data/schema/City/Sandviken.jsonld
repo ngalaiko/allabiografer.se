@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Sandviken",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/G%C3%A4vleborgs%20l%C3%A4n.jsonld"
+  }
+}

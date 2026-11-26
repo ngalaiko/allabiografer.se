@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Vårgårda Rialto Bio",
+  "containedInPlace": {
+    "@id": "../City/V%C3%A5rg%C3%A5rda.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Skarins Väg 5",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-2142"
+    }
+  ],
+  "url": "http://www.rialto.se"
+}

@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Norrköping Cnema",
+  "containedInPlace": {
+    "@id": "../City/Norrk%C3%B6ping.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Kungsgatan 56 Norrköping",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-5"
+    }
+  ],
+  "url": "https://cnema.se"
+}

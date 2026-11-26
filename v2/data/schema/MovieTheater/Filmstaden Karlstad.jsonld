@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Filmstaden Karlstad",
+  "containedInPlace": {
+    "@id": "../City/Karlstad.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Drottningggatan 33",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "filmstaden_se",
+      "value": "filmstaden-ncg85838"
+    }
+  ]
+}

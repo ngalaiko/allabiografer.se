@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Bräcke Bio",
+  "containedInPlace": {
+    "@id": "../City/Br%C3%A4cke.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Hantverksgatan 27",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "fhbracke_se",
+      "value": "bracke-bio"
+    }
+  ],
+  "url": "https://fhbracke.se/bio/"
+}

@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Järpen Bion",
+  "containedInPlace": {
+    "@id": "../City/J%C3%A4rpen.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Strandvägen 22",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "biosverige_se",
+      "value": "biosverige-b27ae992225a7ab79202c537"
+    }
+  ],
+  "url": "https://jarpen.biosverige.se"
+}

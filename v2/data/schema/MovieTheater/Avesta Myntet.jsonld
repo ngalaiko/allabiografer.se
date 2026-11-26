@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Avesta Myntet",
+  "containedInPlace": {
+    "@id": "../City/Avesta.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Markusgatan 9",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-31434"
+    }
+  ]
+}

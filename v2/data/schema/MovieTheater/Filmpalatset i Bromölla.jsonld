@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Filmpalatset i Bromölla",
+  "containedInPlace": {
+    "@id": "../City/Brom%C3%B6lla.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Folkets Husgatan 2",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "filmstaden_se",
+      "value": "filmstaden-ncg71313"
+    }
+  ]
+}

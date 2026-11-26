@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Grums Bio",
+  "containedInPlace": {
+    "@id": "../City/Grums.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Sveagatan 118",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-3579"
+    }
+  ],
+  "url": "http://www.grumsbio.se"
+}

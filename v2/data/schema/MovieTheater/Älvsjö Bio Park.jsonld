@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Älvsjö Bio Park",
+  "containedInPlace": {
+    "@id": "../City/Stockholm.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Götalandsvägen 181",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-25838"
+    }
+  ],
+  "url": "https://parkfolketshus.nu/biopark"
+}

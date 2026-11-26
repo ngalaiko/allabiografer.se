@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Ekerö Mälaröbion",
+  "containedInPlace": {
+    "@id": "../City/Eker%C3%B6.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Mälarö Torg 7B",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-10093"
+    }
+  ]
+}

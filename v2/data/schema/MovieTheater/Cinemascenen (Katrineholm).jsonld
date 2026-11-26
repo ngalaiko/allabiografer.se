@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Cinemascenen",
+  "containedInPlace": {
+    "@id": "../City/Katrineholm.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Drottninggatan 19",
+    "addressLocality": "Katrineholm",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "cinemascenen_se",
+      "value": "cinemascenen-katrineholm"
+    }
+  ],
+  "url": "https://www.cinemascenen.se/katrineholm/"
+}

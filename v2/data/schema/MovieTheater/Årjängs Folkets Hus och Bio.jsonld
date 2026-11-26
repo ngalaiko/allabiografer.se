@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Årjängs Folkets Hus och Bio",
+  "containedInPlace": {
+    "@id": "../City/%C3%85rj%C3%A4ng.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Skolvägen 3 Årjäng",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-17250"
+    }
+  ],
+  "url": "http://arjangsfolketshus.se/"
+}

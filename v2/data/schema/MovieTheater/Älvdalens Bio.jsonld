@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Älvdalens Bio",
+  "containedInPlace": {
+    "@id": "../City/%C3%84lvdalen.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Dalgatan 104",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-c0e8ce7fcf36762f5cab5ba0"
+    }
+  ]
+}

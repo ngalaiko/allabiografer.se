@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Partille Bio Kulturum",
+  "containedInPlace": {
+    "@id": "../City/Partille.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Gamla Kronvägen 56",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-25c9cf7ebc3eabaf13fc8f9d"
+    }
+  ]
+}

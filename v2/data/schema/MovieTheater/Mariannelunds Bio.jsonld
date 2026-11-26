@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Mariannelunds Bio",
+  "containedInPlace": {
+    "@id": "../City/Mariannelund.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Östra Storgatan 6",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "biosverige_se",
+      "value": "biosverige-e6ec35790377ef57acff7732"
+    }
+  ],
+  "url": "https://mariannelundsbio.se"
+}

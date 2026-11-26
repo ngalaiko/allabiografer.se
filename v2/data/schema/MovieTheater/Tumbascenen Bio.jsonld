@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Tumbascenen Bio",
+  "containedInPlace": {
+    "@id": "../City/Tumba.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Utbildningsv. 2",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-2281"
+    }
+  ],
+  "url": "http://www.folketshustumba.se/tumbascenen-bio/"
+}

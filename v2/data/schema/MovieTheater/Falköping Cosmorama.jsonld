@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Falköping Cosmorama",
+  "containedInPlace": {
+    "@id": "../City/Falk%C3%B6ping.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Sankt Olofsgatan 20",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-31441"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Partille/Jonsered Göta Bio",
+  "containedInPlace": {
+    "@id": "../City/Jonsered.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Anna-Stinas Lid 7",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-9979"
+    }
+  ],
+  "url": "http://www.gotabio.se/"
+}

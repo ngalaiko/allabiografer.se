@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Biostaden Värnamo",
+  "containedInPlace": {
+    "@id": "../City/V%C3%A4rnamo.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Jönköpingsvägen 15",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "filmstaden_se",
+      "value": "filmstaden-ncg57716"
+    }
+  ]
+}

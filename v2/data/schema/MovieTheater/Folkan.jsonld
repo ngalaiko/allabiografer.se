@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Folkan",
+  "containedInPlace": {
+    "@id": "../City/Gusum.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Furuvägen 3-5",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-813733883cd1bab030286684"
+    }
+  ],
+  "url": "http://www.gusum.info/bio"
+}

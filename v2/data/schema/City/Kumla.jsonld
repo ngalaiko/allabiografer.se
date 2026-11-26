@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Kumla",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/%C3%96rebro%20l%C3%A4n.jsonld"
+  }
+}

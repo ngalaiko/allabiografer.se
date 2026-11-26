@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Bergmancenter",
+  "containedInPlace": {
+    "@id": "../City/F%C3%A5r%C3%B6.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Svens 1118",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-5372377ffbd42f704c00b1f3"
+    }
+  ],
+  "url": "https://www.bergmancenter.se/"
+}

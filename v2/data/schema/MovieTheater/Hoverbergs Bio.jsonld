@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Hoverbergs Bio",
+  "containedInPlace": {
+    "@id": "../City/Svenstavik.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Hoverberg 211",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-0aae7ac89d4de13f0fd17762"
+    }
+  ],
+  "url": "https://bygdegardarna.se/hoverberg/"
+}

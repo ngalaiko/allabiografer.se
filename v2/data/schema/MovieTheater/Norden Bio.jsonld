@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Norden Bio",
+  "containedInPlace": {
+    "@id": "../City/K%C3%A4larne.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Södervägen 4",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-e85e5e082bfc396b673abd05"
+    }
+  ],
+  "url": "https://www.laget.se/KalarneIK-Skidor-NordenBio"
+}

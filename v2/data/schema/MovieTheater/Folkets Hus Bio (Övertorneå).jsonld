@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Folkets Hus Bio",
+  "containedInPlace": {
+    "@id": "../City/%C3%96vertorne%C3%A5.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Sockenvägen 1",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-483d488612550854af3f63c4"
+    }
+  ]
+}

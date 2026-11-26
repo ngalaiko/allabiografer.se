@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Falan",
+  "containedInPlace": {
+    "@id": "../City/Falun.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Östra Hamngatan 18",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "filmstaden_se",
+      "value": "filmstaden-ncg90949"
+    }
+  ]
+}

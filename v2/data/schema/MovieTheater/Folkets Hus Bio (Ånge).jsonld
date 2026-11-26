@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Folkets Hus Bio",
+  "containedInPlace": {
+    "@id": "../City/%C3%85nge.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Centraltorget 20",
+    "addressLocality": "Ånge",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-2baa1f4a9dea7f691bafc0c2"
+    }
+  ],
+  "url": "http://www.angefolketshus.se"
+}

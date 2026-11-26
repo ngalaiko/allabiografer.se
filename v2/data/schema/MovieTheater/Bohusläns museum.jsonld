@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Bohusläns museum",
+  "containedInPlace": {
+    "@id": "../City/Uddevalla.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Museigatan 1",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "nortic_se",
+      "value": "nortic-a7ccf853023570a34bee6bbc"
+    }
+  ],
+  "url": "https://www.bohuslansmuseum.se/"
+}

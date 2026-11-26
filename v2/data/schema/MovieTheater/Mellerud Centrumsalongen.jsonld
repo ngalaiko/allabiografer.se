@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Mellerud Centrumsalongen",
+  "containedInPlace": {
+    "@id": "../City/Mellerud.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Änggatan 2",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-2dfb584598c06ad0c353c0ee"
+    }
+  ]
+}

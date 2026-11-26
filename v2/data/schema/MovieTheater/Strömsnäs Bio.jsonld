@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Strömsnäs Bio",
+  "containedInPlace": {
+    "@id": "../City/Str%C3%B6msn%C3%A4sbruk.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Nya Åbrovägen 6",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-0dde483d595ddd2fd080d5a6"
+    }
+  ]
+}

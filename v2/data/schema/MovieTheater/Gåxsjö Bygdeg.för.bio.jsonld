@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Gåxsjö Bygdeg.för.bio",
+  "containedInPlace": {
+    "@id": "../City/G%C3%A5xsj%C3%B6.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Gåxsjö 4420",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-3a65cfd3851bbd9d1c5e7a00"
+    }
+  ]
+}

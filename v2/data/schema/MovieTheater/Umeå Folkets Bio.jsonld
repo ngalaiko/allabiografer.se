@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Umeå Folkets Bio",
+  "containedInPlace": {
+    "@id": "../City/Ume%C3%A5.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Västra Strandg. 8A Umeå",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-13192"
+    }
+  ],
+  "url": "https://folketsbioumea.se"
+}

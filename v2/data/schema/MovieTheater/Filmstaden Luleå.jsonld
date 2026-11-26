@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Filmstaden Luleå",
+  "containedInPlace": {
+    "@id": "../City/Lule%C3%A5.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Timmermansgatan 19-21",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "filmstaden_se",
+      "value": "filmstaden-ncg17549"
+    }
+  ],
+  "url": "https://www.filmstaden.se/lulea/biograf/filmstaden/"
+}

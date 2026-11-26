@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Filmstaden Gävle",
+  "containedInPlace": {
+    "@id": "../City/G%C3%A4vle.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Stortorget",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "filmstaden_se",
+      "value": "filmstaden-ncg10840"
+    }
+  ],
+  "url": "https://www.filmstaden.se/gavle/biograf/filmstaden/"
+}

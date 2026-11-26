@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Ulricehamn Folkan",
+  "containedInPlace": {
+    "@id": "../City/Ulricehamn.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Folkets Hus, Nygatan 24",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-31439"
+    }
+  ],
+  "url": "https://www.folketshusulricehamn.se/bio/"
+}

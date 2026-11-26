@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Tollereds Biograf",
+  "containedInPlace": {
+    "@id": "../City/Tollered.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Volrath Bergs väg 7",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-4443"
+    }
+  ],
+  "url": "http://tolleredsbiograf.se"
+}

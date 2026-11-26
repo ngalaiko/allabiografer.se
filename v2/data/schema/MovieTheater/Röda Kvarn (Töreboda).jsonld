@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Röda Kvarn",
+  "containedInPlace": {
+    "@id": "../City/T%C3%B6reboda.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Storgatan 19",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-df9db1cb7667fc058e4a0efa"
+    }
+  ],
+  "url": "https://www.biorodakvarn.se/"
+}

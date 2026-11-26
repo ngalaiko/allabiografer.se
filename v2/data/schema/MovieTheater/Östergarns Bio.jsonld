@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Östergarns Bio",
+  "containedInPlace": {
+    "@id": "../City/Katthammarsvik.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Jacob Häggs väg 6",
+    "addressLocality": "Katthammarsvik",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-80bd17f4130329336539467c"
+    }
+  ],
+  "url": "https://bygdegardarna.se/ostergarn/bio/"
+}

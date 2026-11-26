@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Hebeteatern",
+  "containedInPlace": {
+    "@id": "../City/Trollh%C3%A4ttan.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Kungsgatan 25",
+    "addressLocality": "Trollhättan",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-1f707c38e890268f57542361"
+    }
+  ],
+  "url": "https://www.trollhattan.fh.se"
+}

@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Folkets Hus Bio",
+  "containedInPlace": {
+    "@id": "../City/Pajala.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Fridhemsvägen 1",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-44bf517ade8776071f30b35b"
+    }
+  ],
+  "url": "https://www.yourvismawebsite.com/pajala-folkets-husforening"
+}

@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Bredaryd Röda Kvarn",
+  "containedInPlace": {
+    "@id": "../City/Bredaryd.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Klockaregårdsv 12",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-2134"
+    }
+  ],
+  "url": "http://rodakvarnbredaryd.se"
+}

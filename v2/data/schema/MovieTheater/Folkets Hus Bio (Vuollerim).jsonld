@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Folkets Hus Bio",
+  "containedInPlace": {
+    "@id": "../City/Vuollerim.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Älvvägen 4 A",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-d68f9bfaede4083d38f7c5de"
+    }
+  ]
+}

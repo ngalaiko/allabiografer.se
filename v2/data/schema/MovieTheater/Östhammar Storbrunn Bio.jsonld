@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Östhammar Storbrunn Bio",
+  "containedInPlace": {
+    "@id": "../City/%C3%96sthammar.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Klockstapelsgatan 2 Östhammar",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-15844"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Konserthus Bio",
+  "containedInPlace": {
+    "@id": "../City/Aneby.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Konserthusgatan 15",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-4165a120c092aa682a8aa393"
+    }
+  ],
+  "url": "http://www.anebykonserthus.se"
+}

@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Skänninge Centrumbiografen",
+  "containedInPlace": {
+    "@id": "../City/Sk%C3%A4nninge.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Vadstenag. 2 Skänninge",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-6420"
+    }
+  ]
+}

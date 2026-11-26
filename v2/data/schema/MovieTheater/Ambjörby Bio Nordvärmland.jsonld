@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Ambjörby Bio Nordvärmland",
+  "containedInPlace": {
+    "@id": "../City/Ambj%C3%B6rby.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Ambjörby Folkets Hus 1",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-4577"
+    }
+  ],
+  "url": "https://www.facebook.com/BioNordvarmland"
+}

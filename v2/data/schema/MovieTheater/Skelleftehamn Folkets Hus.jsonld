@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Skelleftehamn Folkets Hus",
+  "containedInPlace": {
+    "@id": "../City/Skelleftehamn.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Berzeliusgatan 2",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-12469"
+    }
+  ],
+  "url": "http://skelleftehamnfolketshus.se"
+}

@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Gullspång Centrumbion",
+  "containedInPlace": {
+    "@id": "../City/Gullsp%C3%A5ng.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Storgatan 9",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-28432"
+    }
+  ],
+  "url": "https://www.centrumbion.se"
+}

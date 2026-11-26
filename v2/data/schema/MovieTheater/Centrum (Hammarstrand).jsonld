@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Centrum",
+  "containedInPlace": {
+    "@id": "../City/Hammarstrand.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Centralgatan 29",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-a45178aa57e0d14541767bd9"
+    }
+  ]
+}

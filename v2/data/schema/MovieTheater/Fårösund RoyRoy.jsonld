@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Fårösund RoyRoy",
+  "containedInPlace": {
+    "@id": "../City/F%C3%A5r%C3%B6sund.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Kronhagsvägen 7",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-16999"
+    }
+  ],
+  "url": "https://www.royroy.se"
+}

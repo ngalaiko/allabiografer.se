@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Grand Sandviken",
+  "containedInPlace": {
+    "@id": "../City/Sandviken.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Köpmangatan 17",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "filmstaden_se",
+      "value": "filmstaden-ncg63812"
+    }
+  ]
+}

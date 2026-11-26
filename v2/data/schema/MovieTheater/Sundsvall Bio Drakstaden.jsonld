@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Sundsvall Bio Drakstaden",
+  "containedInPlace": {
+    "@id": "../City/Sundsvall.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Esplanaden 29, Sundsvall",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-18048"
+    }
+  ],
+  "url": "https://biodrakstaden.se/"
+}

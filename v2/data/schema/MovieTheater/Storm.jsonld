@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Storm",
+  "containedInPlace": {
+    "@id": "../City/Grebbestad.jsonld"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "tickster_se",
+      "value": "r81ewlrj3upvvm7"
+    }
+  ],
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Nedre Långgatan 33",
+    "addressLocality": "Grebbestad",
+    "addressCountry": "SE"
+  },
+  "url": "https://www.restaurangstorm.se/"
+}

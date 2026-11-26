@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Folkbio",
+  "containedInPlace": {
+    "@id": "../City/%C3%85seda.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Olofsgatan 17",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-e85239a4c7983ce743aa0ba6"
+    }
+  ],
+  "url": "http://www.folketshusaseda.se"
+}

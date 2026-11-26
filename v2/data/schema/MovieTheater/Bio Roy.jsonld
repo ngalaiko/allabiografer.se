@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Bio Roy",
+  "containedInPlace": {
+    "@id": "../City/G%C3%B6teborg.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Kungsportsavenyen 45",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "folkets_hus_och_parker",
+      "value": "bioroy_se"
+    }
+  ],
+  "url": "https://www.bioroy.se/"
+}

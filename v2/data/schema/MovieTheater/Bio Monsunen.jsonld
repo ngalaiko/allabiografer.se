@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Bio Monsunen",
+  "containedInPlace": {
+    "@id": "../City/L%C3%B6v%C3%A5nger.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Skolvägen",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-1f38f5c356b05a1cbf0e412c"
+    }
+  ]
+}

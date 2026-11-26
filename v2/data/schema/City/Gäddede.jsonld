@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Gäddede",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/J%C3%A4mtlands%20l%C3%A4n.jsonld"
+  }
+}

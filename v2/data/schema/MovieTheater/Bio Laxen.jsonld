@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Bio Laxen",
+  "containedInPlace": {
+    "@id": "../City/M%C3%B6rrum.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Mörrum",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "nortic_se",
+      "value": "nortic-4d2b13519e903ae2648e6818"
+    }
+  ],
+  "url": "https://morrumsfolketshus.se/"
+}

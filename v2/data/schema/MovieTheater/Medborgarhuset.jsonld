@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Medborgarhuset",
+  "containedInPlace": {
+    "@id": "../City/Dorotea.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Byvägen 5",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-d101efe7a05c231c5664f921"
+    }
+  ]
+}

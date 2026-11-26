@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Hagfors Bio Fasaden",
+  "containedInPlace": {
+    "@id": "../City/Hagfors.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Dalavägen 23",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-2242"
+    }
+  ],
+  "url": "https://biohagfors.se"
+}

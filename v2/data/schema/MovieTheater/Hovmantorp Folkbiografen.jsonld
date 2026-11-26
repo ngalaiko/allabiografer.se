@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Hovmantorp Folkbiografen",
+  "containedInPlace": {
+    "@id": "../City/Hovmantorp.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Parkgatan 1",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-2136"
+    }
+  ],
+  "url": "http://bio.hovmantorpsfh.se/#/home"
+}

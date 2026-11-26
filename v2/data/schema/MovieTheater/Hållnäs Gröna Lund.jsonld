@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Hållnäs Gröna Lund",
+  "containedInPlace": {
+    "@id": "../City/H%C3%A5lln%C3%A4s.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Hjälmunge 202",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-34216"
+    }
+  ],
+  "url": "https://www.hembygd.se/hallnas"
+}

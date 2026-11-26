@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Göteborg Bio Vingen Torslanda",
+  "containedInPlace": {
+    "@id": "../City/G%C3%B6teborg.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Amhults Torg 7",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-eb236798900bb3ad5547f246"
+    }
+  ],
+  "url": "http://www.vingen.se"
+}

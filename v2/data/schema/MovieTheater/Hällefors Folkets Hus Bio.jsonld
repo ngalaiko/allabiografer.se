@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Hällefors Folkets Hus Bio",
+  "containedInPlace": {
+    "@id": "../City/H%C3%A4llefors.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Sikforsvägen 19-21",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-e00cad53bcac1434e1e459ab"
+    }
+  ]
+}

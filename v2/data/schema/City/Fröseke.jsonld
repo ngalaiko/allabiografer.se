@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Fröseke",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/Kronobergs%20l%C3%A4n.jsonld"
+  }
+}

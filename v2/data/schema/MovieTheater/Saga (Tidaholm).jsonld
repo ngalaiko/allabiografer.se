@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Saga",
+  "containedInPlace": {
+    "@id": "../City/Tidaholm.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Nya Torget",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-22547d588af982fb8c33365d"
+    }
+  ],
+  "url": "http://www.sagatidaholm.se"
+}

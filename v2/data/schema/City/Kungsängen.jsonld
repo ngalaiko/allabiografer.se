@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Kungsängen",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/Stockholms%20l%C3%A4n.jsonld"
+  }
+}

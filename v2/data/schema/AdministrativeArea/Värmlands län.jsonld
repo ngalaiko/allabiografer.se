@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "AdministrativeArea",
+  "name": "Värmlands län",
+  "containedInPlace": {
+    "@id": "../Country/Sverige.jsonld"
+  },
+  "identifier": {
+    "@type": "PropertyValue",
+    "propertyID": "SCB länskod",
+    "value": "17"
+  }
+}

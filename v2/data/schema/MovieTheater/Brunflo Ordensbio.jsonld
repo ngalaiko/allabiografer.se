@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Brunflo Ordensbio",
+  "containedInPlace": {
+    "@id": "../City/Brunflo.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Nygatan 4",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-2278"
+    }
+  ],
+  "url": "http://privat.bahnhof.se/wb133081/bio.html"
+}

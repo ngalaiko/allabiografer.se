@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Hofors Folkets Hus",
+  "containedInPlace": {
+    "@id": "../City/Hofors.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Skolgatan 21, Hofors",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-26760"
+    }
+  ]
+}

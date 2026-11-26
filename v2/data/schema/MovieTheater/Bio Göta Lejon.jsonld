@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Bio Göta Lejon",
+  "containedInPlace": {
+    "@id": "../City/G%C3%B6tene.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Torggatan 4",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-50407"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Trönöbio",
+  "containedInPlace": {
+    "@id": "../City/Tr%C3%B6n%C3%B6dal.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Lertagsvägen 2",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-36a7054f46731f3774c3ba6b"
+    }
+  ]
+}

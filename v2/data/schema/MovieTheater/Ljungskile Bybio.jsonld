@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Ljungskile Bybio",
+  "containedInPlace": {
+    "@id": "../City/Ljungskile.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Valdemar Svenssons väg 11",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-45565ae7ccd20af591854bec"
+    }
+  ]
+}

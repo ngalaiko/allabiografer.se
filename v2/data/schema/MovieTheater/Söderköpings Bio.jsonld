@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Söderköpings Bio",
+  "containedInPlace": {
+    "@id": "../City/S%C3%B6derk%C3%B6ping.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Ringvägen 45 A",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "soderkopingsbio_se",
+      "value": "soderkopings-bio"
+    }
+  ],
+  "url": "https://soderkopingsbio.se"
+}

@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Laxå Bio",
+  "containedInPlace": {
+    "@id": "../City/Lax%C3%A5.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Röforsvägen 22",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-17"
+    }
+  ],
+  "url": "http://www.laxabio.se"
+}

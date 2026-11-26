@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Heby Folkets Hus",
+  "containedInPlace": {
+    "@id": "../City/Heby.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Centralgatan 1",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-c9191abe882ffbe7fee42033"
+    }
+  ],
+  "url": "http://www.hebyfh.se"
+}

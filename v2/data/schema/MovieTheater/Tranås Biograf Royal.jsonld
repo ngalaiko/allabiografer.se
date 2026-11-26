@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Tranås Biograf Royal",
+  "containedInPlace": {
+    "@id": "../City/Tran%C3%A5s.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Ågatan 13",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-7627"
+    }
+  ],
+  "url": "http://biografroyal.com/"
+}

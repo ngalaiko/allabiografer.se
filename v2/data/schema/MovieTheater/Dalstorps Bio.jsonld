@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Dalstorps Bio",
+  "containedInPlace": {
+    "@id": "../City/Dalstorp.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Ljungsarpsvägen 4",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-39533"
+    }
+  ],
+  "url": "https://sites.google.com/view/kopia-av-dalstorps-bio/startsida"
+}

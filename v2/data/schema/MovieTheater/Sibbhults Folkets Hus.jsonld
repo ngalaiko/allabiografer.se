@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Sibbhults Folkets Hus",
+  "containedInPlace": {
+    "@id": "../City/Sibbhult.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Möllegatan 3",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-a0e7c4e0e0077f9d696c9eab"
+    }
+  ],
+  "url": "http://www.sibbhultsfh.se"
+}

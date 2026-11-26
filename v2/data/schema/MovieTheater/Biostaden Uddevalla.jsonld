@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Biostaden Uddevalla",
+  "containedInPlace": {
+    "@id": "../City/Uddevalla.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Göteborgsvägen 11A",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "svenskabio_se",
+      "value": "svenskabio-4"
+    }
+  ],
+  "url": "https://svenskabio.se/uddevalla/biostaden/"
+}

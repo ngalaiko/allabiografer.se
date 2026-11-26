@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Hultsfred Rio Bio",
+  "containedInPlace": {
+    "@id": "../City/Hultsfred.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Stora Torget 2, Hultsfred",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-19597"
+    }
+  ],
+  "url": "https://riobiohultsfred.se/"
+}

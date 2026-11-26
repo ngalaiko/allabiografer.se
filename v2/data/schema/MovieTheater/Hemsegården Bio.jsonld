@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Hemsegården Bio",
+  "containedInPlace": {
+    "@id": "../City/Hemse.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Jacob Gråbergs plats 4",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-3111"
+    }
+  ],
+  "url": "http://hemsegarden.se/"
+}

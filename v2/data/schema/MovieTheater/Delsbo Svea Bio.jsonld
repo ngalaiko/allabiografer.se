@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Delsbo Svea Bio",
+  "containedInPlace": {
+    "@id": "../City/Delsbo.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Köpmangatan 14",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-3412"
+    }
+  ],
+  "url": "https://www.sveabio.se"
+}

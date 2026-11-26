@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Cinemascenen",
+  "containedInPlace": {
+    "@id": "../City/Ystad.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Björnstjernegatan 3",
+    "addressLocality": "Ystad",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "cinemascenen_se",
+      "value": "cinemascenen-ystad"
+    }
+  ],
+  "url": "https://www.cinemascenen.se/ystad/"
+}

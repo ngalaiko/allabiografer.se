@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Filmstaden Luxe Uppsala",
+  "containedInPlace": {
+    "@id": "../City/Uppsala.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Dragarbrunnsgatan 22",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "filmstaden_se",
+      "value": "filmstaden-ncg16899"
+    }
+  ]
+}

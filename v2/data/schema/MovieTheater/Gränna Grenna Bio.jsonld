@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Gränna Grenna Bio",
+  "containedInPlace": {
+    "@id": "../City/Gr%C3%A4nna.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Torget",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-aba8cb27868cd7b5c12b7a1b"
+    }
+  ]
+}

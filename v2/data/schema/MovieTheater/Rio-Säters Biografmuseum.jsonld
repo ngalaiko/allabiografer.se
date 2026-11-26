@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Rio-Säters Biografmuseum",
+  "containedInPlace": {
+    "@id": "../City/S%C3%A4ter.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Järnvägsgatan 26",
+    "addressLocality": "Säter",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-bd67d9d03f0ba672d74b4a5f"
+    }
+  ],
+  "url": "http://biografmuseet.se/"
+}

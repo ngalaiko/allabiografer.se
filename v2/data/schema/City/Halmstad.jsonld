@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Halmstad",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/Hallands%20l%C3%A4n.jsonld"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Flora Biografteater",
+  "containedInPlace": {
+    "@id": "../City/Sj%C3%B6bo.jsonld"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "tickster_se",
+      "value": "6fyy0bjpl74d6r5"
+    }
+  ],
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Idegatan 5",
+    "addressLocality": "Sjöbo",
+    "addressCountry": "SE"
+  },
+  "url": "https://www.sjobo.se/uppleva-och-gora/kultur-i-sjobo/flora-biografteater.html"
+}

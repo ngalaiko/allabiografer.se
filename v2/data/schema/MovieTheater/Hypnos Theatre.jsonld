@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Hypnos Theatre",
+  "containedInPlace": {
+    "@id": "../City/Malm%C3%B6.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Norra Grängesbergsgatan 15",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "hypnostheatre_com",
+      "value": "hypnos-theatre"
+    }
+  ],
+  "url": "https://hypnostheatre.com/"
+}

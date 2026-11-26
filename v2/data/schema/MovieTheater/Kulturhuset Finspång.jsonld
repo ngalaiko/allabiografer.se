@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Kulturhuset Finspång",
+  "containedInPlace": {
+    "@id": "../City/Finsp%C3%A5ng.jsonld"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "tickster_se",
+      "value": "8efk0t38a63ealr"
+    }
+  ],
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Bergslagsvägen 29",
+    "addressLocality": "Finspång",
+    "addressCountry": "SE"
+  },
+  "url": "https://finspang.se/kulturhuset/kulturhuset-finspang/om-oss/oppettider-i-kulturhuset"
+}

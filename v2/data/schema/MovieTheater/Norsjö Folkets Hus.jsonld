@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Norsjö Folkets Hus",
+  "containedInPlace": {
+    "@id": "../City/Norsj%C3%B6.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Nygatan 32",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-1ca1d84a3a86e332261b408b"
+    }
+  ],
+  "url": "http://www.norsjofolketshus.se/"
+}

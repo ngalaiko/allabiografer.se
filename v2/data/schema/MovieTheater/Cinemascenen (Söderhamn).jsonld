@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Cinemascenen",
+  "containedInPlace": {
+    "@id": "../City/S%C3%B6derhamn.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Köpmangatan 2",
+    "addressLocality": "Söderhamn",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "cinemascenen_se",
+      "value": "cinemascenen-soderhamn"
+    }
+  ],
+  "url": "https://www.cinemascenen.se/soderhamn/"
+}

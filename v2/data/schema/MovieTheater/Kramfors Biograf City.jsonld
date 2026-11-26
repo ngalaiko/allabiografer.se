@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Kramfors Biograf City",
+  "containedInPlace": {
+    "@id": "../City/Kramfors.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Biblioteksgatan 10",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-27362"
+    }
+  ],
+  "url": "https://www.biografcity.se"
+}

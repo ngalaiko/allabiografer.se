@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Borås Bio Röda Kvarn",
+  "containedInPlace": {
+    "@id": "../City/Bor%C3%A5s.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Västerbrogatan 13 Borås",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-5570"
+    }
+  ],
+  "url": "https://www.boras.se/rodakvarn"
+}

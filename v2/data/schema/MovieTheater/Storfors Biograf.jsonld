@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Storfors Biograf",
+  "containedInPlace": {
+    "@id": "../City/Storfors.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Centrumplan 1",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-74d561e5a7d2987e77b4f8fb"
+    }
+  ]
+}

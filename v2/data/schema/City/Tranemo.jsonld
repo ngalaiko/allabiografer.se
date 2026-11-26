@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Tranemo",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/V%C3%A4stra%20G%C3%B6talands%20l%C3%A4n.jsonld"
+  }
+}

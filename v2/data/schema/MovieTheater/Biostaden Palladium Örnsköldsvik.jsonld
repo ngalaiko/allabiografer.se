@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Biostaden Palladium Örnsköldsvik",
+  "containedInPlace": {
+    "@id": "../City/%C3%96rnsk%C3%B6ldsvik.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Köpmangatan 3",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "filmstaden_se",
+      "value": "filmstaden-ncg76006"
+    }
+  ]
+}

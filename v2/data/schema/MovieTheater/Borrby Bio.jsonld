@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Borrby Bio",
+  "containedInPlace": {
+    "@id": "../City/Borrby.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Sandbyvägen 4",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-eb31d1746568ad9573b921ed"
+    }
+  ],
+  "url": "http://www.borrbybiograf.se"
+}

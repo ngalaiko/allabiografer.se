@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "City",
+  "name": "Ånge",
+  "containedInPlace": {
+    "@id": "../AdministrativeArea/V%C3%A4sternorrlands%20l%C3%A4n.jsonld"
+  }
+}

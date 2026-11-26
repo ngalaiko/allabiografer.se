@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Luleå Folkets Bio Royal",
+  "containedInPlace": {
+    "@id": "../City/Lule%C3%A5.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Nygatan 1 Luleå",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-5318"
+    }
+  ],
+  "url": "http://royalbiografen.se/"
+}

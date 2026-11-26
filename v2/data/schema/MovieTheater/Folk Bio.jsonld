@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Folk Bio",
+  "containedInPlace": {
+    "@id": "../City/Norrhult.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Thorleifs gata 1",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-21023a61b30333e77755ac4d"
+    }
+  ],
+  "url": "http://www.norrhultsfolketshus.se/"
+}

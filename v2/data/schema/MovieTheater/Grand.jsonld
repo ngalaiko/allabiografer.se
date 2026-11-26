@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Grand",
+  "containedInPlace": {
+    "@id": "../City/Ljungbyhed.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Storgatan 7",
+    "addressLocality": "Ljungbyhed",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-9166b5f882d83068e24b1898"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Upplands Bro Bio Kuben",
+  "containedInPlace": {
+    "@id": "../City/Kungs%C3%A4ngen.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Furuhällsplan 1",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-14798"
+    }
+  ]
+}

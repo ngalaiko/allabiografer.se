@@ -1,0 +1,21 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Leksand Visir Bio",
+  "containedInPlace": {
+    "@id": "../City/Leksand.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Faluvägen 16",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bioguiden_se",
+      "value": "bioguiden-f3aeeb7170a2e6789a78fc80"
+    }
+  ]
+}

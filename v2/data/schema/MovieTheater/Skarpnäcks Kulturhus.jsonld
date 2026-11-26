@@ -1,0 +1,23 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Skarpnäcks Kulturhus",
+  "containedInPlace": {
+    "@id": "../City/Skarpn%C3%A4ck.jsonld"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "tickster_se",
+      "value": "3gaa3vubd6a3yr5"
+    }
+  ],
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Skarpnäcks allé 25",
+    "addressLocality": "Skarpnäck",
+    "addressCountry": "SE"
+  },
+  "url": "https://skarpnackskulturhus.stockholm/"
+}

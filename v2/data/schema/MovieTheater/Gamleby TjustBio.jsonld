@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Gamleby TjustBio",
+  "containedInPlace": {
+    "@id": "../City/Gamleby.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Västerviksvägen 4A",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-11912"
+    }
+  ],
+  "url": "http://www.gamleby.se/tjustbioprogram"
+}

@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Degerhamn Torngårds Bio",
+  "containedInPlace": {
+    "@id": "../City/Degerhamn.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Torngård 112",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-31617"
+    }
+  ],
+  "url": "https://www.facebook.com/grasgardsbygdegard/"
+}

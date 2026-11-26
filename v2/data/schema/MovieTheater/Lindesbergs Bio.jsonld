@@ -1,0 +1,22 @@
+{
+  "@context": "https://schema.org",
+  "@id": "",
+  "@type": "MovieTheater",
+  "name": "Lindesbergs Bio",
+  "containedInPlace": {
+    "@id": "../City/Lindesberg.jsonld"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Kristinavägen 13, Lindesberg",
+    "addressCountry": "SE"
+  },
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "bio_se",
+      "value": "bio-se-15616"
+    }
+  ],
+  "url": "https://www.lindesbergsbio.se/"
+}
