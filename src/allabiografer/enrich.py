@@ -18,7 +18,8 @@ from urllib.parse import urlencode
 
 from .graph import Graph
 from .movie_fields import normalise
-from .movie_matching import _close, fold, references, title_keys, work_title
+from .movie_matching import _close, _people, fold, references, title_keys, work_title
+from .posters import poster, stored_downloads
 
 API = "https://api.themoviedb.org/3"
 IMAGES = "https://image.tmdb.org/t/p/original"
@@ -49,6 +50,13 @@ def needs(film: dict) -> bool:
     return any(not film.get(field) for field in CRITICAL)
 
 
+def _without_unusable_poster(graph: Graph, path: Path, film: dict, session, downloaded: dict) -> dict:
+    """The film without an image that is no poster: a still, a banner or a placeholder."""
+    if film.get("image") and poster(graph, path, film["image"], session, downloaded) is None:
+        return {key: value for key, value in film.items() if key != "image"}
+    return film
+
+
 def _year(film: dict) -> int | None:
     found = re.match(r"(?:19|20)\d\d", film.get("datePublished") or "")
     return int(found[0]) if found else None
@@ -60,8 +68,7 @@ def _minutes(film: dict) -> int | None:
 
 
 def _surnames(film: dict) -> set[str]:
-    people = film.get("director") or []
-    return {fold(person["name"]).split()[-1] for person in people if fold(person.get("name") or "")}
+    return {name.split()[-1] for name in _people(film, "director")}
 
 
 def _detail(fetch: Fetch, tmdb_id: int) -> dict:
@@ -197,8 +204,12 @@ def replaying(graph: Graph, capture: Path) -> Fetch:
     return fetch
 
 
-def enrich_dataset(graph: Graph, merged: Path, fetch: Fetch) -> tuple[Path, int]:
-    """A copy of `merged` whose films that need it are filled from TMDB, and how many were."""
+def enrich_dataset(graph: Graph, merged: Path, fetch: Fetch, session=None) -> tuple[Path, int]:
+    """A copy of `merged` whose films that need it are filled from TMDB, and how many were.
+
+    `session` downloads source poster URLs to check them; without one, only stored images are checked.
+    """
+    downloaded = stored_downloads(graph)
     dataset = graph.read(merged)
     entities = {graph.resolve(merged, reference): None for reference in dataset["hasPart"]}
     for path in entities:
@@ -211,7 +222,13 @@ def enrich_dataset(graph: Graph, merged: Path, fetch: Fetch) -> tuple[Path, int]
     }
     parts, replaced, count = [], {}, 0
     for path, entity in entities.items():
-        if entity["@type"] == "Movie" and path in showing and needs(entity):
+        checked = (
+            _without_unusable_poster(graph, path, entity, session, downloaded)
+            if entity["@type"] == "Movie" and path in showing
+            else entity
+        )
+        if entity["@type"] == "Movie" and path in showing and needs(checked):
+            entity = checked
             tmdb_id = _identify(fetch, entity)
             detail = _detail(fetch, tmdb_id) if tmdb_id is not None else {}
             if "id" in detail:

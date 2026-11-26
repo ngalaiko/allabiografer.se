@@ -10,7 +10,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 from . import session as http
-from .graph import Graph, media_type
+from .graph import Graph
 from .model import Screening, Venue
 from .model.movie import Movie
 from .model.version import (
@@ -23,6 +23,8 @@ from .model.version import (
     ProjectionMedium,
     SubtitleVersion,
 )
+from .posters import poster as _poster
+from .posters import stored_downloads
 from .site import pages
 from .sources._shared import STOCKHOLM
 
@@ -86,25 +88,6 @@ def _version(screening: dict) -> tuple[ContentVersion, Presentation]:
     )
 
 
-def _poster(graph: Graph, film_path: Path, image, session, downloaded: dict[str, Path]) -> dict | None:
-    """The stored original poster: a captured image, or a source URL downloaded into the store once."""
-    if isinstance(image, dict):
-        return graph.read(graph.resolve(film_path, image))
-    if not isinstance(image, str) or not image.startswith(("http://", "https://")):
-        return None
-    if image not in downloaded:
-        try:
-            response = session.get(image, timeout=30)
-            response.raise_for_status()
-        except Exception:
-            return None
-        media = media_type(image, response.headers.get("Content-Type", ""))
-        if not media.startswith("image/"):
-            return None
-        downloaded[image] = graph.put_bytes(response.content, media, name=Path(image).name, url=image)
-    return graph.read(downloaded[image])
-
-
 def site_data(graph: Graph, merged: Path, out: Path, *, today: date | None = None) -> pages.SiteData:
     """Page data for a merged Dataset."""
     sd = pages.SiteData(out_dir=out)
@@ -121,11 +104,7 @@ def site_data(graph: Graph, merged: Path, out: Path, *, today: date | None = Non
         venues[path] = Venue(name=cinema["name"], city=city, address=cinema.get("address", {}).get("streetAddress", ""))
     sd.venues = {(venue.city, venue.name): venue for venue in venues.values()}
 
-    downloaded = {}
-    for path in graph.schema.glob("ImageObject/*.jsonld"):
-        url = graph.read(path).get("isBasedOn")
-        if isinstance(url, str):
-            downloaded[url] = path
+    downloaded = stored_downloads(graph)
     session = http.session()
     identities, images, screenings = {}, {}, []
     for reference in dataset["hasPart"]:

@@ -1,4 +1,7 @@
+import io
 from datetime import date
+
+from PIL import Image
 
 from allabiografer.enrich import enrich_dataset, tmdb_movie, url
 from allabiografer.merge import merge_datasets
@@ -32,6 +35,12 @@ def fake(answers):
     return fetch, asked
 
 
+def portrait(graph):
+    buffer = io.BytesIO()
+    Image.new("RGB", (500, 750), "gray").save(buffer, "PNG")
+    return graph.ref(graph.put_bytes(buffer.getvalue(), "image/png", name="poster.png"))
+
+
 def films(graph, dataset):
     found = {}
     for reference in graph.read(dataset)["hasPart"]:
@@ -53,7 +62,7 @@ def test_tmdb_details_become_a_normalised_movie():
 
 def test_only_films_missing_critical_details_are_filled_and_stated_values_stay(graph, parsed):
     tmdb = ["https://www.themoviedb.org/movie/1170608"]
-    complete = {"image": "https://example.org/p.jpg", "description": "Text.", "director": ["Ava Berg"]}
+    complete = {"image": portrait(graph), "description": "Text.", "director": ["Ava Berg"]}
     listed = {
         "a": (
             {"name": "Dune: Part Three", "duration": "PT155M", "sameAs": tmdb},
@@ -97,3 +106,18 @@ def test_search_accepts_one_consistent_result_only(graph, parsed):
 
     assert count == 1
     assert "https://www.themoviedb.org/movie/19" in films(graph, enriched)["Metropolis"]["sameAs"]
+
+
+def test_a_banner_counts_as_no_poster(graph, parsed):
+    buffer = io.BytesIO()
+    Image.new("RGB", (1920, 1080), "gray").save(buffer, "PNG")
+    still = graph.ref(graph.put_bytes(buffer.getvalue(), "image/png", name="still.png"))
+    tmdb = ["https://www.themoviedb.org/movie/1170608"]
+    complete = {"description": "Text.", "director": ["Denis Villeneuve"], "sameAs": tmdb, "image": still}
+    listed = {"a": ({"name": "Dune: Part Three", **complete}, [("Bio Rio", "2026-12-16T18:00:00+01:00")])}
+    merged = merge_datasets(graph, None, [parsed(graph, "x", ["Bio Rio"], listed)], DAY)
+
+    enriched, count = enrich_dataset(graph, merged, fake({"/movie/1170608": DUNE})[0])
+
+    assert count == 1
+    assert films(graph, enriched)["Dune: Part Three"]["image"] == "https://image.tmdb.org/t/p/original/sv.jpg"

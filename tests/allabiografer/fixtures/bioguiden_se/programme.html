@@ -1,0 +1,966 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="sv" lang="sv">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+    <title>Bioguiden.se | Biografer</title>
+    <link rel="stylesheet" href="css/screen_170425.css" type="text/css" media="screen" />
+
+    <script type="text/javascript" src="js/jquery.js"></script>
+
+    <script type="text/javascript" src="js/scroll.js"></script>
+
+    <script type="text/javascript" src="js/dimensions.js"></script>
+
+    <script type="text/javascript" src="js/mousewheel.js"></script>
+
+
+
+<script type="text/javascript" language="javascript">	
+    function hideDiv(divid){
+		if (document.getElementById){
+			var _x = document.getElementById(divid)
+			_x.style.visibility = 'hidden';
+		} else if (document.all) {
+			document.all[divid].style.visibility = 'hidden';
+		} else if (document.layers) {
+			document.layers[divid].style.visibility = 'hidden';
+		}
+	}
+	function showDiv(divid){
+		if (document.getElementById){
+			var _x = document.getElementById(divid)
+			_x.style.visibility = 'visible';
+		} else if (document.all) {
+			document.all[divid].style.visibility = 'visible';
+		} else if (document.layers) {
+			document.layers[divid].style.visibility = 'visible';
+		}
+	}
+
+	function OnCompleteSelected(source, eventArgs) {
+	    var results = eval('(' + eventArgs.get_value() + ')');
+
+	    var selName = results.Display;
+	    var selCityId = results.CityId;
+	    var selTheatreId = results.TheatreId;
+
+	    if (selTheatreId != null)
+	    {
+
+	    } else {
+
+	    }
+    }
+</script>
+</head>
+<body>
+    <form name="MainForm" method="post" action="./biografer.aspx?cityid=227&amp;theatreid=c12ff623-32f1-41a8-9288-c215cc1de994" id="MainForm">
+<div>
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__LASTFOCUS" id="__LASTFOCUS" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="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MTVnEAUHVsOkeGrDtgUCNzdnEAUEWWRyZQUDMjg3ZxAFBVlzdGFkBQMxMjFnEAUGw4Vtw6VsBQMyNjNnEAUFw4VuZ2UFAzIwM2cQBQTDhXJlBQI0NGcQBQjDhXJqw6RuZwUDMTgyZxAFBsOFc2VsZQUDMTk3ZxAFCMOEbG1odWx0BQI3OGcQBQnDhGx2ZGFsZW4FAjIwZxAFC8OEbHZrYXJsZWJ5BQMxNjVnEAUIw4RsdnNieW4FAjkwZxAFCMOWY2tlcsO2BQMyNjRnEAUJw5ZkZXNow7ZnBQMyODlnEAUHw5ZyZWJybwUDMjc2ZxAFDsOWcm5za8O2bGRzdmlrBQMyMDRnEAUKw5ZzdGVyc3VuZAUCNDVnEAULw5ZzdGVyw6VrZXIFAzE1MWcQBQrDlnN0aGFtbWFyBQMxNjZnEAUOw5ZzdHJhIEfDtmluZ2UFAzEyNWcQBQrDlnZlcmthbGl4BQI5MWcQBQzDlnZlcnRvcm5lw6UFAjkyZxYBAitkAgcPEGQQFRUNVsOkbGogYmlvZ3JhZg5BZnRvbnN0asOkcm5hbgxBbmdlcmVkcyBCaW8JQmlnIFN0YWdlC0Jpb3BhbGF0c2V0B0NhcGl0b2wLQ2FwaXRvbC9TRkkKRG9jIExvdW5nZRZGaWxtc3RhZGVuIEJlcmdha3VuZ2VuHUZvbGtldHMgSHVzIEJpbywgSGFtbWFya3VsbGVuDUZyw7ZsdW5kYWJpb24FR8O2dGEISGFnYWJpb24LSGFnYXRlYXRlcm4VS3VsdHVyaHVzZXQgQmVyZ3Nqw7ZuDk3DtmxubHlja2UgQmlvA1JveRxTYW5rdCBKw7ZyZ2VuIFBhcmsgQmlvZ3JhZmVuC1NrZXBwc2Jyb240ElNreXR0ZXNrb2xhbnMgYXVsYRdWaW5nZW4gRC1iaW8sIFRvcnNsYW5kYRUVACgyMjd8ZTAwZWQwMDgtMTc5OS00Y2ViLTgxMWQtNGRlNDg1YWM5YzE1KDIyN3wyZjI0MDJiZC04ZTU2LTRmYzAtYTk3OS1iOTc4ODNiMzg0MzcoMjI3fDNlZTc2YzE2LTc1NDUtNDM0Mi04NzczLWY5YmYxNTZiNWM2YSgyMjd8MTYxOGYzNzMtMTI3NC00MTM0LWE2MzMtODcyMjI4NmZkMTMwKDIyN3wyZDQwOTgzNC0zNjc0LTRjNjYtODFhMy02NmRjMzQ0ODJhYmYoMjI3fGZlM2ZkMDFkLTY1OTktNDFkZS1iZTZiLTA0N2M4OGM1M2Q5YigyMjd8Njc5NWI5YTYtZjYxNi00YzBiLWFmNzctNjk0MGQxNjMxMDYzKDIyN3wwOTY1YTRhZC1iN2M2LTQyZjQtODczMS00MGFmOTBhNmQwNmMoMjI3fGI0MjBjYWZhLTc3ZDktNDUwMi04ZDI3LTYzMWRlMTdkZDhhZSgyMjd8MTJhNGZjOGEtNjliNC00N2U1LWI0ZmQtZTk3MWMxMzQ4YzgzKDIyN3w1MzIzNTY1OC1mMGEzLTRiMGYtODM3Zi02YjE5MGQ2Njc3NWEoMjI3fGYyZjFmZDYzLTI2ZDktNDY1ZC1hNjFhLTg3MDdkMmZhNjM3ZigyMjd8NDkyNGYzNTctZjVmMC00YjUxLTk1NmMtNDBjMmRiZTVhY2YxKDIyN3w4YTgzZTliOC1lZjg2LTQxMGItYTUyNy0wZmY5M2UzMTBiMGIoMjI3fDllNGQ0MmE3LTJjY2QtNGNhZi05YTNiLWExOWQyYjkyN2JjYigyMjd8ZTFiNmRkNmUtZTRlNy00YjFjLTg0MDctNjM1YzU5ZmRiNmJkKDIyN3xjMTJmZjYyMy0zMmYxLTQxYTgtOTI4OC1jMjE1Y2MxZGU5OTQoMjI3fDkzODNiNzc2LWM3ODItNDM2NC04MDhmLTNjODY0NjY3ZThlYSgyMjd8YjlhYTRmMmMtMzNiMy00Yzc2LTk5MjAtNGY0ZjZlMDAyYzk5KDIyN3xjMDI1NDVmOC02MDg4LTRjYWUtYTEwNy00MzE5MGMxMzIyZGQUKwMVZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnFgECEWQCCA9kFgICAQ8WAh4LXyFJdGVtQ291bnQCARYCZg9kFggCAg8VBhxTYW5rdCBKw7ZyZ2VuIFBhcmsgQmlvZ3JhZmVuD0tuaXBwbGVrdWxsZW4gOAU0MTcwNQlHw7Z0ZWJvcmcAgQFodHRwOi8vbWFwcy5nb29nbGUuY29tL21hcHM/b3V0cHV0PWh0bWwmaGw9c3Ymej0xNyZmPXEmdD1tJnE9U2Fua3QrSiVjMyViNnJnZW4rUGFyaytCaW9ncmFmZW4lMmMrS25pcHBsZWt1bGxlbis4JTJjK0clYzMlOTZURUJPUkdkAgMPDxYCHwFoZBYCZg8VAgAHSGVtc2lkYWQCBQ8PFgIfAWhkFgJmDxUBAGQCBg8VAQBkAgkPZBYIAgEPFgIfAWhkAgMPDxYEHgRUZXh0BYEBPGgxPkluZ2EgZmlsbWVyIGt1bmRlIGhpdHRhczwvaDE+PHA+Vmkga3VuZGUgaW50ZSBoaXR0YSBuw6Vnb24gdmlzbmluZyBkZSBuw6RybWFzdGUgZGFnYXJuYSBww6UgU2Fua3QgSsO2cmdlbiBQYXJrIEJpb2dyYWZlbi48L3A+HwFoZGQCBQ8WAh8BaGQCBw8PFgIfAWdkFgQCAQ8WAh4EaHJlZgXQAWphdmFzY3JpcHQ6Y2hhbmdlRGlzcGxheW1vZGUoJ2RldGFpbHNiODVkNzVlMC05NDBiLTQxOGMtOGFkNC1kZmU1M2M3N2QxNzgsZGV0YWlsczhiNDU3N2YxLWZkYWYtNDcwMi1hMTJjLTlkMTBjNzFhMDcwZCxkZXRhaWxzOTM4MjdkOGQtNjUxZS00MTE4LWFhZGEtODNmMWZhMGJjYmQwLGRldGFpbHM1MGNkN2ZmYy0wNTA1LTRiOTgtOTI1Ny01ODE3YzFhY2Q1ZDInKTtkAgUPFgIfAgIEFggCAQ9kFg4CAQ8WAh4FY2xhc3MFFnJlc3VsdGF0IGNsZWFyZml4IG9wZW4WAmYPFQIkYjg1ZDc1ZTAtOTQwYi00MThjLThhZDQtZGZlNTNjNzdkMTc4CUFya2lwZWxhZ2QCAw8WAh8BZ2QCBA8VAgMxMDcMRnLDpW4gMTUgw6VyZAIFDxYCHwFoFgJmDxUCJGI4NWQ3NWUwLTk0MGItNDE4Yy04YWQ0LWRmZTUzYzc3ZDE3OAlBcmtpcGVsYWdkAgcPDxYEHgtOYXZpZ2F0ZVVybAV1ZmlsbWZva3VzLmFzcHg/bW92aWVpZD1iODVkNzVlMC05NDBiLTQxOGMtOGFkNC1kZmU1M2M3N2QxNzgmY2l0eWlkPTIyNyZ0aGVhdHJlaWQ9YzEyZmY2MjMtMzJmMS00MWE4LTkyODgtYzIxNWNjMWRlOTk0HgdUb29sVGlwBRVMw6RzIG1lciBvbSBBcmtpcGVsYWdkFgJmDxYCHwMFCEzDpHMgbWVyZAIIDxUHJGI4NWQ3NWUwLTk0MGItNDE4Yy04YWQ0LWRmZTUzYzc3ZDE3ODJpbWFnZS5hc3B4P2lkPTc5YmI4MWU1LTllZjYtNDA4Ni05YjMwLTNhMzgwZDdjMjk1NglBcmtpcGVsYWckYjg1ZDc1ZTAtOTQwYi00MThjLThhZDQtZGZlNTNjNzdkMTc4AzIyNyRjMTJmZjYyMy0zMmYxLTQxYTgtOTI4OC1jMjE1Y2MxZGU5OTSrBExhZGRhdCBkcmFtYSBtw7Z0ZXIgbcO2cmsgaHVtb3IgbsOkciBBbGV4IFNjaHVsbWFuIHJlZ2lkZWJ1dGVyYXIgbWVkIEFya2lwZWxhZywgZMOkciBHdXN0YWYgU2thcnNnw6VyZCwgRmFyZXMgRmFyZXMgb2NoIExpbnVzIFdhaGxncmVuIHNwZWxhciB0cmUgcGFwcG9yIHNvbSBmw7ZsamVyIG1lZCBzaW5hIGTDtnR0cmFyIHDDpSBlbiBza29scmVzYSB0aWxsIGhlbHZldGV0LiBTdHJhbmRzYXR0YSBtZWQgZW4gc3TDtmtpZyBow7Znc3RhZGlla2xhc3MgcMOlIGVuIGlkeWxsaXNrIHNrw6RyZ8OlcmRzw7YgcMOlbWlubnMgZGUgb20gZWduYSB0b27DpXJzdHJhdW1hbi4gUHJlY2lzIHNvbSB1bmdkb21hcm5hIHR2aW5nYXMgZGUgc25hcnQgb2Nrc8OlIGluc2UgaHVyIHN2w6VydCBkZXQgw6RyIGF0dCBkcmEgZ3LDpG5zZW4gbWVsbGFuIGxlayBvY2ggZmFybGlnIG1ha3RrYW1wLCBvY2ggYXR0IHNraWxqYSBvZmZlciBmcsOlbiBmw7Zyw7Z2YXJlLiBBcmtpcGVsYWcgw6RyIMOlcmV0cyBzdmVuc2thIE9zY2Fyc2JpZHJhZy4KCkFya2lwZWxhZyDDpHIgbWVkIGkgQmlvcGFzc2V0IWQCCQ8PFgIfAWdkFgICAQ8WAh8CAgYWDGYPZBYGAgEPDxYCHghJbWFnZVVybAUafi9pbWcvYnV0dG9ucy9pbmZvX29mZi5naWZkZAIDDxUCEDIwMjYtMTEtMjggMTk6MDAcU2Fua3QgSsO2cmdlbiBQYXJrIEJpb2dyYWZlbmQCBA9kFgJmDxUCPmh0dHBzJTNhJTJmJTJmd3d3LnRpY2tzdGVyLmNvbSUyZnN2JTJmZXZlbnRzJTJmNE1QNlRSOUswRDdUVzIzIFNhbmt0K0olYzMlYjZyZ2VuK1BhcmsrQmlvZ3JhZmVuZAIBD2QWBgIBDw8WAh8IBRp+L2ltZy9idXR0b25zL2luZm9fb2ZmLmdpZmRkAgMPFQIQMjAyNi0xMi0wNSAxOTowMBxTYW5rdCBKw7ZyZ2VuIFBhcmsgQmlvZ3JhZmVuZAIED2QWAmYPFQI+aHR0cHMlM2ElMmYlMmZ3d3cudGlja3N0ZXIuY29tJTJmc3YlMmZldmVudHMlMmZEMDA3RVg4VzM1WVhaMkcgU2Fua3QrSiVjMyViNnJnZW4rUGFyaytCaW9ncmFmZW5kAgIPZBYGAgEPDxYCHwgFGn4vaW1nL2J1dHRvbnMvaW5mb19vZmYuZ2lmZGQCAw8VAhAyMDI2LTEyLTEyIDE5OjAwHFNhbmt0IErDtnJnZW4gUGFyayBCaW9ncmFmZW5kAgQPZBYCZg8VAj5odHRwcyUzYSUyZiUyZnd3dy50aWNrc3Rlci5jb20lMmZzdiUyZmV2ZW50cyUyZk5WM01WTjMxSzBaQzhSWCBTYW5rdCtKJWMzJWI2cmdlbitQYXJrK0Jpb2dyYWZlbmQCAw9kFgYCAQ8PFgIfCAUafi9pbWcvYnV0dG9ucy9pbmZvX29mZi5naWZkZAIDDxUCEDIwMjYtMTItMTkgMTk6MDAcU2Fua3QgSsO2cmdlbiBQYXJrIEJpb2dyYWZlbmQCBA9kFgJmDxUCPmh0dHBzJTNhJTJmJTJmd3d3LnRpY2tzdGVyLmNvbSUyZnN2JTJmZXZlbnRzJTJmVFVaMVhLNjdSQ0JFSjFDIFNhbmt0K0olYzMlYjZyZ2VuK1BhcmsrQmlvZ3JhZmVuZAIED2QWBgIBDw8WAh8IBRp+L2ltZy9idXR0b25zL2luZm9fb2ZmLmdpZmRkAgMPFQIQMjAyNy0wMS0wMSAxOTowMBxTYW5rdCBKw7ZyZ2VuIFBhcmsgQmlvZ3JhZmVuZAIED2QWAmYPFQI+aHR0cHMlM2ElMmYlMmZ3d3cudGlja3N0ZXIuY29tJTJmc3YlMmZldmVudHMlMmZYVTFGUkNMREFaWU5SQVQgU2Fua3QrSiVjMyViNnJnZW4rUGFyaytCaW9ncmFmZW5kAgUPZBYGAgEPDxYCHwgFGn4vaW1nL2J1dHRvbnMvaW5mb19vZmYuZ2lmZGQCAw8VAhAyMDI3LTAxLTAyIDE5OjAwHFNhbmt0IErDtnJnZW4gUGFyayBCaW9ncmFmZW5kAgQPZBYCZg8VAj5odHRwcyUzYSUyZiUyZnd3dy50aWNrc3Rlci5jb20lMmZzdiUyZmV2ZW50cyUyZllETjBVWTlSTlpFQzFONyBTYW5rdCtKJWMzJWI2cmdlbitQYXJrK0Jpb2dyYWZlbmQCAg9kFgwCAQ8WAh8FBRZyZXN1bHRhdCBjbGVhcmZpeCBvcGVuFgJmDxUCJDhiNDU3N2YxLWZkYWYtNDcwMi1hMTJjLTlkMTBjNzFhMDcwZBZEasOkdnVsZW4gYsOkciBQcmFkYSAyZAIEDxUCAzExOA1CYXJudGlsbMOldGVuZAIFDxYCHwFoFgJmDxUCJDhiNDU3N2YxLWZkYWYtNDcwMi1hMTJjLTlkMTBjNzFhMDcwZBZEasOkdnVsZW4gYsOkciBQcmFkYSAyZAIHDw8WBB8GBXVmaWxtZm9rdXMuYXNweD9tb3ZpZWlkPThiNDU3N2YxLWZkYWYtNDcwMi1hMTJjLTlkMTBjNzFhMDcwZCZjaXR5aWQ9MjI3JnRoZWF0cmVpZD1jMTJmZjYyMy0zMmYxLTQxYTgtOTI4OC1jMjE1Y2MxZGU5OTQfBwUiTMOkcyBtZXIgb20gRGrDpHZ1bGVuIGLDpHIgUHJhZGEgMmQWAmYPFgIfAwUITMOkcyBtZXJkAggPFQckOGI0NTc3ZjEtZmRhZi00NzAyLWExMmMtOWQxMGM3MWEwNzBkMmltYWdlLmFzcHg/aWQ9YzQ1ZjgxNGYtYzZiOS00NzM3LTg5NzgtOGIxNjhhZjZlZjU4FkRqw6R2dWxlbiBiw6RyIFByYWRhIDIkOGI0NTc3ZjEtZmRhZi00NzAyLWExMmMtOWQxMGM3MWEwNzBkAzIyNyRjMTJmZjYyMy0zMmYxLTQxYTgtOTI4OC1jMjE1Y2MxZGU5OTSSBFRqdWdvIMOlciBlZnRlciBhdHQgaGEgc2thcGF0IGlrb25pc2thIGthcmFrdMOkcmVyIHNvbSBNaXJhbmRhLCBBbmR5LCBFbWlseSBvY2ggTmlnZWwgw6RyIE1lcnlsIFN0cmVlcCwgQW5uZSBIYXRoYXdheSwgRW1pbHkgQmx1bnQgb2NoIFN0YW5sZXkgVHVjY2kgdGlsbGJha2EgLSBkZW5uYSBnw6VuZyBpIDIwdGggQ2VudHVyeSBTdHVkaW9zIFRoZSBEZXZpbCBXZWFycyBQcmFkYSAyLiBEZW4gZWZ0ZXJsw6RuZ3RhZGUgdXBwZsO2bGphcmVuIHRhciBvc3Mgw6V0ZXIgdGlsbCBOZXcgWW9ya3MgZmFzaGlvbmFibGEgZ2F0b3Igb2NoIG1vZGVtYWdhc2luZXQgUnVud2F5cyBlbGVnYW50YSBrb250b3IuIEZpbG1lbiByZWdpc3NlcmFzIGF2IERhdmlkIEZyYW5rZWwsIG1lZCBtYW51cyBhdiBBbGluZSBCcm9zaCBNY0tlbm5hLiBQcm9kdWNlbnQgw6RyIFdlbmR5IEZpbmVybWFuLCBtZWQgTWljaGFlbCBCZWRlcm1hbiwgS2FyZW4gUm9zZW5mZWx0IG9jaCBBbGluZSBCcm9zaCBNY0tlbm5hIHNvbSBleGVrdXRpdmEgcHJvZHVjZW50ZXIuZAIJDw8WAh8BZ2QWAgIBDxYCHwICAxYGZg9kFgYCAQ8PFgIfCAUafi9pbWcvYnV0dG9ucy9pbmZvX29mZi5naWZkZAIDDxUCEDIwMjYtMTItMDYgMTk6MDAcU2Fua3QgSsO2cmdlbiBQYXJrIEJpb2dyYWZlbmQCBA9kFgJmDxUCPmh0dHBzJTNhJTJmJTJmd3d3LnRpY2tzdGVyLmNvbSUyZnN2JTJmZXZlbnRzJTJmTE5FSEVERzlCNUdEMDhYIFNhbmt0K0olYzMlYjZyZ2VuK1BhcmsrQmlvZ3JhZmVuZAIBD2QWBgIBDw8WAh8IBRp+L2ltZy9idXR0b25zL2luZm9fb2ZmLmdpZmRkAgMPFQIQMjAyNi0xMi0xMyAxOTowMBxTYW5rdCBKw7ZyZ2VuIFBhcmsgQmlvZ3JhZmVuZAIED2QWAmYPFQI+aHR0cHMlM2ElMmYlMmZ3d3cudGlja3N0ZXIuY29tJTJmc3YlMmZldmVudHMlMmZUTUVIWTNKVURNVEgzRDQgU2Fua3QrSiVjMyViNnJnZW4rUGFyaytCaW9ncmFmZW5kAgIPZBYGAgEPDxYCHwgFGn4vaW1nL2J1dHRvbnMvaW5mb19vZmYuZ2lmZGQCAw8VAhAyMDI2LTEyLTIwIDE5OjAwHFNhbmt0IErDtnJnZW4gUGFyayBCaW9ncmFmZW5kAgQPZBYCZg8VAj5odHRwcyUzYSUyZiUyZnd3dy50aWNrc3Rlci5jb20lMmZzdiUyZmV2ZW50cyUyZjJVV1VEUjRHSzczRkpMNCBTYW5rdCtKJWMzJWI2cmdlbitQYXJrK0Jpb2dyYWZlbmQCAw9kFg4CAQ8WAh8FBRZyZXN1bHRhdCBjbGVhcmZpeCBvcGVuFgJmDxUCJDkzODI3ZDhkLTY1MWUtNDExOC1hYWRhLTgzZjFmYTBiY2JkMA1Kw6R2bGEga2FybGFyZAIDDxYCHwFnZAIEDxUCAzEwOQxGcsOlbiAxNSDDpXJkAgUPFgIfAWgWAmYPFQIkOTM4MjdkOGQtNjUxZS00MTE4LWFhZGEtODNmMWZhMGJjYmQwDUrDpHZsYSBrYXJsYXJkAgcPDxYEHwYFdWZpbG1mb2t1cy5hc3B4P21vdmllaWQ9OTM4MjdkOGQtNjUxZS00MTE4LWFhZGEtODNmMWZhMGJjYmQwJmNpdHlpZD0yMjcmdGhlYXRyZWlkPWMxMmZmNjIzLTMyZjEtNDFhOC05Mjg4LWMyMTVjYzFkZTk5NB8HBRlMw6RzIG1lciBvbSBKw6R2bGEga2FybGFyZBYCZg8WAh8DBQhMw6RzIG1lcmQCCA8VByQ5MzgyN2Q4ZC02NTFlLTQxMTgtYWFkYS04M2YxZmEwYmNiZDAyaW1hZ2UuYXNweD9pZD0zODc1YThhNy1iNmQ3LTRkMDEtODUyNC1jMTMxMGE5ZmVhYTYNSsOkdmxhIGthcmxhciQ5MzgyN2Q4ZC02NTFlLTQxMTgtYWFkYS04M2YxZmEwYmNiZDADMjI3JGMxMmZmNjIzLTMyZjEtNDFhOC05Mjg4LWMyMTVjYzFkZTk5NLMISnVsZW4gMTk4My4KCkVmdGVyIMOkbm51IGV0dCB2w6VsZHNhbXQgZ3LDpGwgYXZzbMO2amFyIHNqdcOlcmlnZSBBbmRyZXZzIG1hbW1hIGVuIGhlbWxpZ2hldCBmw7ZyIGhvbm9tOiBoYW5zIHBhcHBhIMOkciBmYWt0aXNrdCBpbnRlIGhhbnMgcGFwcGEuIAoKSSBzdMOkbGxldCBmw7ZyIGF0dCBibGkgZsO2cmtyb3NzYWQgYmxpciBBbmRyZXYgZXhhbHRlcmFkIMO2dmVyIGRlIG3DtmpsaWdoZXRlciBhdnNsw7ZqYW5kZXQgaW5uZWLDpHIuIE1lZCBldHQgYmFybnMgbW90c3TDpW5kc2tyYWZ0IG5hdmlnZXJhciBoYW4gZ2Vub20gbGl2ZXQgb2NoIHNpbiBtYW1tYXMgbWVyIGVsbGVyIG1pbmRyZSBkZXN0cnVrdGl2YSBmw7ZyaMOlbGxhbmRlbiBtZWQgb2xpa2EgbcOkbi4KCkFuZHJldnMgbWFtbWEgZHJhciB0aWxsIHNpZyBtw6RuIG1lZCBlbiBvZW1vdHN0w6VuZGxpZyBrcmFmdCwgbWVuIGludGUgZW5zIGhvbiBrYW4ga29udHJvbGxlcmEgaHVyIGRlIGJldGVyIHNpZy4gTcOkbm5lbiDDpHIgc29tIG1hZ2lrZXIgZWxsZXIga29uc3Ruw6RyZXIsIG3DtnJkYXJlIGVsbGVyIHRqdXZhciwgb2NoIHByZWNpcyBzb20gdsOkeHR2w6RyayBkeWtlciBkZSB1cHAgb29tYmVkZGEgb2NoIGbDtnJzdmlubmVyIHV0YW4gZsO2cnZhcm5pbmcuCgpKw6R2bGEga2FybGFyIMOkciBlbiB1cHB2w6R4dHNraWxkcmluZyBmeWxsZCBhdiBiw6VkZSBtw7Zya2VyIG9jaCBodW1vci4gRGVuIGhhbmRsYXIgb20gZW4gcG9qa2Ugb2NoIGhhbnMgbWFtbWEsIG9tIGVuIHNhbWxpbmcgasOkdmxhIGthcmxhciwgb2NoIG9tIGF0dCBpbnRlIGJsaSBlbiBhdiBkZW0gc2rDpGx2LgoKRmlsbWVuIMOkciByZWdpc3NzZXJhZCBhdiBKZW5zIFNqw7ZncmVuLiBNYW51cyBhdiBKYWtvYiBCZWNrbWFuIGJhc2VyYXQgcMOlIEFuZHJldiBXYWxkZW5zIEF1Z3VzdHByaXNiZWzDtm5hZGUgcm9tYW4uIFByb2R1Y2VudCDDpHIgRnJlZHJpayBIZWluaWcuCkkgcm9sbGVybmEgc2VyIHZpIEFsaWV0dGUgT3BoZWltLCBGaWxpcCBCZXJnLCBEYXZpZCBCb29rLCBKYWtvYiDDlmhybWFuLCBWaWN0b3IgTm9yw6luIG9jaCBKb2VsIFNwaXJhLmQCCQ8PFgIfAWdkFgICAQ8WAh8CAgIWBGYPZBYGAgEPDxYCHwgFGn4vaW1nL2J1dHRvbnMvaW5mb19vZmYuZ2lmZGQCAw8VAhAyMDI2LTExLTI3IDE5OjAwHFNhbmt0IErDtnJnZW4gUGFyayBCaW9ncmFmZW5kAgQPZBYCZg8VAj5odHRwcyUzYSUyZiUyZnd3dy50aWNrc3Rlci5jb20lMmZzdiUyZmV2ZW50cyUyZjNKVjU4UjU5SERMV0hWVyBTYW5rdCtKJWMzJWI2cmdlbitQYXJrK0Jpb2dyYWZlbmQCAQ9kFgYCAQ8PFgIfCAUafi9pbWcvYnV0dG9ucy9pbmZvX29mZi5naWZkZAIDDxUCEDIwMjYtMTEtMjkgMTk6MDAcU2Fua3QgSsO2cmdlbiBQYXJrIEJpb2dyYWZlbmQCBA9kFgJmDxUCPmh0dHBzJTNhJTJmJTJmd3d3LnRpY2tzdGVyLmNvbSUyZnN2JTJmZXZlbnRzJTJmUldBNVdZRzIyWFdZWDFZIFNhbmt0K0olYzMlYjZyZ2VuK1BhcmsrQmlvZ3JhZmVuZAIED2QWDAIBDxYCHwUFFnJlc3VsdGF0IGNsZWFyZml4IG9wZW4WAmYPFQIkNTBjZDdmZmMtMDUwNS00Yjk4LTkyNTctNTgxN2MxYWNkNWQyC1RoZSBPZHlzc2V5ZAIEDxUCAzE3MgxGcsOlbiAxNSDDpXJkAgUPFgIfAWgWAmYPFQIkNTBjZDdmZmMtMDUwNS00Yjk4LTkyNTctNTgxN2MxYWNkNWQyC1RoZSBPZHlzc2V5ZAIHDw8WBB8GBXVmaWxtZm9rdXMuYXNweD9tb3ZpZWlkPTUwY2Q3ZmZjLTA1MDUtNGI5OC05MjU3LTU4MTdjMWFjZDVkMiZjaXR5aWQ9MjI3JnRoZWF0cmVpZD1jMTJmZjYyMy0zMmYxLTQxYTgtOTI4OC1jMjE1Y2MxZGU5OTQfBwUXTMOkcyBtZXIgb20gVGhlIE9keXNzZXlkFgJmDxYCHwMFCEzDpHMgbWVyZAIIDxUHJDUwY2Q3ZmZjLTA1MDUtNGI5OC05MjU3LTU4MTdjMWFjZDVkMjJpbWFnZS5hc3B4P2lkPTU0MGI2MTY4LTdkMzMtNDUyOS1hYmU1LWJlMjQ3M2M5NTY5YwtUaGUgT2R5c3NleSQ1MGNkN2ZmYy0wNTA1LTRiOTgtOTI1Ny01ODE3YzFhY2Q1ZDIDMjI3JGMxMmZmNjIzLTMyZjEtNDFhOC05Mjg4LWMyMTVjYzFkZTk5NJcDQ2hyaXN0b3BoZXIgTm9sYW5zIG55YSBmaWxtLCBUaGUgT2R5c3NleSwgw6RyIGVuIG15dGlzaywgZXBpc2sgYWN0aW9uZmlsbSwgaW5zcGVsYWQgw7Z2ZXIgaGVsYSB2w6RybGRlbiBtZWQgaGVsdCBueSBJTUFYwq4gZmlsbS10ZWtub2xvZ2kuIEZpbG1lbiB0YXIgSG9tZXJvcyBiYW5icnl0YW5kZSBoaXN0b3JpYSB0aWxsIElNQVjCriBmaWxtZHVrYXJuYSBmw7ZyIGbDtnJzdGEgZ8OlbmdlbiBvY2ggaGFyIGJpb3ByZW1pw6RyIMO2dmVyYWxsdCBkZW4gMTcganVsaSwgMjAyNi4gSSBodXZ1ZHJvbGxlcm5hIHNlciB2aSBNYXR0IERhbW9uLCBUb20gSG9sbGFuZCwgQW5uZSBIYXRoYXdheSwgUm9iZXJ0IFBhdHRpbnNvbiBvY2ggTHVwaXRhIE55b25nJ28sIG1lZCBaZW5kYXlhIG9jaCBDaGFybGl6ZSBUaGVyb24uCgpkAgkPDxYCHwFnZBYCAgEPFgIfAgIDFgZmD2QWBgIBDw8WAh8IBRp+L2ltZy9idXR0b25zL2luZm9fb2ZmLmdpZmRkAgMPFQIQMjAyNi0xMi0wNCAxOTowMBxTYW5rdCBKw7ZyZ2VuIFBhcmsgQmlvZ3JhZmVuZAIED2QWAmYPFQI+aHR0cHMlM2ElMmYlMmZ3d3cudGlja3N0ZXIuY29tJTJmc3YlMmZldmVudHMlMmZGMjdOOTBMOUc1OUdYTEogU2Fua3QrSiVjMyViNnJnZW4rUGFyaytCaW9ncmFmZW5kAgEPZBYGAgEPDxYCHwgFGn4vaW1nL2J1dHRvbnMvaW5mb19vZmYuZ2lmZGQCAw8VAhAyMDI2LTEyLTExIDE5OjAwHFNhbmt0IErDtnJnZW4gUGFyayBCaW9ncmFmZW5kAgQPZBYCZg8VAj5odHRwcyUzYSUyZiUyZnd3dy50aWNrc3Rlci5jb20lMmZzdiUyZmV2ZW50cyUyZk5NV0VONlIzSjNKM1VMNCBTYW5rdCtKJWMzJWI2cmdlbitQYXJrK0Jpb2dyYWZlbmQCAg9kFgYCAQ8PFgIfCAUafi9pbWcvYnV0dG9ucy9pbmZvX29mZi5naWZkZAIDDxUCEDIwMjYtMTItMTggMTk6MDAcU2Fua3QgSsO2cmdlbiBQYXJrIEJpb2dyYWZlbmQCBA9kFgJmDxUCPmh0dHBzJTNhJTJmJTJmd3d3LnRpY2tzdGVyLmNvbSUyZnN2JTJmZXZlbnRzJTJmOVpVNlhISkVZQzNETjlOIFNhbmt0K0olYzMlYjZyZ2VuK1BhcmsrQmlvZ3JhZmVuZAIKD2QWBgIBDxYCHwICChYUZg9kFgJmDxUFATECTlkkMTcwNmUyNjEtZDUzZC00N2Y3LWI1NDYtNDNhMTNlMWE2NWZlKFRoZSBIdW5nZXIgR2FtZXM6IFN1bnJpc2Ugb24gdGhlIHJlYXBpbmcaVGhlIEh1bmdlciBHYW1lczogU3VucmkuLi5kAgEPZBYCZg8VBQEyAk5ZJDZlMGM5ZDhjLTNmMzgtNGUzOS1hMWM3LTJhMzY0MmNjMDQyYRJBcm5lIEdvZXMgdG8gU3BhY2USQXJuZSBHb2VzIHRvIFNwYWNlZAICD2QWAmYPFQUBMwJOWSRhNzkyMjk5OS0wZTFhLTRhOTctOGNmNi00NWI4NDE3NDA5OGMWWW91IENhbiBTZWUgRXZlcnl0aGluZxZZb3UgQ2FuIFNlZSBFdmVyeXRoaW5nZAIDD2QWAmYPFQUBNAE1JDA2Njk0Zjg3LTczMTAtNGE5Yi1iY2I1LWI5YmU0YTc5NjdmNh5KYWt0ZW4gcMOlIEp1bHRvbXRlbnMgdmVya3N0YWQbSmFrdGVuIHDDpSBKdWx0b210ZW5zIHZlLi4uZAIED2QWAmYPFQUBNQJOWSQ2OWI4YmE4OS01ODcyLTRjZDUtYTUwMS0wY2RlZGZhZDM1YTgGV2lja2VyBldpY2tlcmQCBQ9kFgJmDxUFATYCTlkkMTU0ODVhYWUtZDM0MS00ZDY2LTk0YTItZTY0ODk0ZThhMGRkD1dpbGQgSG9yc2UgTmluZQ9XaWxkIEhvcnNlIE5pbmVkAgYPZBYCZg8VBQE3ATQkMWMwZjgyMmQtNjdiMy00YjhiLTgwYWMtOThhMTliZTdlMWRhJE5lbGx5IFJhcHAgLSBQb3J0ZW4gdGlsbCB1bmRlcmpvcmRlbhpOZWxseSBSYXBwIC0gUG9ydGVuIHRpbC4uLmQCBw9kFgJmDxUFATgBMSRjOTM0MDI1Ni1kYWQ5LTQ1ZTUtODE0Ni1iZmZiZjE0ZDUwMjUIRWJlbmV6ZXIIRWJlbmV6ZXJkAggPZBYCZg8VBQE5ATIkOTM4MjdkOGQtNjUxZS00MTE4LWFhZGEtODNmMWZhMGJjYmQwDUrDpHZsYSBrYXJsYXINSsOkdmxhIGthcmxhcmQCCQ9kFgJmDxUFAjEwATMkYjg1ZDc1ZTAtOTQwYi00MThjLThhZDQtZGZlNTNjNzdkMTc4CUFya2lwZWxhZwlBcmtpcGVsYWdkAgMPDxYCHwFnZBYEAgEPDxYCHwcFGkdlbmVyZXJhZCAyMDI2LTExLTIzIDEwOjExFgQeB29uY2xpY2sFZ2RvY3VtZW50LmxvY2F0aW9uLmhyZWY9Jy4uL1N0cmVhbUZpbGVfbWVkaWFsaXN0YS5hc2h4P3dlZWtpZD04YmIyYWFhYy00NmE0LTQ5MzMtODg1OS03YzkxMWRjMDhmNzgmcz0xJzseBXN0eWxlBQ9jdXJzb3I6cG9pbnRlcjtkAgMPDxYGHwcFGkdlbmVyZXJhZCAyMDI2LTExLTIzIDEwOjExHwMFGkJpb3RvcHBlbiBmw7ZyIGhlbGdlbiB2LjQ3HwYFTS4uL1N0cmVhbUZpbGVfbWVkaWFsaXN0YS5hc2h4P3dlZWtpZD04YmIyYWFhYy00NmE0LTQ5MzMtODg1OS03YzkxMWRjMDhmNzgmcz0xZGQCBQ8PFgIfAWcWAh8KBSRwYWRkaW5nLWxlZnQ6M3B4O3BhZGRpbmctYm90dG9tOjNweDsWBAIBDw8WAh8HBRpHZW5lcmVyYWQgMjAyNi0xMS0yMCAxMDowMRYEHwkFZ2RvY3VtZW50LmxvY2F0aW9uLmhyZWY9Jy4uL1N0cmVhbUZpbGVfbWVkaWFsaXN0YS5hc2h4P3dlZWtpZD0zZDg3ZTE0Yy0wZGQ3LTRhNjgtYWEyOC03MmJjMmU1NmQyNDImcz0yJzsfCgUPY3Vyc29yOnBvaW50ZXI7ZAIDDw8WBh8HBRpHZW5lcmVyYWQgMjAyNi0xMS0yMCAxMDowMR8DBRdCaW90b3BwZW4gZsO2ciB2ZWNrYSA0Nh8GBU0uLi9TdHJlYW1GaWxlX21lZGlhbGlzdGEuYXNoeD93ZWVraWQ9M2Q4N2UxNGMtMGRkNy00YTY4LWFhMjgtNzJiYzJlNTZkMjQyJnM9MmRkZA3E6syjHvEx7gn6z6FWAuA8BL+J" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['MainForm'];
+if (!theForm) {
+    theForm = document.MainForm;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/WebResource.axd?d=M7nUKaF36nDsNOfsWjgg75I6lgc16LCEgnwcTMUOptmrIxud98343sSKASYUfeIel4kfrU-Q_bAlW4N3wcfZwbiZPuw1&amp;t=637353050110221559" type="text/javascript"></script>
+
+
+<script src="/ScriptResource.axd?d=IbTXv_gGGMvz5Omw9WFFD2lkfCm_kZ60D4o_5lSytgSMXTvXbLUI5Q-m-vKmvsjCxpsm_-sKfMKSUmCHgLSwgzLcAPIpwTu344_oSB31OFb60kOa_QB0zDeK5AwIWKI-os0DJuicgDzfgV542dw3fw8MXIhUNBvOQrAUPICmWjdd-ruq0&amp;t=ffffffffdfc97409" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+if (typeof(Sys) === 'undefined') throw new Error('ASP.NET Ajax client-side framework failed to load.');
+//]]>
+</script>
+
+<script src="/ScriptResource.axd?d=Lr5jC7z8iDLCGb9vT7U9B04tbR3YhU_dFfYKUk7sQXKxVtnUBXlANwxwja6sBQlH9J86v2htAssCb51i6D36nVNAROvhieBiadbe-QYKEFzeuGjVdAIVrPohvtd1d1sPQDn9uQw0p8E0xt9hFYS-QCFiSLr7ESDIQIUyYDIVVfDd7-Qb6V5ysIZwJez5vj85yQv92w2&amp;t=ffffffffdfc97409" type="text/javascript"></script>
+<script src="/ScriptResource.axd?d=bHJlaqcRTlBcRprPelkn2f0fzYmfxllcSnPvSHdRaRXzp0CLWKrD1_8UL12_n6aojw3jCMHfmOgwseebRXYBW38yh6LucJKAHIzWJlsuuRhDVWa-92YwPqUkXvNbIeHSo722VgsnWTbKDxJmJuDNhcU7dVc1&amp;t=ffffffff8b3ffb57" type="text/javascript"></script>
+<script src="/ScriptResource.axd?d=rwDJ_8pidZXzeVObII94eSEkhlU6jMERbJsmfzCxJHsZQlbFuH6B0zEavUkRSb4qfqw2kxti6mgXKBJA_KXLrpbaqrNKL9t0qU9dhxygR6nQ-X2Iz1yvo3KJW_esGosR4JsDdQBcm0pGcIwZBGhIv2zNgB81&amp;t=ffffffff8b3ffb57" type="text/javascript"></script>
+<script src="/ScriptResource.axd?d=PsrSu4Z9plU3ExfYrJDt3ectRGMo59srLwS11Gju4VWgrfWOnIZYoT13d-JXFxmjhrJmdJfLALXo7jfjF-5m5LI9mMi24uDdEGnpmk3KV8HsZpwiIHeQX6IPUKo7dbI_S4xwYknYzjYYwwOXV0FE-rEjeLE1&amp;t=ffffffff8b3ffb57" type="text/javascript"></script>
+<script src="/ScriptResource.axd?d=SPnQRL1uey2PpwOwkd-P-DIOsWjDyp12kXGkhxipq6o9W3ccha6L0ycl1JlfY8p9Foiwu4NB9h7yfiITWLz07JTMcUxvbmzqBp-T5JWDoTfCUed-1g99iD9Ov7V3mN_PQeX2rT1gydJquWKcXxAn4Xtqd_18_bJZra66U7Zx2a1xSjCs0&amp;t=ffffffff8b3ffb57" type="text/javascript"></script>
+<script src="/ScriptResource.axd?d=vV75TSxVzD98eMMEOzSKWkAdGRA1A2LlYqIavtbErQ05iPAgFR6ojOQrlWr21TRac1_cYTfn-CLZsLjhlmJyrqw3wBd4Hyi0dkj3-05go5TwoTtnLVefDMSBCzAPfb3xIU7D4rTKsoJftHIIq-Pl374UZserOTGCTGxwKhG4RkJ3WiEB0&amp;t=ffffffff8b3ffb57" type="text/javascript"></script>
+<script src="/ScriptResource.axd?d=dswOoPurKFc5oSon5SuDK-g5EUZNw7i2O5GRF9XjdbBv5Q1KQKlHVZXPFxtcOrdoPwd14WZwS4cSs8o2Ijsf2D85z4JA5KcCxC0smHoE9_SCn0Rg79P9I73ePTFOr3lMR1V4mLUDYgiVWOSiiB8zDnUlhlNx5nBTfhPKYRMNupibJZur0&amp;t=ffffffff8b3ffb57" type="text/javascript"></script>
+<script src="/ScriptResource.axd?d=fJf0MHMwWwRT5WcBLMmYo2vn1m41EPGJVBuoxs2pH0pnD_FN-67jU2QuT4i-8u_kCF9YtNn-WOOhLNxOU-i1uodJEdRiTIfs6LMy3eZIysM7urZK_MgyjjFSIc4d2PbhNCfKZN59T7ttCDrQJ8OTAPxSFPrwICSIhHVGemoPUVZ7JsVm0&amp;t=ffffffff8b3ffb57" type="text/javascript"></script>
+<div>
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="C470B306" />
+</div>
+
+        <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('ScriptManager', 'MainForm', ['tUP1',''], [], [], 90, '');
+//]]>
+</script>
+
+
+        <!-- begin header -->
+        <div id="header">
+            <span class="headerleft"></span>
+            <h1>
+                <a tabindex="1" href="default.aspx" title="Bioguiden"><span class="hide">Bioguiden</span></a></h1>
+            <ul>
+                <li><a tabindex="2" href="biorummet.aspx" title="Hitta film">Hitta film</a></li>
+                <li><a tabindex="3" href="biotoppen.aspx" title="Biotoppen">Biotoppen</a></li>
+                <li><a tabindex="4" href="kommande.aspx" title="Kommande">Kommande</a></li>
+                <li class="active"><a tabindex="-1" href="biografer.aspx" title="Biografer">Biografer</a></li>
+                <li><a tabindex="5" href="tillganglig.aspx" title="Tillgänglig Bio">Tillgänglig Bio</a></li>
+            </ul>
+            <div id="loading"></div>
+
+             <div id="simple">
+                  <div id="pnSimpleSearch" onkeypress="javascript:return WebForm_FireDefaultButton(event, &#39;SearchFilterButton&#39;)" style="text-align:left;">
+	
+
+                    <div id="UP1">
+		
+
+                            <fieldset>
+                                <legend>
+                                    <label for="SearchFilterTextbox" id="lblSearchFilterTextbox">Snabbsök</label>
+                                </legend>
+
+                                <input name="SearchFilterTextbox" type="text" id="SearchFilterTextbox" tabindex="6" title="Ange en text att söka biograf efter" AutoComplete="Off" placeholder="Fri text" style="height:20px;" />
+                                <a id="SearchFilterButton" tabindex="7" title="Sök biografer" class="buttonBlue" href="javascript:__doPostBack(&#39;SearchFilterButton&#39;,&#39;&#39;)">Sök<img alt="" class="arrowBlue_right" src="img/clear.gif"  /></a>
+
+                                  
+                            </fieldset>
+                            
+                        
+	</div>
+
+                
+</div> 
+            </div>
+
+            <span class="headerright"></span>
+        </div>
+        <!-- end header -->
+        <!-- begin wrapper -->
+        <div id="wrapper" class="clearfix">
+            <!-- begin container -->
+            <div id="container">
+
+                <!-- begin notification -->
+                
+                <!-- end notification -->
+
+                <!-- begin Biotoppen -->
+                <span class="subPageTop"></span>
+                <div id="subPage">
+                    <div class="subPageHeadline clearfix">
+                        <h1 id="debug">
+                            Biografer</h1>
+                    </div>
+                    <!-- begin biografsearch -->
+                    <div id="biografsearch" class="clearfix">
+
+                        <div class="omrade">
+                            <h2>
+                                <label for="SearchCityDropDown" id="lblSearchCityDropDown">Välj kommun</label></h2>
+                            <fieldset>
+                                <select name="SearchCityDropDown" onchange="javascript:setTimeout(&#39;__doPostBack(\&#39;SearchCityDropDown\&#39;,\&#39;\&#39;)&#39;, 0)" id="SearchCityDropDown" style="height:20px;">
+	<option value="">V&#228;lj kommun</option>
+	<option value="216">Ale</option>
+	<option value="71">Alvesta</option>
+	<option value="46">Aneby</option>
+	<option value="205">Arboga</option>
+	<option value="79">Arjeplog</option>
+	<option value="80">Arvidsjaur</option>
+	<option value="167">Arvika</option>
+	<option value="218">Bengtsfors</option>
+	<option value="38">Berg</option>
+	<option value="81">Boden</option>
+	<option value="22">Bolln&#228;s</option>
+	<option value="59">Borgholm</option>
+	<option value="220">Bor&#229;s</option>
+	<option value="126">Botkyrka</option>
+	<option value="39">Br&#228;cke</option>
+	<option value="96">B&#229;stad</option>
+	<option value="221">Dals-Ed</option>
+	<option value="184">Dorotea</option>
+	<option value="168">Eda</option>
+	<option value="128">Eker&#246;</option>
+	<option value="47">Eksj&#246;</option>
+	<option value="60">Emmaboda</option>
+	<option value="152">Eskilstuna</option>
+	<option value="222">Essunga</option>
+	<option value="206">Fagersta</option>
+	<option value="32">Falkenberg</option>
+	<option value="8">Falun</option>
+	<option value="169">Filipstad</option>
+	<option value="278">Finsp&#229;ng</option>
+	<option value="153">Flen</option>
+	<option value="170">Forshaga</option>
+	<option value="224">F&#228;rgelanda</option>
+	<option value="9">Gagnef</option>
+	<option value="48">Gislaved</option>
+	<option value="154">Gnesta</option>
+	<option value="49">Gnosj&#246;</option>
+	<option value="21">Gotland</option>
+	<option value="171">Grums</option>
+	<option value="225">Gr&#228;storp</option>
+	<option value="226">Gullsp&#229;ng</option>
+	<option value="82">G&#228;llivare</option>
+	<option value="23">G&#228;vle</option>
+	<option selected="selected" value="227">G&#246;teborg</option>
+	<option value="228">G&#246;tene</option>
+	<option value="172">Hagfors</option>
+	<option value="267">Hallsberg</option>
+	<option value="207">Hallstahammar</option>
+	<option value="33">Halmstad</option>
+	<option value="173">Hammar&#246;</option>
+	<option value="208">Heby</option>
+	<option value="98">Helsingborg</option>
+	<option value="230">Hjo</option>
+	<option value="24">Hofors</option>
+	<option value="25">Hudiksvall</option>
+	<option value="61">Hultsfred</option>
+	<option value="268">H&#228;llefors</option>
+	<option value="40">H&#228;rjedalen</option>
+	<option value="100">H&#246;gan&#228;s</option>
+	<option value="62">H&#246;gsby</option>
+	<option value="84">Jokkmokk</option>
+	<option value="51">J&#246;nk&#246;ping</option>
+	<option value="85">Kalix</option>
+	<option value="232">Karlsborg</option>
+	<option value="1">Karlshamn</option>
+	<option value="269">Karlskoga</option>
+	<option value="155">Katrineholm</option>
+	<option value="175">Kil</option>
+	<option value="279">Kinda</option>
+	<option value="86">Kiruna</option>
+	<option value="290">Knivsta</option>
+	<option value="199">Kramfors</option>
+	<option value="104">Kristianstad</option>
+	<option value="176">Kristinehamn</option>
+	<option value="41">Krokom</option>
+	<option value="270">Kumla</option>
+	<option value="209">Kungs&#246;r</option>
+	<option value="233">Kung&#228;lv</option>
+	<option value="36">Laholm</option>
+	<option value="271">Lax&#229;</option>
+	<option value="11">Leksand</option>
+	<option value="234">Lerum</option>
+	<option value="72">Lessebo</option>
+	<option value="235">Lidk&#246;ping</option>
+	<option value="236">Lilla Edet</option>
+	<option value="273">Lindesberg</option>
+	<option value="280">Link&#246;ping</option>
+	<option value="73">Ljungby</option>
+	<option value="26">Ljusdal</option>
+	<option value="274">Ljusnarsberg</option>
+	<option value="12">Ludvika</option>
+	<option value="87">Lule&#229;</option>
+	<option value="108">Lund</option>
+	<option value="185">Lycksele</option>
+	<option value="237">Lysekil</option>
+	<option value="109">Malm&#246;</option>
+	<option value="239">Mark</option>
+	<option value="74">Markaryd</option>
+	<option value="240">Mellerud</option>
+	<option value="281">Mj&#246;lby</option>
+	<option value="177">Munkfors</option>
+	<option value="64">M&#246;nster&#229;s</option>
+	<option value="65">M&#246;rbyl&#229;nga</option>
+	<option value="27">Nordanstig</option>
+	<option value="283">Norrk&#246;ping</option>
+	<option value="134">Norrt&#228;lje</option>
+	<option value="188">Norsj&#246;</option>
+	<option value="66">Nybro</option>
+	<option value="28">Ockelbo</option>
+	<option value="3">Olofstr&#246;m</option>
+	<option value="15">Orsa</option>
+	<option value="243">Orust</option>
+	<option value="110">Osby</option>
+	<option value="67">Oskarshamn</option>
+	<option value="88">Pajala</option>
+	<option value="244">Partille</option>
+	<option value="89">Pite&#229;</option>
+	<option value="42">Ragunda</option>
+	<option value="189">Robertsfors</option>
+	<option value="4">Ronneby</option>
+	<option value="138">Sigtuna</option>
+	<option value="112">Simrishamn</option>
+	<option value="113">Sj&#246;bo</option>
+	<option value="190">Skellefte&#229;</option>
+	<option value="114">Skurup</option>
+	<option value="246">Sk&#246;vde</option>
+	<option value="17">Smedjebacken</option>
+	<option value="200">Sollefte&#229;</option>
+	<option value="191">Sorsele</option>
+	<option value="247">Soten&#228;s</option>
+	<option value="248">Stenungsund</option>
+	<option value="1001">Stockholm City</option>
+	<option value="178">Storfors</option>
+	<option value="1000">Stor-Stockholm</option>
+	<option value="192">Storuman</option>
+	<option value="158">Str&#228;ngn&#228;s</option>
+	<option value="43">Str&#246;msund</option>
+	<option value="201">Sundsvall</option>
+	<option value="179">Sunne</option>
+	<option value="214">Surahammar</option>
+	<option value="116">Sval&#246;v</option>
+	<option value="250">Svenljunga</option>
+	<option value="180">S&#228;ffle</option>
+	<option value="18">S&#228;ter</option>
+	<option value="54">S&#228;vsj&#246;</option>
+	<option value="31">S&#246;derhamn</option>
+	<option value="284">S&#246;derk&#246;ping</option>
+	<option value="143">S&#246;dert&#228;lje</option>
+	<option value="5">S&#246;lvesborg</option>
+	<option value="251">Tanum</option>
+	<option value="252">Tibro</option>
+	<option value="253">Tidaholm</option>
+	<option value="163">Tierp</option>
+	<option value="75">Tingsryd</option>
+	<option value="118">Tomelilla</option>
+	<option value="181">Torsby</option>
+	<option value="68">Tors&#229;s</option>
+	<option value="255">Tranemo</option>
+	<option value="55">Tran&#229;s</option>
+	<option value="159">Trosa</option>
+	<option value="144">Tyres&#246;</option>
+	<option value="257">T&#246;reboda</option>
+	<option value="258">Uddevalla</option>
+	<option value="193">Ume&#229;</option>
+	<option value="147">Upplands-Bro</option>
+	<option value="164">Uppsala</option>
+	<option value="76">Uppvidinge</option>
+	<option value="56">Vaggeryd</option>
+	<option value="286">Valdemarsvik</option>
+	<option value="148">Vallentuna</option>
+	<option value="19">Vansbro</option>
+	<option value="260">Vara</option>
+	<option value="37">Varberg</option>
+	<option value="149">Vaxholm</option>
+	<option value="57">Vetlanda</option>
+	<option value="194">Vilhelmina</option>
+	<option value="69">Vimmerby</option>
+	<option value="195">Vindeln</option>
+	<option value="160">Ving&#229;ker</option>
+	<option value="261">V&#229;rg&#229;rda</option>
+	<option value="196">V&#228;nn&#228;s</option>
+	<option value="58">V&#228;rnamo</option>
+	<option value="70">V&#228;stervik</option>
+	<option value="215">V&#228;ster&#229;s</option>
+	<option value="77">V&#228;xj&#246;</option>
+	<option value="287">Ydre</option>
+	<option value="121">Ystad</option>
+	<option value="263">&#197;m&#229;l</option>
+	<option value="203">&#197;nge</option>
+	<option value="44">&#197;re</option>
+	<option value="182">&#197;rj&#228;ng</option>
+	<option value="197">&#197;sele</option>
+	<option value="78">&#196;lmhult</option>
+	<option value="20">&#196;lvdalen</option>
+	<option value="165">&#196;lvkarleby</option>
+	<option value="90">&#196;lvsbyn</option>
+	<option value="264">&#214;cker&#246;</option>
+	<option value="289">&#214;desh&#246;g</option>
+	<option value="276">&#214;rebro</option>
+	<option value="204">&#214;rnsk&#246;ldsvik</option>
+	<option value="45">&#214;stersund</option>
+	<option value="151">&#214;ster&#229;ker</option>
+	<option value="166">&#214;sthammar</option>
+	<option value="125">&#214;stra G&#246;inge</option>
+	<option value="91">&#214;verkalix</option>
+	<option value="92">&#214;vertorne&#229;</option>
+
+</select>
+                            </fieldset>
+                        </div>
+
+                        <div class="biograf">
+                            <h2>
+                                <label for="SearchTheatreDropDown" id="lblSearchTheatreDropDown">Välj biograf</label></h2>
+                            <fieldset>
+                                <select name="SearchTheatreDropDown" onchange="javascript:setTimeout(&#39;__doPostBack(\&#39;SearchTheatreDropDown\&#39;,\&#39;\&#39;)&#39;, 0)" id="SearchTheatreDropDown" style="height:20px;">
+	<option value="">V&#228;lj biograf</option>
+	<option value="227|e00ed008-1799-4ceb-811d-4de485ac9c15">Aftonstj&#228;rnan</option>
+	<option value="227|2f2402bd-8e56-4fc0-a979-b97883b38437">Angereds Bio</option>
+	<option value="227|3ee76c16-7545-4342-8773-f9bf156b5c6a">Big Stage</option>
+	<option value="227|1618f373-1274-4134-a633-8722286fd130">Biopalatset</option>
+	<option value="227|2d409834-3674-4c66-81a3-66dc34482abf">Capitol</option>
+	<option value="227|fe3fd01d-6599-41de-be6b-047c88c53d9b">Capitol/SFI</option>
+	<option value="227|6795b9a6-f616-4c0b-af77-6940d1631063">Doc Lounge</option>
+	<option value="227|0965a4ad-b7c6-42f4-8731-40af90a6d06c">Filmstaden Bergakungen</option>
+	<option value="227|b420cafa-77d9-4502-8d27-631de17dd8ae">Folkets Hus Bio, Hammarkullen</option>
+	<option value="227|12a4fc8a-69b4-47e5-b4fd-e971c1348c83">Fr&#246;lundabion</option>
+	<option value="227|53235658-f0a3-4b0f-837f-6b190d66775a">G&#246;ta</option>
+	<option value="227|f2f1fd63-26d9-465d-a61a-8707d2fa637f">Hagabion</option>
+	<option value="227|4924f357-f5f0-4b51-956c-40c2dbe5acf1">Hagateatern</option>
+	<option value="227|8a83e9b8-ef86-410b-a527-0ff93e310b0b">Kulturhuset Bergsj&#246;n</option>
+	<option value="227|9e4d42a7-2ccd-4caf-9a3b-a19d2b927bcb">M&#246;lnlycke Bio</option>
+	<option value="227|e1b6dd6e-e4e7-4b1c-8407-635c59fdb6bd">Roy</option>
+	<option selected="selected" value="227|c12ff623-32f1-41a8-9288-c215cc1de994">Sankt J&#246;rgen Park Biografen</option>
+	<option value="227|9383b776-c782-4364-808f-3c864667e8ea">Skeppsbron4</option>
+	<option value="227|b9aa4f2c-33b3-4c76-9920-4f4f6e002c99">Skytteskolans aula</option>
+	<option value="227|c02545f8-6088-4cae-a107-43190c1322dd">Vingen D-bio, Torslanda</option>
+
+</select>
+                            </fieldset>
+                        </div>
+                    </div>
+                    <!-- end biografsearch -->
+
+                    <!-- begin biografinformation -->
+                    <div id="MovieInfoPanel">
+	
+
+                            
+                                    <!-- begin biografinformation -->
+                                    <div id="biografinformation" class="clearfix">
+                                        <div id="clipregion">
+                                            <img id="MovieInfoRepeater_ctl00_TheatreImage" src="" style="border-width:0px;" />
+                                        </div>
+                                        <div id="biografinfo" class="clearfix">
+                                            <h2>
+                                                Sankt Jörgen Park Biografen
+                                            </h2>
+
+                                            <div id="biografadress">
+                                                <address>
+                                                    Knipplekullen 8
+                                                    <br />
+                                                    41705
+                                                    Göteborg
+                                                    <br />
+                                                                                                      
+                                                </address>
+                                            </div>
+                                            <div id="biografstorlek">
+                                                <a class="arrowRightLink"  href="http://maps.google.com/maps?output=html&hl=sv&z=17&f=q&t=m&q=Sankt+J%c3%b6rgen+Park+Biografen%2c+Knipplekullen+8%2c+G%c3%96TEBORG" target="_blank" title="Se var biografen ligger på kartan">
+                                                    Visa på karta</a>
+                                                
+                                                
+                                            </div>
+                                        </div>
+
+                                        <div class="biografinfo" style="font-size:1.2em">
+                                            
+                                                
+                                            
+                                        </div>
+
+                                    </div>
+
+                                    <!-- end biografinformation -->
+                                
+             
+                    
+</div>
+                    <!-- end biografinformation -->
+                </div>
+                <!-- end Biotoppen -->
+
+                <!-- begin results -->
+                <div id="searchResults" class="clearfix">
+
+                    <script type="text/javascript" language="javascript">
+                        function setDisplaymode(mode) {
+                            var _x = document.getElementById('displaymode');
+                            _x.value = mode;
+                        }
+                        function getDisplaymode() {
+                            var _x = document.getElementById('displaymode');
+                            return _x.value;
+                        }
+                        function changeDisplaymode(idList) {
+                            var idArr = idList.split(",");
+
+                            for (index = 0; index < idArr.length; index++)
+                            {
+                                if (getDisplaymode() == 'none')
+                                    showDisplay(idArr[index]);
+                                else
+                                    hideDisplay(idArr[index]);
+                            }
+                            if (getDisplaymode() == 'none')
+                                setDisplaymode('block');
+                            else
+                                setDisplaymode('none');
+                        }
+
+                        function showHideDisplay(id) {
+                            var _id = document.getElementById(id);                           
+                            if (_id.style.display == 'block')
+                                _id.style.display = 'none';
+                            else
+                                _id.style.display = 'block';
+                        }
+                        function hideDisplay(id) {
+                            var _id = document.getElementById(id);
+                            _id.style.display = 'none';
+                        }
+                        function showDisplay(id) {
+                            var _id = document.getElementById(id);
+                            _id.style.display = 'block';
+                        }
+                    </script>
+
+                    <div id="SearchResultPanel">
+	
+
+                        
+                        
+                        
+
+
+                        <div id="SearchResultDetails">
+		
+
+                            <div class="bioDisplay clearfix">
+                                <div class="toogleList">
+                                    <a href="javascript:changeDisplaymode('detailsb85d75e0-940b-418c-8ad4-dfe53c77d178,details8b4577f1-fdaf-4702-a12c-9d10c71a070d,details93827d8d-651e-4118-aada-83f1fa0bcbd0,details50cd7ffc-0505-4b98-9257-5817c1acd5d2');" id="extend" class="arrowDownLink" title="Växla mellan enkel och detaljerad lista">Detaljerad lista</a>
+                                    <input name="displaymode" type="text" value="block" id="displaymode" style="height:20px;display:none;" />
+                                </div>
+                            </div>
+
+                            
+                                    <div id="SearchResultRepeater_ctl01_ResultDiv" class="resultat clearfix open">
+
+                                        <ul>
+                                            <li class="first">
+                                                <div style="cursor:pointer;float:left" onclick="showHideDisplay('detailsb85d75e0-940b-418c-8ad4-dfe53c77d178');">
+                                                    <h3>Arkipelag</h3>
+                                                </div>  
+                                                <div id="SearchResultRepeater_ctl01_divAccesibilityicons" style="float:right;padding-right:18px;"><img title="Stöd för syntolkning" src="img/icon_syntolkning_18x18.png" alt="Stöd för syntolkning" style="border-width:0px;padding-right:6px;" /></div>
+                                            </li>
+                                            <li class="second">
+                                                107
+                                                min</li>
+                                            <li class="third">
+                                                Från 15 år
+                                            </li>
+                                            
+                                            <li class="fifth" style="padding-left:25px; float:right" ><a id="SearchResultRepeater_ctl01_urlMovieDetails" title="Läs mer om Arkipelag" class="buttonRed" href="filmfokus.aspx?movieid=b85d75e0-940b-418c-8ad4-dfe53c77d178&amp;cityid=227&amp;theatreid=c12ff623-32f1-41a8-9288-c215cc1de994">Läs mer
+                                                    <img src="img/clear.gif" alt="" class="arrowRed_right" />
+                                                </a></li>
+                                        </ul>
+                                                                                                                  
+                                        <div class="detaljerat_content" id="detailsb85d75e0-940b-418c-8ad4-dfe53c77d178">
+
+                                           <div class="imgCol">
+                                                <img class="banner" src="image.aspx?id=79bb81e5-9ef6-4086-9b30-3a380d7c2956"
+                                                    alt="Arkipelag"  style="cursor:pointer" onclick="document.location = 'filmfokus.aspx?movieid=b85d75e0-940b-418c-8ad4-dfe53c77d178&cityid=227&theatreid=c12ff623-32f1-41a8-9288-c215cc1de994';" />                                
+                                            </div>
+
+                                            <div class="contentCol">
+                                                
+                                                Laddat drama möter mörk humor när Alex Schulman regidebuterar med Arkipelag, där Gustaf Skarsgård, Fares Fares och Linus Wahlgren spelar tre pappor som följer med sina döttrar på en skolresa till helvetet. Strandsatta med en stökig högstadieklass på en idyllisk skärgårdsö påminns de om egna tonårstrauman. Precis som ungdomarna tvingas de snart också inse hur svårt det är att dra gränsen mellan lek och farlig maktkamp, och att skilja offer från förövare. Arkipelag är årets svenska Oscarsbidrag.
+
+Arkipelag är med i Biopasset!
+                                                
+                                                <div id="SearchResultRepeater_ctl01_RepertoirePanel">
+			
+                                                    <h2>
+                                                        Visningar</h2>
+                                                        
+					                                <div id="biografrepertoire" style=" width:400px;">                                                        
+                                				        <ul style="border: 1px solid #e9e9e9; padding:0px;">   
+                                                            
+										                            <li style="padding:2px;vertical-align:middle"><img id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl00_imgPrice" src="img/buttons/info_off.gif" alt="Visa prisinformation" style="border-width:0px;margin-top:1px" /><div id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl00_popupcontent" class="popupcontent">
+				<span id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl00_lblPriceinfo"></span>
+			</div>&nbsp;&nbsp;2026-11-28 19:00&nbsp;&nbsp;Sankt Jörgen Park Biografen&nbsp;&nbsp;
+                                                                        <a title="Boka biljett på biografens hemsida" style="float:right;" class="buttonRed" href='redirect.aspx?url=https%3a%2f%2fwww.tickster.com%2fsv%2fevents%2f4MP6TR9K0D7TW23&name=Sankt+J%c3%b6rgen+Park+Biografen'>
+                                                                            Boka<img src="img/clear.gif" class="arrowRed_right" alt="" /></a></li>
+                                                                
+										                            <li class="even" style="padding:2px;vertical-align:middle"><img id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl01_imgPrice" src="img/buttons/info_off.gif" alt="Visa prisinformation" style="border-width:0px;margin-top:1px" /><div id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl01_popupcontent" class="popupcontent">
+				<span id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl01_lblPriceinfo"></span>
+			</div>&nbsp;&nbsp;2026-12-05 19:00&nbsp;&nbsp;Sankt Jörgen Park Biografen&nbsp;&nbsp;
+                                                                        <a title="Boka biljett på biografens hemsida" style="float:right;" class="buttonRed" href='redirect.aspx?url=https%3a%2f%2fwww.tickster.com%2fsv%2fevents%2fD007EX8W35YXZ2G&name=Sankt+J%c3%b6rgen+Park+Biografen'>
+                                                                            Boka<img src="img/clear.gif" class="arrowRed_right" alt="" /></a></li>
+                                                                
+										                            <li style="padding:2px;vertical-align:middle"><img id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl02_imgPrice" src="img/buttons/info_off.gif" alt="Visa prisinformation" style="border-width:0px;margin-top:1px" /><div id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl02_popupcontent" class="popupcontent">
+				<span id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl02_lblPriceinfo"></span>
+			</div>&nbsp;&nbsp;2026-12-12 19:00&nbsp;&nbsp;Sankt Jörgen Park Biografen&nbsp;&nbsp;
+                                                                        <a title="Boka biljett på biografens hemsida" style="float:right;" class="buttonRed" href='redirect.aspx?url=https%3a%2f%2fwww.tickster.com%2fsv%2fevents%2fNV3MVN31K0ZC8RX&name=Sankt+J%c3%b6rgen+Park+Biografen'>
+                                                                            Boka<img src="img/clear.gif" class="arrowRed_right" alt="" /></a></li>
+                                                                
+										                            <li class="even" style="padding:2px;vertical-align:middle"><img id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl03_imgPrice" src="img/buttons/info_off.gif" alt="Visa prisinformation" style="border-width:0px;margin-top:1px" /><div id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl03_popupcontent" class="popupcontent">
+				<span id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl03_lblPriceinfo"></span>
+			</div>&nbsp;&nbsp;2026-12-19 19:00&nbsp;&nbsp;Sankt Jörgen Park Biografen&nbsp;&nbsp;
+                                                                        <a title="Boka biljett på biografens hemsida" style="float:right;" class="buttonRed" href='redirect.aspx?url=https%3a%2f%2fwww.tickster.com%2fsv%2fevents%2fTUZ1XK67RCBEJ1C&name=Sankt+J%c3%b6rgen+Park+Biografen'>
+                                                                            Boka<img src="img/clear.gif" class="arrowRed_right" alt="" /></a></li>
+                                                                
+										                            <li style="padding:2px;vertical-align:middle"><img id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl04_imgPrice" src="img/buttons/info_off.gif" alt="Visa prisinformation" style="border-width:0px;margin-top:1px" /><div id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl04_popupcontent" class="popupcontent">
+				<span id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl04_lblPriceinfo"></span>
+			</div>&nbsp;&nbsp;2027-01-01 19:00&nbsp;&nbsp;Sankt Jörgen Park Biografen&nbsp;&nbsp;
+                                                                        <a title="Boka biljett på biografens hemsida" style="float:right;" class="buttonRed" href='redirect.aspx?url=https%3a%2f%2fwww.tickster.com%2fsv%2fevents%2fXU1FRCLDAZYNRAT&name=Sankt+J%c3%b6rgen+Park+Biografen'>
+                                                                            Boka<img src="img/clear.gif" class="arrowRed_right" alt="" /></a></li>
+                                                                
+										                            <li class="even" style="padding:2px;vertical-align:middle"><img id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl05_imgPrice" src="img/buttons/info_off.gif" alt="Visa prisinformation" style="border-width:0px;margin-top:1px" /><div id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl05_popupcontent" class="popupcontent">
+				<span id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl05_lblPriceinfo"></span>
+			</div>&nbsp;&nbsp;2027-01-02 19:00&nbsp;&nbsp;Sankt Jörgen Park Biografen&nbsp;&nbsp;
+                                                                        <a title="Boka biljett på biografens hemsida" style="float:right;" class="buttonRed" href='redirect.aspx?url=https%3a%2f%2fwww.tickster.com%2fsv%2fevents%2fYDN0UY9RNZEC1N7&name=Sankt+J%c3%b6rgen+Park+Biografen'>
+                                                                            Boka<img src="img/clear.gif" class="arrowRed_right" alt="" /></a></li>
+                                                                
+                                                        </ul>
+                                                    </div>
+
+                                                
+		</div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                
+                                    <div id="SearchResultRepeater_ctl02_ResultDiv" class="resultat clearfix open">
+
+                                        <ul>
+                                            <li class="first">
+                                                <div style="cursor:pointer;float:left" onclick="showHideDisplay('details8b4577f1-fdaf-4702-a12c-9d10c71a070d');">
+                                                    <h3>Djävulen bär Prada 2</h3>
+                                                </div>  
+                                                
+                                            </li>
+                                            <li class="second">
+                                                118
+                                                min</li>
+                                            <li class="third">
+                                                Barntillåten
+                                            </li>
+                                            
+                                            <li class="fifth" style="padding-left:25px; float:right" ><a id="SearchResultRepeater_ctl02_urlMovieDetails" title="Läs mer om Djävulen bär Prada 2" class="buttonRed" href="filmfokus.aspx?movieid=8b4577f1-fdaf-4702-a12c-9d10c71a070d&amp;cityid=227&amp;theatreid=c12ff623-32f1-41a8-9288-c215cc1de994">Läs mer
+                                                    <img src="img/clear.gif" alt="" class="arrowRed_right" />
+                                                </a></li>
+                                        </ul>
+                                                                                                                  
+                                        <div class="detaljerat_content" id="details8b4577f1-fdaf-4702-a12c-9d10c71a070d">
+
+                                           <div class="imgCol">
+                                                <img class="banner" src="image.aspx?id=c45f814f-c6b9-4737-8978-8b168af6ef58"
+                                                    alt="Djävulen bär Prada 2"  style="cursor:pointer" onclick="document.location = 'filmfokus.aspx?movieid=8b4577f1-fdaf-4702-a12c-9d10c71a070d&cityid=227&theatreid=c12ff623-32f1-41a8-9288-c215cc1de994';" />                                
+                                            </div>
+
+                                            <div class="contentCol">
+                                                
+                                                Tjugo år efter att ha skapat ikoniska karaktärer som Miranda, Andy, Emily och Nigel är Meryl Streep, Anne Hathaway, Emily Blunt och Stanley Tucci tillbaka - denna gång i 20th Century Studios The Devil Wears Prada 2. Den efterlängtade uppföljaren tar oss åter till New Yorks fashionabla gator och modemagasinet Runways eleganta kontor. Filmen regisseras av David Frankel, med manus av Aline Brosh McKenna. Producent är Wendy Finerman, med Michael Bederman, Karen Rosenfelt och Aline Brosh McKenna som exekutiva producenter.
+                                                
+                                                <div id="SearchResultRepeater_ctl02_RepertoirePanel">
+			
+                                                    <h2>
+                                                        Visningar</h2>
+                                                        
+					                                <div id="biografrepertoire" style=" width:400px;">                                                        
+                                				        <ul style="border: 1px solid #e9e9e9; padding:0px;">   
+                                                            
+										                            <li style="padding:2px;vertical-align:middle"><img id="SearchResultRepeater_ctl02_RepertoireRepeater_ctl00_imgPrice" src="img/buttons/info_off.gif" alt="Visa prisinformation" style="border-width:0px;margin-top:1px" /><div id="SearchResultRepeater_ctl02_RepertoireRepeater_ctl00_popupcontent" class="popupcontent">
+				<span id="SearchResultRepeater_ctl02_RepertoireRepeater_ctl00_lblPriceinfo"></span>
+			</div>&nbsp;&nbsp;2026-12-06 19:00&nbsp;&nbsp;Sankt Jörgen Park Biografen&nbsp;&nbsp;
+                                                                        <a title="Boka biljett på biografens hemsida" style="float:right;" class="buttonRed" href='redirect.aspx?url=https%3a%2f%2fwww.tickster.com%2fsv%2fevents%2fLNEHEDG9B5GD08X&name=Sankt+J%c3%b6rgen+Park+Biografen'>
+                                                                            Boka<img src="img/clear.gif" class="arrowRed_right" alt="" /></a></li>
+                                                                
+										                            <li class="even" style="padding:2px;vertical-align:middle"><img id="SearchResultRepeater_ctl02_RepertoireRepeater_ctl01_imgPrice" src="img/buttons/info_off.gif" alt="Visa prisinformation" style="border-width:0px;margin-top:1px" /><div id="SearchResultRepeater_ctl02_RepertoireRepeater_ctl01_popupcontent" class="popupcontent">
+				<span id="SearchResultRepeater_ctl02_RepertoireRepeater_ctl01_lblPriceinfo"></span>
+			</div>&nbsp;&nbsp;2026-12-13 19:00&nbsp;&nbsp;Sankt Jörgen Park Biografen&nbsp;&nbsp;
+                                                                        <a title="Boka biljett på biografens hemsida" style="float:right;" class="buttonRed" href='redirect.aspx?url=https%3a%2f%2fwww.tickster.com%2fsv%2fevents%2fTMEHY3JUDMTH3D4&name=Sankt+J%c3%b6rgen+Park+Biografen'>
+                                                                            Boka<img src="img/clear.gif" class="arrowRed_right" alt="" /></a></li>
+                                                                
+										                            <li style="padding:2px;vertical-align:middle"><img id="SearchResultRepeater_ctl02_RepertoireRepeater_ctl02_imgPrice" src="img/buttons/info_off.gif" alt="Visa prisinformation" style="border-width:0px;margin-top:1px" /><div id="SearchResultRepeater_ctl02_RepertoireRepeater_ctl02_popupcontent" class="popupcontent">
+				<span id="SearchResultRepeater_ctl02_RepertoireRepeater_ctl02_lblPriceinfo"></span>
+			</div>&nbsp;&nbsp;2026-12-20 19:00&nbsp;&nbsp;Sankt Jörgen Park Biografen&nbsp;&nbsp;
+                                                                        <a title="Boka biljett på biografens hemsida" style="float:right;" class="buttonRed" href='redirect.aspx?url=https%3a%2f%2fwww.tickster.com%2fsv%2fevents%2f2UWUDR4GK73FJL4&name=Sankt+J%c3%b6rgen+Park+Biografen'>
+                                                                            Boka<img src="img/clear.gif" class="arrowRed_right" alt="" /></a></li>
+                                                                
+                                                        </ul>
+                                                    </div>
+
+                                                
+		</div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                
+                                    <div id="SearchResultRepeater_ctl03_ResultDiv" class="resultat clearfix open">
+
+                                        <ul>
+                                            <li class="first">
+                                                <div style="cursor:pointer;float:left" onclick="showHideDisplay('details93827d8d-651e-4118-aada-83f1fa0bcbd0');">
+                                                    <h3>Jävla karlar</h3>
+                                                </div>  
+                                                <div id="SearchResultRepeater_ctl03_divAccesibilityicons" style="float:right;padding-right:18px;"><img title="Stöd för syntolkning" src="img/icon_syntolkning_18x18.png" alt="Stöd för syntolkning" style="border-width:0px;padding-right:6px;" /></div>
+                                            </li>
+                                            <li class="second">
+                                                109
+                                                min</li>
+                                            <li class="third">
+                                                Från 15 år
+                                            </li>
+                                            
+                                            <li class="fifth" style="padding-left:25px; float:right" ><a id="SearchResultRepeater_ctl03_urlMovieDetails" title="Läs mer om Jävla karlar" class="buttonRed" href="filmfokus.aspx?movieid=93827d8d-651e-4118-aada-83f1fa0bcbd0&amp;cityid=227&amp;theatreid=c12ff623-32f1-41a8-9288-c215cc1de994">Läs mer
+                                                    <img src="img/clear.gif" alt="" class="arrowRed_right" />
+                                                </a></li>
+                                        </ul>
+                                                                                                                  
+                                        <div class="detaljerat_content" id="details93827d8d-651e-4118-aada-83f1fa0bcbd0">
+
+                                           <div class="imgCol">
+                                                <img class="banner" src="image.aspx?id=3875a8a7-b6d7-4d01-8524-c1310a9feaa6"
+                                                    alt="Jävla karlar"  style="cursor:pointer" onclick="document.location = 'filmfokus.aspx?movieid=93827d8d-651e-4118-aada-83f1fa0bcbd0&cityid=227&theatreid=c12ff623-32f1-41a8-9288-c215cc1de994';" />                                
+                                            </div>
+
+                                            <div class="contentCol">
+                                                
+                                                Julen 1983.
+
+Efter ännu ett våldsamt gräl avslöjar sjuårige Andrevs mamma en hemlighet för honom: hans pappa är faktiskt inte hans pappa. 
+
+I stället för att bli förkrossad blir Andrev exalterad över de möjligheter avslöjandet innebär. Med ett barns motståndskraft navigerar han genom livet och sin mammas mer eller mindre destruktiva förhållanden med olika män.
+
+Andrevs mamma drar till sig män med en oemotståndlig kraft, men inte ens hon kan kontrollera hur de beter sig. Männen är som magiker eller konstnärer, mördare eller tjuvar, och precis som växtvärk dyker de upp oombedda och försvinner utan förvarning.
+
+Jävla karlar är en uppväxtskildring fylld av både mörker och humor. Den handlar om en pojke och hans mamma, om en samling jävla karlar, och om att inte bli en av dem själv.
+
+Filmen är regissserad av Jens Sjögren. Manus av Jakob Beckman baserat på Andrev Waldens Augustprisbelönade roman. Producent är Fredrik Heinig.
+I rollerna ser vi Aliette Opheim, Filip Berg, David Book, Jakob Öhrman, Victor Norén och Joel Spira.
+                                                
+                                                <div id="SearchResultRepeater_ctl03_RepertoirePanel">
+			
+                                                    <h2>
+                                                        Visningar</h2>
+                                                        
+					                                <div id="biografrepertoire" style=" width:400px;">                                                        
+                                				        <ul style="border: 1px solid #e9e9e9; padding:0px;">   
+                                                            
+										                            <li style="padding:2px;vertical-align:middle"><img id="SearchResultRepeater_ctl03_RepertoireRepeater_ctl00_imgPrice" src="img/buttons/info_off.gif" alt="Visa prisinformation" style="border-width:0px;margin-top:1px" /><div id="SearchResultRepeater_ctl03_RepertoireRepeater_ctl00_popupcontent" class="popupcontent">
+				<span id="SearchResultRepeater_ctl03_RepertoireRepeater_ctl00_lblPriceinfo"></span>
+			</div>&nbsp;&nbsp;2026-11-27 19:00&nbsp;&nbsp;Sankt Jörgen Park Biografen&nbsp;&nbsp;
+                                                                        <a title="Boka biljett på biografens hemsida" style="float:right;" class="buttonRed" href='redirect.aspx?url=https%3a%2f%2fwww.tickster.com%2fsv%2fevents%2f3JV58R59HDLWHVW&name=Sankt+J%c3%b6rgen+Park+Biografen'>
+                                                                            Boka<img src="img/clear.gif" class="arrowRed_right" alt="" /></a></li>
+                                                                
+										                            <li class="even" style="padding:2px;vertical-align:middle"><img id="SearchResultRepeater_ctl03_RepertoireRepeater_ctl01_imgPrice" src="img/buttons/info_off.gif" alt="Visa prisinformation" style="border-width:0px;margin-top:1px" /><div id="SearchResultRepeater_ctl03_RepertoireRepeater_ctl01_popupcontent" class="popupcontent">
+				<span id="SearchResultRepeater_ctl03_RepertoireRepeater_ctl01_lblPriceinfo"></span>
+			</div>&nbsp;&nbsp;2026-11-29 19:00&nbsp;&nbsp;Sankt Jörgen Park Biografen&nbsp;&nbsp;
+                                                                        <a title="Boka biljett på biografens hemsida" style="float:right;" class="buttonRed" href='redirect.aspx?url=https%3a%2f%2fwww.tickster.com%2fsv%2fevents%2fRWA5WYG22XWYX1Y&name=Sankt+J%c3%b6rgen+Park+Biografen'>
+                                                                            Boka<img src="img/clear.gif" class="arrowRed_right" alt="" /></a></li>
+                                                                
+                                                        </ul>
+                                                    </div>
+
+                                                
+		</div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                
+                                    <div id="SearchResultRepeater_ctl04_ResultDiv" class="resultat clearfix open">
+
+                                        <ul>
+                                            <li class="first">
+                                                <div style="cursor:pointer;float:left" onclick="showHideDisplay('details50cd7ffc-0505-4b98-9257-5817c1acd5d2');">
+                                                    <h3>The Odyssey</h3>
+                                                </div>  
+                                                
+                                            </li>
+                                            <li class="second">
+                                                172
+                                                min</li>
+                                            <li class="third">
+                                                Från 15 år
+                                            </li>
+                                            
+                                            <li class="fifth" style="padding-left:25px; float:right" ><a id="SearchResultRepeater_ctl04_urlMovieDetails" title="Läs mer om The Odyssey" class="buttonRed" href="filmfokus.aspx?movieid=50cd7ffc-0505-4b98-9257-5817c1acd5d2&amp;cityid=227&amp;theatreid=c12ff623-32f1-41a8-9288-c215cc1de994">Läs mer
+                                                    <img src="img/clear.gif" alt="" class="arrowRed_right" />
+                                                </a></li>
+                                        </ul>
+                                                                                                                  
+                                        <div class="detaljerat_content" id="details50cd7ffc-0505-4b98-9257-5817c1acd5d2">
+
+                                           <div class="imgCol">
+                                                <img class="banner" src="image.aspx?id=540b6168-7d33-4529-abe5-be2473c9569c"
+                                                    alt="The Odyssey"  style="cursor:pointer" onclick="document.location = 'filmfokus.aspx?movieid=50cd7ffc-0505-4b98-9257-5817c1acd5d2&cityid=227&theatreid=c12ff623-32f1-41a8-9288-c215cc1de994';" />                                
+                                            </div>
+
+                                            <div class="contentCol">
+                                                
+                                                Christopher Nolans nya film, The Odyssey, är en mytisk, episk actionfilm, inspelad över hela världen med helt ny IMAX® film-teknologi. Filmen tar Homeros banbrytande historia till IMAX® filmdukarna för första gången och har biopremiär överallt den 17 juli, 2026. I huvudrollerna ser vi Matt Damon, Tom Holland, Anne Hathaway, Robert Pattinson och Lupita Nyong'o, med Zendaya och Charlize Theron.
+
+
+                                                
+                                                <div id="SearchResultRepeater_ctl04_RepertoirePanel">
+			
+                                                    <h2>
+                                                        Visningar</h2>
+                                                        
+					                                <div id="biografrepertoire" style=" width:400px;">                                                        
+                                				        <ul style="border: 1px solid #e9e9e9; padding:0px;">   
+                                                            
+										                            <li style="padding:2px;vertical-align:middle"><img id="SearchResultRepeater_ctl04_RepertoireRepeater_ctl00_imgPrice" src="img/buttons/info_off.gif" alt="Visa prisinformation" style="border-width:0px;margin-top:1px" /><div id="SearchResultRepeater_ctl04_RepertoireRepeater_ctl00_popupcontent" class="popupcontent">
+				<span id="SearchResultRepeater_ctl04_RepertoireRepeater_ctl00_lblPriceinfo"></span>
+			</div>&nbsp;&nbsp;2026-12-04 19:00&nbsp;&nbsp;Sankt Jörgen Park Biografen&nbsp;&nbsp;
+                                                                        <a title="Boka biljett på biografens hemsida" style="float:right;" class="buttonRed" href='redirect.aspx?url=https%3a%2f%2fwww.tickster.com%2fsv%2fevents%2fF27N90L9G59GXLJ&name=Sankt+J%c3%b6rgen+Park+Biografen'>
+                                                                            Boka<img src="img/clear.gif" class="arrowRed_right" alt="" /></a></li>
+                                                                
+										                            <li class="even" style="padding:2px;vertical-align:middle"><img id="SearchResultRepeater_ctl04_RepertoireRepeater_ctl01_imgPrice" src="img/buttons/info_off.gif" alt="Visa prisinformation" style="border-width:0px;margin-top:1px" /><div id="SearchResultRepeater_ctl04_RepertoireRepeater_ctl01_popupcontent" class="popupcontent">
+				<span id="SearchResultRepeater_ctl04_RepertoireRepeater_ctl01_lblPriceinfo"></span>
+			</div>&nbsp;&nbsp;2026-12-11 19:00&nbsp;&nbsp;Sankt Jörgen Park Biografen&nbsp;&nbsp;
+                                                                        <a title="Boka biljett på biografens hemsida" style="float:right;" class="buttonRed" href='redirect.aspx?url=https%3a%2f%2fwww.tickster.com%2fsv%2fevents%2fNMWEN6R3J3J3UL4&name=Sankt+J%c3%b6rgen+Park+Biografen'>
+                                                                            Boka<img src="img/clear.gif" class="arrowRed_right" alt="" /></a></li>
+                                                                
+										                            <li style="padding:2px;vertical-align:middle"><img id="SearchResultRepeater_ctl04_RepertoireRepeater_ctl02_imgPrice" src="img/buttons/info_off.gif" alt="Visa prisinformation" style="border-width:0px;margin-top:1px" /><div id="SearchResultRepeater_ctl04_RepertoireRepeater_ctl02_popupcontent" class="popupcontent">
+				<span id="SearchResultRepeater_ctl04_RepertoireRepeater_ctl02_lblPriceinfo"></span>
+			</div>&nbsp;&nbsp;2026-12-18 19:00&nbsp;&nbsp;Sankt Jörgen Park Biografen&nbsp;&nbsp;
+                                                                        <a title="Boka biljett på biografens hemsida" style="float:right;" class="buttonRed" href='redirect.aspx?url=https%3a%2f%2fwww.tickster.com%2fsv%2fevents%2f9ZU6XHJEYC3DN9N&name=Sankt+J%c3%b6rgen+Park+Biografen'>
+                                                                            Boka<img src="img/clear.gif" class="arrowRed_right" alt="" /></a></li>
+                                                                
+                                                        </ul>
+                                                    </div>
+
+                                                
+		</div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                
+                                    &nbsp;
+                                
+                        
+	</div>
+                    
+</div>
+                </div>
+                <!-- end results -->
+                <!-- begin footer -->
+                <div id="footer">
+                    <div class="slogan">Vi finns här för dig som älskar film!</div>
+                    <div class="bgurl">www.bioguiden.se</div>
+                    <div class="bgabout"><a href="bioguiden.aspx" class="linkAdjusted">Om Bioguiden</a></div>
+                </div>
+                <!-- end footer -->
+            </div>
+            <!-- end container -->
+            <!-- begin sidebar -->
+            <div id="sidebar">
+                <!-- start BioToppen -->
+                
+<div class="biotoppen clearfix">
+	<h1 style="padding-bottom:10px">Biotoppen</h1>
+
+	<table summary="Popul&auml;raste filmerna just nu" >
+		<caption>Biotoppen</caption>
+		<tbody>
+			
+					<tr class="odd">
+						<th scope="row">1</th>
+						<td>(NY)</td>
+						<td><a class="linkAdjusted" href="filmfokus.aspx?movieid=1706e261-d53d-47f7-b546-43a13e1a65fe" title="The Hunger Games: Sunrise on the reaping">The Hunger Games: Sunri...</a></td>
+					</tr>
+				
+					<tr>
+						<th scope="row">2</th>
+						<td>(NY)</td>
+						<td><a class="linkAdjusted"  href="filmfokus.aspx?movieid=6e0c9d8c-3f38-4e39-a1c7-2a3642cc042a" title="Arne Goes to Space">Arne Goes to Space</a></td>
+					</tr>
+				
+					<tr class="odd">
+						<th scope="row">3</th>
+						<td>(NY)</td>
+						<td><a class="linkAdjusted" href="filmfokus.aspx?movieid=a7922999-0e1a-4a97-8cf6-45b84174098c" title="You Can See Everything">You Can See Everything</a></td>
+					</tr>
+				
+					<tr>
+						<th scope="row">4</th>
+						<td>(5)</td>
+						<td><a class="linkAdjusted"  href="filmfokus.aspx?movieid=06694f87-7310-4a9b-bcb5-b9be4a7967f6" title="Jakten på Jultomtens verkstad">Jakten på Jultomtens ve...</a></td>
+					</tr>
+				
+					<tr class="odd">
+						<th scope="row">5</th>
+						<td>(NY)</td>
+						<td><a class="linkAdjusted" href="filmfokus.aspx?movieid=69b8ba89-5872-4cd5-a501-0cdedfad35a8" title="Wicker">Wicker</a></td>
+					</tr>
+				
+					<tr>
+						<th scope="row">6</th>
+						<td>(NY)</td>
+						<td><a class="linkAdjusted"  href="filmfokus.aspx?movieid=15485aae-d341-4d66-94a2-e64894e8a0dd" title="Wild Horse Nine">Wild Horse Nine</a></td>
+					</tr>
+				
+					<tr class="odd">
+						<th scope="row">7</th>
+						<td>(4)</td>
+						<td><a class="linkAdjusted" href="filmfokus.aspx?movieid=1c0f822d-67b3-4b8b-80ac-98a19be7e1da" title="Nelly Rapp - Porten till underjorden">Nelly Rapp - Porten til...</a></td>
+					</tr>
+				
+					<tr>
+						<th scope="row">8</th>
+						<td>(1)</td>
+						<td><a class="linkAdjusted"  href="filmfokus.aspx?movieid=c9340256-dad9-45e5-8146-bffbf14d5025" title="Ebenezer">Ebenezer</a></td>
+					</tr>
+				
+					<tr class="odd">
+						<th scope="row">9</th>
+						<td>(2)</td>
+						<td><a class="linkAdjusted" href="filmfokus.aspx?movieid=93827d8d-651e-4118-aada-83f1fa0bcbd0" title="Jävla karlar">Jävla karlar</a></td>
+					</tr>
+				
+					<tr>
+						<th scope="row">10</th>
+						<td>(3)</td>
+						<td><a class="linkAdjusted"  href="filmfokus.aspx?movieid=b85d75e0-940b-418c-8ad4-dfe53c77d178" title="Arkipelag">Arkipelag</a></td>
+					</tr>
+							
+		</tbody>		
+	</table>
+	
+	<div id="BioToppen_pnlDownload1" style="padding-top:8px;padding-left:3px">
+	
+	    <table border=0 cellpadding=0 cellspacing=0>
+	    <tr>
+	        <td style="width:28px"><img id="BioToppen_imgDownloadPDF1" title="Genererad 2026-11-23 10:11" onclick="document.location.href=&#39;../StreamFile_medialista.ashx?weekid=8bb2aaac-46a4-4933-8859-7c911dc08f78&amp;s=1&#39;;" src="img/download_pdf.gif" style="border-width:0px;cursor:pointer;" /></td>
+	        <td style="padding-top:2px"><a id="BioToppen_urlDownloadPDF1" title="Genererad 2026-11-23 10:11" class="linkAdjusted" href="StreamFile_medialista.ashx?weekid=8bb2aaac-46a4-4933-8859-7c911dc08f78&amp;s=1">Biotoppen för helgen v.47</a></td>
+	    </tr>
+	    </table>             
+    
+</div>            
+	<div id="BioToppen_pnlDownload2" style="padding-left:3px;padding-bottom:3px;">
+	
+	    <table border=0 cellpadding=0 cellspacing=0>
+	    <tr>
+	        <td style="width:28px"><img id="BioToppen_imgDownloadPDF2" title="Genererad 2026-11-20 10:01" onclick="document.location.href=&#39;../StreamFile_medialista.ashx?weekid=3d87e14c-0dd7-4a68-aa28-72bc2e56d242&amp;s=2&#39;;" src="img/download_pdf.gif" style="border-width:0px;cursor:pointer;" /></td>
+	        <td style="padding-top:2px"><a id="BioToppen_urlDownloadPDF2" title="Genererad 2026-11-20 10:01" class="linkAdjusted" href="StreamFile_medialista.ashx?weekid=3d87e14c-0dd7-4a68-aa28-72bc2e56d242&amp;s=2">Biotoppen för vecka 46</a></td>
+	    </tr>
+	    </table>     
+	
+</div>
+</div>
+                <!-- end BioToppen -->
+            </div>
+            <!-- end sidebar -->
+        </div>
+        <!-- end wrapper -->
+    
+
+<script type="text/javascript">
+//<![CDATA[
+Sys.Application.add_init(function() {
+    $create(AjaxControlToolkit.AutoCompleteBehavior, {"completionListCssClass":"AutoExtender","completionListItemCssClass":"AutoExtenderList","delimiterCharacters":"","highlightedItemCssClass":"AutoExtenderHighlight","id":"AutoCompleteExtender1","minimumPrefixLength":2,"serviceMethod":"GetSearchSuggestions","servicePath":"/biografer.aspx","useContextKey":true}, {"itemSelected":OnCompleteSelected}, null, $get("SearchFilterTextbox"));
+});
+//]]>
+</script>
+</form>
+
+</body>
+</html>

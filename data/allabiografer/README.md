@@ -37,6 +37,8 @@ Source `Movie`s pass through `movie_fields.normalise`, so every adapter writes o
 
 Sources that state a TMDB or IMDb identity carry it in `sameAs`; matching treats a shared identity as the same film and different ones as different films. Showing films missing a poster, description or director are looked up on TMDB: by stated identity, else the one search result whose title matches and whose year or director confirm it. TMDB fills missing properties only. The token is read from `TMDB_ACCESS_TOKEN` or `~/.config/allabiografer/tmdb-token`. A TMDB failure is reported; the run keeps the unenriched result.
 
+A poster is an image at least 200 px wide and 1.2 times taller than wide; stills, banners and placeholders are dropped, and TMDB fills the gap. Bioguiden's listing thumbnails are 150x90 banners, so its poster is taken from the film page's gallery with the dark canvas cropped off; the gallery serves the real image only with the film page as referrer.
+
 Each `Movie` in a merged `Dataset` has a stable slug, its `allabiografer:film` identifier, and `url` `https://allabiografer.se/film/<slug>/`. Grouping is re-evaluated every run. A group reuses the oldest identity among its members, slugs are never reassigned, and slugs of joined films remain as `allabiografer:film-alias`.
 
 Actions record `startTime`, `endTime`, `actionStatus`, and `error` for failures. A failing adapter does not stop the others; the run exits non-zero after merging.

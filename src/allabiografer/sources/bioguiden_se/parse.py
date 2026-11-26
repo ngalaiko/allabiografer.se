@@ -1,6 +1,7 @@
 """Replay Bioguiden programmes without network or TMDB."""
 
 from datetime import datetime
+from urllib.parse import parse_qs, urlsplit
 
 from requests import Response
 
@@ -27,6 +28,7 @@ def rows(inputs, today):
             films[item.key] = item
         elif not isinstance(item, Venue) and item.date >= today:
             film = films[item.film_key]
+            movie_id = parse_qs(urlsplit(film.url).query)["movieid"][0]
             url, address = locations[item.city, item.cinema_name]
             venue_key = stable_key(url)
             start = datetime.combine(item.date, item.time, STOCKHOLM)
@@ -39,5 +41,5 @@ def rows(inputs, today):
                 item.presentation,
                 stable_key(film.key),
                 f"programme-{venue_key}.html",
-                film_fields(film),
+                film_fields(film, image=poster.name if (poster := inputs / f"poster-{movie_id}.jpg").is_file() else ""),
             )

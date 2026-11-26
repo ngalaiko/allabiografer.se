@@ -348,7 +348,6 @@ def _parse_pages(get, *, sites=None) -> Iterator[Screening | Venue | Film]:
             runtime = block.select_one("li.second")
             minutes = re.search(r"\b(\d+)\s+min\b", runtime.get_text(" ", strip=True)) if runtime else None
             rating = block.select_one("li.third")
-            poster = block.select_one(".imgCol img[src]")
             rows = block.select("[id=biografrepertoire] > ul > li")
             if not title or not rows:
                 raise ValueError(f"Bioguiden: missing film title or screenings at {url}")
@@ -363,9 +362,6 @@ def _parse_pages(get, *, sites=None) -> Iterator[Screening | Venue | Film]:
                 overview=" ".join(content.get_text(" ", strip=True).split()),
                 runtime=int(minutes[1]) or None if minutes else None,
                 age_rating=rating.get_text(" ", strip=True) if rating else "",
-                poster_url=(
-                    urljoin(_BASE, poster["src"]) if poster and poster["src"] != "img/bild_saknas_150x90.gif" else ""
-                ),
             )
             # City and theatre parameters only control navigation, not film identity.
             movie_id = parse_qs(urlsplit(film.url).query)["movieid"][0]
@@ -412,3 +408,35 @@ def _parse_pages(get, *, sites=None) -> Iterator[Screening | Venue | Film]:
         has_auditoriums = any(s.screen not in cinema_names for s in screenings.values())
         for screening in screenings.values():
             yield screening if has_auditoriums else replace(screening, screen="")
+
+
+_ORIGINALS = re.compile(r"addVariable \( 'originals' , '([^']*)'")
+# Posters sit on a dark canvas in the gallery's 718x400 frame.
+_CANVAS = 24
+_POSTER_RATIO = 1.2
+
+
+def gallery(html: str) -> list[str]:
+    """Full-size image URLs of a film page's gallery, the poster first when it has one."""
+    found = _ORIGINALS.search(html)
+    return [urljoin(_BASE, src) for src in found[1].split(",") if src] if found else []
+
+
+def poster(data: bytes) -> bytes | None:
+    """The poster within a gallery image: its canvas cropped away, if what remains is portrait."""
+    import io
+
+    from PIL import Image, ImageChops
+
+    with Image.open(io.BytesIO(data)) as image:
+        image = image.convert("RGB")
+        mask = ImageChops.difference(image, Image.new("RGB", image.size)).convert("L")
+        box = mask.point(lambda value: 255 if value > _CANVAS else 0).getbbox()
+        if box is None:
+            return None
+        cropped = image.crop(box)
+        if cropped.height < cropped.width * _POSTER_RATIO:
+            return None
+        buffer = io.BytesIO()
+        cropped.save(buffer, "JPEG", quality=92)
+        return buffer.getvalue()

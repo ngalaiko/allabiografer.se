@@ -47,3 +47,18 @@ def test_render_writes_pages_from_the_merged_dataset(graph, parsed, tmp_path):
     assert all(link.is_symlink() and link.resolve().parent == (tmp_path / "assets").resolve() for link in posters)
     with Image.open(next(link for link in posters if "-" not in link.stem)) as image:
         assert (image.format, image.size) == ("WEBP", (250, 354))
+
+
+def test_banners_and_placeholders_are_no_posters(graph):
+    from allabiografer.posters import poster as _poster
+
+    def stored(size):
+        buffer = io.BytesIO()
+        Image.new("RGB", size, "gray").save(buffer, "PNG")
+        return graph.ref(graph.put_bytes(buffer.getvalue(), "image/png", name="image.png"))
+
+    film = graph.path("Movie", "x")
+    assert _poster(graph, film, stored((500, 750)), None, {}) is not None
+    # A 16:9 still, a square cover and a 150x90 "Bild saknas" placeholder.
+    for size in ((1920, 1080), (1080, 1080), (150, 90)):
+        assert _poster(graph, film, stored(size), None, {}) is None

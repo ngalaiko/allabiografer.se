@@ -158,7 +158,8 @@ def enrich(graph: Graph, merged: Path) -> Path:
     }
     with action(graph, "DownloadAction", fields) as outcome, _http.session() as session:
         downloads: list[Path] = []
-        tmdb.enrich_dataset(graph, merged, tmdb.recording(graph, session, downloads))
+        # Source poster URLs are downloaded here, so the replay below decides from stored images only.
+        tmdb.enrich_dataset(graph, merged, tmdb.recording(graph, session, downloads), session)
         capture = graph.put(
             "Dataset",
             {
