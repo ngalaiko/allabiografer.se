@@ -7,7 +7,7 @@ assets/<sha256>                  raw bytes: HTML, API responses, images
 schema/<Schema.org type>/<id>.jsonld
 ```
 
-Run `uv run --group parse allabiografer`, optionally limited with `--cinema <MovieTheater ID>` (repeatable). It prints the merged `Dataset`. `--fresh` ignores the previous result.
+Run `uv run --group parse --group build allabiografer`, optionally limited with `--cinema <MovieTheater ID>` (repeatable). It prints the merged `Dataset` and the website directory. `--fresh` ignores the previous result; `--render-only` renders the latest result without fetching.
 
 ## Registry
 
@@ -26,6 +26,7 @@ Generated and not checked in. Each run is an action:
 | fetch | `DownloadAction` | registry cinemas | `Dataset` of `DataDownload`s |
 | parse | `CreateAction` | fetch `Dataset` | `Dataset` of `Movie`s and `ScreeningEvent`s |
 | merge | `CreateAction` | previous merged `Dataset`, new parse `Dataset`s | merged `Dataset` |
+| render | `CreateAction` | merged `Dataset` | `www/` |
 
 A run is an `UpdateAction` over the previous result (`targetCollection`) for the selected cinemas (`object`): fetch and parse per adapter, then one merge. Each cinema's screenings come from the newest parse covering it, so cinemas not run, or whose adapter failed, keep their previous screenings. Screenings before the run day drop out.
 
@@ -42,3 +43,9 @@ Entities other than actions are named by the SHA-256 of their content, so identi
 A merged `Movie` lists its source records in `isBasedOn`.
 
 Each action's `instrument` is a `SoftwareSourceCode` entity naming the module it ran. That module is `isPartOf` a snapshot of all pipeline code. The snapshot records the git commit as `version`, suffixed `-dirty` when the source files differ from it. Its `encoding` is a deterministic tar of `src/allabiografer/`, `pyproject.toml`, and `uv.lock`, stored as an asset, so a run can be traced to the exact bytes it executed even when uncommitted.
+
+## Website
+
+`www/` is the static site rendered from the latest merged `Dataset`, regenerated on every run and not checked in. It has the home page, a page per city, cinema, and film, and redirects from film slug aliases. Each page embeds its entities as JSON-LD.
+
+Posters are resized to 500 px WebP and stored as `ImageObject`s in `assets/`; source URLs are downloaded into the store first. `www/assets/<sha256>` are symlinks to those assets, so image bytes are stored once; a deploy must copy them as files.

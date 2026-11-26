@@ -87,14 +87,15 @@ class Graph:
         _atomic_write(path, self._dump({"@context": CONTEXT, "@id": "", "@type": kind, **fields}))
         return path
 
-    def put_bytes(self, data: bytes, media: str, *, name: str, url: str = "") -> Path:
+    def put_bytes(self, data: bytes, media: str, *, name: str, url: str = "", compress: bool = True) -> Path:
         """Store raw bytes as an asset and describe them with a MediaObject.
 
-        Compressed assets declare the registered `+zstd` structured syntax suffix.
+        Compressed assets declare the registered `+zstd` structured syntax suffix. Assets served
+        as-is (`compress=False`) keep their bytes unchanged.
         """
         stored, encoding = data, media
-        packed = zstd.compress(data)
-        if len(packed) <= len(data) * (1 - MIN_SAVING):
+        packed = zstd.compress(data) if compress else data
+        if compress and len(packed) <= len(data) * (1 - MIN_SAVING):
             stored, encoding = packed, f"{media}+zstd"
         digest = hashlib.sha256(stored).digest()
         asset = self.assets / digest.hex()

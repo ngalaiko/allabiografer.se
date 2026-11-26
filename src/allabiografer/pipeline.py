@@ -24,6 +24,8 @@ from .code import source_code
 from .graph import DATA, Graph, media_type
 from .merge import merge_datasets
 from .parsing import parse_capture
+from .render import SITE
+from .render import render as render_site
 from .schedule import PREFIX, Route, checked, routes
 from .sources._shared import STOCKHOLM
 
@@ -152,6 +154,21 @@ def merge(graph: Graph, previous: Path | None, parsed: list[Path], day: date) ->
     return dataset
 
 
+def render(graph: Graph, merged: Path) -> Path:
+    """Write the static site for `merged` to <data>/www, replacing the previous one."""
+    out = graph.root / "www"
+    fields = {
+        "name": "Render",
+        "object": graph.ref(merged),
+        "instrument": instrument(graph, "src/allabiografer/render.py"),
+    }
+    with action(graph, "CreateAction", fields) as outcome:
+        pages = render_site(graph, merged, out)
+        # The site is a directory, not an entity; record where it is and how much it holds.
+        outcome["result"] = {"@type": "WebSite", "name": "allabiografer.se", "url": SITE, "size": f"{pages} pages"}
+    return out
+
+
 def latest(graph: Graph) -> Path | None:
     """The result of the most recent completed run."""
     runs = []
@@ -198,9 +215,15 @@ def main() -> None:
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--cinema", action="append", default=[], help="Limit to this cinema (MovieTheater filename stem)")
     cli.add_argument("--fresh", action="store_true", help="Ignore the previous run's result")
+    cli.add_argument("--render-only", action="store_true", help="Render the latest result without fetching")
     cli.add_argument("--data", type=Path, default=DATA)
     args = cli.parse_args()
     graph = Graph(args.data.resolve())
+    if args.render_only:
+        if (previous := latest(graph)) is None:
+            cli.error("no completed run to render")
+        print(render(graph, previous))
+        return
     try:
         available = routes(graph.root)
         checked(set(args.cinema), available)
@@ -209,6 +232,7 @@ def main() -> None:
     selected = [available[cinema] for cinema in dict.fromkeys(args.cinema)] or list(available.values())
     result, failures = run(graph, selected, previous=None if args.fresh else latest(graph))
     print(result)
+    print(render(graph, result))
     if failures:
         sys.exit(f"{len(failures)} adapter(s) failed: {', '.join(sorted(failures))}")
 
