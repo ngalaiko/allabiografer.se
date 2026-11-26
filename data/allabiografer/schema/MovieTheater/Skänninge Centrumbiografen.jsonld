@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Skänninge Centrumbiografen",
+  "name": "Centrumbiografen",
+  "alternateName": "Skänninge Centrumbiografen",
   "containedInPlace": {
     "@id": "../City/Sk%C3%A4nninge.jsonld"
   },

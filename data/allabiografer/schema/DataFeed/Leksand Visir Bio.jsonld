@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Leksand Visir Bio",
+  "name": "Visir Bio",
   "about": {
     "@id": "../MovieTheater/Leksand%20Visir%20Bio.jsonld"
   },

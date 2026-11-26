@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Djurås Gagnefs Bio",
+  "name": "Gagnefs Bio",
   "about": {
     "@id": "../MovieTheater/Djur%C3%A5s%20Gagnefs%20Bio.jsonld"
   },

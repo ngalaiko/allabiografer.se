@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Röda Kvarn i Halmstad",
+  "name": "Röda Kvarn",
   "about": {
     "@id": "../MovieTheater/R%C3%B6da%20Kvarn%20i%20Halmstad.jsonld"
   },

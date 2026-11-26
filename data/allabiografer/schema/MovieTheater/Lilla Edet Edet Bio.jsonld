@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Lilla Edet Edet Bio",
+  "name": "Edet Bio",
+  "alternateName": "Lilla Edet Edet Bio",
   "containedInPlace": {
     "@id": "../City/Lilla%20Edet.jsonld"
   },

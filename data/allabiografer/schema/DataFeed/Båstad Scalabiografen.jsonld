@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Båstad Scalabiografen",
+  "name": "Scala Biografen",
   "about": {
     "@id": "../MovieTheater/B%C3%A5stad%20Scalabiografen.jsonld"
   },

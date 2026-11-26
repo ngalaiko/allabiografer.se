@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Stockholm Bio Fågel Blå",
+  "name": "Bio Fågel Blå",
+  "alternateName": "Stockholm Bio Fågel Blå",
   "containedInPlace": {
     "@id": "../City/Stockholm.jsonld"
   },

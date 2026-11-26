@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Royal Köping",
+  "name": "Royal",
   "about": {
     "@id": "../MovieTheater/Royal%20K%C3%B6ping.jsonld"
   },

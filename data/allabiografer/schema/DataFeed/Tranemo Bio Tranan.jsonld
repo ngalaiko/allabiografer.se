@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Tranemo Bio Tranan",
+  "name": "Bio Tranan",
   "about": {
     "@id": "../MovieTheater/Tranemo%20Bio%20Tranan.jsonld"
   },

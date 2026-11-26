@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Royal Malmö",
+  "name": "Royal",
   "about": {
     "@id": "../MovieTheater/Royal%20Malm%C3%B6.jsonld"
   },

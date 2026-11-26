@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Skene Bio Folkan",
+  "name": "Bio Folkan",
   "about": {
     "@id": "../MovieTheater/Skene%20Bio%20Folkan.jsonld"
   },

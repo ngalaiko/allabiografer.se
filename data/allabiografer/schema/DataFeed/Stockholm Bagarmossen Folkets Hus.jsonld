@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Stockholm Bagarmossen Folkets Hus",
+  "name": "Bagarmossen Folkets Hus",
   "about": {
     "@id": "../MovieTheater/Stockholm%20Bagarmossen%20Folkets%20Hus.jsonld"
   },

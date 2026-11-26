@@ -10,6 +10,7 @@
 """
 
 import hashlib
+import html
 import io
 import json
 import os
@@ -22,6 +23,7 @@ from datetime import date, datetime, time, timedelta
 from html import escape
 from itertools import combinations
 from pathlib import Path
+from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -67,7 +69,7 @@ SWEDEN_TZ = ZoneInfo("Europe/Stockholm")
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 STATIC_DIR = Path(__file__).parent / "static" / "i"
 
-# Canonical origin — see etc/nginx (www → apex redirect).
+# Canonical origin.
 BASE_URL = "https://allabiografer.se"
 SITE_NAME = "Alla biografer i Sverige"
 SITE_DESCRIPTION = (
@@ -248,6 +250,8 @@ class SiteData:
     # Build-time movie keys are catalogue identities, not necessarily TMDB IDs.
     tmdb_ids: dict[int, int | None] = field(default_factory=dict)
     film_aliases: dict[str, str] = field(default_factory=dict)
+    # (city, former cinema slug) → current cinema slug.
+    cinema_aliases: dict[tuple[str, str], str] = field(default_factory=dict)
     city_films: set[tuple[str, int]] = field(default_factory=set)
     sitemap_urls: list[str] = field(default_factory=list)
 
@@ -1623,21 +1627,67 @@ def build(sd: SiteData) -> int:
     _write_robots(out_dir)
     _write_llms(sd)
     _write_sitemap(sd)
-    _write_film_redirects(sd)
+    _write_redirects(sd)
     return len(set(sd.sitemap_urls))
 
 
-def _write_film_redirects(sd: SiteData) -> None:
-    """Static nginx map entries; aliases never enter internal links or sitemaps."""
+REDIRECT = """<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flyttad – allabiografer.se</title>
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="{canonical}">
+<meta http-equiv="refresh" content="0; url={href}">
+<script>location.replace({script});</script>
+<link href="/i/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<main>
+<p>Sidan har flyttat till <a href="{href}">{label}</a>.</p>
+</main>
+</body>
+</html>
+"""
+
+
+def _write_redirect(sd: SiteData, old: str, url: str) -> None:
+    """A page at `old` sending visitors to `url`; aliases never enter internal links or sitemaps.
+
+    The meta refresh moves browsers and crawlers; the canonical link passes the page's
+    standing to its new address; the script also keeps the fragment, which a refresh drops.
+    """
+    page = sd.out_dir / old.strip("/") / "index.html"
+    # A rendered page wins over a former name that now belongs to it.
+    if page.exists():
+        return
+    href = quote(url)
+    page.parent.mkdir(parents=True, exist_ok=True)
+    page.write_text(
+        REDIRECT.format(
+            href=html.escape(href),
+            canonical=html.escape(BASE_URL + href),
+            label=html.escape(BASE_URL.removeprefix("https://") + url),
+            script=json.dumps(href) + " + location.hash",
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_redirects(sd: SiteData) -> None:
+    """Former film and cinema slugs, to their current pages."""
     targets: dict[str, set[str]] = defaultdict(set)
     for page in (sd.out_dir / "film").glob("*/index.html"):
         targets[page.parent.name].add("/film")
     for page in (sd.out_dir / "stad").glob("*/film/*/index.html"):
         targets[page.parent.name].add("/" + page.parent.parent.relative_to(sd.out_dir).as_posix())
-    lines = []
     for old, current in sorted(sd.film_aliases.items()):
         # Redirect only to pages actually rendered. A city with no remaining
         # screenings must not acquire an alias-to-missing-page redirect chain.
         for prefix in sorted(targets[current]):
-            lines.extend(f'"{prefix}/{old}{ending}" "{prefix}/{current}/";' for ending in ("", "/"))
-    (sd.out_dir / "film-redirects.map").write_text("\n".join(lines) + "\n", encoding="utf-8")
+            _write_redirect(sd, f"{prefix}/{old}/", f"{prefix}/{current}/")
+    for (city, old), current in sorted(sd.cinema_aliases.items()):
+        city_slug = sd.city_slugs[city]
+        if old != current and (sd.out_dir / "stad" / city_slug / current / "index.html").exists():
+            _write_redirect(sd, f"/stad/{city_slug}/{old}/", f"/stad/{city_slug}/{current}/")

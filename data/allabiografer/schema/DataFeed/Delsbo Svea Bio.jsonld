@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Delsbo Svea Bio",
+  "name": "Svea Bio",
   "about": {
     "@id": "../MovieTheater/Delsbo%20Svea%20Bio.jsonld"
   },

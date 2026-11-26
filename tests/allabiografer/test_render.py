@@ -62,3 +62,21 @@ def test_banners_and_placeholders_are_no_posters(graph):
     # A 16:9 still, a square cover and a 150x90 "Bild saknas" placeholder.
     for size in ((1920, 1080), (1080, 1080), (150, 90)):
         assert _poster(graph, film, stored(size), None, {}) is None
+
+
+def test_renamed_cinemas_redirect_from_their_former_pages(graph, parsed, tmp_path):
+    listed = {"a": ({"name": "Dune"}, [("Göteborg Hagabion", "2026-12-02T18:00:00+01:00")])}
+    merged = merge_datasets(graph, None, [parsed(graph, "x", ["Göteborg Hagabion"], listed)], DAY)
+    out = tmp_path / "www"
+
+    render(graph, merged, out, today=DAY)
+
+    assert (out / "stad" / "göteborg" / "hagabion" / "index.html").is_file()
+    redirect = (out / "stad" / "göteborg" / "göteborg-hagabion" / "index.html").read_text()
+    target = "/stad/g%C3%B6teborg/hagabion/"
+    assert '<meta charset="utf-8">' in redirect
+    assert f'<meta http-equiv="refresh" content="0; url={target}">' in redirect
+    assert f'<link rel="canonical" href="https://allabiografer.se{target}">' in redirect
+    assert '<meta name="robots" content="noindex, follow">' in redirect
+    assert f'<a href="{target}">allabiografer.se/stad/göteborg/hagabion/</a>' in redirect
+    assert not (out / "film-redirects.map").exists()

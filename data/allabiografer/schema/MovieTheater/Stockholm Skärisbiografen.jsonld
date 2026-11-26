@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Stockholm Skärisbiografen",
+  "name": "Skärisbiografen",
+  "alternateName": "Stockholm Skärisbiografen",
   "containedInPlace": {
     "@id": "../City/Stockholm.jsonld"
   },

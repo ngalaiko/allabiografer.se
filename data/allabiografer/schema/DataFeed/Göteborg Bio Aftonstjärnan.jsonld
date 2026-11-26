@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Göteborg Bio Aftonstjärnan",
+  "name": "Bio Aftonstjärnan",
   "about": {
     "@id": "../MovieTheater/G%C3%B6teborg%20Bio%20Aftonstj%C3%A4rnan.jsonld"
   },

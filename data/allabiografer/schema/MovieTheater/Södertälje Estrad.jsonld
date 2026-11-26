@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Södertälje Estrad",
+  "name": "Estrad",
+  "alternateName": "Södertälje Estrad",
   "containedInPlace": {
     "@id": "../City/S%C3%B6dert%C3%A4lje.jsonld"
   },

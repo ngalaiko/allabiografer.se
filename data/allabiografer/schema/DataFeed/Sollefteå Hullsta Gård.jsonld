@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Sollefteå Hullsta Gård",
+  "name": "Hullsta Gård",
   "about": {
     "@id": "../MovieTheater/Sollefte%C3%A5%20Hullsta%20G%C3%A5rd.jsonld"
   },

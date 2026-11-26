@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Ljungskile Bybio",
+  "name": "Bybio",
   "about": {
     "@id": "../MovieTheater/Ljungskile%20Bybio.jsonld"
   },

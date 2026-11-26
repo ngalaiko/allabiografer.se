@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Röda Kvarn Ängelholm",
+  "name": "Röda Kvarn",
+  "alternateName": "Röda Kvarn Ängelholm",
   "containedInPlace": {
     "@id": "../City/%C3%84ngelholm.jsonld"
   },

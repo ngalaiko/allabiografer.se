@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Hunnebostrand Kulturhuset Hav och Land",
+  "name": "Kulturhuset Hav & Land",
   "about": {
     "@id": "../MovieTheater/Hunnebostrand%20Kulturhuset%20Hav%20och%20Land.jsonld"
   },

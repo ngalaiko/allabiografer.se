@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Tranås Biograf Royal",
+  "name": "Biograf Royal",
   "about": {
     "@id": "../MovieTheater/Tran%C3%A5s%20Biograf%20Royal.jsonld"
   },

@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Gunnarsbyn Saga Bio",
+  "name": "Saga Bio",
   "about": {
     "@id": "../MovieTheater/Gunnarsbyn%20Saga%20Bio.jsonld"
   },

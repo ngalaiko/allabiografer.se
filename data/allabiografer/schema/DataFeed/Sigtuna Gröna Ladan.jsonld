@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Sigtuna Gröna Ladan",
+  "name": "Gröna Ladan",
   "about": {
     "@id": "../MovieTheater/Sigtuna%20Gr%C3%B6na%20Ladan.jsonld"
   },

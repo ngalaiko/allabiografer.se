@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Skutskär Rio Bio",
+  "name": "Rio Bio",
   "about": {
     "@id": "../MovieTheater/Skutsk%C3%A4r%20Rio%20Bio.jsonld"
   },

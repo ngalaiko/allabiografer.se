@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Eksjö Metropol",
+  "name": "Metropol",
   "about": {
     "@id": "../MovieTheater/Eksj%C3%B6%20Metropol.jsonld"
   },

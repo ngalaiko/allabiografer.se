@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Vittangi Bio Skandia",
+  "name": "Bio Skandia",
   "about": {
     "@id": "../MovieTheater/Vittangi%20Bio%20Skandia.jsonld"
   },

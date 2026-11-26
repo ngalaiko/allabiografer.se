@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Laholm Maxim",
+  "name": "Maxim",
   "about": {
     "@id": "../MovieTheater/Laholm%20Maxim.jsonld"
   },

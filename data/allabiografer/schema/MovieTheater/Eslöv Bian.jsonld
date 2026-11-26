@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Eslöv Bian",
+  "name": "Bian",
+  "alternateName": "Eslöv Bian",
   "containedInPlace": {
     "@id": "../City/Esl%C3%B6v.jsonld"
   },

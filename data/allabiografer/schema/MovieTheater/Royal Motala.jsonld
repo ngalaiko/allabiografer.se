@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Royal Motala",
+  "name": "Royal",
+  "alternateName": "Royal Motala",
   "containedInPlace": {
     "@id": "../City/Motala.jsonld"
   },

@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Stockholm Årsta Folkets Hus",
+  "name": "Årsta Folkets Hus",
   "about": {
     "@id": "../MovieTheater/Stockholm%20%C3%85rsta%20Folkets%20Hus.jsonld"
   },

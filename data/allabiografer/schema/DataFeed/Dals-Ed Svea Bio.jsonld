@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Dals-Ed Svea Bio",
+  "name": "Svea Bio",
   "about": {
     "@id": "../MovieTheater/Dals-Ed%20Svea%20Bio.jsonld"
   },

@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Visingsö Ö-bion",
+  "name": "Ö-bion",
+  "alternateName": "Visingsö Ö-bion",
   "containedInPlace": {
     "@id": "../City/Visings%C3%B6.jsonld"
   },

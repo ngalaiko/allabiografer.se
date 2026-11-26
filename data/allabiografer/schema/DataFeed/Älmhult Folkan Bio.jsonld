@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Älmhult Folkan Bio",
+  "name": "Folkan Bio",
   "about": {
     "@id": "../MovieTheater/%C3%84lmhult%20Folkan%20Bio.jsonld"
   },

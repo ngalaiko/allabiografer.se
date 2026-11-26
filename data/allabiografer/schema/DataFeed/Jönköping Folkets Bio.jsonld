@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Jönköping Folkets Bio",
+  "name": "Folkets Bio",
   "about": {
     "@id": "../MovieTheater/J%C3%B6nk%C3%B6ping%20Folkets%20Bio.jsonld"
   },

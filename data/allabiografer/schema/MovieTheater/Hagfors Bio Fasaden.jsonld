@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Hagfors Bio Fasaden",
+  "name": "Bio Fasaden",
+  "alternateName": "Hagfors Bio Fasaden",
   "containedInPlace": {
     "@id": "../City/Hagfors.jsonld"
   },

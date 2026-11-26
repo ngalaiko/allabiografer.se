@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Vårgårda Rialto Bio",
+  "name": "Rialto Bio",
   "about": {
     "@id": "../MovieTheater/V%C3%A5rg%C3%A5rda%20Rialto%20Bio.jsonld"
   },

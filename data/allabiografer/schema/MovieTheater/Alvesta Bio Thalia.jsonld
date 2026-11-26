@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Alvesta Bio Thalia",
+  "name": "Bio Thalia",
+  "alternateName": "Alvesta Bio Thalia",
   "containedInPlace": {
     "@id": "../City/Alvesta.jsonld"
   },

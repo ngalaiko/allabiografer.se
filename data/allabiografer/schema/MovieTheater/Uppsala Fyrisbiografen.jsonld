@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Uppsala Fyrisbiografen",
+  "name": "Fyrisbiografen",
+  "alternateName": "Uppsala Fyrisbiografen",
   "containedInPlace": {
     "@id": "../City/Uppsala.jsonld"
   },

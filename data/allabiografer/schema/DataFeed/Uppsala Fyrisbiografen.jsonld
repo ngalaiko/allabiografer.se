@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Uppsala Fyrisbiografen",
+  "name": "Fyrisbiografen",
   "about": {
     "@id": "../MovieTheater/Uppsala%20Fyrisbiografen.jsonld"
   },

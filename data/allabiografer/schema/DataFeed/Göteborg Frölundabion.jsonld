@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Göteborg Frölundabion",
+  "name": "Frölundabion",
   "about": {
     "@id": "../MovieTheater/G%C3%B6teborg%20Fr%C3%B6lundabion.jsonld"
   },

@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Ellös Parkens bio",
+  "name": "Parkens Bio",
   "about": {
     "@id": "../MovieTheater/Ell%C3%B6s%20Parkens%20bio.jsonld"
   },

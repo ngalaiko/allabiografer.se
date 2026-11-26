@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Löttorp Centrum Bio",
+  "name": "Centrumbion",
   "about": {
     "@id": "../MovieTheater/L%C3%B6ttorp%20Centrum%20Bio.jsonld"
   },

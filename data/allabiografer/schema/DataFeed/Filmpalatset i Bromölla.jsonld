@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Filmpalatset i Bromölla",
+  "name": "Filmpalatset",
   "about": {
     "@id": "../MovieTheater/Filmpalatset%20i%20Brom%C3%B6lla.jsonld"
   },

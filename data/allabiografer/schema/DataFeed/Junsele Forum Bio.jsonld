@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Junsele Forum Bio",
+  "name": "Forum Bio",
   "about": {
     "@id": "../MovieTheater/Junsele%20Forum%20Bio.jsonld"
   },

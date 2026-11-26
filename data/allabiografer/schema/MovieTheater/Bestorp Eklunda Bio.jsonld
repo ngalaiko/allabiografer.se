@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Bestorp Eklunda Bio",
+  "name": "Eklunda Bio",
+  "alternateName": "Bestorp Eklunda Bio",
   "containedInPlace": {
     "@id": "../City/Bestorp.jsonld"
   },

@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Göteborg Bio Aftonstjärnan",
+  "name": "Bio Aftonstjärnan",
+  "alternateName": "Göteborg Bio Aftonstjärnan",
   "containedInPlace": {
     "@id": "../City/G%C3%B6teborg.jsonld"
   },

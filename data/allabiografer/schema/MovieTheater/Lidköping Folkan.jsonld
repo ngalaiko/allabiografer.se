@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Lidköping Folkan",
+  "name": "Folkan",
+  "alternateName": "Lidköping Folkan",
   "containedInPlace": {
     "@id": "../City/Lidk%C3%B6ping.jsonld"
   },

@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Röda Kvarn Ängelholm",
+  "name": "Röda Kvarn",
   "about": {
     "@id": "../MovieTheater/R%C3%B6da%20Kvarn%20%C3%84ngelholm.jsonld"
   },

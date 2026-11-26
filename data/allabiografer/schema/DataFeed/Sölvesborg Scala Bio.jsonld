@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Sölvesborg Scala Bio",
+  "name": "Scala Bio",
   "about": {
     "@id": "../MovieTheater/S%C3%B6lvesborg%20Scala%20Bio.jsonld"
   },

@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Visby Folkets Bio Betty",
+  "name": "Folkets Bio Betty",
   "about": {
     "@id": "../MovieTheater/Visby%20Folkets%20Bio%20Betty.jsonld"
   },

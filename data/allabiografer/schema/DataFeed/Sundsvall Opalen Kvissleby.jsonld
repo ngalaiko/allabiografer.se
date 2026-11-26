@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Sundsvall Opalen Kvissleby",
+  "name": "Bio Opalen",
   "about": {
     "@id": "../MovieTheater/Sundsvall%20Opalen%20Kvissleby.jsonld"
   },

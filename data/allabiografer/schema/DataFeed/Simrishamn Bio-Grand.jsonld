@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Simrishamn Bio-Grand",
+  "name": "Bio-Grand",
   "about": {
     "@id": "../MovieTheater/Simrishamn%20Bio-Grand.jsonld"
   },

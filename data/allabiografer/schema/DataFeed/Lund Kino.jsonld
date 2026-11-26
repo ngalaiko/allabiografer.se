@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Lund Kino",
+  "name": "Kino",
   "about": {
     "@id": "../MovieTheater/Lund%20Kino.jsonld"
   },

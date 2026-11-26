@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Flen Saga Bio",
+  "name": "Saga Bio",
   "about": {
     "@id": "../MovieTheater/Flen%20Saga%20Bio.jsonld"
   },

@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Kosta Folkbio",
+  "name": "Folkbio",
   "about": {
     "@id": "../MovieTheater/Kosta%20Folkbio.jsonld"
   },

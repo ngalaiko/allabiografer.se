@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Gränna Grenna Bio",
+  "name": "Grenna Bio",
   "about": {
     "@id": "../MovieTheater/Gr%C3%A4nna%20Grenna%20Bio.jsonld"
   },

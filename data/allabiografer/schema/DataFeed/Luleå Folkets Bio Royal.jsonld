@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Luleå Folkets Bio Royal",
+  "name": "Folkets Bio Royal",
   "about": {
     "@id": "../MovieTheater/Lule%C3%A5%20Folkets%20Bio%20Royal.jsonld"
   },

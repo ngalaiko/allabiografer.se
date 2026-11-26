@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Stockholm Skärisbiografen",
+  "name": "Skärisbiografen",
   "about": {
     "@id": "../MovieTheater/Stockholm%20Sk%C3%A4risbiografen.jsonld"
   },

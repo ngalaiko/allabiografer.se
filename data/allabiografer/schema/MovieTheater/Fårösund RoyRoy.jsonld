@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Fårösund RoyRoy",
+  "name": "RoyRoy",
+  "alternateName": "Fårösund RoyRoy",
   "containedInPlace": {
     "@id": "../City/F%C3%A5r%C3%B6sund.jsonld"
   },

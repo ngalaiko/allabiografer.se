@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Södertälje Mölnbo Bio",
+  "name": "Mölnbo Bio",
   "about": {
     "@id": "../MovieTheater/S%C3%B6dert%C3%A4lje%20M%C3%B6lnbo%20Bio.jsonld"
   },

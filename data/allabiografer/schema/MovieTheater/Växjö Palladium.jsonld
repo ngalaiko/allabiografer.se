@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Växjö Palladium",
+  "name": "Palladium",
+  "alternateName": "Växjö Palladium",
   "containedInPlace": {
     "@id": "../City/V%C3%A4xj%C3%B6.jsonld"
   },

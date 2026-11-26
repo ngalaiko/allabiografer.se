@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Åmål Saga Bio",
+  "name": "Saga Bio",
   "about": {
     "@id": "../MovieTheater/%C3%85m%C3%A5l%20Saga%20Bio.jsonld"
   },

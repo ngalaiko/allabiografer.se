@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Borrby Bio",
+  "name": "Borrby Biograf",
   "about": {
     "@id": "../MovieTheater/Borrby%20Bio.jsonld"
   },

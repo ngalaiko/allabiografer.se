@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Skene Bio Folkan",
+  "name": "Bio Folkan",
+  "alternateName": "Skene Bio Folkan",
   "containedInPlace": {
     "@id": "../City/Skene.jsonld"
   },

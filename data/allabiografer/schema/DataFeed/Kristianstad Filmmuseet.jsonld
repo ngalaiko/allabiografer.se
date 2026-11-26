@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Kristianstad Filmmuseet",
+  "name": "Filmmuseet",
   "about": {
     "@id": "../MovieTheater/Kristianstad%20Filmmuseet.jsonld"
   },

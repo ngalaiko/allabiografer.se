@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Enköping Sagabiograferna",
+  "name": "Sagabiograferna",
   "about": {
     "@id": "../MovieTheater/Enk%C3%B6ping%20Sagabiograferna.jsonld"
   },

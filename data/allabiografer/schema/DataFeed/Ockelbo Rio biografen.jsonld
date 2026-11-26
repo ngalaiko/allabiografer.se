@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Ockelbo Rio biografen",
+  "name": "Rio Biografen",
   "about": {
     "@id": "../MovieTheater/Ockelbo%20Rio%20biografen.jsonld"
   },

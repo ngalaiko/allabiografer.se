@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Järfälla Folkets Hus Kallhäll",
+  "name": "Folkets Hus Kallhäll",
   "about": {
     "@id": "../MovieTheater/J%C3%A4rf%C3%A4lla%20Folkets%20Hus%20Kallh%C3%A4ll.jsonld"
   },

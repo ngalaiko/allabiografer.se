@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Saga Vetlanda",
+  "name": "Saga",
+  "alternateName": "Saga Vetlanda",
   "containedInPlace": {
     "@id": "../City/Vetlanda.jsonld"
   },

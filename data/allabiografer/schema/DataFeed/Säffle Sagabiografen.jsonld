@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Säffle Sagabiografen",
+  "name": "Sagabiografen",
   "about": {
     "@id": "../MovieTheater/S%C3%A4ffle%20Sagabiografen.jsonld"
   },

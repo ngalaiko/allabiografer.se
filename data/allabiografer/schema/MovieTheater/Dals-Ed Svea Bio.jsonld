@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Dals-Ed Svea Bio",
+  "name": "Svea Bio",
+  "alternateName": "Dals-Ed Svea Bio",
   "containedInPlace": {
     "@id": "../City/Dals-Ed.jsonld"
   },

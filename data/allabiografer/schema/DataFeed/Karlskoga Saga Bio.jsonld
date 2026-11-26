@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Karlskoga Saga Bio",
+  "name": "Saga Bio",
   "about": {
     "@id": "../MovieTheater/Karlskoga%20Saga%20Bio.jsonld"
   },

@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Åkersberga Facklan",
+  "name": "Facklan",
   "about": {
     "@id": "../MovieTheater/%C3%85kersberga%20Facklan.jsonld"
   },

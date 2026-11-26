@@ -52,8 +52,9 @@ def test_registry_links_and_source_identifiers():
 
     for path in cinemas:
         entity = read_entity(path, "MovieTheater")
-        # IDs disambiguate shared names with the locality; names are as displayed.
+        # IDs disambiguate shared names with the locality; names are the cinema's own, as displayed.
         assert "(" not in entity["name"], path
+        assert entity.get("alternateName") != entity["name"], path
         assert container(path, entity) in cities
         address = entity["address"]
         assert address["@type"] == "PostalAddress"

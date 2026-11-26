@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Knivsta Blå Wingen Bio",
+  "name": "Blå Wingen Bio",
   "about": {
     "@id": "../MovieTheater/Knivsta%20Bl%C3%A5%20Wingen%20Bio.jsonld"
   },

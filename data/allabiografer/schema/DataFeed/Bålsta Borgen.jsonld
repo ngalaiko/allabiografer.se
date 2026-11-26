@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Bålsta Borgen",
+  "name": "Borgen",
   "about": {
     "@id": "../MovieTheater/B%C3%A5lsta%20Borgen.jsonld"
   },

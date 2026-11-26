@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Sölvesborg Scala Bio",
+  "name": "Scala Bio",
+  "alternateName": "Sölvesborg Scala Bio",
   "containedInPlace": {
     "@id": "../City/S%C3%B6lvesborg.jsonld"
   },

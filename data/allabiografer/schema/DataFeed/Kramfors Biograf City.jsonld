@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Kramfors Biograf City",
+  "name": "Biograf City",
   "about": {
     "@id": "../MovieTheater/Kramfors%20Biograf%20City.jsonld"
   },

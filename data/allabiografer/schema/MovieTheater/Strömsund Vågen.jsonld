@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Strömsund Vågen",
+  "name": "Vågen",
+  "alternateName": "Strömsund Vågen",
   "containedInPlace": {
     "@id": "../City/Str%C3%B6msund.jsonld"
   },

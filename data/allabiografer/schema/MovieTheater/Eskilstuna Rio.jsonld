@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Eskilstuna Rio",
+  "name": "Rio",
+  "alternateName": "Eskilstuna Rio",
   "containedInPlace": {
     "@id": "../City/Eskilstuna.jsonld"
   },

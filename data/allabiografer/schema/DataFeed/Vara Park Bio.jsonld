@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Vara Park Bio",
+  "name": "Park Bio",
   "about": {
     "@id": "../MovieTheater/Vara%20Park%20Bio.jsonld"
   },

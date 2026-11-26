@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Löttorp Centrum Bio",
+  "name": "Centrumbion",
+  "alternateName": "Löttorp Centrum Bio",
   "containedInPlace": {
     "@id": "../City/L%C3%B6ttorp.jsonld"
   },

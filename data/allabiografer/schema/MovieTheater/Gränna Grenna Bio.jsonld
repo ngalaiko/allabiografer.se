@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Gränna Grenna Bio",
+  "name": "Grenna Bio",
+  "alternateName": "Gränna Grenna Bio",
   "containedInPlace": {
     "@id": "../City/Gr%C3%A4nna.jsonld"
   },

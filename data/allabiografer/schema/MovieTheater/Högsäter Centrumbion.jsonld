@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Högsäter Centrumbion",
+  "name": "Centrumbion",
+  "alternateName": "Högsäter Centrumbion",
   "containedInPlace": {
     "@id": "../City/H%C3%B6gs%C3%A4ter.jsonld"
   },

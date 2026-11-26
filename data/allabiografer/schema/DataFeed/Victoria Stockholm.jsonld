@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Victoria Stockholm",
+  "name": "Victoria",
   "about": {
     "@id": "../MovieTheater/Victoria%20Stockholm.jsonld"
   },

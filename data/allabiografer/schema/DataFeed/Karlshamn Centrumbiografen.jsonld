@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Karlshamn Centrumbiografen",
+  "name": "Centrumbiografen",
   "about": {
     "@id": "../MovieTheater/Karlshamn%20Centrumbiografen.jsonld"
   },

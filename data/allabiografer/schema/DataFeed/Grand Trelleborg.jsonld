@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Grand Trelleborg",
+  "name": "Grand",
   "about": {
     "@id": "../MovieTheater/Grand%20Trelleborg.jsonld"
   },

@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Visingsö Ö-bion",
+  "name": "Ö-bion",
   "about": {
     "@id": "../MovieTheater/Visings%C3%B6%20%C3%96-bion.jsonld"
   },

@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Svenljunga Teaterbiografen",
+  "name": "Teaterbiografen",
+  "alternateName": "Svenljunga Teaterbiografen",
   "containedInPlace": {
     "@id": "../City/Svenljunga.jsonld"
   },

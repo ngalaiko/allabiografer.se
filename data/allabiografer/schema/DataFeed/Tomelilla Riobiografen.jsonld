@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Tomelilla Riobiografen",
+  "name": "Riobiografen",
   "about": {
     "@id": "../MovieTheater/Tomelilla%20Riobiografen.jsonld"
   },

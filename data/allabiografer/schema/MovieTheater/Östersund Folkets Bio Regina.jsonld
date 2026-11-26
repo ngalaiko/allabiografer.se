@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Östersund Folkets Bio Regina",
+  "name": "Folkets Bio Regina",
+  "alternateName": "Östersund Folkets Bio Regina",
   "containedInPlace": {
     "@id": "../City/%C3%96stersund.jsonld"
   },

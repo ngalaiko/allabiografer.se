@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Bålsta Borgen",
+  "name": "Borgen",
+  "alternateName": "Bålsta Borgen",
   "containedInPlace": {
     "@id": "../City/B%C3%A5lsta.jsonld"
   },

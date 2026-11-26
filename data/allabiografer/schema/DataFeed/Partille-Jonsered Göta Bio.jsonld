@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Partille-Jonsered Göta Bio",
+  "name": "Göta Bio",
   "about": {
     "@id": "../MovieTheater/Partille-Jonsered%20G%C3%B6ta%20Bio.jsonld"
   },

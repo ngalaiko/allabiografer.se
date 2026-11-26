@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Borås Bio Röda Kvarn",
+  "name": "Bio Röda Kvarn",
+  "alternateName": "Borås Bio Röda Kvarn",
   "containedInPlace": {
     "@id": "../City/Bor%C3%A5s.jsonld"
   },

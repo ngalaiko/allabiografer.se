@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Saga Mora",
+  "name": "Saga",
+  "alternateName": "Saga Mora",
   "containedInPlace": {
     "@id": "../City/Mora.jsonld"
   },

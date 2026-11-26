@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Hallstahammar Saga",
+  "name": "Saga",
   "about": {
     "@id": "../MovieTheater/Hallstahammar%20Saga.jsonld"
   },

@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Piteå Bio 3:an",
+  "name": "Bio 3:an",
+  "alternateName": "Piteå Bio 3:an",
   "containedInPlace": {
     "@id": "../City/Pite%C3%A5.jsonld"
   },

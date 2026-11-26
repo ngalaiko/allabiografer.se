@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Vårgårda Rialto Bio",
+  "name": "Rialto Bio",
+  "alternateName": "Vårgårda Rialto Bio",
   "containedInPlace": {
     "@id": "../City/V%C3%A5rg%C3%A5rda.jsonld"
   },

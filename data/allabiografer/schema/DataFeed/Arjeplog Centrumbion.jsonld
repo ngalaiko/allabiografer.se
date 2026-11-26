@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Arjeplog Centrumbion",
+  "name": "Centrumbion",
   "about": {
     "@id": "../MovieTheater/Arjeplog%20Centrumbion.jsonld"
   },

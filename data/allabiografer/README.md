@@ -12,7 +12,7 @@ Run `uv run --group parse --group build allabiografer`, optionally limited to th
 
 Checked in: `MovieTheater`, `DataFeed`, `City`, `AdministrativeArea` (län), and `Country`. IDs are Swedish names; shared cinema names get the locality in parentheses. `containedInPlace` links each cinema to its city, county, and `Country/Sverige.jsonld`. County names and codes are from [SCB](https://www.scb.se/hitta-statistik/regional-statistik-och-kartor/regionala-indelningar/lan-och-kommuner/lan-och-kommuner-i-kodnummerordning/); locality assignments use [GeoNames](https://www.geonames.org/) (CC BY 4.0), with ambiguous names checked against venue locations.
 
-`MovieTheater.url` is the venue or operator's public website, omitted when unknown.
+`MovieTheater.url` is the venue or operator's public website, omitted when unknown. `name` is the cinema's own name, without the town prefix ticketing sites add ("Göteborg Hagabion" is Hagabion); the town stays where it is part of the name or of a chain branch's ("Arboga Bio", "Filmstaden Lund"). A former name is kept as `alternateName`; its old page becomes a redirect page.
 
 A `DataFeed` is one published programme. Its `about` is the cinema the screenings take place in; its one `PropertyValue` identifier, `allabiografer:schedule:<adapter>` with the adapter's venue ID, tells fetch and parse where to read it. Each source listing belongs to one feed. Most cinemas have one feed; a cinema whose screenings are also published by an organiser, such as a film society, has one per publisher. Such feeds name the organiser as `publisher`, and their screenings carry it as `organizer`.
 
@@ -55,6 +55,6 @@ Each action's `instrument` is a `SoftwareSourceCode` entity naming the module it
 
 ## Website
 
-`www/` is the allabiografer.se site rendered from the latest merged `Dataset`, regenerated on every run and not checked in. `src/allabiografer/site/` holds the page code, templates, styles, scripts and fonts; `render.py` translates the merged graph into its page data. Each programme has an `index.md` and an `index.jsonld`.
+`www/` is the allabiografer.se site rendered from the latest merged `Dataset`, regenerated on every run and not checked in. `src/allabiografer/site/` holds the page code, templates, styles, scripts and fonts; `render.py` translates the merged graph into its page data. Each programme has an `index.md` and an `index.jsonld`. Former film and cinema slugs are static redirect pages: a meta refresh, a canonical link to the new address, `noindex`, and a script that keeps the URL fragment.
 
 Posters are cropped and resized to WebP at 104, 125, 250 and 500 px and stored as `ImageObject`s in `assets/`; source URLs are downloaded into the store first. `www/posters/` holds symlinks to those assets, so image bytes are stored once; a deploy must copy them as files.

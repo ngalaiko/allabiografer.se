@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Tranemo Bio Tranan",
+  "name": "Bio Tranan",
+  "alternateName": "Tranemo Bio Tranan",
   "containedInPlace": {
     "@id": "../City/Tranemo.jsonld"
   },

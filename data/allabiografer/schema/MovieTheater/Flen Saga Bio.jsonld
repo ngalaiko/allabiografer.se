@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Flen Saga Bio",
+  "name": "Saga Bio",
+  "alternateName": "Flen Saga Bio",
   "containedInPlace": {
     "@id": "../City/Flen.jsonld"
   },

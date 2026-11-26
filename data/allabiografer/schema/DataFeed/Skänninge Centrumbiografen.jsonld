@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Skänninge Centrumbiografen",
+  "name": "Centrumbiografen",
   "about": {
     "@id": "../MovieTheater/Sk%C3%A4nninge%20Centrumbiografen.jsonld"
   },

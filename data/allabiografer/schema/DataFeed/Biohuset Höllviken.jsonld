@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Biohuset Höllviken",
+  "name": "Biohuset",
   "about": {
     "@id": "../MovieTheater/Biohuset%20H%C3%B6llviken.jsonld"
   },

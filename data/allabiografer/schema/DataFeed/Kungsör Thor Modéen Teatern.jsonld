@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Kungsör Thor Modéen Teatern",
+  "name": "Thor Modéen Teatern",
   "about": {
     "@id": "../MovieTheater/Kungs%C3%B6r%20Thor%20Mod%C3%A9en%20Teatern.jsonld"
   },

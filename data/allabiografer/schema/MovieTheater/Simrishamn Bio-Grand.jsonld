@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Simrishamn Bio-Grand",
+  "name": "Bio-Grand",
+  "alternateName": "Simrishamn Bio-Grand",
   "containedInPlace": {
     "@id": "../City/Simrishamn.jsonld"
   },

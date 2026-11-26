@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Botkyrka Biograf Sländan Tullinge",
+  "name": "Biograf Sländan",
   "about": {
     "@id": "../MovieTheater/Botkyrka%20Biograf%20Sl%C3%A4ndan%20Tullinge.jsonld"
   },

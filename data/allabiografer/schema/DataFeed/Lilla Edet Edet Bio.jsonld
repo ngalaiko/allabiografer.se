@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Lilla Edet Edet Bio",
+  "name": "Edet Bio",
   "about": {
     "@id": "../MovieTheater/Lilla%20Edet%20Edet%20Bio.jsonld"
   },

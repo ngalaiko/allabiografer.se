@@ -102,6 +102,8 @@ def site_data(graph: Graph, merged: Path, out: Path, *, today: date | None = Non
         cinema = graph.read(path)
         city = graph.read(graph.resolve(path, cinema["containedInPlace"]))["name"]
         venues[path] = Venue(name=cinema["name"], city=city, address=cinema.get("address", {}).get("streetAddress", ""))
+        if former := cinema.get("alternateName"):
+            sd.cinema_aliases[(city, pages._slugify_sv(former))] = pages._slugify_sv(cinema["name"])
     sd.venues = {(venue.city, venue.name): venue for venue in venues.values()}
 
     downloaded = stored_downloads(graph)

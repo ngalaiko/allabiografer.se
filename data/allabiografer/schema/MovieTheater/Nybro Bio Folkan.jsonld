@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Nybro Bio Folkan",
+  "name": "Bio Folkan",
+  "alternateName": "Nybro Bio Folkan",
   "containedInPlace": {
     "@id": "../City/Nybro.jsonld"
   },

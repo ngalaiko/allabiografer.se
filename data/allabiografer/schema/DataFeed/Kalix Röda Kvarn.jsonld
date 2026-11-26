@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Kalix Röda Kvarn",
+  "name": "Röda Kvarn",
   "about": {
     "@id": "../MovieTheater/Kalix%20R%C3%B6da%20Kvarn.jsonld"
   },

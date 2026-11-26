@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Göteborg Angereds Bio",
+  "name": "Angereds Bio",
   "about": {
     "@id": "../MovieTheater/G%C3%B6teborg%20Angereds%20Bio.jsonld"
   },

@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Oskarshamn Saga",
+  "name": "Saga",
+  "alternateName": "Oskarshamn Saga",
   "containedInPlace": {
     "@id": "../City/Oskarshamn.jsonld"
   },

@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Timrå Söråkers Folkets Hus",
+  "name": "Söråkers Folkets Hus",
   "about": {
     "@id": "../MovieTheater/Timr%C3%A5%20S%C3%B6r%C3%A5kers%20Folkets%20Hus.jsonld"
   },

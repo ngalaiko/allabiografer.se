@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Grästorp KonsertBio",
+  "name": "KonsertBio",
   "about": {
     "@id": "../MovieTheater/Gr%C3%A4storp%20KonsertBio.jsonld"
   },

@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Alvesta Bio Thalia",
+  "name": "Bio Thalia",
   "about": {
     "@id": "../MovieTheater/Alvesta%20Bio%20Thalia.jsonld"
   },

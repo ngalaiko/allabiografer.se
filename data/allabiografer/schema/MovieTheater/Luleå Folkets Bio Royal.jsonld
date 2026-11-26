@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Luleå Folkets Bio Royal",
+  "name": "Folkets Bio Royal",
+  "alternateName": "Luleå Folkets Bio Royal",
   "containedInPlace": {
     "@id": "../City/Lule%C3%A5.jsonld"
   },

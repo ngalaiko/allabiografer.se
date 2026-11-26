@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Lidköping Folkan",
+  "name": "Folkan",
   "about": {
     "@id": "../MovieTheater/Lidk%C3%B6ping%20Folkan.jsonld"
   },

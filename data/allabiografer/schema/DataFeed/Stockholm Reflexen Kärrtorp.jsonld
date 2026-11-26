@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Stockholm Reflexen Kärrtorp",
+  "name": "Biograf Reflexen",
   "about": {
     "@id": "../MovieTheater/Stockholm%20Reflexen%20K%C3%A4rrtorp.jsonld"
   },

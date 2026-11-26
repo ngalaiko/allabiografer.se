@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Göteborg Hagabion",
+  "name": "Hagabion",
   "about": {
     "@id": "../MovieTheater/G%C3%B6teborg%20Hagabion.jsonld"
   },

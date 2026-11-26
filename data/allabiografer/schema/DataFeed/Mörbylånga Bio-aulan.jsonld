@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Mörbylånga Bio-aulan",
+  "name": "Bio-aulan",
   "about": {
     "@id": "../MovieTheater/M%C3%B6rbyl%C3%A5nga%20Bio-aulan.jsonld"
   },

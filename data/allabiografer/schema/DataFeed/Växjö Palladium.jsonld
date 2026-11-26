@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Växjö Palladium",
+  "name": "Palladium",
   "about": {
     "@id": "../MovieTheater/V%C3%A4xj%C3%B6%20Palladium.jsonld"
   },

@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Stockholm Bio Kaskad Blackeberg",
+  "name": "Bio Kaskad",
   "about": {
     "@id": "../MovieTheater/Stockholm%20Bio%20Kaskad%20Blackeberg.jsonld"
   },

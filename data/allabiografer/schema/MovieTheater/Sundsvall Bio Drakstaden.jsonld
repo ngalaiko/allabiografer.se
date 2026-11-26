@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Sundsvall Bio Drakstaden",
+  "name": "Bio Drakstaden",
+  "alternateName": "Sundsvall Bio Drakstaden",
   "containedInPlace": {
     "@id": "../City/Sundsvall.jsonld"
   },

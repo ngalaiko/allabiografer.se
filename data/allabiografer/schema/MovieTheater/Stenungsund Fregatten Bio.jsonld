@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Stenungsund Fregatten Bio",
+  "name": "Fregatten Bio",
+  "alternateName": "Stenungsund Fregatten Bio",
   "containedInPlace": {
     "@id": "../City/Stenungsund.jsonld"
   },

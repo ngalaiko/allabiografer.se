@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Timrå Söråkers Folkets Hus",
+  "name": "Söråkers Folkets Hus",
+  "alternateName": "Timrå Söråkers Folkets Hus",
   "containedInPlace": {
     "@id": "../City/S%C3%B6r%C3%A5ker.jsonld"
   },

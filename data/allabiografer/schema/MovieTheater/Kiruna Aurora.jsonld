@@ -2,7 +2,8 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "MovieTheater",
-  "name": "Kiruna Aurora",
+  "name": "Aurora",
+  "alternateName": "Kiruna Aurora",
   "containedInPlace": {
     "@id": "../City/Kiruna.jsonld"
   },

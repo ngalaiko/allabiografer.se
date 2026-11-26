@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@id": "",
   "@type": "DataFeed",
-  "name": "Kilafors Biografteater",
+  "name": "Biografteatern",
   "about": {
     "@id": "../MovieTheater/Kilafors%20Biografteater.jsonld"
   },
