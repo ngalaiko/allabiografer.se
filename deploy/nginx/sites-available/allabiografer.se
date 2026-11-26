@@ -1,0 +1,73 @@
+server {
+    listen 8080;
+    server_name allabiografer.se;
+    include @conf@/rewrites.conf;
+
+    root /srv/www;
+    index index.html;
+    charset utf-8;
+    charset_types text/markdown;
+    add_header Vary Accept always;
+    add_header Cache-Control $cache_control always;
+
+    set_by_lua_block $accept_markdown { return require('markdown').accept(ngx.var.http_accept) }
+    header_filter_by_lua_block { require('markdown').link() }
+
+    location = /api/newsletter/signup {
+        limit_req zone=newsletter_signup burst=3 nodelay;
+        limit_req_status 429;
+        client_max_body_size 2k;
+        access_log off;
+        content_by_lua_block { require('newsletter').handle() }
+    }
+
+    location = /api/newsletter/preferences {
+        limit_req zone=newsletter_preferences burst=5 nodelay;
+        limit_req_status 429;
+        client_max_body_size 2k;
+        access_log off;
+        content_by_lua_block { require('newsletter').handle() }
+    }
+
+    location = /api/newsletter/native-unsubscribe {
+        client_max_body_size 2k;
+        access_log off;
+        content_by_lua_block { require('newsletter').handle() }
+    }
+
+    location = /api/newsletter/cohorts {
+        client_max_body_size 2k;
+        access_log off;
+        content_by_lua_block { require('newsletter').handle() }
+    }
+
+    location ^~ /salong/ {
+        resolver 1.1.1.1 8.8.8.8 valid=300s ipv6=off;
+        resolver_timeout 5s;
+        rewrite ^/salong/(.*)$ /$1 break;
+        proxy_pass https://$posthog_upstream;
+        proxy_set_header Host $posthog_upstream;
+        proxy_set_header X-Forwarded-For $posthog_client_ip;
+        proxy_set_header X-Real-IP $posthog_client_ip;
+        proxy_set_header Cookie "";
+        proxy_set_header Authorization "";
+        proxy_hide_header Set-Cookie;
+        proxy_ssl_server_name on;
+        proxy_ssl_name $posthog_upstream;
+        proxy_ssl_verify on;
+        proxy_ssl_verify_depth 2;
+        proxy_ssl_trusted_certificate @cacert@;
+        client_max_body_size 64m;
+        access_log off;
+    }
+
+    location ~ ^/(i/.*\.(?:css|woff2)|posters/.*\.webp)$ {
+        try_files $uri =404;
+    }
+
+    location / {
+        # Known programmes are retained as static pages even without showtimes.
+        # Unknown URLs are not equivalent to the homepage or city programme.
+        try_files $markdown_candidate $uri $uri/ =404;
+    }
+}

@@ -1,0 +1,64 @@
+name: Run
+
+# Fetch, parse, merge, enrich and render against the store in R2, then deploy the site.
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy the rendered site
+        type: boolean
+        default: true
+  push:
+    branches: [master]
+
+concurrency:
+  group: run
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: DeterminateSystems/nix-installer-action@v16
+      - uses: DeterminateSystems/magic-nix-cache-action@v8
+      # Immutable objects only: a cold cache costs time, never correctness.
+      - uses: actions/cache@v4
+        with:
+          path: data/allabiografer/.cache
+          key: store-${{ github.run_id }}
+          restore-keys: store-
+      - name: Run
+        id: run
+        # A failed source keeps its previous screenings; the site still deploys.
+        continue-on-error: true
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ vars.R2_BUCKET }}
+          R2_JURISDICTION: ${{ vars.R2_JURISDICTION }}
+          TMDB_ACCESS_TOKEN: ${{ secrets.TMDB_ACCESS_TOKEN }}
+          POSTHOG_PROJECT_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
+        # Code changes re-render the latest result; the schedule fetches.
+        run: |
+          if [[ "${{ github.event_name }}" == push ]]; then
+            nix run .#run -- --render-only
+          else
+            nix run .#run
+          fi
+      - name: Deploy
+        if: github.event_name != 'workflow_dispatch' || inputs.deploy
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: nix run .#deploy
+      - name: Report failed sources
+        if: steps.run.outcome == 'failure'
+        run: |
+          echo "::error::Some sources failed; see the Run step"
+          exit 1

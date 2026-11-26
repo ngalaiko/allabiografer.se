@@ -13,16 +13,30 @@
         "aarch64-darwin"
       ];
       forAll = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
+      server =
+        pkgs:
+        import ./deploy { inherit pkgs; }
+        // {
+          # The image for another platform, e.g. Fly's x86_64-linux from a Mac.
+          imageFor = system: (import ./deploy { pkgs = nixpkgs.legacyPackages.${system}; }).image;
+        };
       tools = pkgs: [
         pkgs.uv
         pkgs.python314
         pkgs.nodejs
         pkgs.git-lfs
+        # The production nginx, for the server and newsletter API tests.
+        (server pkgs).openresty
+        pkgs.crane
+        pkgs.flyctl
+        pkgs.gnutar
+        pkgs.gzip
       ];
       # uv runs the locked dependencies on Nix's Python; it never downloads its own.
       env = pkgs: {
         UV_PYTHON = "${pkgs.python314}/bin/python3";
         UV_PYTHON_DOWNLOADS = "never";
+        NEWSLETTER_LUA_PATH = "${pkgs.luajitPackages.lua-resty-http}/share/lua/5.1/?.lua;;";
       };
       task =
         pkgs: name: text:
@@ -53,7 +67,33 @@
             # With R2_BUCKET (and R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY) set, the
             # store is the bucket; otherwise data/allabiografer.
             run = ''uv run --locked --group parse --group build allabiografer "$@"'';
+            # The weekly newsletter: previews, or with --send, PostHog batches (POSTHOG_* variables).
+            newsletter = ''uv run --locked allabiografer-newsletter "$@"'';
             serve = ''python3 -m http.server "''${1:-8000}" --bind 127.0.0.1 -d data/allabiografer/www'';
+            # Push the server image with data/allabiografer/www as a layer, then deploy it to Fly
+            # (FLY_API_TOKEN; FLY_APP, default allabiografer-se). The image is built for Fly's x86_64.
+            deploy = ''
+              site=$(realpath "''${1:-data/allabiografer/www}")
+              [[ -f "$site/index.html" ]] || { echo "No rendered site at $site" >&2; exit 1; }
+              app="''${FLY_APP:-allabiografer-se}"
+              tag="registry.fly.io/$app:$(date -u +%Y%m%d%H%M%S)"
+              work=$(mktemp -d)
+              trap 'rm -rf "$work"' EXIT
+              # The site layer: /srv/www, readable by the server's user.
+              tar -C "$site" --transform 's,^\.,srv/www,' --owner=0 --group=0 --mode=a+rX \
+                --sort=name --mtime=@0 -cf "$work/www.tar" .
+              # Credentials stay in this process: a throwaway config, not ~/.docker.
+              export DOCKER_CONFIG="$work/docker"
+              crane auth login registry.fly.io -u x -p "$FLY_API_TOKEN"
+              gzip -dc ${(server pkgs).imageFor "x86_64-linux"} > "$work/server.tar"
+              crane push "$work/server.tar" "$tag.base"
+              crane append --base "$tag.base" --new_layer "$work/www.tar" --new_tag "$tag"
+              flyctl deploy --app "$app" --image "$tag" --ha=false --yes
+            '';
+            # The production nginx, newsletter API included, on data/allabiografer/www at :8080.
+            nginx = ''
+              SITE_ROOT=$(realpath "''${1:-data/allabiografer/www}") exec ${(server pkgs).serve}/bin/allabiografer-serve
+            '';
             # Mirror R2 and data/allabiografer; deletes what the source lacks, refuses a source without a run.
             pull = ''uv run --locked allabiografer-sync pull "$@"'';
             push = ''uv run --locked allabiografer-sync push "$@"'';
@@ -62,6 +102,11 @@
     {
       apps = forAll apps;
 
+      # The production server image, without the site: CI adds the rendered site as a layer.
+      packages = forAll (pkgs: {
+        image = (server pkgs).image;
+        default = (server pkgs).image;
+      });
 
       devShells = forAll (pkgs: {
         default = pkgs.mkShell {
