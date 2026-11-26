@@ -9,6 +9,7 @@ from allabiografer.model import Dimension, Presentation, PresentationSystem, Pro
 from allabiografer.model.version import ContentVersion
 
 from .graph import Graph
+from .movie_fields import normalise
 from .schedule import PREFIX
 
 # Picture and projection formats. Sound, seating and programme labels are not video formats.
@@ -76,9 +77,7 @@ def parse_capture(graph: Graph, adapter: str, captured: Path) -> Path:
                 continue
             feed_path, feed, cinema = feeds[venue[0]]
             if movie_id not in movies:
-                movie = dict(movie)
-                if not movie.get("url"):
-                    movie.pop("url", None)
+                movie = normalise(movie)
                 if isinstance(image := movie.get("image"), str) and image in downloads:
                     movie["image"] = graph.ref(downloads[image])
                 movies[movie_id] = graph.put(

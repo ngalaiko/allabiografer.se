@@ -159,4 +159,5 @@ def _film(sess: dict, detail: dict) -> Film:
         age_rating=str(detail.get("f_rating") or ""),
         poster_url=detail.get("f_graphic_url") or sess.get("f_graphic_url") or "",
         url=_film_url(sess.get("f_id", "")),
+        trailers=[url for url in (detail.get("f_trailer_url"), sess.get("f_trailer_url")) if url][:1],
     )

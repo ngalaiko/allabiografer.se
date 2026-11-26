@@ -176,7 +176,9 @@ def _details(html: str) -> dict:
         if not lines[0].startswith("Regi:"):
             details["genres"] = [g.strip() for g in re.split(r"[,/]", lines[0]) if g.strip()]
         for line in lines[1:]:
-            if _AGE.match(line):
+            if line.startswith("Regi:"):
+                details["directors"] = [n.strip() for n in re.split(r",|\s+och\s+|\s+&\s+", line[5:]) if n.strip()]
+            elif _AGE.match(line):
                 details["age_rating"] = line
             elif runtime := _runtime(line):
                 details["runtime"] = runtime

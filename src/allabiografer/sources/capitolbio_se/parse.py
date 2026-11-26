@@ -4,9 +4,10 @@ import json
 import re
 from datetime import datetime, timedelta
 
+from allabiografer.movie_fields import film_fields
 from allabiografer.sources.capitolbio_se.site import _DAYS, _details, _page, _showtimes
 
-from .._shared import STOCKHOLM, film_id, movie_fields
+from .._shared import STOCKHOLM, film_id
 
 
 def rows(inputs, today):
@@ -24,6 +25,7 @@ def rows(inputs, today):
                 html = (inputs / capture).read_text(encoding="utf-8")
                 film = _details(html, film)
                 credits = {"director": film.directors}
+                extra = {}
                 title = film.title
                 for script in _page(html).select('script[type="application/ld+json"]'):
                     try:
@@ -42,14 +44,14 @@ def rows(inputs, today):
                                     if p.get("name")
                                 ]:
                                     credits[role] = names
-                details[slug] = movie_fields(
-                    title,
-                    film.url,
-                    film.overview,
-                    film.runtime,
-                    credits,
-                    year=film.release_date,
-                )
+                            extra = {
+                                "genre": item.get("genre") or [],
+                                "languages": [item.get("inLanguage") or ""],
+                                # Capitol publishes landscape stills, no posters.
+                                "image": item.get("image") or "",
+                            }
+                details[slug] = film_fields(film, credits=credits, **extra)
+                details[slug]["name"] = title
             yield (
                 (None, "Capitol", "Sankt Eriksgatan 82"),
                 film_id(show.ticket_url),

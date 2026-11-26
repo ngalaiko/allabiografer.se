@@ -16,6 +16,7 @@ from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 
 from allabiografer import normalize as _version
+from allabiografer.movie_fields import film_fields, movie_fields  # noqa: F401 - adapter API
 
 STOCKHOLM = ZoneInfo("Europe/Stockholm")
 
@@ -77,8 +78,8 @@ def facts(*, format="", language="", subtitles="", source_texts=(), audio_role_t
 
 def single_venue_rows(venue_id, screenings):
     """Rows for adapters that publish one cinema and link each film to its own page."""
-    for show_id, start, ticket, audio, subtitles, url, title, description, runtime, credits in screenings:
-        slug = film_id(url)
+    for show_id, start, ticket, audio, subtitles, movie in screenings:
+        slug = film_id(movie["url"])
         yield (
             (venue_id,),
             show_id,
@@ -87,21 +88,5 @@ def single_venue_rows(venue_id, screenings):
             *facts(language=audio, subtitles=subtitles),
             slug,
             f"movie-{slug}.html",
-            movie_fields(title, url, description, runtime, credits),
+            movie,
         )
-
-
-def movie_fields(title, url, description, runtime, credits=None, *, year="", alternate=""):
-    return {
-        "name": title,
-        "url": url,
-        **({"description": description} if description else {}),
-        **({"duration": f"PT{runtime}M"} if runtime else {}),
-        **({"datePublished": year} if year else {}),
-        **({"alternateName": alternate} if alternate else {}),
-        **{
-            role: [{"@type": "Person", "name": name} for name in dict.fromkeys(names) if name]
-            for role, names in (credits or {}).items()
-            if names
-        },
-    }

@@ -3,9 +3,10 @@
 from datetime import datetime
 from urllib.parse import urlsplit
 
-from allabiografer.sources.cinemascenen_se.site import _SITES, _details, _showtimes
+from allabiografer.movie_fields import film_fields
+from allabiografer.sources.cinemascenen_se.site import _SITES, _actors, _details, _showtimes
 
-from .._shared import STOCKHOLM, movie_fields, stable_key
+from .._shared import STOCKHOLM, stable_key
 
 
 def movie_url(url, slug):
@@ -37,16 +38,15 @@ def rows(inputs, today):
             seen.add(show_id)
             if movie_id not in movies:
                 detail = inputs / f"movie-{movie_id}.html"
+                actors = []
                 if film.url and detail.is_file():
-                    film = _details(detail.read_text(encoding="utf-8"), film)
+                    page = detail.read_text(encoding="utf-8")
+                    film = _details(page, film)
+                    actors = _actors(page)
                     based_on = detail.name
                 else:
                     based_on = path.name
-                fields = movie_fields(film.title, url, film.overview, film.runtime, {"director": film.directors})
-                if film.poster_url:
-                    fields["image"] = film.poster_url
-                if film.age_rating:
-                    fields["contentRating"] = str(film.age_rating)
+                fields = film_fields(film, url, credits={"actor": actors})
                 movies[movie_id] = based_on, fields
             based_on, fields = movies[movie_id]
             yield (

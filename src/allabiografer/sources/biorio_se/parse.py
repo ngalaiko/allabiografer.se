@@ -5,7 +5,7 @@ from datetime import datetime
 
 from allabiografer.sources.biorio_se.site import _CANCELLED, _SITE, _label, _release_date, _show_date, _show_time
 
-from .._shared import STOCKHOLM, facts, movie_fields
+from .._shared import STOCKHOLM, _version, facts, movie_fields
 
 
 def rows(inputs, today):
@@ -28,6 +28,12 @@ def rows(inputs, today):
                 movie.get("duration"),
                 {"director": (movie.get("director") or "").split(", "), "actor": movie.get("cast") or []},
                 year=_release_date(movie),
+                genre=movie.get("genres") or [],
+                # The poster is AVIF; its JPEG share image is the same artwork.
+                image=movie.get("ogImageUrl") or movie.get("posterPath") or "",
+                languages=_version.languages(movie.get("language") or ""),
+                trailers=[movie.get("trailerUrl") or ""],
+                same_as=[f"https://www.themoviedb.org/movie/{movie['tmdbId']}"] if movie.get("tmdbId") else [],
             )
             if "visas i director's cut" in synopsis.casefold():
                 fields["version"] = "Director's Cut"

@@ -3,9 +3,10 @@
 from datetime import datetime
 
 from allabiografer.model import Film
+from allabiografer.movie_fields import film_fields
 from allabiografer.sources.wp_theatre.site import _SITES, _parse_production
 
-from .._shared import STOCKHOLM, movie_fields, stable_key
+from .._shared import STOCKHOLM, stable_key
 
 
 def rows(inputs, today):
@@ -16,15 +17,7 @@ def rows(inputs, today):
         film = next(records, None)
         if not isinstance(film, Film):
             continue
-        fields = movie_fields(
-            film.title,
-            film.url,
-            film.overview,
-            film.runtime,
-            {"director": film.directors},
-            year=film.release_date,
-            alternate=film.title_original,
-        )
+        fields = film_fields(film)
         for show in records:
             if show.date < today:
                 continue

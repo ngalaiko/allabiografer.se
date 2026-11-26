@@ -3,9 +3,10 @@
 import json
 import re
 
+from allabiografer.movie_fields import film_fields
 from allabiografer.sources.folkets_hus_och_parker.site import _PRIVATE_HIRE, _SITES, _film, _start
 
-from .._shared import STOCKHOLM, facts, movie_fields, stable_key
+from .._shared import STOCKHOLM, facts, stable_key
 
 
 def rows(inputs, today):
@@ -27,15 +28,12 @@ def rows(inputs, today):
             if not title or title in {_PRIVATE_HIRE, *site.excluded_titles}:
                 continue
             film = _film(feature, site=site)
-            fields = movie_fields(
-                film.title,
-                film.url,
-                film.overview,
+            fields = film_fields(
+                film,
                 # Other listings for this recording disagree on its length.
-                None if film.url.rstrip("/").endswith("/program/national-theatre-the-misanthrope") else film.runtime,
-                year=film.release_date,
-                alternate=film.title_original,
-                credits={"director": film.directors},
+                runtime=None
+                if film.url.rstrip("/").endswith("/program/national-theatre-the-misanthrope")
+                else film.runtime,
             )
             for show in entry.get("dates", []):
                 if not show.get("startDate") or not show.get("ticksterLink"):

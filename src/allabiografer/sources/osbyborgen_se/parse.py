@@ -4,6 +4,7 @@ from datetime import datetime
 from functools import partial
 from urllib.parse import urljoin
 
+from allabiografer.movie_fields import film_fields
 from allabiografer.sources.osbyborgen_se.site import (
     _ADDRESS,
     _CINEMA,
@@ -18,7 +19,7 @@ from allabiografer.sources.osbyborgen_se.site import (
 )
 
 from .._regional import year_from_capture
-from .._shared import STOCKHOLM, movie_fields, stable_key
+from .._shared import STOCKHOLM, stable_key
 
 
 def rows(inputs, today):
@@ -46,13 +47,9 @@ def rows(inputs, today):
             film = _film(session, detail)
             # The documentary page has the correct poster and trailer but a copied Minecraft synopsis.
             overview = "" if str(movie_id) == "335" and "A Minecraft Movie" in film.overview else film.overview
-            fields = movie_fields(film.title, film.url, overview, film.runtime, {"director": film.directors})
-            if film.poster_url:
-                fields["image"] = urljoin(_URL, film.poster_url)
-            if film.genres:
-                fields["genre"] = list(film.genres)
-            if film.age_rating:
-                fields["contentRating"] = film.age_rating
+            fields = film_fields(
+                film, description=overview, image=urljoin(_URL, film.poster_url) if film.poster_url else ""
+            )
             movies[key] = fields, detail.get("f_label")
         fields, label = movies[key]
         found = _label_facts(session.get("f_label"), label)

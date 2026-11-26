@@ -1,5 +1,6 @@
 """cinemascenen.se — five cinemas with dated programme rows."""
 
+import json
 import logging
 import re
 from collections.abc import Iterator
@@ -115,19 +116,38 @@ def _details(html: str, film: Film) -> Film:
         ) and "elementor-widget-text-editor" in prev.get("class", []):
             overview = " ".join(prev.get_text(" ", strip=True).split())
             break
-    directors = next(
-        (
-            widget.get_text(" ", strip=True)
-            for label, widget in pairwise(section.select(".elementor-widget"))
-            if label.get_text(strip=True) == "Regi" and "elementor-widget-text-editor" in widget.get("class", [])
-        ),
-        "",
-    )
+    directors = _credit(section, "Regi")
     poster = section.select_one(".elementor-widget-image img[src]")
+    trailers = [
+        url
+        for widget in section.select("[data-settings]")
+        if (url := json.loads(widget["data-settings"] or "{}").get("youtube_url"))
+    ]
     return replace(
         film,
         title=" ".join(heading.get_text(" ", strip=True).split()) or film.title,
         overview=overview,
         poster_url=urljoin(_URL, poster["src"]) if poster else "",
         directors=[name.strip() for name in directors.split(",") if name.strip()],
+        trailers=trailers,
     )
+
+
+def _credit(section, label: str) -> str:
+    """The text widget after a heading such as "Regi" or "Skådespelare"."""
+    return next(
+        (
+            widget.get_text(" ", strip=True)
+            for heading, widget in pairwise(section.select(".elementor-widget"))
+            if heading.get_text(strip=True) == label and "elementor-widget-text-editor" in widget.get("class", [])
+        ),
+        "",
+    )
+
+
+def _actors(html: str) -> list[str]:
+    """Cast from the film's Elementor section."""
+    heading = BeautifulSoup(html, "html.parser").select_one("h2.elementor-heading-title")
+    section = heading.find_parent(class_="e-parent") if heading else None
+    names = _credit(section, "Skådespelare") if section else ""
+    return [name.strip() for name in names.split(",") if name.strip()]

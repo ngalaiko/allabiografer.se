@@ -2,9 +2,10 @@
 
 from datetime import datetime
 
+from allabiografer.movie_fields import film_fields
 from allabiografer.sources.hypnostheatre_com.site import _ADDRESS, _CINEMA, _CITY, _showtimes
 
-from .._shared import STOCKHOLM, movie_fields, stable_key
+from .._shared import STOCKHOLM, stable_key
 
 
 def rows(inputs, today):
@@ -19,7 +20,7 @@ def rows(inputs, today):
         if key in seen:
             continue
         seen.add(key)
-        fields = movie_fields(film.title, "", film.overview, film.runtime, year=film.release_date)
+        fields = film_fields(film, "")
         yield (
             (None, _CINEMA, _ADDRESS, _CITY),
             key,

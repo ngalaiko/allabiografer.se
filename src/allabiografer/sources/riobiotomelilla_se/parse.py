@@ -1,10 +1,11 @@
 """Replay Rio Tomelilla's saved programme and movie details."""
 
-import re
 from datetime import datetime
 from pathlib import Path
 
 from bs4 import BeautifulSoup
+
+from allabiografer.movie_fields import booking_fields
 
 from .._shared import facts, movie_fields
 from . import BASE, STOCKHOLM, response_rows
@@ -36,9 +37,8 @@ def rows(inputs, today):
                     for role, key in (("director", "director_name"), ("actor", "actors_name"))
                 },
                 year=str(detail.get("production_year") or ""),
+                **booking_fields(detail),
             )
-            if re.fullmatch(r"tt\d+", imdb := str(detail.get("imdb_id") or "")):
-                fields.setdefault("sameAs", f"https://www.imdb.com/title/{imdb}")
             if rating := detail.get("rating_name") or row.get("rating_name"):
                 fields["contentRating"] = rating
             if poster := detail.get("movie_poster"):

@@ -5,7 +5,7 @@ from datetime import datetime
 
 from allabiografer.sources.bio_se.site import _cinema_url, _showtimes, _venue
 
-from .._shared import STOCKHOLM, facts, film_id, movie_fields, stable_key
+from .._shared import STOCKHOLM, facts, film_fields, film_id, stable_key
 from .fetch import OTHER_PROGRAMME_IDS, programme_city, venue_id
 
 # Cinemateket's 5 December programme distinguishes these same-title films.
@@ -51,12 +51,10 @@ def rows(inputs, today):
                 *facts(format=fmt, language=audio, subtitles=subtitles, source_texts=source_texts),
                 movie_id,
                 path.name,
-                movie_fields(
-                    film.title,
-                    film.url,
-                    film.overview,
-                    None if movie_id in UNVERIFIED_RUNTIMES else film.runtime,
-                    {"director": [director]} if director else None,
+                film_fields(
+                    film,
+                    runtime=None if movie_id in UNVERIFIED_RUNTIMES else film.runtime,
+                    credits={"director": [director]} if director else None,
                     year=year,
                 ),
             )

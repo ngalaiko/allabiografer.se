@@ -6,10 +6,11 @@ from types import SimpleNamespace
 
 from requests import ConnectionError as RequestConnectionError
 
+from allabiografer.movie_fields import details_fields
 from allabiografer.sources import _biosverige_api, _tickster
 from allabiografer.sources.biosverige_se.site import _SITES
 
-from .._shared import STOCKHOLM, facts, movie_fields, stable_key
+from .._shared import STOCKHOLM, facts, stable_key
 
 
 def tickster_path(inputs, url):
@@ -70,28 +71,8 @@ def rows(inputs, today):
                     programme, title, start.date(), start.time(), audio, subtitles
                 )
             if movie_id not in movies:
-                details = _biosverige_api.film_details(movie)
                 url = f"{site.url}/filmer/{movie['slug']}" if movie.get("slug") else ""
-                credits = {
-                    role: [name.strip() for name in (movie.get(key) or "").split(",") if name.strip()]
-                    for role, key in (("director", "director"), ("actor", "actors"))
-                }
-                fields = movie_fields(
-                    title,
-                    url,
-                    details["overview"],
-                    details["runtime"],
-                    credits,
-                    year=details["release_date"],
-                    alternate=details["title_original"],
-                )
-                for key, value in (
-                    ("image", details["poster_url"]),
-                    ("genre", details["genres"]),
-                    ("contentRating", details["age_rating"]),
-                ):
-                    if value:
-                        fields[key] = value
+                fields = details_fields(title, url, _biosverige_api.film_details(movie))
                 movies[movie_id] = fields
             yield (
                 (venue_id(site.url), site.name, site.address, site.city),

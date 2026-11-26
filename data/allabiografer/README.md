@@ -31,6 +31,8 @@ Generated and not checked in. Each run is an action:
 
 A run is an `UpdateAction` over the previous result (`targetCollection`) for the selected feeds (`object`): fetch and parse per adapter, then one merge. Each feed's screenings come from the newest parse covering it, so feeds not run, or whose adapter failed, keep their previous screenings. A show listed by several feeds of one cinema appears once, from the cinema's own feed. Screenings before the run day drop out.
 
+Source `Movie`s pass through `movie_fields.normalise`, so every adapter writes one vocabulary: `genre` from a fixed Swedish list (programme labels such as "Jul" or "Live på bio" drop), `contentRating` as "Barntillåten" or "Från 7/11/15/18 år", `inLanguage` as BCP 47 tags, `duration` in minutes, people as `Person`s and trailers as `VideoObject`s. Unrated and implausible values drop.
+
 Each `Movie` in a merged `Dataset` has a stable slug, its `allabiografer:film` identifier, and `url` `https://allabiografer.se/film/<slug>/`. Grouping is re-evaluated every run. A group reuses the oldest identity among its members, slugs are never reassigned, and slugs of joined films remain as `allabiografer:film-alias`.
 
 Actions record `startTime`, `endTime`, `actionStatus`, and `error` for failures. A failing adapter does not stop the others; the run exits non-zero after merging.

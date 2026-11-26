@@ -62,6 +62,8 @@ def _movie(identifier: int, film: dict) -> Movie:
         poster_path="",
         vote_average=None,
         age_rating=film.get("contentRating") or "",
+        original_language=next(iter(film.get("inLanguage") or []), ""),
+        spoken_languages=film.get("inLanguage") or None,
         directors=directors or None,
     )
 

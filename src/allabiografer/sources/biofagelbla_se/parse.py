@@ -1,5 +1,6 @@
 """Build Fågel Blå's JSON-LD catalogue from a saved fetch."""
 
+import html
 import json
 import re
 from datetime import datetime
@@ -7,13 +8,14 @@ from urllib.parse import parse_qs, urlsplit
 
 from allabiografer.sources.biofagelbla_se.site import _RUNTIME
 
-from .._shared import STOCKHOLM, film_id, read_page, single_venue_rows
+from .._shared import STOCKHOLM, film_id, movie_fields, read_page, single_venue_rows
 
 BASE = "https://biofagelbla.se"
 SOURCE = "biofagelbla_se"
 
 
-def credits(detail):
+def movie_data(detail):
+    """The page's JSON-LD Movie; directors arrive comma-joined in one Person."""
     for tag in detail.select('script[type="application/ld+json"]'):
         try:
             movie = json.loads(tag.get_text())
@@ -21,16 +23,15 @@ def credits(detail):
             continue
         if not isinstance(movie, dict) or movie.get("@type") != "Movie":
             continue
-        result = {}
-        for role in ("director", "actor"):
-            people = movie.get(role)
-            result[role] = [
-                name.strip()
-                for person in (people if isinstance(people, list) else [people])
-                if isinstance(person, dict) and isinstance(person.get("name"), str)
-                for name in (person["name"].split(",") if role == "director" else [person["name"]])
-                if name.strip()
-            ]
+        result = {key: movie[key] for key in ("image", "genre", "actor", "trailer") if movie.get(key)}
+        people = movie.get("director")
+        result["director"] = [
+            name.strip()
+            for person in (people if isinstance(people, list) else [people])
+            if isinstance(person, dict) and isinstance(person.get("name"), str)
+            for name in person["name"].split(",")
+            if name.strip()
+        ]
         return result
     return {}
 
@@ -78,10 +79,21 @@ def screenings(inputs, today):
             if duration := next((m for text in labels if (m := _RUNTIME.fullmatch(text))), None):
                 hours, minutes, only_minutes = duration.groups()
                 runtime = int(hours or 0) * 60 + int(minutes or only_minutes or 0)
-            details[movie] = (meta.get("content", "") if meta else "", runtime, credits(detail))
+            data = movie_data(detail)
+            trailer = detail.select_one('a[href*="youtu"]')
+            details[movie] = movie_fields(
+                title,
+                movie,
+                html.unescape(meta.get("content", "")) if meta else "",
+                runtime,
+                {"director": data.get("director"), "actor": data.get("actor")},
+                genre=data.get("genre") or [],
+                image=data.get("image") or "",
+                trailers=[trailer["href"]] if trailer else [],
+            )
         audio = next((text[7:] for text in labels if text.startswith("Språk: ")), "")
         subtitles = next((text[6:] for text in labels if text.startswith("Text: ")), "")
-        yield show_id, start, ticket, audio, subtitles, movie, title, *details[movie]
+        yield show_id, start, ticket, audio, subtitles, details[movie]
 
 
 def rows(inputs, today):

@@ -5,12 +5,13 @@ import re
 from bs4 import BeautifulSoup
 
 from allabiografer.model import title_key
+from allabiografer.movie_fields import details_fields
 from allabiografer.sources import _tickster
 from allabiografer.sources.tickster_se.site import _NOT_A_SHOWING, _PREFIX, _SCREEN, _SUFFIX, _runtime
 
 from .._shared import facts, stable_key
 from .fetch import candidates
-from .pages import Pages, source_movie
+from .pages import Pages
 
 _EXTRA_PREFIX = re.compile(r"^(Extravisning|Live på bio)\s*[:-]\s*", re.IGNORECASE)
 _COMBINED_VERSION = re.compile(r"\((\w+\.?\s*tal)\s*&\s*(\w+\.?\s*(?:txt|text))\)", re.IGNORECASE)
@@ -60,7 +61,7 @@ def rows(inputs, today):
         if slug not in films or (overview and not films[slug][1].get("description")):
             films[slug] = (
                 pages.filename(item.url),
-                source_movie(title, event.url, {"overview": overview, "runtime": _runtime(overview)}),
+                details_fields(title, event.url, {"overview": overview, "runtime": _runtime(overview)}),
             )
         street = location.select_one("[itemprop=streetAddress]")
         address = (street.get("content") or street.get_text(" ", strip=True)) if street else ""

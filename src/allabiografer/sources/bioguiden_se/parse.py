@@ -5,9 +5,10 @@ from datetime import datetime
 from requests import Response
 
 from allabiografer.model import Film, Venue
+from allabiografer.movie_fields import film_fields
 from allabiografer.sources.bioguiden_se.site import _SITES, _parse_pages
 
-from .._shared import STOCKHOLM, movie_fields, stable_key
+from .._shared import STOCKHOLM, stable_key
 
 
 def rows(inputs, today):
@@ -38,5 +39,5 @@ def rows(inputs, today):
                 item.presentation,
                 stable_key(film.key),
                 f"programme-{venue_key}.html",
-                movie_fields(film.title, film.url, film.overview, film.runtime),
+                film_fields(film),
             )

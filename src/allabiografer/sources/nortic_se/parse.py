@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 
 from allabiografer import normalize as _version
+from allabiografer.movie_fields import film_fields
 from allabiografer.sources.nortic_se.site import (
     _COMPOSER,
     _DUBBED,
@@ -19,7 +20,7 @@ from allabiografer.sources.nortic_se.site import (
     _title,
 )
 
-from .._shared import STOCKHOLM, facts, movie_fields, stable_key
+from .._shared import STOCKHOLM, facts, stable_key
 
 _VENUE_ALIASES = {
     "d97e37737b8573ad9ae80537": "e381546df50c3bd3bfeada04",
@@ -79,5 +80,5 @@ def rows(inputs, today):
                 ),
                 stable_key(film.key),
                 capture,
-                movie_fields(film.title, film.url, film.overview, film.runtime, alternate=film.title_original),
+                film_fields(film),
             )

@@ -3,11 +3,12 @@
 from datetime import datetime
 from urllib.parse import urljoin
 
+from allabiografer.movie_fields import details_fields
 from allabiografer.sources import _tickster
 from allabiografer.sources.hallundafolketshus_se import site as site
 
 from .._shared import STOCKHOLM, facts, stable_key
-from ..tickster_se.pages import Pages, source_movie
+from ..tickster_se.pages import Pages
 from .fetch import articles
 
 VENUE = (None, site._CINEMA, site._ADDRESS, site._CITY)
@@ -36,5 +37,5 @@ def rows(inputs, today):
             *facts(language=audio, subtitles=subtitles),
             stable_key(title.casefold()),
             pages.filename(url if html else site._URL),
-            source_movie(title, url, details),
+            details_fields(title, url, details),
         )

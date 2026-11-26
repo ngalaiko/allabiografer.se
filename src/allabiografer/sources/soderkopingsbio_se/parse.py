@@ -3,11 +3,12 @@
 import json
 from datetime import datetime
 
+from allabiografer.movie_fields import details_fields
 from allabiografer.sources import _biosverige_api
 from allabiografer.sources.soderkopingsbio_se.site import _ADDRESS, _CINEMA, _CITY, _MOVIE_PAGE, _TICKETS
 
 from .._shared import STOCKHOLM, facts, stable_key
-from ..tickster_se.pages import Pages, source_movie
+from ..tickster_se.pages import Pages
 from .fetch import SCHEDULE, showings
 
 VENUE = (None, _CINEMA, _ADDRESS, _CITY)
@@ -26,7 +27,7 @@ def rows(inputs, today):
         seen.add(show_id)
         slug = movie.get("slug")
         url = _MOVIE_PAGE + slug if slug else ""
-        fields = source_movie(title, url, _biosverige_api.film_details(movie))
+        fields = details_fields(title, url, _biosverige_api.film_details(movie))
         yield (
             VENUE,
             show_id,

@@ -5,6 +5,7 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup
 
+from allabiografer.movie_fields import booking_fields
 from allabiografer.sources.roxy_bio.site import _BASE, _VENUE, _showtimes
 
 from .._shared import STOCKHOLM, facts, movie_fields
@@ -39,6 +40,7 @@ def rows(inputs, today):
                 detail.get("running_time") or row.get("running_time"),
                 credits,
                 year=str(detail.get("production_year") or ""),
+                **booking_fields(detail),
             )
             if poster := detail.get("movie_poster"):
                 fields["image"] = f"{_BASE}/media/posters/{movie_id}/{poster}"

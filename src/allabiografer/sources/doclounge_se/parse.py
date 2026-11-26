@@ -2,9 +2,10 @@
 
 from datetime import datetime
 
+from allabiografer.movie_fields import details_fields
 from allabiografer.sources.doclounge_se.site import _FILM_URL, _events, _film_details, _film_slugs, _listed_details
 
-from .._shared import STOCKHOLM, facts, movie_fields, stable_key
+from .._shared import STOCKHOLM, facts, stable_key
 
 
 def rows(inputs, today):
@@ -34,12 +35,5 @@ def rows(inputs, today):
             *facts(language=details.get("language_label", ""), subtitles=details.get("subtitle_label", "")),
             stable_key(url or title),
             capture,
-            movie_fields(
-                title,
-                url,
-                details.get("overview", ""),
-                details.get("runtime"),
-                year=details.get("release_date", ""),
-                alternate=details.get("title_original", ""),
-            ),
+            details_fields(title, url, details),
         )

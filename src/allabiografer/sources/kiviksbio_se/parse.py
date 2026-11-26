@@ -4,6 +4,7 @@ from datetime import datetime
 from functools import partial
 from urllib.parse import urljoin
 
+from allabiografer.movie_fields import film_fields
 from allabiografer.sources.kiviksbio_se.site import (
     _ADDRESS,
     _CINEMA,
@@ -16,7 +17,7 @@ from allabiografer.sources.kiviksbio_se.site import (
 )
 
 from .._regional import year_from_capture
-from .._shared import STOCKHOLM, film_id, movie_fields, stable_key
+from .._shared import STOCKHOLM, film_id, stable_key
 
 
 def rows(inputs, today):
@@ -33,11 +34,7 @@ def rows(inputs, today):
         seen.add(show)
         capture = f"event-{film_id(url)}.html"
         detail = (inputs / capture).read_text(encoding="utf-8")
-        fields = movie_fields(film.title, url, _overview(detail), film.runtime, {"director": _directors(detail)})
-        if film.age_rating:
-            fields["contentRating"] = film.age_rating
-        if film.genres:
-            fields["genre"] = list(film.genres)
+        fields = film_fields(film, url, description=_overview(detail), credits={"director": _directors(detail)})
         yield (
             (None, _CINEMA, _ADDRESS, _CITY),
             show,

@@ -2,9 +2,10 @@
 
 import json
 
+from allabiografer.movie_fields import film_fields
 from allabiografer.sources.kraftenifinspang_se.site import _showtimes
 
-from .._shared import facts, movie_fields, stable_key
+from .._shared import facts, stable_key
 
 
 def rows(inputs, today):
@@ -27,7 +28,7 @@ def rows(inputs, today):
                 *facts(format=fmt, language=audio, subtitles=subtitles),
                 stable_key(film.key),
                 capture,
-                movie_fields(film.title, film.url, film.overview, None),
+                film_fields(film, runtime=None),
             )
         if page >= data["total_pages"]:
             return

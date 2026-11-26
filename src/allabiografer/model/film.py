@@ -27,6 +27,7 @@ class Film:
     url: str = ""
     original_languages: frozenset[Language] = frozenset()
     directors: list[str] = field(default_factory=list)
+    trailers: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -43,6 +44,7 @@ class Film:
             "url": self.url,
             "original_languages": sorted(language.value for language in self.original_languages),
             "directors": list(self.directors),
+            "trailers": list(self.trailers),
         }
 
     @classmethod
@@ -61,6 +63,7 @@ class Film:
             url=d.get("url") or "",
             original_languages=frozenset(Language(v) for v in d.get("original_languages", ())),
             directors=d.get("directors") or [],
+            trailers=d.get("trailers") or [],
         )
 
 

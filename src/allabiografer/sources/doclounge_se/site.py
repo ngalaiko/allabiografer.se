@@ -262,7 +262,18 @@ def _film_details(html: str) -> dict:
         "original_languages": _version.languages(language),
         "language_label": language,
         "subtitle_label": subtitles,
+        "directors": [d.get("director", "") for d in info.get("directors") or [] if d.get("director")],
+        "trailers": [_trailer(hero.get("trailer") or {})],
     }
+
+
+def _trailer(trailer: dict) -> str:
+    """YouTube ids sometimes arrive as whole watch URLs."""
+    if video := trailer.get("youtubeId"):
+        return video if video.startswith("http") else f"https://www.youtube.com/watch?v={video}"
+    if video := trailer.get("vimeoId"):
+        return video if video.startswith("http") else f"https://vimeo.com/{video}"
+    return ""
 
 
 def _poster_url(url: str) -> str:

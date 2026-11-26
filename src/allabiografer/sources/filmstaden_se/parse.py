@@ -3,9 +3,10 @@
 import json
 from datetime import datetime
 
+from allabiografer.movie_fields import film_fields
 from allabiografer.sources.filmstaden_se.site import _CINEMA_STATUS, _film, _screening
 
-from .._shared import STOCKHOLM, movie_fields
+from .._shared import STOCKHOLM
 from .fetch import venue_id
 
 
@@ -35,17 +36,12 @@ def rows(inputs, today):
             if movie_id not in films:
                 detail = json.loads((inputs / capture).read_bytes())
                 film = _film(movie, detail)
-                films[movie_id] = movie_fields(
-                    film.title,
-                    film.url,
-                    film.overview,
-                    film.runtime,
-                    {
+                films[movie_id] = film_fields(
+                    film,
+                    credits={
                         role: [p["displayName"] for p in detail.get(key) or [] if p.get("displayName")]
                         for role, key in (("director", "directors"), ("actor", "actors"))
                     },
-                    year=film.release_date,
-                    alternate=film.title_original,
                 )
             show = _screening(row, tmdb_id=None, cinema_name=name, city=city)
             yield (

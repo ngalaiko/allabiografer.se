@@ -1,5 +1,6 @@
 """Replay Filmhuset Palladium's saved HTML programme and event pages."""
 
+import re
 from datetime import datetime
 from functools import partial
 from urllib.parse import urljoin
@@ -18,6 +19,8 @@ from allabiografer.sources.palladiumbio_se.site import (
 
 from .._regional import year_from_capture
 from .._shared import STOCKHOLM, facts, movie_fields, stable_key
+
+_TRAILER = re.compile(r"youtube\.com/embed/([\w-]{11})")
 
 
 def rows(inputs, today):
@@ -38,11 +41,14 @@ def rows(inputs, today):
         url = urljoin(_URL, film.url) if film.url else ""
         capture = f"event-{stable_key(url)}.html" if url else "programme.html"
         detail = (inputs / capture).read_text(encoding="utf-8") if url else ""
-        fields = movie_fields(film.title, url, _overview(detail), None)
-        if not url:
-            fields.pop("url")
-        if image := _poster(posters, film.title, programme) or _hero(detail):
-            fields["image"] = image
+        trailer = _TRAILER.search(detail)
+        fields = movie_fields(
+            film.title,
+            url,
+            _overview(detail),
+            image=_poster(posters, film.title, programme) or _hero(detail),
+            trailers=[f"https://www.youtube.com/watch?v={trailer[1]}"] if trailer else [],
+        )
         yield (
             (None, _CINEMA, _ADDRESS, _CITY),
             show,

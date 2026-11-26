@@ -84,8 +84,13 @@ def showtimes(items: list[dict]) -> Iterator[tuple[str, date, time, str, str, st
         )
 
 
+def _names(text: str | None) -> list[str]:
+    """People from "Jason Hand och Josie Trinidad" or "A, B, C"."""
+    return [name for part in re.split(r",|\s+och\s+|\s+&\s+", text or "") if (name := part.strip(" ."))]
+
+
 def film_details(data: dict) -> dict:
-    """Poster, synopsis, runtime, age rating, original title and premiere date."""
+    """Film fields in the shape of `Film`'s: poster, synopsis, runtime, credits and more."""
     poster = data.get("poster") or ""
     genre = data.get("genre") or ""
 
@@ -97,6 +102,10 @@ def film_details(data: dict) -> dict:
         "age_rating": data.get("rating") or "",
         "title_original": data.get("originalName") or "",
         "release_date": (data.get("releaseDate") or "")[:10],
+        "directors": _names(data.get("director")),
+        "actors": _names(data.get("actors")),
+        "original_languages": _version.languages(data.get("originalLanguage") or ""),
+        "trailers": [data["trailer"]] if data.get("trailer") else [],
     }
 
 

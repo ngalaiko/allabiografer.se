@@ -6,7 +6,7 @@ from urllib.parse import urljoin, urlsplit
 
 from allabiografer.sources.bioaspen_se.site import _RUNTIME
 
-from .._shared import STOCKHOLM, film_id, read_page, single_venue_rows
+from .._shared import STOCKHOLM, film_id, movie_fields, read_page, single_venue_rows
 
 BASE = "https://www.bioaspen.se"
 SOURCE = "bioaspen_se"
@@ -18,13 +18,18 @@ CAST = re.compile(
     r"(?:\bI filmen medverkar |\bI rollerna(?: i [^.!?]+?)? ser vi |\(spelade? av )([^.!?()]+)(?=[.!?\)])"
 )
 CAST_SEPARATOR = re.compile(r",\s*(?:med\s+)?|\s+(?:och|samt)\s+")
+AGE = re.compile(r"Från \d+ år|Barntillåten", re.IGNORECASE)
+
+
+def fact(movie, heading):
+    """The value beside a heading in the film's facts list: "Genre", "Land", "Regissör"."""
+    label = movie.find("h3", string=re.compile(rf"^\s*{heading}\s*$"))
+    value = label.find_next_sibling("span") if label else None
+    return value.get_text(" ", strip=True) if value else ""
 
 
 def credits(movie, paragraphs):
-    director = movie.find("h3", string=re.compile(r"^\s*Regissör\s*$"))
-    label = director.find_next_sibling("span") if director else None
-    names = label.get_text(" ", strip=True) if label else ""
-    result = {"director": [name.strip() for name in names.split(",") if name.strip()]}
+    result = {"director": [name.strip() for name in fact(movie, "Regissör").split(",") if name.strip()]}
     for paragraph in paragraphs:
         # Only read explicit cast lists, not names mentioned in the synopsis.
         if cast := CAST.search(paragraph):
@@ -64,6 +69,7 @@ def screenings(inputs, today):
                 description += " " + synopsis[1]
         rows = []
         runtimes = set()
+        ratings = set()
         for card in movie.select('a[href*="/shows/"]:has(h2)'):
             ticket = urljoin(url, card["href"])
             target = urlsplit(ticket)
@@ -77,6 +83,7 @@ def screenings(inputs, today):
                 continue
             seen.add(match["id"])
             labels = [tag.get_text(" ", strip=True) for tag in card.select("span.font-menu")]
+            ratings |= {text for text in labels if AGE.fullmatch(text)}
             audio = next((text[4:] for text in labels if text.startswith("TAL ")), "")
             subtitles = next((text[5:] for text in labels if text.startswith("TEXT ")), "")
             if duration := next((m for text in labels if (m := _RUNTIME.fullmatch(text))), None):
@@ -84,9 +91,19 @@ def screenings(inputs, today):
                 runtimes.add(int(hours or 0) * 60 + int(minutes or only_minutes or 0))
             rows.append((match["id"], start, ticket, audio, subtitles))
         runtime = next(iter(runtimes)) if len(runtimes) == 1 else None
-        people = credits(movie, synopsis)
+        poster = movie.select_one('meta[property="og:image"]')
+        fields = movie_fields(
+            title,
+            url,
+            description,
+            runtime,
+            credits(movie, synopsis),
+            genre=[fact(movie, "Genre")],
+            rating=next(iter(ratings)) if len(ratings) == 1 else "",
+            image=poster.get("content", "") if poster else "",
+        )
         for row in rows:
-            yield *row, url, title, description, runtime, people
+            yield *row, fields
 
 
 def rows(inputs, today):

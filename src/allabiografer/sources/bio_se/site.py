@@ -95,6 +95,7 @@ def _film(movie: dict, title: str) -> Film:
         poster_url=_clean(movie.get("poster_url", "")),
         url=f"{_SITE}/movie/{movie['id']}" if movie.get("id") else "",
         original_languages=frozenset() if dubbed else _version.languages(language),
+        trailers=[_clean(url) for url in movie.get("trailer_urls") or [] if url],
     )
 
 

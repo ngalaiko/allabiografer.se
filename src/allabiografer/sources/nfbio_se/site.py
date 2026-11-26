@@ -167,6 +167,18 @@ def _title_original(node) -> str:
     return title
 
 
+def _actors(html: str) -> list[str]:
+    """Cast; dubbed films list original voices, then Swedish ones, under subheadings."""
+    node = BeautifulSoup(html, "html.parser").select_one("article.node--type-movie")
+    names = []
+    for name in _items(node, "actors") if node else []:
+        if name == "Svenska röster":
+            break
+        if name != "Originalröster":
+            names.append(re.sub(r"\s+m\.?\s?fl\.?$", "", name))
+    return names
+
+
 def _original_languages(film: Film, node, title_original: str) -> frozenset[Language]:
     """The page's language, which names the Swedish dub of imported family films.
 
@@ -199,6 +211,7 @@ def _enrich(film: Film, html: str) -> Film:
         release_date=(premiere.get("datetime", "") or "")[:10],
         title_original=title_original,
         original_languages=_original_languages(film, node, title_original),
+        directors=_items(node, "directors"),
         # JSON-LD links the original; the page renders it at 336px, the listing at 230px.
         poster_url=_poster(soup) or (_absolute(poster.get("src", "")) if poster else film.poster_url),
     )

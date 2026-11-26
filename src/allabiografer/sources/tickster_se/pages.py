@@ -4,7 +4,7 @@ import logging
 
 import requests
 
-from .._shared import movie_fields, saved, stable_key
+from .._shared import saved, stable_key
 
 log = logging.getLogger(__name__)
 
@@ -55,20 +55,3 @@ def year_for_month(today, month):
     if month == (today.month - 2) % 12 + 1:
         return today.year - (today.month == 1)
     return today.year + (month < today.month)
-
-
-def source_movie(title, url, details):
-    fields = movie_fields(
-        title,
-        url,
-        details.get("overview"),
-        details.get("runtime"),
-        year=details.get("release_date"),
-        alternate=details.get("title_original"),
-    )
-    if not url:
-        fields.pop("url")
-    for key, field in (("age_rating", "contentRating"), ("genres", "genre"), ("poster_url", "image")):
-        if value := details.get(key):
-            fields[field] = value
-    return fields

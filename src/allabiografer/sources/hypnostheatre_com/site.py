@@ -28,7 +28,7 @@ _FILM_CATEGORIES = {"FILMKLUBB", "MOVIES"}
 # "Sat Oct 3".
 _DATE = re.compile(r"(\w{3})\s+(\d{1,2})$")
 # "Chad Stahelski, 2014 · 101' · English"; language optional.
-_CREDITS = re.compile(r"^.+,\s*(\d{4})\s*·\s*(\d+)['\u2019](?:\s*·\s*(.+))?$")
+_CREDITS = re.compile(r"^(.+),\s*(\d{4})\s*·\s*(\d+)['\u2019](?:\s*·\s*(.+))?$")
 _MONTHS = ("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")
 
 
@@ -102,11 +102,13 @@ def _showtimes(html: str) -> Iterator[tuple[Film, Screening]]:
 
         year = runtime = None
         language = ""
+        directors: list[str] = []
         labels: list[str] = []
         for meta in row.select(".screening-meta"):
             text = _text(meta)
             if credits := _CREDITS.match(text):
-                year, runtime, language = credits[1], int(credits[2]), credits[3] or ""
+                year, runtime, language = credits[2], int(credits[3]), credits[4] or ""
+                directors = [name.strip() for name in re.split(r",|&| and ", credits[1]) if name.strip()]
             elif text:
                 labels.append(text)
 
@@ -117,6 +119,9 @@ def _showtimes(html: str) -> Iterator[tuple[Film, Screening]]:
             release_date=year or "",
             overview=_overview(row),
             url=_URL,
+            directors=directors,
+            # "French, Mandarin · English subtitles": spoken languages precede the subtitles.
+            original_languages=_version.languages(language.split("·")[0]),
         )
         yield (
             film,
