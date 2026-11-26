@@ -1,7 +1,9 @@
-"""Run fetch, parse, and merge as Schema.org actions over one data directory.
+"""Update the merged screenings, as Schema.org actions over one data directory.
 
-Every run is a DownloadAction (fetch) or CreateAction (parse, merge) whose `object`
-links its inputs and whose `result` links the Dataset it produced.
+A run is an UpdateAction: its `object` lists the cinemas run and its `targetCollection`
+the previous result. It fans out to a DownloadAction (fetch) and CreateAction (parse) per
+adapter, then fans in to one CreateAction (merge). Each step's `object` links its inputs
+and `result` the Dataset it produced.
 """
 
 import argparse
@@ -21,7 +23,7 @@ from parse import _http
 from .code import source_code
 from .graph import DATA, Graph, media_type
 from .merge import merge_datasets
-from .parse import parse_capture
+from .parsing import parse_capture
 from .schedule import PREFIX, Route, checked, routes
 from .source._shared import STOCKHOLM
 
@@ -138,56 +140,74 @@ def parse(graph: Graph, adapter: str, captured: Path) -> Path:
     return dataset
 
 
-def merge(graph: Graph, parsed: list[Path]) -> Path:
+def merge(graph: Graph, previous: Path | None, parsed: list[Path], day: date) -> Path:
     fields = {
         "name": "Merge",
-        "object": [graph.ref(path) for path in parsed],
+        "object": [graph.ref(path) for path in ([previous] if previous else []) + parsed],
         "instrument": instrument(graph, "v2/merge.py"),
     }
     with action(graph, "CreateAction", fields) as outcome:
-        dataset = merge_datasets(graph, parsed)
+        dataset = merge_datasets(graph, previous, parsed, day)
         outcome["result"] = graph.ref(dataset)
     return dataset
 
 
-def run(graph: Graph, selected: list[Route]) -> tuple[Path, dict[str, str]]:
-    """Fetch and parse each adapter, then merge the ones that succeeded.
+def latest(graph: Graph) -> Path | None:
+    """The result of the most recent completed run."""
+    runs = []
+    for path in graph.schema.glob("UpdateAction/*.jsonld"):
+        record = graph.read(path)
+        if record.get("actionStatus") == "https://schema.org/CompletedActionStatus" and "result" in record:
+            runs.append((record["endTime"], graph.resolve(path, record["result"])))
+    return max(runs)[1] if runs else None
 
-    A failing adapter is recorded as a failed action and reported; it does not stop the others.
+
+def run(graph: Graph, selected: list[Route], *, previous: Path | None) -> tuple[Path, dict[str, str]]:
+    """Fan out into fetch and parse per adapter; fan in to one merge with the previous result.
+
+    A failing adapter is recorded as a failed action and reported; its cinemas keep their
+    previous screenings.
     """
     day = datetime.now(STOCKHOLM).date()
     by_adapter = defaultdict(list)
     for route in selected:
         by_adapter[route.adapter].append(route)
-    parsed = []
-    failures = {}
-    for adapter, group in sorted(by_adapter.items()):
-        try:
-            parsed.append(parse(graph, adapter, fetch(graph, adapter, group, day)))
-        except Exception as error:
-            failures[adapter] = "".join(traceback.format_exception_only(error)).strip()
-            print(f"{adapter}: {failures[adapter]}", file=sys.stderr)
-    if not parsed:
-        raise RuntimeError("Every adapter failed")
-    return merge(graph, parsed), failures
+    fields = {
+        "name": "Run",
+        "object": [graph.ref(graph.path("MovieTheater", route.cinema)) for route in selected],
+        **({"targetCollection": graph.ref(previous)} if previous else {}),
+        "instrument": instrument(graph, "v2/pipeline.py"),
+    }
+    with action(graph, "UpdateAction", fields) as outcome:
+        parsed = []
+        failures = {}
+        for adapter, group in sorted(by_adapter.items()):
+            try:
+                parsed.append(parse(graph, adapter, fetch(graph, adapter, group, day)))
+            except Exception as error:
+                failures[adapter] = "".join(traceback.format_exception_only(error)).strip()
+                print(f"{adapter}: {failures[adapter]}", file=sys.stderr)
+        if not parsed and previous is None:
+            raise RuntimeError("Every adapter failed")
+        result = merge(graph, previous, parsed, day)
+        outcome["result"] = graph.ref(result)
+    return result, failures
 
 
 def main() -> None:
     cli = argparse.ArgumentParser(description=__doc__)
-    cli.add_argument("cinema", nargs="*", help="Cinema ID (MovieTheater filename stem)")
-    cli.add_argument("--all", action="store_true", help="Run every registered cinema")
+    cli.add_argument("--cinema", action="append", default=[], help="Limit to this cinema (MovieTheater filename stem)")
+    cli.add_argument("--fresh", action="store_true", help="Ignore the previous run's result")
     cli.add_argument("--data", type=Path, default=DATA)
     args = cli.parse_args()
-    if args.all == bool(args.cinema):
-        cli.error("provide cinema IDs or --all")
     graph = Graph(args.data.resolve())
     try:
         available = routes(graph.root)
         checked(set(args.cinema), available)
     except ValueError as error:
         cli.error(str(error))
-    selected = list(available.values()) if args.all else [available[cinema] for cinema in dict.fromkeys(args.cinema)]
-    result, failures = run(graph, selected)
+    selected = [available[cinema] for cinema in dict.fromkeys(args.cinema)] or list(available.values())
+    result, failures = run(graph, selected, previous=None if args.fresh else latest(graph))
     print(result)
     if failures:
         sys.exit(f"{len(failures)} adapter(s) failed: {', '.join(sorted(failures))}")

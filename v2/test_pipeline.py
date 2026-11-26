@@ -10,7 +10,7 @@ from store import Dimension, Presentation, PresentationSystem
 from store.version import AudioVersion, ContentVersion, Language, SubtitleVersion
 from v2 import pipeline
 from v2.graph import DATA, Graph
-from v2.parse import screening_fields
+from v2.parsing import screening_fields
 from v2.schedule import routes
 
 
@@ -73,17 +73,18 @@ def test_run_records_actions_and_links_screenings_to_the_registry(tmp_path, monk
         "parse": SimpleNamespace(rows=rows),
     }
     monkeypatch.setattr(pipeline, "import_module", lambda name, package: modules[name.rsplit(".", 1)[1]])
-    monkeypatch.setattr("v2.parse.import_module", lambda name, package: modules["parse"])
+    monkeypatch.setattr("v2.parsing.import_module", lambda name, package: modules["parse"])
     monkeypatch.setattr(pipeline._http, "session", lambda: nullcontext(SimpleNamespace(headers={})))
     monkeypatch.setattr(pipeline, "datetime", SimpleNamespace(now=lambda tz: datetime(2026, 11, 26, tzinfo=tz)))
 
-    result, failures = pipeline.run(graph, [route])
+    result, failures = pipeline.run(graph, [route], previous=None)
 
     assert failures == {}
     actions = [
         graph.read(path) for kind in ("DownloadAction", "CreateAction") for path in graph.schema.glob(f"{kind}/*")
     ]
     assert sorted(action["name"] for action in actions) == ["Fetch bio_se", "Merge", "Parse bio_se"]
+    assert pipeline.latest(graph) == result
     assert {action["actionStatus"] for action in actions} == {"https://schema.org/CompletedActionStatus"}
     for action_path in graph.schema.glob("*Action/*"):
         module = graph.read(graph.resolve(action_path, graph.read(action_path)["instrument"]))
@@ -134,4 +135,4 @@ def test_failed_adapter_is_recorded_and_others_still_merge(tmp_path, monkeypatch
 
     monkeypatch.setattr(pipeline, "fetch", fetch)
     with pytest.raises(RuntimeError, match="Every adapter failed"):
-        pipeline.run(graph, [routes(tmp_path)["Ale Medborgarhusets Bio"]])
+        pipeline.run(graph, [routes(tmp_path)["Ale Medborgarhusets Bio"]], previous=None)

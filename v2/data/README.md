@@ -5,7 +5,7 @@ assets/<sha256>                  raw bytes: HTML, API responses, images
 schema/<Schema.org type>/<id>.jsonld
 ```
 
-Run `python -m v2.pipeline --all`, or pass cinema IDs (`MovieTheater` filename stems). The command prints the merged `Dataset`.
+Run `python -m v2.pipeline`, optionally limited with `--cinema <MovieTheater ID>` (repeatable). It prints the merged `Dataset`. `--fresh` ignores the previous result.
 
 ## Registry
 
@@ -23,9 +23,13 @@ Generated and not checked in. Each run is an action:
 |---|---|---|---|
 | fetch | `DownloadAction` | registry cinemas | `Dataset` of `DataDownload`s |
 | parse | `CreateAction` | fetch `Dataset` | `Dataset` of `Movie`s and `ScreeningEvent`s |
-| merge | `CreateAction` | parse `Dataset`s | merged `Dataset` |
+| merge | `CreateAction` | previous merged `Dataset`, new parse `Dataset`s | merged `Dataset` |
 
-Actions record `startTime`, `endTime`, `actionStatus`, and `error` for failures. A failing adapter does not stop the others; the run exits non-zero after merging the rest.
+A run is an `UpdateAction` over the previous result (`targetCollection`) for the selected cinemas (`object`): fetch and parse per adapter, then one merge. Each cinema's screenings come from the newest parse covering it, so cinemas not run, or whose adapter failed, keep their previous screenings. Screenings before the run day drop out.
+
+Each `Movie` in a merged `Dataset` has a stable slug, its `allabiografer:film` identifier, and `url` `https://allabiografer.se/film/<slug>/`. Grouping is re-evaluated every run. A group reuses the oldest identity among its members, slugs are never reassigned, and slugs of joined films remain as `allabiografer:film-alias`.
+
+Actions record `startTime`, `endTime`, `actionStatus`, and `error` for failures. A failing adapter does not stop the others; the run exits non-zero after merging.
 
 Entities other than actions are named by the SHA-256 of their content, so identical outputs are shared between runs. Links are relative paths.
 
@@ -33,6 +37,6 @@ Entities other than actions are named by the SHA-256 of their content, so identi
 
 `ScreeningEvent` links `workPresented` to a `Movie` and `location` to a registry `MovieTheater`. `inLanguage` and `subtitleLanguage` are BCP 47 tags; an empty `subtitleLanguage` means the source states there are none. `videoFormat` lists picture and projection formats only: `2D`, `3D`, `IMAX`, `Dolby Cinema`, `4DX`, `ScreenX`, `35 mm`, `70 mm`.
 
-Merge reconciles movies across sources: a merged `Movie` lists its source records in `isBasedOn`.
+A merged `Movie` lists its source records in `isBasedOn`.
 
 Each action's `instrument` is a `SoftwareSourceCode` entity naming the module it ran. That module is `isPartOf` a snapshot of all pipeline code. The snapshot records the git commit as `version`, suffixed `-dirty` when the source files differ from it. Its `encoding` is a deterministic tar of `v2/`, `src/`, `pyproject.toml`, and `uv.lock`, stored as an asset, so a run can be traced to the exact bytes it executed even when uncommitted.

@@ -1,90 +1,182 @@
-"""Combine parse Datasets into one Dataset with movies reconciled across sources."""
+"""Fold new parse Datasets into the previous merged Dataset.
 
-from datetime import UTC, datetime
+The merged Dataset carries the state between runs:
+
+- `isBasedOn` lists the parse Datasets in effect, oldest first. Each cinema's screenings
+  come from the newest one whose `about` includes it, so cinemas left out of a run, or
+  whose adapter failed, keep their previous screenings.
+- `hasPart` lists every film ever identified, and the screenings from the run day onward.
+
+Films keep a stable slug, the `allabiografer:film` identifier. Grouping is re-evaluated
+on every run; a group reuses the oldest identity among its members, slugs are never
+reassigned, and slugs of films merged into another remain as `allabiografer:film-alias`.
+"""
+
+import json
+import re
+from dataclasses import dataclass, field
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from .graph import Graph
 from .movie_matching import groups
+from .source._shared import STOCKHOLM
+
+FILM = "allabiografer:film"
+ALIAS = "allabiografer:film-alias"
+SITE = "https://allabiografer.se"
+# Source records whose fields are replaced by the merged film's own.
+_OWN_FIELDS = {"@context", "@id", "@type", "identifier", "isBasedOn", "url", "sameAs", "image"}
 
 
-def merge_datasets(graph: Graph, parsed: list[Path]) -> Path:
-    movies: dict[Path, dict] = {}
-    screenings: list[tuple[Path, dict]] = []
-    places: dict[str, Path] = {}
-    days = []
-    for dataset_path in parsed:
-        dataset = graph.read(dataset_path)
-        days.append(dataset["temporalCoverage"])
-        for cinema in dataset["about"]:
-            places.setdefault(cinema["@id"], graph.resolve(dataset_path, cinema))
-        for reference in dataset["hasPart"]:
-            path = graph.resolve(dataset_path, reference)
-            entity = graph.read(path)
-            if entity["@type"] == "Movie":
-                movies[path] = entity
-            elif entity["@type"] == "ScreeningEvent":
-                screenings.append((path, entity))
-            else:
-                raise ValueError(f"Unexpected {entity['@type']} in {dataset_path}")
+def slugify(text: str) -> str:
+    """Slug preserving å ä ö, as v1 film URLs do."""
+    text = re.sub(r"[^\wåäö\s-]", "", text.lower().strip())
+    return re.sub(r"[-\s]+", "-", text).strip("-") or "unnamed"
 
-    # The same cinema and start time is the strongest evidence that two records are one film.
-    keys = {path: path.as_uri() for path in movies}
-    slots = {key: set() for key in keys.values()}
-    for path, screening in screenings:
-        movie = graph.resolve(path, screening["workPresented"])
-        cinema = graph.resolve(path, screening["location"])
-        start = datetime.fromisoformat(screening["startDate"]).astimezone(UTC).isoformat()
-        slots[keys[movie]].add((str(cinema), start))
-    by_key = {key: path for path, key in keys.items()}
-    merged = {}
-    for group in groups({key: movies[path] for path, key in keys.items()}, slots):
-        members = [by_key[key] for key in group]
-        if len(members) == 1:
-            merged[members[0]] = members[0]
-            continue
-        # Prefer the first record's values; later records only fill gaps.
-        fields = {}
-        for member in members:
-            for field, value in movies[member].items():
-                if field not in {"@context", "@id", "@type", "identifier", "isBasedOn"}:
-                    fields.setdefault(field, value)
-        combined = graph.put(
-            "Movie",
+
+@dataclass
+class Identity:
+    slug: str
+    created: str
+    aliases: set[str] = field(default_factory=set)
+
+
+def _key(movie: dict) -> str:
+    """A source record's identity: its adapter and the adapter's movie ID."""
+    identifier = movie["identifier"]
+    return json.dumps([identifier["propertyID"], identifier["value"]], ensure_ascii=False)
+
+
+def _parts(graph: Graph, dataset: Path, kind: str) -> list[tuple[Path, dict]]:
+    found = []
+    for reference in graph.read(dataset)["hasPart"]:
+        path = graph.resolve(dataset, reference)
+        entity = graph.read(path)
+        if entity["@type"] == kind:
+            found.append((path, entity))
+    return found
+
+
+def _previous_films(graph: Graph, previous: Path) -> tuple[list[Identity], dict[str, Identity], dict[str, Path]]:
+    identities, owners, records = [], {}, {}
+    for path, film in _parts(graph, previous, "Movie"):
+        values = {item["propertyID"]: [] for item in film["identifier"]}
+        for item in film["identifier"]:
+            values[item["propertyID"]].append(item["value"])
+        if FILM not in values:
+            raise ValueError(f"{previous} has no film identities; start with --fresh")
+        identity = Identity(values[FILM][0], film["dateCreated"], set(values.get(ALIAS, [])))
+        identities.append(identity)
+        for reference in film["isBasedOn"]:
+            member = graph.resolve(path, reference)
+            key = _key(graph.read(member))
+            owners[key] = identity
+            records[key] = member
+    return identities, owners, records
+
+
+def merge_datasets(graph: Graph, previous: Path | None, parsed: list[Path], day: date) -> Path:
+    identities, owners, records = _previous_films(graph, previous) if previous else ([], {}, {})
+    datasets = [graph.resolve(previous, ref) for ref in graph.read(previous)["isBasedOn"]] if previous else []
+    datasets += parsed
+
+    # The newest dataset covering a cinema supplies it; cinemas gone from the registry drop out.
+    suppliers: dict[Path, Path] = {}
+    for dataset in datasets:
+        for cinema in graph.read(dataset)["about"]:
+            path = graph.resolve(dataset, cinema)
+            if path.exists():
+                suppliers[path] = dataset
+    in_effect = [dataset for dataset in dict.fromkeys(datasets) if dataset in suppliers.values()]
+
+    # Newer source records replace older ones with the same identity.
+    for dataset in in_effect:
+        for path, movie in _parts(graph, dataset, "Movie"):
+            records[_key(movie)] = path
+    keys = {path: key for key, path in records.items()}
+    movies = {key: graph.read(path) for key, path in records.items()}
+
+    screenings = []
+    slots = {key: set() for key in records}
+    for dataset in in_effect:
+        for path, screening in _parts(graph, dataset, "ScreeningEvent"):
+            cinema = graph.resolve(path, screening["location"])
+            start = datetime.fromisoformat(screening["startDate"])
+            if suppliers.get(cinema) != dataset or start.astimezone(STOCKHOLM).date() < day:
+                continue
+            key = keys[graph.resolve(path, screening["workPresented"])]
+            slots[key].add((str(cinema), start.astimezone(UTC).isoformat()))
+            screenings.append((key, screening))
+
+    used = {slug for identity in identities for slug in (identity.slug, *identity.aliases)}
+    claimed: set[str] = set()
+    films = {}
+    for group in sorted(groups(movies, slots), key=sorted):
+        members = sorted(group, key=lambda key: (-len(slots[key]), key))
+        candidates = sorted(
             {
-                **{key: value for key, value in fields.items() if key != "image"},
-                "identifier": [movies[member]["identifier"] for member in members],
-                "isBasedOn": [graph.ref(member) for member in members],
-                **({"image": _rebase(graph, members, movies)} if "image" in fields else {}),
-            },
+                owners[key].slug: owners[key] for key in group if key in owners and owners[key].slug not in claimed
+            }.values(),
+            key=lambda identity: (identity.created, identity.slug),
         )
-        for member in members:
-            merged[member] = combined
+        if candidates:
+            identity = Identity(candidates[0].slug, candidates[0].created, set(candidates[0].aliases))
+            for losing in candidates[1:]:
+                identity.aliases |= {losing.slug, *losing.aliases}
+        else:
+            base = slugify(movies[members[0]]["name"])
+            slug, suffix = base, 2
+            while slug in used:
+                slug, suffix = f"{base}-{suffix}", suffix + 1
+            identity = Identity(slug, day.isoformat())
+        used.add(identity.slug)
+        claimed |= {identity.slug, *identity.aliases}
+        film = graph.put("Movie", _film(graph, identity, members, movies, records))
+        for key in group:
+            films[key] = film
 
-    parts = []
-    for path, screening in screenings:
-        movie = graph.resolve(path, screening["workPresented"])
-        if merged[movie] != movie:
-            fields = {key: value for key, value in screening.items() if key not in {"@context", "@id", "@type"}}
-            path = graph.put("ScreeningEvent", fields | {"workPresented": graph.ref(merged[movie])})
-        parts.append(path)
-    distinct_movies = sorted(set(merged.values()), key=str)
+    parts = [
+        graph.put("ScreeningEvent", screening | {"workPresented": graph.ref(films[key])})
+        for key, screening in screenings
+    ]
+    days = sorted({graph.read(dataset)["temporalCoverage"] for dataset in in_effect})
     return graph.put(
         "Dataset",
         {
             "name": "Merged screenings",
-            "temporalCoverage": min(days) if len(set(days)) == 1 else f"{min(days)}/{max(days)}",
-            "isBasedOn": [graph.ref(path) for path in parsed],
+            "temporalCoverage": days[0] if len(days) == 1 else f"{days[0]}/{days[-1]}",
+            "isBasedOn": [graph.ref(dataset) for dataset in in_effect],
             "spatialCoverage": graph.ref(graph.path("Country", "Sverige")),
-            "about": [graph.ref(path) for path in sorted(set(places.values()), key=str)],
-            "hasPart": [graph.ref(path) for path in distinct_movies]
-            + [graph.ref(path) for path in sorted(parts, key=str)],
+            "about": [graph.ref(cinema) for cinema in sorted(suppliers, key=str)],
+            "hasPart": [graph.ref(film) for film in sorted(set(films.values()), key=str)]
+            + [graph.ref(path) for path in sorted(set(parts), key=str)],
         },
     )
 
 
-def _rebase(graph: Graph, members: list[Path], movies: dict[Path, dict]):
-    """First member's image, as a link valid from any Movie entity."""
-    for member in members:
-        if image := movies[member].get("image"):
-            return graph.ref(graph.resolve(member, image)) if isinstance(image, dict) else image
-    return None
+def _film(graph: Graph, identity: Identity, members: list[str], movies: dict, records: dict) -> dict:
+    """A film's fields: preferred values from the member with the most screenings."""
+    fields = {}
+    same_as = set()
+    image = None
+    for key in members:
+        movie = movies[key]
+        for name, value in movie.items():
+            if name not in _OWN_FIELDS:
+                fields.setdefault(name, value)
+        links = movie.get("sameAs", [])
+        # Source pages identify the film too; the film's own url is its allabiografer page.
+        same_as |= {movie.get("url", ""), *(links if isinstance(links, list) else [links])} - {""}
+        if image is None and (found := movie.get("image")):
+            image = graph.ref(graph.resolve(records[key], found)) if isinstance(found, dict) else found
+    return {
+        "identifier": [{"@type": "PropertyValue", "propertyID": FILM, "value": identity.slug}]
+        + [{"@type": "PropertyValue", "propertyID": ALIAS, "value": alias} for alias in sorted(identity.aliases)],
+        "url": f"{SITE}/film/{identity.slug}/",
+        "dateCreated": identity.created,
+        **fields,
+        **({"sameAs": sorted(same_as)} if same_as else {}),
+        **({"image": image} if image else {}),
+        "isBasedOn": [graph.ref(records[key]) for key in sorted(members)],
+    }
