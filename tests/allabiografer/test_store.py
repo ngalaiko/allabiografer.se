@@ -67,3 +67,69 @@ def test_pruning_keeps_the_latest_runs_and_what_they_reach(tmp_path):
     assert not old_data.exists()
     assert len(list(graph.assets.iterdir())) == 2  # The new run's data and document.
     assert (tmp_path / "schema" / "City" / "Göteborg.jsonld").exists()
+
+
+def test_a_bucket_store_runs_merge_and_prune_without_local_objects(tmp_path, parsed):
+    import shutil
+
+    import boto3
+    from moto import mock_aws
+
+    from allabiografer.graph import DATA
+    from allabiografer.store import BucketStore
+
+    for kind in ("MovieTheater", "City", "DataFeed"):
+        shutil.copytree(DATA / "schema" / kind, tmp_path / "schema" / kind)
+    with mock_aws():
+        client = boto3.client("s3", region_name="us-east-1")
+        client.create_bucket(Bucket="store")
+        graph = Graph(tmp_path, BucketStore(client, "store", cache=tmp_path / ".cache"))
+        listed = {"a": ({"name": "Dune"}, [("Bio Rio", "2026-12-02T18:00:00+01:00")])}
+        merged = merge_datasets(graph, None, [parsed(graph, "x", ["Bio Rio"], listed)], DAY)
+        graph.save(
+            "UpdateAction",
+            "run",
+            {
+                "startTime": "2026-12-01T00:00:00+00:00",
+                "endTime": "2026-12-01T00:00:00+00:00",
+                "actionStatus": "https://schema.org/CompletedActionStatus",
+                "result": graph.ref(merged),
+            },
+        )
+        stray = graph.put_bytes(b"left behind" * 100, "text/plain", name="stray")
+        graph.store.flush()
+
+        keys = {item["Key"] for item in client.list_objects_v2(Bucket="store")["Contents"]}
+        assert {key.split("/")[0] for key in keys} == {"schema", "assets"}
+        # Generated objects live only in the bucket; the registry only in the checkout.
+        assert not (tmp_path / "assets").exists()
+        assert not any(key.startswith("schema/MovieTheater/") for key in keys)
+        # A fresh graph on the same bucket reads the run back.
+        again = Graph(tmp_path, BucketStore(client, "store"))
+        assert sorted(part["@type"] for part in again.parts(merged).values()) == ["Movie", "ScreeningEvent"]
+
+        assert prune(again, keep=1) == (1, 1)
+        assert not again.exists(stray)
+        assert again.exists(merged)
+
+
+def test_mirroring_copies_new_objects_deletes_stale_ones_and_refuses_an_empty_source(tmp_path):
+    import pytest
+
+    from allabiografer.store import LocalStore
+    from allabiografer.sync import mirror
+
+    source, target = LocalStore(tmp_path / "a"), LocalStore(tmp_path / "b")
+    run = b'{"actionStatus": "https://schema.org/CompletedActionStatus"}'
+    with pytest.raises(SystemExit):
+        mirror(source, target)
+    source.put("schema/UpdateAction/run.jsonld", run)
+    source.put("assets/new", b"new")
+    target.put("assets/old", b"old")
+    target.put("schema/City/Göteborg.jsonld", b"{}")
+
+    assert mirror(source, target) == (2, 1)
+    assert target.get("assets/new") == b"new"
+    assert not target.exists("assets/old")
+    # The registry is never mirrored, nor deleted.
+    assert target.exists("schema/City/Göteborg.jsonld")

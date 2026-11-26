@@ -44,10 +44,13 @@ def poster(graph: Graph, film_path: Path, image, session, downloaded: dict[str, 
 
 
 def stored_downloads(graph: Graph) -> dict[str, Path]:
-    """Images already downloaded, by source URL."""
-    found = {}
-    for path in graph.schema.glob("ImageObject/*.jsonld"):
-        url = graph.read(path).get("isBasedOn")
+    """Images already downloaded, by source URL; their bytes are fetched in one batch."""
+    found, entities = {}, []
+    for path in graph.entities("ImageObject"):
+        entity = graph.read(path)
+        entities.append(entity)
+        url = entity.get("isBasedOn")
         if isinstance(url, str) and url.startswith(("http://", "https://")):
             found[url] = path
+    graph.prefetch_content(entities)
     return found

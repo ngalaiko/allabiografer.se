@@ -3,17 +3,16 @@
 Kept: the registry; the newest `keep` completed runs with every action recorded during
 them; the newest render of each run's result; and everything those reach by links,
 part links and stored MediaObjects (including images downloaded or resized from a kept
-image or URL). The rendered site's asset links are kept too.
+image or URL).
 """
 
 import json
-import os
 from pathlib import Path
 from urllib.parse import unquote
 
 from .graph import Graph
+from .store import registry
 
-REGISTRY = {"AdministrativeArea", "City", "Country", "DataFeed", "MovieTheater"}
 COMPLETED = "https://schema.org/CompletedActionStatus"
 
 
@@ -35,7 +34,7 @@ def prune(graph: Graph, keep: int = 1) -> tuple[int, int]:
     actions = {
         path: graph.read(path)
         for kind in ("UpdateAction", "DownloadAction", "CreateAction")
-        for path in graph.schema.glob(f"{kind}/*.jsonld")
+        for path in graph.entities(kind)
     }
     runs = sorted(
         (
@@ -59,6 +58,7 @@ def prune(graph: Graph, keep: int = 1) -> tuple[int, int]:
                 renders.append((action["startTime"], path))
         roots += [max(renders)[1]] if renders else []
 
+    stored = {graph.path_of(key) for key in graph.store.list("schema/") if not registry(key)}
     reached: set[Path] = set()
     strings: set[str] = set()
     pending = list(roots)
@@ -70,7 +70,7 @@ def prune(graph: Graph, keep: int = 1) -> tuple[int, int]:
 
     while pending:
         path = Path(pending.pop()).resolve()
-        if path in reached or not path.is_file() or path.parent.parent != graph.schema.resolve():
+        if path in reached or path not in stored:
             continue
         reached.add(path)
         entity = graph.read(path)
@@ -80,11 +80,7 @@ def prune(graph: Graph, keep: int = 1) -> tuple[int, int]:
             visit(path, {"hasPart": list(graph.parts(path).values())})
 
     # Media stored from kept media or kept URLs: downloaded and resized images.
-    media = {
-        path.resolve(): graph.read(path)
-        for kind in ("ImageObject", "DataDownload")
-        for path in graph.schema.glob(f"{kind}/*.jsonld")
-    }
+    media = {path: graph.read(path) for path in stored if path.parent.name in ("ImageObject", "DataDownload")}
     changed = True
     while changed:
         changed = False
@@ -96,22 +92,9 @@ def prune(graph: Graph, keep: int = 1) -> tuple[int, int]:
                 changed = True
 
     hashes = {media[path]["sha256"] for path in reached if path in media}
-    site = graph.root / "www"
-    for link in site.rglob("*") if site.exists() else []:
-        if link.is_symlink():
-            hashes.add(Path(os.readlink(link)).name)
-
-    entities = [
-        path
-        for path in graph.schema.glob("*/*.jsonld")
-        if path.parent.name not in REGISTRY and path.resolve() not in reached
-    ]
-    assets = [path for path in graph.assets.iterdir() if path.name not in hashes] if graph.assets.exists() else []
-    for path in entities + assets:
-        path.unlink()
-    for directory in graph.schema.iterdir():
-        if directory.is_dir() and not any(directory.iterdir()):
-            directory.rmdir()
+    entities = sorted(graph.key(path) for path in stored - reached)
+    assets = sorted(key for key in graph.store.list("assets/") if key.removeprefix("assets/") not in hashes)
+    graph.store.delete(entities + assets)
     return len(entities), len(assets)
 
 
@@ -123,6 +106,9 @@ def main() -> None:
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--keep", type=int, default=1, help="Completed runs to keep")
     cli.add_argument("--data", type=Path, default=DATA)
+    cli.add_argument("--local", action="store_true", help="Prune the store under --data even when R2_BUCKET is set")
     args = cli.parse_args()
-    entities, assets = prune(Graph(args.data.resolve()), args.keep)
+    from .pipeline import open_store
+
+    entities, assets = prune(Graph(args.data.resolve(), open_store(args.data.resolve(), local=args.local)), args.keep)
     print(json.dumps({"entities": entities, "assets": assets}))

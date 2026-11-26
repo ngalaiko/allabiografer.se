@@ -4,12 +4,12 @@ import base64
 import hashlib
 import json
 import mimetypes
-import os
-import tempfile
 from compression import zstd
 from os.path import relpath
 from pathlib import Path
 from urllib.parse import quote, unquote
+
+from .store import REGISTRY, LocalStore, registry
 
 CONTEXT = "https://schema.org"
 # The repository's data directory; pass another to work elsewhere.
@@ -17,16 +17,6 @@ DATA = Path(__file__).resolve().parents[2] / "data" / "allabiografer"
 NI_PREFIX = "ni:///sha-256;"
 # Compression must save at least this share of the original size.
 MIN_SAVING = 0.1
-
-
-def _atomic_write(path: Path, data: bytes) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary = tempfile.mkstemp(dir=path.parent, prefix=".tmp-")
-    with os.fdopen(descriptor, "wb") as file:
-        file.write(data)
-    # mkstemp creates private files; stored data is meant to be read by anyone.
-    os.chmod(temporary, 0o644)
-    os.replace(temporary, path)
 
 
 def media_type(name: str, header: str = "") -> str:
@@ -56,11 +46,46 @@ class Graph:
     resolve against the Dataset entity, as if the document were stored in its place.
     """
 
-    def __init__(self, root: Path = DATA):
-        self.root = root
-        self.assets = root / "assets"
-        self.schema = root / "schema"
+    def __init__(self, root: Path = DATA, store=None):
+        self.root = root.resolve()
+        self.assets = self.root / "assets"
+        self.schema = self.root / "schema"
+        # Generated objects live in `store`; the checked-in registry is always read from `root`.
+        self.store = store or LocalStore(self.root)
+        self._local = LocalStore(self.root)
         self._parts: dict[Path, dict[str, dict]] = {}
+
+    def key(self, path: Path) -> str:
+        return path.resolve().relative_to(self.root).as_posix()
+
+    def path_of(self, key: str) -> Path:
+        return self.root / key
+
+    def _of(self, path: Path):
+        return self._local if registry(self.key(path)) else self.store
+
+    def exists(self, path: Path) -> bool:
+        return self._of(path).exists(self.key(path))
+
+    def entities(self, kind: str) -> list[Path]:
+        """Every stored entity of a type, fetched in one batch when the store is remote."""
+        prefix = f"schema/{kind}/"
+        source = self._local if kind in REGISTRY else self.store
+        keys = sorted(key for key in source.list(prefix) if key.endswith(".jsonld"))
+        source.prefetch(keys)
+        return [self.path_of(key) for key in keys]
+
+    def prefetch(self, paths: list[Path]) -> None:
+        """Fetch many entities in one batch; later reads are local."""
+        self.store.prefetch([self.key(path) for path in paths if not registry(self.key(path))])
+
+    def prefetch_content(self, entities: list[dict]) -> None:
+        """Fetch many MediaObjects' bytes in one batch."""
+        keys = []
+        for entity in entities:
+            encoded = entity["contentUrl"].removeprefix(NI_PREFIX)
+            keys.append(f"assets/{base64.urlsafe_b64decode(encoded + '=' * (-len(encoded) % 4)).hex()}")
+        self.store.prefetch(keys)
 
     def path(self, kind: str, id_: str) -> Path:
         return self.schema / kind / f"{id_}.jsonld"
@@ -110,9 +135,8 @@ class Graph:
             self._parts[dataset] = found
         return self._parts[dataset]
 
-    @staticmethod
-    def read(path: Path) -> dict:
-        return json.loads(path.read_bytes())
+    def read(self, path: Path) -> dict:
+        return json.loads(self._of(path).get(self.key(path)))
 
     @staticmethod
     def _dump(document: dict) -> bytes:
@@ -123,14 +147,14 @@ class Graph:
         document = {"@context": CONTEXT, "@type": kind, **fields}
         digest = hashlib.sha256(json.dumps(document, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
         path = self.path(kind, digest)
-        if not path.exists():
-            _atomic_write(path, self._dump({"@context": CONTEXT, "@id": "", **document}))
+        if not self.exists(path):
+            self.store.put(self.key(path), self._dump({"@context": CONTEXT, "@id": "", **document}))
         return path
 
     def save(self, kind: str, id_: str, fields: dict) -> Path:
         """Write a named, mutable entity, such as an action record."""
         path = self.path(kind, id_)
-        _atomic_write(path, self._dump({"@context": CONTEXT, "@id": "", "@type": kind, **fields}))
+        self.store.put(self.key(path), self._dump({"@context": CONTEXT, "@id": "", "@type": kind, **fields}))
         return path
 
     def put_bytes(self, data: bytes, media: str, *, name: str, url: str = "", compress: bool = True) -> Path:
@@ -144,9 +168,9 @@ class Graph:
         if compress and len(packed) <= len(data) * (1 - MIN_SAVING):
             stored, encoding = packed, f"{media}+zstd"
         digest = hashlib.sha256(stored).digest()
-        asset = self.assets / digest.hex()
-        if not asset.exists():
-            _atomic_write(asset, stored)
+        asset = f"assets/{digest.hex()}"
+        if not self.store.exists(asset):
+            self.store.put(asset, stored)
         fields = {
             "name": name,
             "contentUrl": ni(digest),
@@ -164,7 +188,7 @@ class Graph:
             raise ValueError(f"Unsupported content URL: {url}")
         encoded = url.removeprefix(NI_PREFIX)
         digest = base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4))
-        data = (self.assets / digest.hex()).read_bytes()
+        data = self.store.get(f"assets/{digest.hex()}")
         if hashlib.sha256(data).digest() != digest:
             raise ValueError(f"Corrupt asset: {digest.hex()}")
         return zstd.decompress(data) if entity["encodingFormat"].endswith("+zstd") else data

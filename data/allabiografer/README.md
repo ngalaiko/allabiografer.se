@@ -6,6 +6,8 @@ assets/<sha256>                  raw bytes: HTML, API responses, images
 schema/<Schema.org type>/<id>.jsonld
 ```
 
+The registry is read from this directory. Everything generated (actions, datasets, captures, images) lives in a store: with `R2_BUCKET`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` set, the Cloudflare R2 bucket, read and written directly, with immutable objects cached under `.cache/`; otherwise this directory (`--local` forces it). Object keys are the same paths in both: `schema/<Type>/<id>.jsonld` and `assets/<sha256>`. `nix run .#pull` and `nix run .#push` mirror one into the other, deleting what the source lacks; each refuses a source without a completed run.
+
 Run `nix run .#run`, optionally limited to the feeds of `-- --cinema <MovieTheater ID>` (repeatable). It prints the merged `Dataset` and the website directory. `--fresh` ignores the previous result; `--render-only` renders the latest result without fetching.
 
 ## Registry
@@ -59,4 +61,4 @@ Each action's `instrument` is a `SoftwareSourceCode` entity naming the module it
 
 `www/` is the allabiografer.se site rendered from the latest merged `Dataset`, regenerated on every run and not checked in. `src/allabiografer/site/` holds the page code, templates, styles, scripts and fonts; `render.py` translates the merged graph into its page data. Each programme has an `index.md` and an `index.jsonld`. Former film and cinema slugs are static redirect pages: a meta refresh, a canonical link to the new address, `noindex`, and a script that keeps the URL fragment.
 
-Posters are cropped and resized to WebP at 104, 125, 250 and 500 px and stored as `ImageObject`s in `assets/`; source URLs are downloaded into the store first. `www/posters/` holds symlinks to those assets, so image bytes are stored once; a deploy must copy them as files.
+Posters are downloaded into the store once; render crops and resizes them to WebP at 104, 125, 250 and 500 px directly into `www/posters/`.

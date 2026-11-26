@@ -8,6 +8,7 @@ them from that capture. Each step's `object` links its inputs and `result` the D
 """
 
 import argparse
+import os
 import sys
 import tempfile
 import traceback
@@ -31,6 +32,7 @@ from .render import render as render_site
 from .schedule import Feed, checked, feeds
 from .site.pages import BASE_URL as SITE
 from .sources._shared import STOCKHOLM
+from .store import BucketStore, LocalStore
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -200,10 +202,17 @@ def render(graph: Graph, merged: Path) -> Path:
     return out
 
 
+def open_store(data: Path, *, local: bool = False):
+    """R2 when R2_BUCKET is set, caching objects under <data>/.cache; else the data directory."""
+    if local or not os.environ.get("R2_BUCKET"):
+        return LocalStore(data)
+    return BucketStore.from_environment(cache=data / ".cache")
+
+
 def latest(graph: Graph) -> Path | None:
     """The result of the most recent completed run."""
     runs = []
-    for path in graph.schema.glob("UpdateAction/*.jsonld"):
+    for path in graph.entities("UpdateAction"):
         record = graph.read(path)
         if record.get("actionStatus") == "https://schema.org/CompletedActionStatus" and "result" in record:
             runs.append((record["endTime"], graph.resolve(path, record["result"])))
@@ -255,9 +264,12 @@ def main() -> None:
     cli.add_argument("--fresh", action="store_true", help="Ignore the previous run's result")
     cli.add_argument("--render-only", action="store_true", help="Render the latest result without fetching")
     cli.add_argument("--keep", type=int, default=1, help="Completed runs kept in the store afterwards")
-    cli.add_argument("--data", type=Path, default=DATA)
+    cli.add_argument("--data", type=Path, default=DATA, help="Registry, site output and local store")
+    cli.add_argument(
+        "--local", action="store_true", help="Keep generated objects under --data even when R2_BUCKET is set"
+    )
     args = cli.parse_args()
-    graph = Graph(args.data.resolve())
+    graph = Graph(args.data.resolve(), open_store(args.data.resolve(), local=args.local))
     if args.render_only:
         if (previous := latest(graph)) is None:
             cli.error("no completed run to render")

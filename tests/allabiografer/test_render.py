@@ -41,10 +41,11 @@ def test_render_writes_pages_from_the_merged_dataset(graph, parsed, tmp_path):
     # No iCalendar feeds; Schema.org JSON-LD only.
     assert not list(out.rglob("*.ics"))
     assert (out / "film" / "dune" / "index.jsonld").is_file()
-    # Resized posters stay in the asset store; the site links to them.
+    # Resized posters are files in the site; the store keeps only the original.
     posters = sorted((out / "posters").iterdir())
     assert len(posters) == 4
-    assert all(link.is_symlink() and link.resolve().parent == (tmp_path / "assets").resolve() for link in posters)
+    assert not any(poster.is_symlink() for poster in posters)
+    assert len(list((tmp_path / "assets").iterdir())) == 3  # Poster, and two dataset documents.
     with Image.open(next(link for link in posters if "-" not in link.stem)) as image:
         assert (image.format, image.size) == ("WEBP", (250, 354))
 

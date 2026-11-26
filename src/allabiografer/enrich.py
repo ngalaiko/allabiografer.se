@@ -211,9 +211,12 @@ def recording(graph: Graph, session, downloads: list[Path]) -> Fetch:
 def replaying(graph: Graph, capture: Path) -> Fetch:
     """A fetch answered from a capture Dataset's DataDownloads only."""
     stored = {}
-    for reference in graph.read(capture)["distribution"]:
-        download = graph.read(graph.resolve(capture, reference))
+    paths = [graph.resolve(capture, reference) for reference in graph.read(capture)["distribution"]]
+    graph.prefetch(paths)
+    for path in paths:
+        download = graph.read(path)
         stored[download["isBasedOn"]] = download
+    graph.prefetch_content(list(stored.values()))
 
     def fetch(path: str, params: dict) -> dict:
         return json.loads(graph.content(stored[url(path, params)]))

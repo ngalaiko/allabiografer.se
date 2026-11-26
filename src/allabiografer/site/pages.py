@@ -400,7 +400,7 @@ def _poster_bytes(sd: SiteData, movie_id: int) -> bytes | None:
 
 
 def _poster_url(sd: SiteData, movie_id: int) -> str | None:
-    """`/posters/<name>.webp`, linked to resized posters kept in the asset store."""
+    """`/posters/<name>.webp`: the stored poster, cropped and resized for the site."""
     if movie_id in sd.poster_urls:
         return sd.poster_urls[movie_id]
     source = sd.posters.get(movie_id)
@@ -413,17 +413,12 @@ def _poster_url(sd: SiteData, movie_id: int) -> str | None:
             variants = None
         if variants:
             name = source["sha256"][:16]
+            # Derived from a stored poster and reproducible, so written to the site only.
             for width, data in variants.items():
-                stored = sd.graph.read(
-                    sd.graph.put_bytes(
-                        data, "image/webp", name=f"{name}-{width}.webp", url=source["contentUrl"], compress=False
-                    )
-                )
                 filename = f"{name}.webp" if width == POSTER_W else f"{name}-{width}.webp"
-                link = sd.out_dir / "posters" / filename
-                link.parent.mkdir(parents=True, exist_ok=True)
-                link.unlink(missing_ok=True)
-                link.symlink_to(Path("..", "..", "assets", stored["sha256"]))
+                target = sd.out_dir / "posters" / filename
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(data)
             url = f"/posters/{name}.webp"
     sd.poster_urls[movie_id] = url
     return url

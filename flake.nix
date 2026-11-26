@@ -50,12 +50,18 @@
               node --test tests/allabiografer/site/*.test.cjs
             '';
             # Fetch, parse, merge, enrich and render; flags pass through (--cinema, --fresh, --render-only).
+            # With R2_BUCKET (and R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY) set, the
+            # store is the bucket; otherwise data/allabiografer.
             run = ''uv run --locked --group parse --group build allabiografer "$@"'';
             serve = ''python3 -m http.server "''${1:-8000}" --bind 127.0.0.1 -d data/allabiografer/www'';
+            # Mirror R2 and data/allabiografer; deletes what the source lacks, refuses a source without a run.
+            pull = ''uv run --locked allabiografer-sync pull "$@"'';
+            push = ''uv run --locked allabiografer-sync push "$@"'';
           };
     in
     {
       apps = forAll apps;
+
 
       devShells = forAll (pkgs: {
         default = pkgs.mkShell {

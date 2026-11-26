@@ -4,10 +4,11 @@ import io
 import platform
 import subprocess
 import tarfile
-from functools import cache
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from .graph import Graph
+if TYPE_CHECKING:
+    from .graph import Graph
 
 REPOSITORY = "https://github.com/ngalaiko/allabiografer.se"
 ROOT = Path(__file__).resolve().parents[2]
@@ -57,9 +58,10 @@ def commit(root: Path = ROOT) -> str | None:
     return head.stdout.strip() + ("-dirty" if changed.returncode or changed.stdout.strip() else "")
 
 
-@cache
-def _snapshot(graph_root: Path, root: Path) -> Path:
-    graph = Graph(graph_root)
+_snapshots: dict[tuple[str, Path], Path] = {}
+
+
+def _snapshot(graph: Graph, root: Path) -> Path:
     snapshot = graph.put_bytes(archive(root), "application/x-tar", name="allabiografer-source.tar")
     version = commit(root)
     return graph.put(
@@ -77,4 +79,9 @@ def _snapshot(graph_root: Path, root: Path) -> Path:
 
 def source_code(graph: Graph, root: Path = ROOT) -> Path:
     """The SoftwareSourceCode entity for the code at `root`, stored once per process."""
-    return _snapshot(graph.root, root)
+    # Object ids are reused once freed; the store's location names it for the whole process.
+    store = graph.store
+    key = (str(getattr(store, "root", None) or f"{store.bucket}:{id(store.client)}"), root)
+    if key not in _snapshots:
+        _snapshots[key] = _snapshot(graph, root)
+    return _snapshots[key]

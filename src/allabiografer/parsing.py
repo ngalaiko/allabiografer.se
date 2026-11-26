@@ -57,9 +57,12 @@ def screening_fields(version: ContentVersion, presentation: Presentation) -> dic
 def parse_capture(graph: Graph, adapter: str, captured: Path) -> Path:
     dataset = graph.read(captured)
     downloads = {}
-    for reference in dataset["distribution"]:
-        path = graph.resolve(captured, reference)
-        downloads[graph.read(path)["name"]] = path
+    paths = [graph.resolve(captured, reference) for reference in dataset["distribution"]]
+    graph.prefetch(paths)
+    entities = {path: graph.read(path) for path in paths}
+    graph.prefetch_content(list(entities.values()))
+    for path, entity in entities.items():
+        downloads[entity["name"]] = path
     feeds = {}
     for reference in dataset["about"]:
         path = graph.resolve(captured, reference)
