@@ -6,11 +6,6 @@ from allabiografer.sources.hypnostheatre_com.site import _ADDRESS, _CINEMA, _CIT
 
 from .._shared import STOCKHOLM, movie_fields, stable_key
 
-REVIEWED_CREDITS = {
-    ("die hard", "1988"): "https://biografspegeln.se/program/die-hard",
-    ("the holdovers", "2023"): "https://biografspegeln.se/program/the-holdovers",
-}
-
 
 def rows(inputs, today):
     capture = "programme.html"
@@ -25,8 +20,6 @@ def rows(inputs, today):
             continue
         seen.add(key)
         fields = movie_fields(film.title, "", film.overview, film.runtime, year=film.release_date)
-        if equivalent := REVIEWED_CREDITS.get((film.title.casefold(), film.release_date)):
-            fields["sameAs"] = equivalent
         yield (
             (None, _CINEMA, _ADDRESS, _CITY),
             key,

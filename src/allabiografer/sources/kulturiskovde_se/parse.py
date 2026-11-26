@@ -7,14 +7,6 @@ from allabiografer.sources.kulturiskovde_se.site import _SERIES, _VENUE, _showti
 from .._shared import STOCKHOLM, facts, read_page, stable_key
 from .fetch import TICKETS
 
-# Tix event IDs identify the reviewed December 2026 bookings, not future screenings with the same title.
-MOVIE_LINKS = {
-    "129559": "https://bio.se/movie/42258",  # Couture, in the Swedish theatrical release window.
-    "129560": "https://bio.se/movie/47019",  # Dagbio also lists A Sad and Beautiful World.
-    "129561": "https://www.filmstaden.se/film/pillion",
-    "129670": "https://bio.se/movie/4323",  # The organizer's description identifies Molly and Edison.
-}
-
 
 def rows(inputs, today):
     seen = set()
@@ -37,5 +29,5 @@ def rows(inputs, today):
                 *facts(),
                 stable_key(title.casefold()),
                 capture,
-                {"name": title, **({"sameAs": MOVIE_LINKS[event]} if event in MOVIE_LINKS else {})},
+                {"name": title},
             )

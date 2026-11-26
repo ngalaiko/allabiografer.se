@@ -17,8 +17,6 @@ from bs4 import BeautifulSoup
 
 from allabiografer import normalize as _version
 
-from .stockholm_movie_links import REVIEWED_MOVIE_LINKS
-
 STOCKHOLM = ZoneInfo("Europe/Stockholm")
 
 
@@ -94,7 +92,6 @@ def single_venue_rows(venue_id, screenings):
 
 
 def movie_fields(title, url, description, runtime, credits=None, *, year="", alternate=""):
-    same_as = REVIEWED_MOVIE_LINKS.get(url.rstrip("/"))
     return {
         "name": title,
         "url": url,
@@ -102,7 +99,6 @@ def movie_fields(title, url, description, runtime, credits=None, *, year="", alt
         **({"duration": f"PT{runtime}M"} if runtime else {}),
         **({"datePublished": year} if year else {}),
         **({"alternateName": alternate} if alternate else {}),
-        **({"sameAs": same_as} if same_as else {}),
         **{
             role: [{"@type": "Person", "name": name} for name in dict.fromkeys(names) if name]
             for role, names in (credits or {}).items()
