@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Föreningsgatan 8",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Jokkmokk",
+    "postalCode": "962 32"
   },
   "identifier": [
     {

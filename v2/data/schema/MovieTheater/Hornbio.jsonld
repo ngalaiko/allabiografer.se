@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Stångågatan 25",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Horn",
+    "postalCode": "590 42"
   },
   "identifier": [
     {

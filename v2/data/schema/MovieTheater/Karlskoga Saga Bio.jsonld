@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Centralplan 7",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Karlskoga",
+    "postalCode": "691 32"
   },
   "identifier": [
     {

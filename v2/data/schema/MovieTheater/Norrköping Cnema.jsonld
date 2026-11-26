@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kungsgatan 56 Norrköping",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Norrköping",
+    "postalCode": "602 33"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Algatan 53",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Trelleborg",
+    "postalCode": "231 42"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Bodholmsgången 11-13",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Skärholmen",
+    "postalCode": "127 48"
   },
   "identifier": [
     {

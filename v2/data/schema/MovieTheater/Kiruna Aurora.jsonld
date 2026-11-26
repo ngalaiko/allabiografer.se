@@ -17,7 +17,8 @@
     "@type": "PostalAddress",
     "streetAddress": "Stadshustorget 10",
     "addressLocality": "Kiruna",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "postalCode": "981 30"
   },
   "url": "https://aurorakiruna.se/"
 }

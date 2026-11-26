@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Hamngatan 52",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Piteå",
+    "postalCode": "941 32"
   },
   "identifier": [
     {

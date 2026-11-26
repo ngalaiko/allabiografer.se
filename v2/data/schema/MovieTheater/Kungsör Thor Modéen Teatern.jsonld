@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Drottninggatan 19",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Kungsör",
+    "postalCode": "736 31"
   },
   "identifier": [
     {

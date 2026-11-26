@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Lönnebergsvägen 7",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Bergsjö",
+    "postalCode": "829 50"
   },
   "identifier": [
     {

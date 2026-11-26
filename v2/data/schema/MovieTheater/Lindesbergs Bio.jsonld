@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kristinavägen 13, Lindesberg",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Lindesberg",
+    "postalCode": "711 30"
   },
   "identifier": [
     {

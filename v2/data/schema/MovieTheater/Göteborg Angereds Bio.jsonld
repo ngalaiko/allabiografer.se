@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Angereds torg 13",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Angered",
+    "postalCode": "424 65"
   },
   "identifier": [
     {

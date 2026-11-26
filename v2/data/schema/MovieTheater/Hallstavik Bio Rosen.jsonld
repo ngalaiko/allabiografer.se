@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Norra Uppsalavägen 15",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Hallstavik",
+    "postalCode": "763 40"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Östra Rådhusg 2D",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Umeå",
+    "postalCode": "901 09"
   },
   "identifier": [
     {

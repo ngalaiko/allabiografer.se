@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Sveavägen 45",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Stockholm",
+    "postalCode": "111 34"
   },
   "identifier": [
     {

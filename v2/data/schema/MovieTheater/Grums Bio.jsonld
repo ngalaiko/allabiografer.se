@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Sveagatan 118",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Grums",
+    "postalCode": "664 34"
   },
   "identifier": [
     {

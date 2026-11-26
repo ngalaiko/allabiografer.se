@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Hotingsvägen 23",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Rossön",
+    "postalCode": "883 95"
   },
   "identifier": [
     {

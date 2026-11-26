@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kyrkogatan 23",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Vetlanda",
+    "postalCode": "574 32"
   },
   "identifier": [
     {

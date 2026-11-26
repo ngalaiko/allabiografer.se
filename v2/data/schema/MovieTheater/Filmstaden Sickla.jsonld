@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Marcusplatsen 19",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Nacka",
+    "postalCode": "131 34"
   },
   "identifier": [
     {

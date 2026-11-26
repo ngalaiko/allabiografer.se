@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Skollärarvägen 3 Gideå",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Gideå",
+    "postalCode": "896 93"
   },
   "identifier": [
     {

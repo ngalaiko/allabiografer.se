@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Storgatan 69 Sollefteå",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Sollefteå",
+    "postalCode": "881 31"
   },
   "identifier": [
     {

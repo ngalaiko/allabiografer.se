@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Stora Östergatan 12",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Ystad",
+    "postalCode": "271 34"
   },
   "identifier": [
     {

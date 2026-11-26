@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Bondegatan 51",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Arbrå",
+    "postalCode": "820 10"
   },
   "identifier": [
     {

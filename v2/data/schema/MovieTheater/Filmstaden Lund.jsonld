@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Västra Mårtensgatan 12",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Lund",
+    "postalCode": "223 51"
   },
   "identifier": [
     {

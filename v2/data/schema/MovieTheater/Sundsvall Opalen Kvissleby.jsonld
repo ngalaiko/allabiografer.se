@@ -9,7 +9,8 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Affärsgatan",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Kvissleby"
   },
   "identifier": [
     {

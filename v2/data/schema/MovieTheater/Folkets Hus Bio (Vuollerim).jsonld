@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Älvvägen 4 A",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Vuollerim",
+    "postalCode": "960 30"
   },
   "identifier": [
     {

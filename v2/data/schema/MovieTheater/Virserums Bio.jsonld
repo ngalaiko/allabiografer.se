@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Storgatan 72",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Virserum",
+    "postalCode": "577 71"
   },
   "identifier": [
     {

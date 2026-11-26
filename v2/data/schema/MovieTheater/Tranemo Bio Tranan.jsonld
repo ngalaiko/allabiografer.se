@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Medborgarplatsen",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Tranemo",
+    "postalCode": "514 80"
   },
   "identifier": [
     {

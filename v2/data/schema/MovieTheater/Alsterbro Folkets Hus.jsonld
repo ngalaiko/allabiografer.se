@@ -17,7 +17,8 @@
     "@type": "PostalAddress",
     "streetAddress": "Parkvägen 11",
     "addressLocality": "Alsterbro",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "postalCode": "382 73"
   },
   "url": "https://www.folketshusochparker.se/arrangor/alsterbro-byggnadsforening/"
 }

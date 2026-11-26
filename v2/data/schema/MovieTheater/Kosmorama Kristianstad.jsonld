@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Östra Boulevarden 5",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Kristianstad",
+    "postalCode": "291 31"
   },
   "identifier": [
     {

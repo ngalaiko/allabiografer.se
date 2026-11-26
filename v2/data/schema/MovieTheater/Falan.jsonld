@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Östra Hamngatan 18",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Falun",
+    "postalCode": "791 71"
   },
   "identifier": [
     {

@@ -9,7 +9,8 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Sevedegatan 30",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Vimmerby"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Folkets Husvägen 1",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Ljungaverk",
+    "postalCode": "841 98"
   },
   "identifier": [
     {

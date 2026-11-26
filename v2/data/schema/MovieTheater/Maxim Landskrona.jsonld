@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Östergatan 13",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Landskrona",
+    "postalCode": "261 31"
   },
   "identifier": [
     {

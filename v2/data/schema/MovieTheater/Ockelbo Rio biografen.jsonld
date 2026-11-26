@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Norra Åsgatan 56 Ockelbo",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Ockelbo",
+    "postalCode": "816 31"
   },
   "identifier": [
     {

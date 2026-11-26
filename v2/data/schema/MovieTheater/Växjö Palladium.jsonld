@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Storgatan 12 Växjö",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Växjö",
+    "postalCode": "352 31"
   },
   "identifier": [
     {

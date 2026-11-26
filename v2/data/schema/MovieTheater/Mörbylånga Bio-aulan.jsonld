@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Ölandsgatan",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Mörbylånga",
+    "postalCode": "386 50"
   },
   "identifier": [
     {

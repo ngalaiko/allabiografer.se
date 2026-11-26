@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kulturhuset Fregatten",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Stenungsund",
+    "postalCode": "444 30"
   },
   "identifier": [
     {

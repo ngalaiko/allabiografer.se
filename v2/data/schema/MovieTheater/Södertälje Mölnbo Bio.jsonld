@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kvarnvägen 8",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Mölnbo",
+    "postalCode": "153 60"
   },
   "identifier": [
     {

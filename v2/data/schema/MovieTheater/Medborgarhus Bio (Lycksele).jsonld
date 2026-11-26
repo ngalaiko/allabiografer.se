@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Norra Torggatan 14",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Lycksele",
+    "postalCode": "921 31"
   },
   "identifier": [
     {

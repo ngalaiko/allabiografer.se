@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Stora Brogatan 3",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Norrtälje",
+    "postalCode": "761 30"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Sockenvägen 1",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Övertorneå",
+    "postalCode": "957 31"
   },
   "identifier": [
     {

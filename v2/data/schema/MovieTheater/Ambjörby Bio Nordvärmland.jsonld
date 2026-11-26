@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Ambjörby Folkets Hus 1",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Ambjörby",
+    "postalCode": "680 52"
   },
   "identifier": [
     {

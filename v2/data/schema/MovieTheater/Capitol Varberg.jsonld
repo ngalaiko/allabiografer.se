@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Västra Vallgatan 4",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Varberg",
+    "postalCode": "432 41"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Norra Allégatan 30",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Vansbro",
+    "postalCode": "786 31"
   },
   "identifier": [
     {

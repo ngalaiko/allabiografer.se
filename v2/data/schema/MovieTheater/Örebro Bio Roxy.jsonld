@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Olaigatan 19",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Örebro",
+    "postalCode": "703 61"
   },
   "identifier": [
     {

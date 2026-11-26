@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Stora Torget 2, Hultsfred",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Hultsfred",
+    "postalCode": "577 30"
   },
   "identifier": [
     {

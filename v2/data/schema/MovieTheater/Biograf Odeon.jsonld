@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Trädgårdsgatan 9",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Skövde",
+    "postalCode": "541 30"
   },
   "identifier": [
     {

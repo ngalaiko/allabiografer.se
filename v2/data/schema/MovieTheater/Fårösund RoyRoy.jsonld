@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kronhagsvägen 7",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Fårösund",
+    "postalCode": "624 62"
   },
   "identifier": [
     {

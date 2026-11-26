@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Holgersgatan 9",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Falkenberg",
+    "postalCode": "311 35"
   },
   "identifier": [
     {

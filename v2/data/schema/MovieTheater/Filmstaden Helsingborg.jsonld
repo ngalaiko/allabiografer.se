@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Mäster Palms plats 10",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Helsingborg",
+    "postalCode": "252 25"
   },
   "identifier": [
     {

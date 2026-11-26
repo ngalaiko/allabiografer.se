@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Götaforsvägen 8",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Vaggeryd",
+    "postalCode": "567 31"
   },
   "identifier": [
     {

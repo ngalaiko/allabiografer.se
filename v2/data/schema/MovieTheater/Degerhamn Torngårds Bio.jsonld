@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Torngård 112",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Degerhamn",
+    "postalCode": "380 65"
   },
   "identifier": [
     {

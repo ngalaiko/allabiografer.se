@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Klockaregårdsv 12",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Bredaryd",
+    "postalCode": "333 71"
   },
   "identifier": [
     {

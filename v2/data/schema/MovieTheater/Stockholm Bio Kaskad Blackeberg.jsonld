@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Blackebergsplan 3",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Bromma",
+    "postalCode": "168 48"
   },
   "identifier": [
     {

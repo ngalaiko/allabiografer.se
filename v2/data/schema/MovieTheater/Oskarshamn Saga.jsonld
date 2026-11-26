@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Köpmangatan 9",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Oskarshamn",
+    "postalCode": "572 30"
   },
   "identifier": [
     {

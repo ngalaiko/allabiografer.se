@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Stora Södergatan 64 Lund",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Lund",
+    "postalCode": "222 23"
   },
   "identifier": [
     {

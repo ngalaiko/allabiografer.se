@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kapellgatan 5",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Arboga",
+    "postalCode": "732 30"
   },
   "identifier": [
     {

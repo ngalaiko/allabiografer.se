@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Ågatan 13",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Tranås",
+    "postalCode": "573 31"
   },
   "identifier": [
     {

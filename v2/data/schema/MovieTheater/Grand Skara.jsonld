@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Tullportagatan 21",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Skara",
+    "postalCode": "532 30"
   },
   "identifier": [
     {

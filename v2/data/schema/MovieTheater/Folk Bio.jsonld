@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Thorleifs gata 1",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Norrhult",
+    "postalCode": "364 44"
   },
   "identifier": [
     {

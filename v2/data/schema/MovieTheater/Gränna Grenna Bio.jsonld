@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Torget",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Gränna",
+    "postalCode": "563 32"
   },
   "identifier": [
     {

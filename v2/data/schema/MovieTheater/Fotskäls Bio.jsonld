@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Strätehedsvägen 5",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Fotskäl",
+    "postalCode": "519 96"
   },
   "identifier": [
     {

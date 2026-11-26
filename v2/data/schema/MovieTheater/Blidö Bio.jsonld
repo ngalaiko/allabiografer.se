@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Blidövägen 149, Blidö",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Blidö",
+    "postalCode": "760 17"
   },
   "identifier": [
     {

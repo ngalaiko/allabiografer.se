@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Vällingby Torg 39",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Vällingby",
+    "postalCode": "162 65"
   },
   "identifier": [
     {

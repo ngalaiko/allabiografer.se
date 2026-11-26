@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Röforsvägen 22",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Laxå",
+    "postalCode": "695 60"
   },
   "identifier": [
     {

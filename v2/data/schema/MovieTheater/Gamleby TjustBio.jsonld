@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Västerviksvägen 4A",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Gamleby",
+    "postalCode": "594 30"
   },
   "identifier": [
     {

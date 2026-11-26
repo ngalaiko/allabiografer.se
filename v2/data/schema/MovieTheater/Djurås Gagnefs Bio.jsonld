@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Södra Industriv. 8 Djurås",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Djurås",
+    "postalCode": "785 61"
   },
   "identifier": [
     {

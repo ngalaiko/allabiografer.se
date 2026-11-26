@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Österlånggatan 11 Grästorp",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Grästorp",
+    "postalCode": "467 30"
   },
   "identifier": [
     {

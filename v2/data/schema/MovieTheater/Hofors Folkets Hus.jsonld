@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Skolgatan 21, Hofors",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Hofors",
+    "postalCode": "813 30"
   },
   "identifier": [
     {

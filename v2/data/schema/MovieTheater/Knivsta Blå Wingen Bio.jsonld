@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Vackerberga 35, Knivsta",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Knivsta",
+    "postalCode": "741 95"
   },
   "identifier": [
     {

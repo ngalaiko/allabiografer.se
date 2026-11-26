@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Genavägen",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Högsäter",
+    "postalCode": "450 63"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Storgatan 12",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Arvidsjaur",
+    "postalCode": "933 32"
   },
   "identifier": [
     {

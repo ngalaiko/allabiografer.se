@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Friisgatan 19D",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Malmö",
+    "postalCode": "214 22"
   },
   "identifier": [
     {

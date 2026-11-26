@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 from urllib.parse import quote, unquote, urlsplit
 
@@ -56,6 +57,11 @@ def test_registry_links_and_source_identifiers():
         assert address["@type"] == "PostalAddress"
         assert address["addressCountry"] == "SE"
         assert address["streetAddress"].strip(), path
+        if "addressLocality" in address:
+            assert isinstance(address["addressLocality"], str), path
+            assert address["addressLocality"].strip(), path
+        if "postalCode" in address:
+            assert re.fullmatch(r"[1-9][0-9]{2} [0-9]{2}", address["postalCode"]), path
         if "url" in entity:
             url = urlsplit(entity["url"])
             assert url.scheme in {"http", "https"}, path

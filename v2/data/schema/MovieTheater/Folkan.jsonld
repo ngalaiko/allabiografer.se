@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Furuvägen 3-5",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Gusum",
+    "postalCode": "615 71"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Oxtorget 10",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Växjö",
+    "postalCode": "352 32"
   },
   "identifier": [
     {

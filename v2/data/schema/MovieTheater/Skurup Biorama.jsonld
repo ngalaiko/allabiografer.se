@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Stora Torggatan 4",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Skurup",
+    "postalCode": "274 34"
   },
   "identifier": [
     {

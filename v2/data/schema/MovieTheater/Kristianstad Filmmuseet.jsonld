@@ -10,7 +10,8 @@
     "@type": "PostalAddress",
     "streetAddress": "Östra Storgatan 53",
     "addressLocality": "Kristianstad",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "postalCode": "291 22"
   },
   "identifier": [
     {

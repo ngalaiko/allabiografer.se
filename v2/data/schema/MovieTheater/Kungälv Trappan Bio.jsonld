@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Trappgränd 2, Kungälv",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Kungälv",
+    "postalCode": "442 31"
   },
   "identifier": [
     {

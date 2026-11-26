@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Södra Allén 14",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Hallsberg",
+    "postalCode": "694 30"
   },
   "identifier": [
     {

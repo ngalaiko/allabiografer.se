@@ -17,7 +17,8 @@
     "@type": "PostalAddress",
     "streetAddress": "Nygatan 24",
     "addressLocality": "Ulricehamn",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "postalCode": "523 34"
   },
   "url": "https://www.folketshusulricehamn.se/bio/"
 }

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Täby Centrum, Plan 2",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Täby",
+    "postalCode": "183 34"
   },
   "identifier": [
     {

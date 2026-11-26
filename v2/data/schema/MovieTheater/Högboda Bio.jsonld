@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Bodavägen 25",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Kil",
+    "postalCode": "665 93"
   },
   "identifier": [
     {

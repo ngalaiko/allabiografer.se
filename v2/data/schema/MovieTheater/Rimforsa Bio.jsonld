@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Järnvägsgatan 8",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Rimforsa",
+    "postalCode": "590 43"
   },
   "identifier": [
     {

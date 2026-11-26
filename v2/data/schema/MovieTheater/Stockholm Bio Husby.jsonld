@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Edvard Griegsgången 11",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Kista",
+    "postalCode": "164 32"
   },
   "identifier": [
     {

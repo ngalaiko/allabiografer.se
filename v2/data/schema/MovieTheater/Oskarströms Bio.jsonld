@@ -9,7 +9,8 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Hantverksgatan 2",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Oskarström"
   },
   "identifier": [
     {

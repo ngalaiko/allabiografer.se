@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Centrumplan 1",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Storfors",
+    "postalCode": "688 30"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Skånegatan 16 B",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Göteborg",
+    "postalCode": "411 40"
   },
   "identifier": [
     {

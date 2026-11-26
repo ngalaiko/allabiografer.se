@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Stationsgatan 16",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Sorsele",
+    "postalCode": "920 70"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Hantverkargatan 5",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Gällivare",
+    "postalCode": "982 31"
   },
   "identifier": [
     {

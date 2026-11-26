@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Borgvägen 1-5",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Stockholm",
+    "postalCode": "115 53"
   },
   "identifier": [
     {

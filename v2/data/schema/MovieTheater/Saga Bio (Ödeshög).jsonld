@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Stråtomtagatan 6",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Ödeshög",
+    "postalCode": "599 31"
   },
   "identifier": [
     {

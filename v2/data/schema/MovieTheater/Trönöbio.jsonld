@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Lertagsvägen 2",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Trönödal",
+    "postalCode": "826 95"
   },
   "identifier": [
     {

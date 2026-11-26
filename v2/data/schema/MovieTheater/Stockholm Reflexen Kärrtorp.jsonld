@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kärrtorpsplan 14",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Johanneshov",
+    "postalCode": "121 55"
   },
   "identifier": [
     {

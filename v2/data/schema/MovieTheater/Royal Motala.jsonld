@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Drottninggatan 20",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Motala",
+    "postalCode": "591 22"
   },
   "identifier": [
     {

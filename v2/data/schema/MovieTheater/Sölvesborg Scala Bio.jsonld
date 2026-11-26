@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Stortorget 10",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Sölvesborg",
+    "postalCode": "294 31"
   },
   "identifier": [
     {

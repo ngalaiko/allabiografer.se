@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Faluvägen 16",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Leksand",
+    "postalCode": "793 30"
   },
   "identifier": [
     {

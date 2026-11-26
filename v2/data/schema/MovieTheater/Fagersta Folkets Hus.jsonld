@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Aspvägen 23 Fagersta",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Fagersta",
+    "postalCode": "737 45"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "S:t Olofsgatan 10",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Uppsala",
+    "postalCode": "753 12"
   },
   "identifier": [
     {

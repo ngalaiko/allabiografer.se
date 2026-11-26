@@ -17,7 +17,8 @@
     "@type": "PostalAddress",
     "streetAddress": "Skarpnäcks allé 25",
     "addressLocality": "Skarpnäck",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "postalCode": "128 33"
   },
   "url": "https://skarpnackskulturhus.stockholm/"
 }

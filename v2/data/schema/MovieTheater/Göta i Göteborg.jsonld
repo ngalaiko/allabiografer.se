@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Götaplatsen 9",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Göteborg",
+    "postalCode": "411 34"
   },
   "identifier": [
     {

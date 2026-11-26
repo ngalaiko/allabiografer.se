@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Sandgatan 1",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Mönsterås",
+    "postalCode": "383 30"
   },
   "identifier": [
     {

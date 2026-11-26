@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Stora Torget 9B",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Sala",
+    "postalCode": "733 30"
   },
   "identifier": [
     {

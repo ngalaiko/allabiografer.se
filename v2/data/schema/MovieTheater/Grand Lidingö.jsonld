@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Lejonstigen 5, Lidingö centrum",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Lidingö",
+    "postalCode": "181 24"
   },
   "identifier": [
     {

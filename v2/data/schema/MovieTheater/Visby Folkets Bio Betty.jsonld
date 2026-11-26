@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Adelsgatan 39 Visby",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Visby",
+    "postalCode": "621 57"
   },
   "identifier": [
     {

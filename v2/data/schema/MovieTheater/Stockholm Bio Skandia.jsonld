@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Drottninggatan 82",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Stockholm",
+    "postalCode": "111 36"
   },
   "identifier": [
     {

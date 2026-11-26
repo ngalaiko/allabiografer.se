@@ -9,7 +9,8 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Nygatan 3",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Eksjö"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kungsgatan 5",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Åmål",
+    "postalCode": "662 31"
   },
   "identifier": [
     {

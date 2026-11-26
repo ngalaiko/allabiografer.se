@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Gåxsjö 4420",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Gåxsjö",
+    "postalCode": "830 70"
   },
   "identifier": [
     {

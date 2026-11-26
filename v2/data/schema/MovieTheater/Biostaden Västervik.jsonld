@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Bredgatan 20",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Västervik",
+    "postalCode": "593 30"
   },
   "identifier": [
     {

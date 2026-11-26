@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Konserthusgatan 15",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Aneby",
+    "postalCode": "578 23"
   },
   "identifier": [
     {

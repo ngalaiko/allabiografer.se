@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Västra Storgatan 3, Säffle",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Säffle",
+    "postalCode": "661 30"
   },
   "identifier": [
     {

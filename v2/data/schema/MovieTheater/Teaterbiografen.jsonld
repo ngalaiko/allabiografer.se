@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kvarngatan 22",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Sunne",
+    "postalCode": "686 21"
   },
   "identifier": [
     {

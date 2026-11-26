@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Ludvikavägen 22",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Fredriksberg",
+    "postalCode": "770 10"
   },
   "identifier": [
     {

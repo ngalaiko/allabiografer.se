@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Östra hamnen 1",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Hönö",
+    "postalCode": "475 42"
   },
   "identifier": [
     {

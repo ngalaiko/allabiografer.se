@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Borganäsvägen 48",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Borlänge",
+    "postalCode": "781 22"
   },
   "identifier": [
     {

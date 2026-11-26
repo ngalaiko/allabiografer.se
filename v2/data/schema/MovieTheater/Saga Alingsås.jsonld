@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Nygatan 21",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Alingsås",
+    "postalCode": "441 30"
   },
   "identifier": [
     {

@@ -9,7 +9,8 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Storgatan 12",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Hallstahammar"
   },
   "identifier": [
     {

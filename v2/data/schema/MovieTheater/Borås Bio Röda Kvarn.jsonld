@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Västerbrogatan 13 Borås",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Borås",
+    "postalCode": "503 30"
   },
   "identifier": [
     {

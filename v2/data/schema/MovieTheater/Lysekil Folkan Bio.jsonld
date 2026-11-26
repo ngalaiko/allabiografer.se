@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kungsgatan 17, Lysekil",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Lysekil",
+    "postalCode": "453 33"
   },
   "identifier": [
     {

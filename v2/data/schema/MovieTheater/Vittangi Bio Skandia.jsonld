@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kirunavägen 24",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Vittangi",
+    "postalCode": "980 10"
   },
   "identifier": [
     {

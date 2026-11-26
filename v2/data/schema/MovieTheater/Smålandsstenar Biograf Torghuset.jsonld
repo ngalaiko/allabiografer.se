@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Torggatan 1, Smålandsstenar",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Smålandsstenar",
+    "postalCode": "333 30"
   },
   "identifier": [
     {

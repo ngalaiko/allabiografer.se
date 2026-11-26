@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Änggatan 2",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Mellerud",
+    "postalCode": "464 30"
   },
   "identifier": [
     {

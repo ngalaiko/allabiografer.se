@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Timmermansgatan 19-21",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Luleå",
+    "postalCode": "971 10"
   },
   "identifier": [
     {

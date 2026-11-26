@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Ågatan 29",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Enköping",
+    "postalCode": "745 31"
   },
   "identifier": [
     {

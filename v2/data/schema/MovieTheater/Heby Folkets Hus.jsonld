@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Centralgatan 1",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Heby",
+    "postalCode": "744 32"
   },
   "identifier": [
     {

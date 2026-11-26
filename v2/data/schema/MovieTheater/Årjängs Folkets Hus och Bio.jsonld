@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Skolvägen 3 Årjäng",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Årjäng",
+    "postalCode": "672 32"
   },
   "identifier": [
     {

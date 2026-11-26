@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Nya Åbrovägen 6",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Strömsnäsbruk",
+    "postalCode": "287 31"
   },
   "identifier": [
     {

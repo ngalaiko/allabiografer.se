@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Biblioteksgatan 14",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Östersund",
+    "postalCode": "831 31"
   },
   "identifier": [
     {

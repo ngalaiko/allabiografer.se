@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Engelbrektsgatan 7",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Varberg",
+    "postalCode": "432 80"
   },
   "identifier": [
     {

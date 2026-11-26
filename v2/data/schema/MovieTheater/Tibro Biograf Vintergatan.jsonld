@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Storgatan 36",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Tibro",
+    "postalCode": "543 32"
   },
   "identifier": [
     {

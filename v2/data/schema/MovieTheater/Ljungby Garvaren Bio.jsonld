@@ -9,7 +9,8 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Stationsgatan 2",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Ljungby"
   },
   "identifier": [
     {

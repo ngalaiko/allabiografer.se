@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kulturhuset Svavelsticksgränd 7–9",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Jönköping",
+    "postalCode": "553 15"
   },
   "identifier": [
     {

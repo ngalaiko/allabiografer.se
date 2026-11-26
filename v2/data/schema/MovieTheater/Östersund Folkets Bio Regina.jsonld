@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Prästgatan 56 Östersund",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Östersund",
+    "postalCode": "831 33"
   },
   "identifier": [
     {

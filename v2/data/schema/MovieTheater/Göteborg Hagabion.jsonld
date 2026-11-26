@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Linnégatan 21 Göteborg",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Göteborg",
+    "postalCode": "413 04"
   },
   "identifier": [
     {

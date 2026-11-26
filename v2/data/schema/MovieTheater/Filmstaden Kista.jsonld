@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kista Galleria",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Kista",
+    "postalCode": "164 91"
   },
   "identifier": [
     {

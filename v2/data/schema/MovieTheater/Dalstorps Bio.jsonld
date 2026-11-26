@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Ljungsarpsvägen 4",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Dalstorp",
+    "postalCode": "514 60"
   },
   "identifier": [
     {

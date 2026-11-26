@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Slottstorget 1",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Gävle",
+    "postalCode": "802 50"
   },
   "identifier": [
     {

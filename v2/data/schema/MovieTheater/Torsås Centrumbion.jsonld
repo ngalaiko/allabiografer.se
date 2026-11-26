@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Karlskronavägen 3",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Torsås",
+    "postalCode": "385 30"
   },
   "identifier": [
     {

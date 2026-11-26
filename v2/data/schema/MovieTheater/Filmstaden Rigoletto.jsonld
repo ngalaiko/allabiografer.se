@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kungsgatan 16",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Stockholm",
+    "postalCode": "111 35"
   },
   "identifier": [
     {

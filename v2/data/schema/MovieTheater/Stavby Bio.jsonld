@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Stavby 110",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Alunda",
+    "postalCode": "747 94"
   },
   "identifier": [
     {

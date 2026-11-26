@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Vadstenag. 2 Skänninge",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Skänninge",
+    "postalCode": "596 31"
   },
   "identifier": [
     {

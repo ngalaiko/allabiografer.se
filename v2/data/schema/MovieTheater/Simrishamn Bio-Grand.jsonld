@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Storgatan 13",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Simrishamn",
+    "postalCode": "272 31"
   },
   "identifier": [
     {

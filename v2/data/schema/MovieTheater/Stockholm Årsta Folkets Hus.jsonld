@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Hjälmarsvägen 28",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Årsta",
+    "postalCode": "120 53"
   },
   "identifier": [
     {

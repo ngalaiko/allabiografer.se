@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Markusgatan 9",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Avesta",
+    "postalCode": "774 30"
   },
   "identifier": [
     {

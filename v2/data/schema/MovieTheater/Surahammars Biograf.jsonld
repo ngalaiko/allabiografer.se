@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Köpmannagatan 26 Surahammar",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Surahammar",
+    "postalCode": "735 31"
   },
   "identifier": [
     {

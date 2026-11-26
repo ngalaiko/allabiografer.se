@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Brogatan 3B",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Nässjö",
+    "postalCode": "571 31"
   },
   "identifier": [
     {

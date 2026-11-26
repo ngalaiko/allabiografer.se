@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Ronnebyvägen 8",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Konga",
+    "postalCode": "362 40"
   },
   "identifier": [
     {

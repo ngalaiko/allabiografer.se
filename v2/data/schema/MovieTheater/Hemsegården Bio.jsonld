@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Jacob Gråbergs plats 4",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Hemse",
+    "postalCode": "623 50"
   },
   "identifier": [
     {

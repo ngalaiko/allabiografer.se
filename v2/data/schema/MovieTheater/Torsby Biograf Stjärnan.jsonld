@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Järnvägsgatan 2",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Torsby",
+    "postalCode": "685 30"
   },
   "identifier": [
     {

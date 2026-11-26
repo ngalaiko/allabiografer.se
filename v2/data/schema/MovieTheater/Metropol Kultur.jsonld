@@ -17,7 +17,8 @@
     "@type": "PostalAddress",
     "streetAddress": "Norra Fogdelyckegatan 24",
     "addressLocality": "Karlshamn",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "postalCode": "374 38"
   },
   "url": "https://metropolkultur.se/"
 }

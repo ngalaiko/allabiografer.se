@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Götgatan 67",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Stockholm",
+    "postalCode": "116 21"
   },
   "identifier": [
     {

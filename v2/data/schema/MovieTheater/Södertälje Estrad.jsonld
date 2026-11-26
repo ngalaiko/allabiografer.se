@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Nyköpingsv. 26 Södertälje",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Södertälje",
+    "postalCode": "151 32"
   },
   "identifier": [
     {

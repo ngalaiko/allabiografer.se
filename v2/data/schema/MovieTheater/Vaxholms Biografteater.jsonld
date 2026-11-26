@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Hamngatan 31 Vaxholm",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Vaxholm",
+    "postalCode": "185 32"
   },
   "identifier": [
     {

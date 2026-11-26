@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Lilla Vintergatan 1, Ljusdal",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Ljusdal",
+    "postalCode": "827 31"
   },
   "identifier": [
     {

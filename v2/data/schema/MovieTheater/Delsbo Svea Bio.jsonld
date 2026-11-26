@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Köpmangatan 14",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Delsbo",
+    "postalCode": "824 71"
   },
   "identifier": [
     {

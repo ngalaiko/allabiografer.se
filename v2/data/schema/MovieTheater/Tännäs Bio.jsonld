@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Bygatan 25 Tännäs",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Tännäs",
+    "postalCode": "846 95"
   },
   "identifier": [
     {

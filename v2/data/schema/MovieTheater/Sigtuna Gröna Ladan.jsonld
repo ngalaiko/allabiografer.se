@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Gröna Gränd 6",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Sigtuna",
+    "postalCode": "193 30"
   },
   "identifier": [
     {

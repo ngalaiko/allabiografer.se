@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Karlskronagatan 23b Ronneby",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Ronneby",
+    "postalCode": "372 37"
   },
   "identifier": [
     {

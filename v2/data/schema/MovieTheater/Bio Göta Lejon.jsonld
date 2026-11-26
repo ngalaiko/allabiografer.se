@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Torggatan 4",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Götene",
+    "postalCode": "533 80"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Teatergatan 3",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Vara",
+    "postalCode": "534 31"
   },
   "identifier": [
     {

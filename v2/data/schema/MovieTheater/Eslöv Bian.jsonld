@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Köpmansgatan 8",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Eslöv",
+    "postalCode": "241 30"
   },
   "identifier": [
     {

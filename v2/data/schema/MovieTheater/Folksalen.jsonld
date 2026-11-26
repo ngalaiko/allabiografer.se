@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Mosshultsvägen 3",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Österbymo",
+    "postalCode": "570 60"
   },
   "identifier": [
     {

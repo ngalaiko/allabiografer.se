@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Hogdalsvägen 3",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Ytterhogdal",
+    "postalCode": "842 71"
   },
   "identifier": [
     {

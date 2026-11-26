@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Folkets Husgatan 2",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Bromölla",
+    "postalCode": "295 31"
   },
   "identifier": [
     {

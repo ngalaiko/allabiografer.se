@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Älvuddsgatan 21",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Åmotfors",
+    "postalCode": "673 34"
   },
   "identifier": [
     {

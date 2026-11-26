@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Parkgatan 1",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Hunnebostrand",
+    "postalCode": "456 61"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Nygatan 3",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Hedemora",
+    "postalCode": "776 30"
   },
   "identifier": [
     {

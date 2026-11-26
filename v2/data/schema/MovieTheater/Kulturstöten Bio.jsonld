@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Teatergatan 3",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Falun",
+    "postalCode": "791 62"
   },
   "identifier": [
     {

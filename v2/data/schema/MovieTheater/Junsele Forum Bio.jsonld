@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Forumv. 4 Junsele",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Junsele",
+    "postalCode": "880 37"
   },
   "identifier": [
     {

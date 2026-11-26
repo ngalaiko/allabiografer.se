@@ -9,7 +9,8 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Allbogatan 17",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Alvesta"
   },
   "identifier": [
     {

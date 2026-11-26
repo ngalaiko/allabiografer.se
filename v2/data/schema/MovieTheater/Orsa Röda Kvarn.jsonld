@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Järnvägsgatan 33",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Orsa",
+    "postalCode": "794 30"
   },
   "identifier": [
     {

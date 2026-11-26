@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Smäckbrogatan 25 Trosa",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Trosa",
+    "postalCode": "619 34"
   },
   "identifier": [
     {

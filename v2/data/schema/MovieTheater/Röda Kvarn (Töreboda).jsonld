@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Storgatan 19",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Töreboda",
+    "postalCode": "545 30"
   },
   "identifier": [
     {

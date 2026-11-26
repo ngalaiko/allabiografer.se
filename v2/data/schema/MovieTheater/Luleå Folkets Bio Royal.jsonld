@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Nygatan 1 Luleå",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Luleå",
+    "postalCode": "972 32"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Södra Tullgatan 4",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Malmö",
+    "postalCode": "211 42"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Trädgårdsgatan 4",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Robertsfors",
+    "postalCode": "915 31"
   },
   "identifier": [
     {

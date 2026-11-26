@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Storgatan 37",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Härnösand",
+    "postalCode": "871 30"
   },
   "identifier": [
     {

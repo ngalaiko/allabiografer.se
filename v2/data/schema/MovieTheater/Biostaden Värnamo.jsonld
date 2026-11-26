@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Jönköpingsvägen 15",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Värnamo",
+    "postalCode": "331 34"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Götalandsvägen 181",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Älvsjö",
+    "postalCode": "125 35"
   },
   "identifier": [
     {

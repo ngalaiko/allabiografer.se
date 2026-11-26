@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Fjällvägen 40",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Sälen",
+    "postalCode": "780 91"
   },
   "identifier": [
     {

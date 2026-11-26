@@ -9,7 +9,8 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Stubbekasvägen 1",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Dals-Ed"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Södervägen 4",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Kälarne",
+    "postalCode": "844 61"
   },
   "identifier": [
     {

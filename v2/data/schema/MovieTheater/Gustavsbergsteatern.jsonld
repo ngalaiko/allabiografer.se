@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Gustavsberg Centrum",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Gustavsberg",
+    "postalCode": "134 22"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Rademachergatan 19",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Eskilstuna",
+    "postalCode": "632 18"
   },
   "identifier": [
     {

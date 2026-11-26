@@ -9,7 +9,8 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Östra Vemmerlöv 19",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Gärsnäs"
   },
   "identifier": [
     {

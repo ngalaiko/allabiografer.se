@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Storgatan 29",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Nybro",
+    "postalCode": "382 33"
   },
   "identifier": [
     {

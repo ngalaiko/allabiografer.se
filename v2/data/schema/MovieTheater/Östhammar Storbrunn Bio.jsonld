@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Klockstapelsgatan 2 Östhammar",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Östhammar",
+    "postalCode": "742 32"
   },
   "identifier": [
     {

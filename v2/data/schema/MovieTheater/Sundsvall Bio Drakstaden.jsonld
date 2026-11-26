@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Esplanaden 29, Sundsvall",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Sundsvall",
+    "postalCode": "852 36"
   },
   "identifier": [
     {

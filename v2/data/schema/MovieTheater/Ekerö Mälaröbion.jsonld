@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Mälarö Torg 7B",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Ekerö",
+    "postalCode": "178 30"
   },
   "identifier": [
     {

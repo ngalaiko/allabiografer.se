@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kyrkogatan 21",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Mora",
+    "postalCode": "792 22"
   },
   "identifier": [
     {

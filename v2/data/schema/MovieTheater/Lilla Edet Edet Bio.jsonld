@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Göteborgsvägen 61",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Lilla Edet",
+    "postalCode": "463 31"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Carlavägen 24",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Ludvika",
+    "postalCode": "771 30"
   },
   "identifier": [
     {

@@ -10,7 +10,8 @@
     "@type": "PostalAddress",
     "streetAddress": "Svensköp 6518",
     "addressLocality": "Hörby",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "postalCode": "242 95"
   },
   "identifier": [
     {

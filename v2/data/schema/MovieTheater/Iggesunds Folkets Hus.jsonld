@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Centralgatan 3 Iggesund",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Iggesund",
+    "postalCode": "825 30"
   },
   "identifier": [
     {

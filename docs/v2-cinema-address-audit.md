@@ -23,4 +23,6 @@ All venue IDs in the local v2 parse snapshots are represented, including older N
 | Vallentuna Teater | Gymnasievägen 4 | [Event operator](https://jano.nu/vallentuna-teater) |
 | Vilhelmina Folkets Hus | Tingsgatan 8 | [Venue](https://vilhelminafolketshus.se/) |
 
+Postal localities and postcodes come from saved Bio.se, Filmstaden, and Bioguiden address records matched by venue ID and street address, or from the venue and municipal pages above. A linked city is not used to infer a postal locality. Conflicting or missing source values are left unset.
+
 TODO: Reconcile remaining legacy-only venues and aliases in `data/allabiografer.db`. Verify inherited addresses against venue sources, including entries that contain only a street or building name.

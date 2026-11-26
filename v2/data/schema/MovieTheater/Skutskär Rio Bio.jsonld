@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Gävlevägen 24",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Skutskär",
+    "postalCode": "814 31"
   },
   "identifier": [
     {

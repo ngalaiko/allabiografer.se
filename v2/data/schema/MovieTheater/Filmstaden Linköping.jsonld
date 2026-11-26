@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Ågatan 39",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Linköping",
+    "postalCode": "582 22"
   },
   "identifier": [
     {

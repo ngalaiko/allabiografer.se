@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Skolgatan 18, Älmhult",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Älmhult",
+    "postalCode": "343 31"
   },
   "identifier": [
     {

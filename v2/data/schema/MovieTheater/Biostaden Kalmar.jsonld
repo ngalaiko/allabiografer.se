@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Skeppsbrogatan 12",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Kalmar",
+    "postalCode": "391 22"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Edsgatan 12A",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Vänersborg",
+    "postalCode": "462 21"
   },
   "identifier": [
     {

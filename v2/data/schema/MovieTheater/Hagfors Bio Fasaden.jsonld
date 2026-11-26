@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Dalavägen 23",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Hagfors",
+    "postalCode": "683 30"
   },
   "identifier": [
     {

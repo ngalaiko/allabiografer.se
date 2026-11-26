@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Drottninggatan 6-8",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Örebro",
+    "postalCode": "702 10"
   },
   "identifier": [
     {

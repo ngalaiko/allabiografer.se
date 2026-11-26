@@ -17,7 +17,8 @@
     "@type": "PostalAddress",
     "streetAddress": "Byttgränd 13",
     "addressLocality": "Umeå",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "postalCode": "906 27"
   },
   "url": "https://ersbodafolketshus.se/"
 }

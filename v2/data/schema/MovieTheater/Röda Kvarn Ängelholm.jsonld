@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Järnvägsgatan 15",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Ängelholm",
+    "postalCode": "262 37"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Gamla Kronvägen 56",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Partille",
+    "postalCode": "433 28"
   },
   "identifier": [
     {

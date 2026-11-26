@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Storgatan 31",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Vissefjärda",
+    "postalCode": "361 54"
   },
   "identifier": [
     {

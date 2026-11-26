@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Skolvägen",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Lövånger",
+    "postalCode": "930 10"
   },
   "identifier": [
     {

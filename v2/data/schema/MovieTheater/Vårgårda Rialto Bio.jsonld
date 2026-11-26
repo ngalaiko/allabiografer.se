@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Skarins Väg 5",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Vårgårda",
+    "postalCode": "447 32"
   },
   "identifier": [
     {

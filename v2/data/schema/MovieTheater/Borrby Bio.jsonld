@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Sandbyvägen 4",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Borrby",
+    "postalCode": "276 30"
   },
   "identifier": [
     {

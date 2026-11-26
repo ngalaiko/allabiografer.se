@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Utbildningsv. 2",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Tumba",
+    "postalCode": "147 40"
   },
   "identifier": [
     {

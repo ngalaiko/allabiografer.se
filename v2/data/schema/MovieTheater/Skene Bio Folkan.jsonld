@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Textilgatan 1, 511 61, Skene",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Skene",
+    "postalCode": "511 61"
   },
   "identifier": [
     {

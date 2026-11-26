@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kungstorget 2",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Göteborg",
+    "postalCode": "411 16"
   },
   "identifier": [
     {

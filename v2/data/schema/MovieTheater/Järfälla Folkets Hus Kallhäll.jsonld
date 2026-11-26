@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Gjutarplan 15",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Järfälla",
+    "postalCode": "176 71"
   },
   "identifier": [
     {

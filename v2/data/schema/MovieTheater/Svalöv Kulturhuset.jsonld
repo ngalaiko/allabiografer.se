@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Svalegatan 22",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Svalöv",
+    "postalCode": "268 31"
   },
   "identifier": [
     {

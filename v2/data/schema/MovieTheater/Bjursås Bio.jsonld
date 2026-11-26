@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Skovägen 31",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Bjursås",
+    "postalCode": "790 21"
   },
   "identifier": [
     {

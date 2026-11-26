@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Löttorpsvägen 21",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Löttorp",
+    "postalCode": "387 72"
   },
   "identifier": [
     {

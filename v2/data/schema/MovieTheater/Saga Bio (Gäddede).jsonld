@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Sagavägen 5",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Gäddede",
+    "postalCode": "830 90"
   },
   "identifier": [
     {

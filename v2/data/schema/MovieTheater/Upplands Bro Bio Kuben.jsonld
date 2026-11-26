@@ -9,7 +9,8 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Furuhällsplan 1",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Kungsängen"
   },
   "identifier": [
     {

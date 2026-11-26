@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Ljusnegatan 1",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Sveg",
+    "postalCode": "842 32"
   },
   "identifier": [
     {

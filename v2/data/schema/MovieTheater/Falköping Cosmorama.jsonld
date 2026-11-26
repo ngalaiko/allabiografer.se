@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Sankt Olofsgatan 20",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Falköping",
+    "postalCode": "521 43"
   },
   "identifier": [
     {

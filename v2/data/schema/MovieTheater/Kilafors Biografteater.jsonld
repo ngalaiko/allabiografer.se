@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Stationsgatan 11",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Kilafors",
+    "postalCode": "823 30"
   },
   "identifier": [
     {

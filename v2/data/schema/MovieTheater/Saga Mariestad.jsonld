@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kungsgatan 1",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Mariestad",
+    "postalCode": "542 23"
   },
   "identifier": [
     {

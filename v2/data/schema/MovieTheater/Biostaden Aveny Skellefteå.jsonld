@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Torget 4",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Skellefteå",
+    "postalCode": "931 22"
   },
   "identifier": [
     {

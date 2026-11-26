@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Berzeliusgatan 2",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Skelleftehamn",
+    "postalCode": "932 32"
   },
   "identifier": [
     {

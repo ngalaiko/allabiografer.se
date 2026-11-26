@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Torggatan 8",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Lidköping",
+    "postalCode": "531 30"
   },
   "identifier": [
     {

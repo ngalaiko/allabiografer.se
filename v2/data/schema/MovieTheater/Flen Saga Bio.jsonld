@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Stadshusgatan 7 Flen",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Flen",
+    "postalCode": "642 35"
   },
   "identifier": [
     {

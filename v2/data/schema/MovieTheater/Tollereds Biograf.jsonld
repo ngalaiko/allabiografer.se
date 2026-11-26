@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Volrath Bergs väg 7",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Tollered",
+    "postalCode": "448 50"
   },
   "identifier": [
     {

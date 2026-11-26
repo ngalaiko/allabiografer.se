@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Köpmangatan 17",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Sandviken",
+    "postalCode": "811 39"
   },
   "identifier": [
     {

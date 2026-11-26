@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Köpmannagatan 24",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Kalix",
+    "postalCode": "952 33"
   },
   "identifier": [
     {

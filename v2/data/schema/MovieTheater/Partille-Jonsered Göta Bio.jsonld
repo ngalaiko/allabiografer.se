@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Anna-Stinas Lid 7",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Jonsered",
+    "postalCode": "433 75"
   },
   "identifier": [
     {

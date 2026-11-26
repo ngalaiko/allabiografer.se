@@ -10,7 +10,8 @@
     "@type": "PostalAddress",
     "streetAddress": "Storgatan 7",
     "addressLocality": "Ljungbyhed",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "postalCode": "264 52"
   },
   "identifier": [
     {

@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Storgatan 39 , Borgholm",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Borgholm",
+    "postalCode": "386 94"
   },
   "identifier": [
     {

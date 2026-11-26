@@ -10,7 +10,8 @@
     "@type": "PostalAddress",
     "streetAddress": "Lisagatan 69",
     "addressLocality": "Malung",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "postalCode": "782 30"
   },
   "identifier": [
     {

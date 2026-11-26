@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Ledetvägen 6",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Alafors",
+    "postalCode": "449 80"
   },
   "identifier": [
     {

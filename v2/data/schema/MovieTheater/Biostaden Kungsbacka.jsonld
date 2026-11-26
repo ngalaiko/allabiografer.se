@@ -9,7 +9,9 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Kungsmässan",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Kungsbacka",
+    "postalCode": "434 32"
   },
   "identifier": [
     {

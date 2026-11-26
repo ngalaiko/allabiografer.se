@@ -17,7 +17,8 @@
     "@type": "PostalAddress",
     "streetAddress": "Medborgargatan 2",
     "addressLocality": "Älvsbyn",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "postalCode": "942 33"
   },
   "url": "https://www.forumalvsbyn.se/kontakt/"
 }

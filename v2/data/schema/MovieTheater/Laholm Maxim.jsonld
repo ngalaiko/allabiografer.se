@@ -9,7 +9,8 @@
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Hästtorget 7",
-    "addressCountry": "SE"
+    "addressCountry": "SE",
+    "addressLocality": "Laholm"
   },
   "identifier": [
     {
