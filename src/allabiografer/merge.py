@@ -31,7 +31,7 @@ _OWN_FIELDS = {"@context", "@id", "@type", "identifier", "isBasedOn", "url", "sa
 
 
 def slugify(text: str) -> str:
-    """Slug preserving å ä ö, as v1 film URLs do."""
+    """Slug preserving å ä ö, as published film URLs do."""
     text = re.sub(r"[^\wåäö\s-]", "", text.lower().strip())
     return re.sub(r"[-\s]+", "-", text).strip("-") or "unnamed"
 

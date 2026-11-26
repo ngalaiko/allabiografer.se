@@ -1,7 +1,6 @@
 # allabiografer data
 
-The `allabiografer` package (`src/allabiografer/`) reads and writes this directory. It shares no code with the `parse`, `store`, and `build` packages.
-
+The `allabiografer` package (`src/allabiografer/`) reads and writes this directory.
 ```text
 assets/<sha256>                  raw bytes: HTML, API responses, images
 schema/<Schema.org type>/<id>.jsonld
@@ -48,6 +47,6 @@ Each action's `instrument` is a `SoftwareSourceCode` entity naming the module it
 
 ## Website
 
-`www/` is the allabiografer.se site rendered from the latest merged `Dataset`, regenerated on every run and not checked in. Rendering is v1's: `src/allabiografer/site/` holds copies of `src/build`'s page code, templates, styles, scripts and fonts, so the pages look the same. `render.py` only translates the merged graph into v1's page data. Each programme has an `index.md` and an `index.jsonld`; there are no iCalendar feeds or festival pages.
+`www/` is the allabiografer.se site rendered from the latest merged `Dataset`, regenerated on every run and not checked in. `src/allabiografer/site/` holds the page code, templates, styles, scripts and fonts; `render.py` translates the merged graph into its page data. Each programme has an `index.md` and an `index.jsonld`.
 
-Posters are cropped and resized to v1's WebP widths and stored as `ImageObject`s in `assets/`; source URLs are downloaded into the store first. `www/posters/` holds symlinks to those assets, so image bytes are stored once; a deploy must copy them as files.
+Posters are cropped and resized to WebP at 104, 125, 250 and 500 px and stored as `ImageObject`s in `assets/`; source URLs are downloaded into the store first. `www/posters/` holds symlinks to those assets, so image bytes are stored once; a deploy must copy them as files.

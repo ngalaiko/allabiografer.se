@@ -24,16 +24,8 @@
               git-lfs
               mise
               nodejs
-              chromium
-              openresty
             ];
 
-            NEWSLETTER_LUA_PATH = "${pkgs.luajitPackages.lua-resty-http}/share/lua/5.1/?.lua;${pkgs.luajitPackages.lua-resty-openssl}/share/lua/5.1/?.lua;;";
-
-            # Binary Python wheels (greenlet and curl_cffi) need the C++ runtime.
-            LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib ];
-            PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH = "${pkgs.chromium}/bin/chromium";
-            PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
             FONTCONFIG_FILE = pkgs.makeFontsConf {
               fontDirectories = [ pkgs.dejavu_fonts ];
             };

@@ -1,4 +1,4 @@
-"""Save Tickster and linked cinema HTML for later replay through the v1 parsers."""
+"""Save Tickster and linked cinema HTML for later replay through the parser."""
 
 import logging
 
@@ -50,7 +50,8 @@ class Pages:
 
 
 def year_for_month(today, month):
-    # Match v1's year inference, anchored to the capture day rather than replay time.
+    # A month just past belongs to this year (late listings); earlier months roll to next year.
+    # Anchored to the capture day, not the replay clock.
     if month == (today.month - 2) % 12 + 1:
         return today.year - (today.month == 1)
     return today.year + (month < today.month)

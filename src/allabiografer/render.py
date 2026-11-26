@@ -1,7 +1,7 @@
 """Render a merged Dataset as the allabiografer.se website.
 
-The pages are v1's (`site/pages.py`, its templates, styles and scripts); this module only
-translates the merged Schema.org graph into the page data v1 renders from.
+The pages are `site/pages.py` with its templates, styles and scripts; this module only
+translates the merged Schema.org graph into the page data they render from.
 """
 
 import hashlib
@@ -34,7 +34,7 @@ _MEDIA = {medium.value: medium for medium in ProjectionMedium}
 
 
 def _identity(slug: str) -> int:
-    """v1 keys films by negative integers; derive a stable one from the film's slug."""
+    """Pages key films by negative integers; derive a stable one from the film's slug."""
     return -int.from_bytes(hashlib.sha256(slug.encode()).digest()[:7], "big")
 
 
@@ -104,7 +104,7 @@ def _poster(graph: Graph, film_path: Path, image, session, downloaded: dict[str,
 
 
 def site_data(graph: Graph, merged: Path, out: Path, *, today: date | None = None) -> pages.SiteData:
-    """v1's page data for a merged Dataset."""
+    """Page data for a merged Dataset."""
     sd = pages.SiteData(out_dir=out)
     sd.graph = graph
     if today is not None:
@@ -179,7 +179,7 @@ def site_data(graph: Graph, merged: Path, out: Path, *, today: date | None = Non
     for screening in sd.screenings:
         sd.cities[screening.city] += 1
         sd.city_films.add((screening.city, screening.tmdb_id))
-    # Every registry cinema and city has a page, as in v1; films are listed while they show.
+    # Every registry cinema and city has a page; films are listed while they show.
     sd.movies = {identifier: movie for identifier, movie in sd.movies.items() if identifier in showing}
     return sd
 

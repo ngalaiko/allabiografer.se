@@ -8,11 +8,11 @@ from allabiografer.merge import merge_datasets
 from allabiografer.render import render
 
 DAY = date(2026, 12, 1)
-STATIC = DATA.parents[1] / "static" / "i"
+STATIC = DATA.parents[1] / "src" / "allabiografer" / "site" / "static" / "i"
 ENGLISH = {"inLanguage": ["en"], "subtitleLanguage": ["sv"]}
 
 
-def test_render_writes_v1_pages_from_the_merged_dataset(graph, parsed, tmp_path):
+def test_render_writes_pages_from_the_merged_dataset(graph, parsed, tmp_path):
     buffer = io.BytesIO()
     Image.new("RGB", (1000, 1500), "teal").save(buffer, "PNG")
     poster = graph.put_bytes(buffer.getvalue(), "image/png", name="poster.png")
@@ -28,7 +28,7 @@ def test_render_writes_v1_pages_from_the_merged_dataset(graph, parsed, tmp_path)
 
     render(graph, merged, out, today=DAY)
 
-    # v1's styles and scripts are published unchanged.
+    # The styles and scripts are published unchanged.
     assert (out / "i" / "style.css").read_bytes() == (STATIC / "style.css").read_bytes()
     cinema = (out / "stad" / "stockholm" / "bio-rio" / "index.html").read_text()
     assert 'class="schedule-film"' in cinema

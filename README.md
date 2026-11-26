@@ -1,9 +1,6 @@
 # allabiografer.se
 
-Cinema programmes across Sweden, with festival planners and weekly city newsletters.
+Cinema programmes across Sweden.
 Inspired by [allekinos.de](https://allekinos.de/) by [Nikita Tonsky](https://tonsky.me/).
 
-## Documentation
-
-- [Development, data, festivals and deployment](docs/development.md)
-- [Newsletter architecture, state, delivery lifecycle and operations](docs/newsletter.md)
+See [data/allabiografer/README.md](data/allabiografer/README.md) for the registry, pipeline and website.

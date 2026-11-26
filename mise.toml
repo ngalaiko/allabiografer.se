@@ -10,109 +10,16 @@ description = "Format with ruff"
 run = "uv run ruff format src/ tests/"
 
 [tasks.test]
-description = "Run tests with pytest"
-run = "uv run --group dev --group parse --group build pytest"
+description = "Run tests"
+run = [
+  "uv run --group dev --group parse --group build pytest",
+  "node --test tests/allabiografer/site/*.test.cjs",
+]
 
-
-[tasks.parse]
-description = "Fetch sources, reconcile films and publish the final schedule"
-depends = ["fetch"]
-run = "uv run --group parse reconcile --enrich"
-
-[tasks.fetch]
-description = "Fetch cinema sources independently, without TMDB"
-depends = ["parse:*"]
-
-[tasks.reconcile]
-description = "Reconcile stored source films, enrich from TMDB, and save the final schedule"
-run = "uv run --group parse reconcile --enrich"
-
-[tasks."parse:filmstaden_se"]
-run = "uv run --group parse parse filmstaden_se"
-
-[tasks."parse:svenskabio_se"]
-run = "uv run --group parse parse svenskabio_se"
-
-[tasks."parse:bio_se"]
-run = "uv run --group parse parse bio_se"
-
-[tasks."parse:bioguiden_se"]
-run = "uv run --group parse parse bioguiden_se"
-
-[tasks."parse:nfbio_se"]
-run = "uv run --group parse parse nfbio_se"
-
-[tasks."parse:folkets_hus_och_parker"]
-description = "Parse Folkets Hus och Parker cinemas"
-run = "uv run --group parse parse folkets_hus_och_parker"
-
-[tasks."parse:cinemascenen_se"]
-run = "uv run --group parse parse cinemascenen_se"
-
-[tasks."parse:wp_theatre"]
-run = "uv run --group parse parse wp_theatre"
-
-[tasks."parse:capitolbio_se"]
-run = "uv run --group parse parse capitolbio_se"
-
-[tasks."parse:tickster_se"]
-run = "uv run --group parse parse tickster_se"
-
-[tasks."parse:kraftenifinspang_se"]
-run = "uv run --group parse parse kraftenifinspang_se"
-
-[tasks."parse:kiviksbio_se"]
-run = "uv run --group parse parse kiviksbio_se"
-
-[tasks."parse:biorio_se"]
-run = "uv run --group parse parse biorio_se"
-
-[tasks."parse:bioaspen_se"]
-run = "uv run --group parse parse bioaspen_se"
-
-[tasks."parse:biofagelbla_se"]
-run = "uv run --group parse parse biofagelbla_se"
-
-[tasks."parse:biosverige_se"]
-run = "uv run --group parse parse biosverige_se"
-
-[tasks."parse:soderkopingsbio_se"]
-run = "uv run --group parse parse soderkopingsbio_se"
-
-[tasks."parse:hallundafolketshus_se"]
-run = "uv run --group parse parse hallundafolketshus_se"
-
-[tasks."parse:fhbracke_se"]
-run = "uv run --group parse parse fhbracke_se"
-
-[tasks."parse:palladiumbio_se"]
-run = "uv run --group parse parse palladiumbio_se"
-
-[tasks."parse:osbyborgen_se"]
-run = "uv run --group parse parse osbyborgen_se"
-
-[tasks."parse:doclounge_se"]
-run = "uv run --group parse parse doclounge_se"
-
-[tasks."parse:nortic_se"]
-run = "uv run --group parse parse nortic_se"
-
-[tasks."parse:hypnostheatre_com"]
-run = "uv run --group parse parse hypnostheatre_com"
-
-[tasks."parse:kulturiskovde_se"]
-run = "uv run --group parse parse kulturiskovde_se"
-
-[tasks."parse:roxy_bio"]
-run = "uv run --group parse parse roxy_bio"
-
-[tasks."parse:riobiotomelilla_se"]
-run = "uv run --group parse parse riobiotomelilla_se"
-
-[tasks.build]
-description = "Build the static site"
-run = "uv run --group build build www/allabiografer.se"
+[tasks.run]
+description = "Fetch, parse, merge and render"
+run = "uv run --group parse --group build allabiografer"
 
 [tasks.serve]
-description = "Serve the built site locally"
-run = "python -m http.server 8000 -d www/allabiografer.se"
+description = "Serve the rendered site locally"
+run = "python -m http.server 8000 -d data/allabiografer/www"

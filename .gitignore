@@ -4,11 +4,7 @@ __pycache__/
 *.lock
 !flake.lock
 build/
-!src/build
 www/
-*.db-journal
-*.db-wal
-*.db-shm
 # allabiografer: only the cinema registry and its README are checked in.
 !/data/allabiografer/
 /data/allabiografer/*

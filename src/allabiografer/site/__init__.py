@@ -1,1 +1,1 @@
-"""The allabiografer.se website: v1's pages, templates, styles and scripts."""
+"""The allabiografer.se website: pages, templates, styles and scripts."""

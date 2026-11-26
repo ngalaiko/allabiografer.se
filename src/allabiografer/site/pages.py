@@ -1,7 +1,6 @@
 """Render the merged schedule as the allabiografer.se static site.
 
-The pages, templates, styles and scripts are v1's (`src/build`), so the site looks the same;
-only the data comes from the merged Dataset instead of the SQLite catalogue.
+`render.py` fills the page data from the merged Dataset.
 
     /                                    - city A-Ö index
     /stad/{slug}/                        - programme for a city
@@ -362,7 +361,7 @@ POSTER_WIDTHS = (104, 125, 250, 500)
 
 
 def _poster_variants(data: bytes) -> dict[int, bytes]:
-    """Crop to the poster ratio and encode v1's responsive WebP widths."""
+    """Crop to the poster ratio and encode the responsive WebP widths."""
     with Image.open(io.BytesIO(data)) as img:
         img = img.convert("RGB")
         src_ratio = img.width / img.height
