@@ -131,18 +131,18 @@ def test_slugs_are_stable_and_never_reassigned(graph):
 
 
 def test_joined_films_keep_the_oldest_slug_and_alias_the_other(graph):
-    rio = parsed(graph, "a", ["Bio Rio"], {"1": ({"name": "Heat", "url": "https://x/heat"}, [])})
-    aspen = parsed(graph, "b", ["Aspen"], {"2": ({"name": "Heat (1995)", "url": "https://y/heat"}, [])})
+    plot = "En polis jagar en bankrånare genom Los Angeles medan båda försöker hålla ihop sina liv. " * 3
+    rio = parsed(graph, "a", ["Bio Rio"], {"1": ({"name": "Heat", "description": plot}, [])})
+    aspen = parsed(graph, "b", ["Aspen"], {"2": ({"name": "Heta nätter"}, [])})
     first = merge_datasets(graph, None, [rio], DAY)
     second = merge_datasets(graph, first, [aspen], date(2026, 12, 2))
-    # A shared identity link now proves both records are one film.
-    aspen = parsed(
-        graph, "b", ["Aspen"], {"2": ({"name": "Heat", "url": "https://y/heat", "sameAs": "https://x/heat"}, [])}
-    )
+    assert len(contents(graph, second)[0]) == 2
+    # The second listing now carries the same distributor synopsis: one film.
+    aspen = parsed(graph, "b", ["Aspen"], {"2": ({"name": "Heta nätter", "description": plot}, [])})
     third = merge_datasets(graph, second, [aspen], date(2026, 12, 3))
 
     (film,) = contents(graph, third)[0].values()
     assert [(item["propertyID"], item["value"]) for item in film["identifier"]] == [
         (FILM, "heat"),
-        ("allabiografer:film-alias", "heat-1995"),
+        ("allabiografer:film-alias", "heta-nätter"),
     ]

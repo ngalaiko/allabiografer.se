@@ -15,7 +15,7 @@ reassigned, and slugs of films merged into another remain as `allabiografer:film
 import json
 import re
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime
+from datetime import date, datetime
 from pathlib import Path
 
 from .graph import Graph
@@ -100,7 +100,8 @@ def merge_datasets(graph: Graph, previous: Path | None, parsed: list[Path], day:
     movies = {key: graph.read(path) for key, path in records.items()}
 
     screenings = []
-    slots = {key: set() for key in records}
+    # Screenings per source record: the record listed most often names the film.
+    shown = dict.fromkeys(records, 0)
     for dataset in in_effect:
         for path, screening in _parts(graph, dataset, "ScreeningEvent"):
             cinema = graph.resolve(path, screening["location"])
@@ -108,14 +109,14 @@ def merge_datasets(graph: Graph, previous: Path | None, parsed: list[Path], day:
             if suppliers.get(cinema) != dataset or start.astimezone(STOCKHOLM).date() < day:
                 continue
             key = keys[graph.resolve(path, screening["workPresented"])]
-            slots[key].add((str(cinema), start.astimezone(UTC).isoformat()))
+            shown[key] += 1
             screenings.append((key, screening))
 
     used = {slug for identity in identities for slug in (identity.slug, *identity.aliases)}
     claimed: set[str] = set()
     films = {}
-    for group in sorted(groups(movies, slots), key=sorted):
-        members = sorted(group, key=lambda key: (-len(slots[key]), key))
+    for group in groups(movies):
+        members = sorted(group, key=lambda key: (-shown[key], key))
         candidates = sorted(
             {
                 owners[key].slug: owners[key] for key in group if key in owners and owners[key].slug not in claimed
