@@ -33,3 +33,23 @@ def test_movies_use_the_captured_poster_not_the_listing_thumbnail(tmp_path):
     assert movies["Djävulen bär Prada 2"]["image"] == f"poster-{PRADA}.jpg"
     # The listing's 150x90 thumbnails are banners, not posters.
     assert all("image" not in movie for name, movie in movies.items() if name != "Djävulen bär Prada 2")
+
+
+def test_a_programme_with_nothing_selected_is_identified_by_its_address(tmp_path):
+    overkalix = "https://www.bioguiden.se/biografer.aspx?cityid=91&theatreid=df7b68d4-44d9-4d99-b508-e4bf79b1444b"
+    shutil.copy(FIXTURES / "unselected.html", tmp_path / f"programme-{stable_key(overkalix)}.html")
+
+    found = list(rows(tmp_path, date(2026, 11, 26)))
+
+    assert found
+    assert {row[0][1] for row in found} == {"Överkalix Bio"}
+
+
+def test_a_programme_selecting_the_previously_visited_cinema_is_identified_by_its_address(tmp_path):
+    # One session fetches every programme; the dropdown can keep the previous cinema (Älvdalen).
+    overkalix = "https://www.bioguiden.se/biografer.aspx?cityid=91&theatreid=df7b68d4-44d9-4d99-b508-e4bf79b1444b"
+    shutil.copy(FIXTURES / "stale-selection.html", tmp_path / f"programme-{stable_key(overkalix)}.html")
+
+    found = list(rows(tmp_path, date(2026, 11, 26)))
+
+    assert {row[0][1] for row in found} == {"Överkalix Bio"}

@@ -1,0 +1,719 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="sv" lang="sv">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+    <title>Bioguiden.se | Biografer</title>
+    <link rel="stylesheet" href="css/screen_170425.css" type="text/css" media="screen" />
+
+    <script type="text/javascript" src="js/jquery.js"></script>
+
+    <script type="text/javascript" src="js/scroll.js"></script>
+
+    <script type="text/javascript" src="js/dimensions.js"></script>
+
+    <script type="text/javascript" src="js/mousewheel.js"></script>
+
+
+
+<script type="text/javascript" language="javascript">	
+    function hideDiv(divid){
+		if (document.getElementById){
+			var _x = document.getElementById(divid)
+			_x.style.visibility = 'hidden';
+		} else if (document.all) {
+			document.all[divid].style.visibility = 'hidden';
+		} else if (document.layers) {
+			document.layers[divid].style.visibility = 'hidden';
+		}
+	}
+	function showDiv(divid){
+		if (document.getElementById){
+			var _x = document.getElementById(divid)
+			_x.style.visibility = 'visible';
+		} else if (document.all) {
+			document.all[divid].style.visibility = 'visible';
+		} else if (document.layers) {
+			document.layers[divid].style.visibility = 'visible';
+		}
+	}
+
+	function OnCompleteSelected(source, eventArgs) {
+	    var results = eval('(' + eventArgs.get_value() + ')');
+
+	    var selName = results.Display;
+	    var selCityId = results.CityId;
+	    var selTheatreId = results.TheatreId;
+
+	    if (selTheatreId != null)
+	    {
+
+	    } else {
+
+	    }
+    }
+</script>
+</head>
+<body>
+    <form name="MainForm" method="post" action="./biografer.aspx?cityid=91&amp;theatreid=df7b68d4-44d9-4d99-b508-e4bf79b1444b" id="MainForm">
+<div>
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__LASTFOCUS" id="__LASTFOCUS" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="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AQ9kFgwCAQ8WAh4FY2xhc3MFFnJlc3VsdGF0IGNsZWFyZml4IG9wZW4WAmYPFQIkNjliOGJhODktNTg3Mi00Y2Q1LWE1MDEtMGNkZWRmYWQzNWE4BldpY2tlcmQCBA8VAgMxMDUMRnLDpW4gMTEgw6VyZAIFDxYCHwFoFgJmDxUCJDY5YjhiYTg5LTU4NzItNGNkNS1hNTAxLTBjZGVkZmFkMzVhOAZXaWNrZXJkAgcPDxYEHgtOYXZpZ2F0ZVVybAV0ZmlsbWZva3VzLmFzcHg/bW92aWVpZD02OWI4YmE4OS01ODcyLTRjZDUtYTUwMS0wY2RlZGZhZDM1YTgmY2l0eWlkPTkxJnRoZWF0cmVpZD1kZjdiNjhkNC00NGQ5LTRkOTktYjUwOC1lNGJmNzliMTQ0NGIeB1Rvb2xUaXAFEkzDpHMgbWVyIG9tIFdpY2tlcmQWAmYPFgIeBFRleHQFCEzDpHMgbWVyZAIIDxUHJDY5YjhiYTg5LTU4NzItNGNkNS1hNTAxLTBjZGVkZmFkMzVhODJpbWFnZS5hc3B4P2lkPTM3ODVkODQ4LWY0MTQtNDQ5Ni1hMzg2LTRhMjA1ZGMwNzZhNwZXaWNrZXIkNjliOGJhODktNTg3Mi00Y2Q1LWE1MDEtMGNkZWRmYWQzNWE4AjkxJGRmN2I2OGQ0LTQ0ZDktNGQ5OS1iNTA4LWU0YmY3OWIxNDQ0Yt0PT2xpdmlhIENvbG1hbiAoT3NjYXJiZWzDtm5hZCBmw7ZyIFRoZSBGYXZvdXJpdGUpIHNwZWxhciBmaXNrYXJrdmlubmFuIHNvbSBib3IgaSBlbiBieSB2aWQgaGF2ZXQgb2NoIHNvbSBlbiBkYWcgdHLDtnR0bmFyIHDDpSB0aWxsdmFyb24gc29tIGZpc2tsdWt0YW5kZSBzaW5nZWwsIHN0w6RuZGlndCB0csOla2FkIGF2IHNpbmEgc23DpXNpbnRhIGdyYW5uYXIuIEhvbiBiZXN0w6RtbWVyIHNpZyBmw7ZyIGF0dCBoZWx0IGVua2VsdCBiZXN0w6RsbGEgZW4gZmzDpHRhZCBtYW4gKEFsZXhhbmRlciBTa2Fyc2fDpXJkKSBhdiBieW5zIGtvcmdtYWthcmUgKFBldGVyIERpbmtsYWdlKS4gSGVubmVzIHVkZGEgcm9tYW5zIG1lZCBkZW4gc3RpbGlnYSBza2FwZWxzZW4gdsOkY2tlciB1cHByw7ZyZGhldCwgc3ZhcnRzanVrYSBvY2gga2FvcyBpIGRlbiBrb25zZXJ2YXRpdmEgYnluLiBXaWNrZXIgaGFyIGbDpXR0IG15Y2tldCBrcml0aWtlcmJlcsO2bSBvY2ggYmxpdml0IGVuIHN0b3Igc25hY2tpcyBww6Ugc29jaWFsYSBtZWRpZXIgdsOkcmxkZW4gw7Z2ZXIuIAoKSSDDtnZyaWdhIHJvbGxlciBzZXMgYmxhbmQgYW5kcmEgR3VzdGF2IExpbmRoIChCcsOkbm4gYWxsYSBtaW5hIGJyZXYsIFRyb2zDtnNhKSBzYW10IEVsaXphYmV0aCBEZWJpY2tpLiBGw7ZyIHJlZ2kgb2NoIG1hbnVzIHN0w6VyIEFsZXggSHVzdG9uIEZpc2NoZXIgb2NoIEVsZWFub3IgV2lsc29uLCBzb20gYmFzZXJhdCBmaWxtZW4gcMOlIG5vdmVsbGVuIFRoZSBXaWNrZXIgSHVzYmFuZCBhdiBVcnN1bGEgV2lsbHMtSm9uZXMuCgpVcnZhbCBhdiBpbnRlcm5hdGlvbmVsbGEgY2l0YXQ6CgpNZWQgZW4gc3BydWRsYW5kZSBlbmVyZ2kgc29tIGxlZGVyIGZyYW0gdGlsbCBldHQgZnVsbGtvbWxpZ3QgcGVyZmVrdCBzbHV0IMOkciBXaWNrZXIgYsOlZGUgcm9saWcsIG3DpHJrbGlnIG9jaCBpbm5lcmxpZ3Qgcm9tYW50aXNrLSBUaGUgTmV3IFlvcmsgVGltZXMKCk9saXZpYSBDb2xtYW4gb2NoIEFsZXhhbmRlciBTa2Fyc2fDpXJkIMOkciBmYW50YXN0aXNrYS4gRmlsbWVuIMOkciByb2xpZywgb3Ryb2xpZ3Qgc2V4aWcgb2NoIGVuIGF2IMOlcmV0cyBiw6RzdGEgLSBUaGUgRmlsbSBNYXZlbgoKV2lja2VyIMOkciBlbiBzZXbDpHJkIG9jaCBzw6RyZWdlbiBza2FwZWxzZSBzb20gc2tpY2tsaWd0IHbDpHZlciBzYW1tYW4gaHVtb3IsIHNhbWjDpGxsc2tyaXRpayBvY2ggZW4gZGp1cGfDpWVuZGUgYmV0cmFrdGVsc2Ugw7Z2ZXIgaHVyIHN2YXJ0c2p1a2Ega2FuIGxlZGEgdGlsbCBzasOkbHZkZXN0cnVrdGl2YSBrb25zZWt2ZW5zZXIgLSBUaGUgRmlsbSBTdGFnZQoKTWFudXNldCBianVkZXIgcMOlIHJpa2xpZ2EgZG9zZXIgc2F0aXIgb2NoIMO2Z29uYmxpY2sgc29tIGbDpXIgZW4gYXR0IHNrcmF0dGEgaMO2Z3QgLSBTY3JlZW4gRGFpbHkKCkRldCBrcsOkdnMgZW4gc2vDpWRlc3BlbGVyc2thIG1lZCBDb2xtYW5zIG9yw6RkZGEgaW5zdMOkbGxuaW5nIGbDtnIgYXR0IGt1bm5hIHNrYXBhIGVuIHPDpSBkanVwIGtvcHBsaW5nIHRpbGwgZW4gdHLDpGRnw6VyZHNzdG9sLiBTa2Fyc2fDpXJkcyBseWjDtnJkaGV0IGJpZHJhciBvY2tzw6UgdGlsbCBkZXR0YSAtIE5ldyBZb3JrIFBvc3QKCkZpbG1lbiDDpHIgdXRmb3JtYWQgbWVkIGxpa2Egc3RvciBvbXNvcmcgc29tIGRlIGtvcmdhciBzb20ga29yZ21ha2FyZW4gdsOkY2tlciB0aWxsIGxpdjsgRmlzY2hlciBvY2ggV2lsc29uIGxldmVyZXJhciBlbiBrYXhpZywgZmVtaW5pc3Rpc2sgZmFiZWwgc29tIGfDpXIgc2luIGVnZW4gdsOkZyAtIHJ5dG1pc2ssIGxla2Z1bGwgb2NoIGZ1bGwgYXYgbGl2IC0gQ2hpY2FnbyBUcmlidW5lCgpXaWNrZXIgw6RyIGVuIHZhcm0gb2NoIHN0dW5kdGFscyBncmlwYW5kZSB1cHBsZXZlbHNlIC0gZW4gZmlsbSBtZWQgc3RhcmsgcGVyc29ubGlnaGV0IG9jaCBlbiBmw7Zyc29uYW5kZSwgbcOkbnNrbGlnIHN5biBww6UgdsOlcmEgc23DpSBtw6Ruc2tsaWdhIHN2YWdoZXRlciAtIFRoZSBIb2xseXdvb2QgUmVwb3J0ZXIKZAIJDw8WAh8BZ2QWAgIBDxYCHwMCARYCZg9kFggCAQ8PZBYGHgVzdHlsZQUbbWFyZ2luLXRvcDoxcHg7Y3Vyc29yOmhhbmQ7Hgtvbm1vdXNlb3ZlcgVMc2hvd0RpdignU2VhcmNoUmVzdWx0UmVwZWF0ZXJfY3RsMDFfUmVwZXJ0b2lyZVJlcGVhdGVyX2N0bDAwX3BvcHVwY29udGVudCcpOx4Kb25tb3VzZW91dAVMaGlkZURpdignU2VhcmNoUmVzdWx0UmVwZWF0ZXJfY3RsMDFfUmVwZXJ0b2lyZVJlcGVhdGVyX2N0bDAwX3BvcHVwY29udGVudCcpO2QCAg9kFgJmDw8WAh8JBRpPcmRpbmFyaWUgYmlsamV0dHByaXM6IDEwMGRkAgMPFQIQMjAyNi0xMS0yNiAxOTowMA9Gb2xrZXRzIEh1cyBCaW9kAgQPFgIfAWgWAmYPFQIAIUZvbGtldHMrSHVzK0JpbyUyYyslYzMlOTZ2ZXJrYWxpeGQCCg9kFgYCAQ8WAh8DAgoWFGYPZBYCZg8VBQExAk5ZJDE3MDZlMjYxLWQ1M2QtNDdmNy1iNTQ2LTQzYTEzZTFhNjVmZShUaGUgSHVuZ2VyIEdhbWVzOiBTdW5yaXNlIG9uIHRoZSByZWFwaW5nGlRoZSBIdW5nZXIgR2FtZXM6IFN1bnJpLi4uZAIBD2QWAmYPFQUBMgJOWSQ2ZTBjOWQ4Yy0zZjM4LTRlMzktYTFjNy0yYTM2NDJjYzA0MmESQXJuZSBHb2VzIHRvIFNwYWNlEkFybmUgR29lcyB0byBTcGFjZWQCAg9kFgJmDxUFATMCTlkkYTc5MjI5OTktMGUxYS00YTk3LThjZjYtNDViODQxNzQwOThjFllvdSBDYW4gU2VlIEV2ZXJ5dGhpbmcWWW91IENhbiBTZWUgRXZlcnl0aGluZ2QCAw9kFgJmDxUFATQBNSQwNjY5NGY4Ny03MzEwLTRhOWItYmNiNS1iOWJlNGE3OTY3ZjYeSmFrdGVuIHDDpSBKdWx0b210ZW5zIHZlcmtzdGFkG0pha3RlbiBww6UgSnVsdG9tdGVucyB2ZS4uLmQCBA9kFgJmDxUFATUCTlkkNjliOGJhODktNTg3Mi00Y2Q1LWE1MDEtMGNkZWRmYWQzNWE4BldpY2tlcgZXaWNrZXJkAgUPZBYCZg8VBQE2Ak5ZJDE1NDg1YWFlLWQzNDEtNGQ2Ni05NGEyLWU2NDg5NGU4YTBkZA9XaWxkIEhvcnNlIE5pbmUPV2lsZCBIb3JzZSBOaW5lZAIGD2QWAmYPFQUBNwE0JDFjMGY4MjJkLTY3YjMtNGI4Yi04MGFjLTk4YTE5YmU3ZTFkYSROZWxseSBSYXBwIC0gUG9ydGVuIHRpbGwgdW5kZXJqb3JkZW4aTmVsbHkgUmFwcCAtIFBvcnRlbiB0aWwuLi5kAgcPZBYCZg8VBQE4ATEkYzkzNDAyNTYtZGFkOS00NWU1LTgxNDYtYmZmYmYxNGQ1MDI1CEViZW5lemVyCEViZW5lemVyZAIID2QWAmYPFQUBOQEyJDkzODI3ZDhkLTY1MWUtNDExOC1hYWRhLTgzZjFmYTBiY2JkMA1Kw6R2bGEga2FybGFyDUrDpHZsYSBrYXJsYXJkAgkPZBYCZg8VBQIxMAEzJGI4NWQ3NWUwLTk0MGItNDE4Yy04YWQ0LWRmZTUzYzc3ZDE3OAlBcmtpcGVsYWcJQXJraXBlbGFnZAIDDw8WAh8BZ2QWBAIBDw8WAh8IBRpHZW5lcmVyYWQgMjAyNi0xMS0yMyAxMDoxMRYEHgdvbmNsaWNrBWdkb2N1bWVudC5sb2NhdGlvbi5ocmVmPScuLi9TdHJlYW1GaWxlX21lZGlhbGlzdGEuYXNoeD93ZWVraWQ9OGJiMmFhYWMtNDZhNC00OTMzLTg4NTktN2M5MTFkYzA4Zjc4JnM9MSc7HwoFD2N1cnNvcjpwb2ludGVyO2QCAw8PFgYfCAUaR2VuZXJlcmFkIDIwMjYtMTEtMjMgMTA6MTEfCQUaQmlvdG9wcGVuIGbDtnIgaGVsZ2VuIHYuNDcfBwVNLi4vU3RyZWFtRmlsZV9tZWRpYWxpc3RhLmFzaHg/d2Vla2lkPThiYjJhYWFjLTQ2YTQtNDkzMy04ODU5LTdjOTExZGMwOGY3OCZzPTFkZAIFDw8WAh8BZxYCHwoFJHBhZGRpbmctbGVmdDozcHg7cGFkZGluZy1ib3R0b206M3B4OxYEAgEPDxYCHwgFGkdlbmVyZXJhZCAyMDI2LTExLTIwIDEwOjAxFgQfDQVnZG9jdW1lbnQubG9jYXRpb24uaHJlZj0nLi4vU3RyZWFtRmlsZV9tZWRpYWxpc3RhLmFzaHg/d2Vla2lkPTNkODdlMTRjLTBkZDctNGE2OC1hYTI4LTcyYmMyZTU2ZDI0MiZzPTInOx8KBQ9jdXJzb3I6cG9pbnRlcjtkAgMPDxYGHwgFGkdlbmVyZXJhZCAyMDI2LTExLTIwIDEwOjAxHwkFF0Jpb3RvcHBlbiBmw7ZyIHZlY2thIDQ2HwcFTS4uL1N0cmVhbUZpbGVfbWVkaWFsaXN0YS5hc2h4P3dlZWtpZD0zZDg3ZTE0Yy0wZGQ3LTRhNjgtYWEyOC03MmJjMmU1NmQyNDImcz0yZGRkgh6u7eAjxqBOStc96Vh21BwzTO8=" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['MainForm'];
+if (!theForm) {
+    theForm = document.MainForm;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/WebResource.axd?d=M7nUKaF36nDsNOfsWjgg75I6lgc16LCEgnwcTMUOptmrIxud98343sSKASYUfeIel4kfrU-Q_bAlW4N3wcfZwbiZPuw1&amp;t=637353050110221559" type="text/javascript"></script>
+
+
+<script src="/ScriptResource.axd?d=8OqtBnhrT5ypDtbti8LpBFLHNELUj_0uI_iEG0xdoU_P3UglJl_cCIgFH2wlcysODfPXb8zSDRqqGMhSHCj5pasQOQs1R9LlmuC64ELTycOhUuI1A2tnedDmDyWesujdp5-tQ5u77bM0S4Dh19FBFZz_7pJSXBJvdb5MxVTEfmq2krS90&amp;t=ffffffffdfc97409" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+if (typeof(Sys) === 'undefined') throw new Error('ASP.NET Ajax client-side framework failed to load.');
+//]]>
+</script>
+
+<script src="/ScriptResource.axd?d=7ERZUz-9UzIhs2EzZOm0PxAfUWXt0r2wOk3LcAC1sCu41HHovCV_WBvkR-c4-UXGALSmfGSLpr84dOx4g1xRUP85qRCNqog736Q_rjws2JWNE9eAV-c_sTz-ug5Sk7vCQLhi-s2gcWxCwYH5C4PFC2d22ZK4_STo_rJM-zsjkMX9N3IBbH8RySD9zEKrMHSNyK3row2&amp;t=ffffffffdfc97409" type="text/javascript"></script>
+<script src="/ScriptResource.axd?d=gyVayabig6HzKA7gxNzSGV7I0bQ0UCOWxcIeemfGEMW6b_DSKi1tXxlsioZR10VhXr32YGdyIJJiyv32p7YdYXv4rANnO66kPr691wscKxz09MA4V2l0cqnOzji-zcT7bFbXNxPv8IQBcZfgZCUKQiyRb6k1&amp;t=ffffffff8b3ffb57" type="text/javascript"></script>
+<script src="/ScriptResource.axd?d=HgrOn9t3qaJ657Pnn9r7o8na4iIvGkK9ZeMYsiLt0UXlVGDj6vq9RNEPH7iL-apsEsRX-oMInDaBVkgL9QCgaL_vUtHS_P_63wYF6PJ51RtbmmRcKEMM-6nQ-z15y38XTjLteZWsW-uXhr1ORstJ6IIArZY1&amp;t=ffffffff8b3ffb57" type="text/javascript"></script>
+<script src="/ScriptResource.axd?d=gSKjT_8Q5ZAn9ocjOjWeZPaba1uJSdTjXnlU6ccMBO_G3n_RXSzY1zaRXpl8K2GTT33sygMjPsS8V2BJk1fMLQnymknrOgLL5IS8p2KHPireuHAkx1arPqzbMSnn06WQdUdShX93xeJyee2bX-xc-x5VCqc1&amp;t=ffffffff8b3ffb57" type="text/javascript"></script>
+<script src="/ScriptResource.axd?d=t3S-4QpfrnNEUA6BQC6jXkvR-zJ5qzjqBpsYUo-l8SU_6eTHWT5IjFCkXtFcF8Z2MXFT6gWkBJ1bU09Orq-yZftqDdObzXBvgsT5FwRrnjgQlXkZe2FjXW8oLt2tKhxzv9mGEK3oGmO4N49e3ASMflQ4ttvXwhXSd6NJmOyUhXTvTcNC0&amp;t=ffffffff8b3ffb57" type="text/javascript"></script>
+<script src="/ScriptResource.axd?d=W5Wd4awsmQi6N780oqczwbkIB9rGkB8E2yLy6u85JzFckwAFH2KHGsEWAWBp1I9e2_kc4sEjZczY97V2H-Q94xtoBhB_sXMnVa8pglEcwzGh74kO49CLI_Sjgt7xdX9sioVQvHnaXbljG2OBvnwIBoR4tsvM28W61OGjhslqTJfOX2P80&amp;t=ffffffff8b3ffb57" type="text/javascript"></script>
+<script src="/ScriptResource.axd?d=mm5lGmOMR4YNjN4tyMjGoHdkyF_WJk1CO_0dQoztxismsB81NPBaJ8cscgzSbRbBoOe70mxQJNx-r4wyhWctAwpTBXUqXXgf34MWJGvWXR98gOe4Y4hSOpcdA9MO8Euw-N7W7zFmIgy0jUVIziisg8BPiagZegGlVIdda0vF5o9-sY_v0&amp;t=ffffffff8b3ffb57" type="text/javascript"></script>
+<script src="/ScriptResource.axd?d=1eZqO5zyP6sOT4R1rnAzFADDDeBBxpxjFISIGZAzeX3mtt21Wr8EWcTiELorv8hCpG9IIRt3HLZuRfvlo4dgx_q6s-K-U6_R97ii47kK5dyGbRlamBrsBWTgKMYIjVyypyn-STDhc_EBFXKuXAw6mr9_onny34LAiv4FJC-UAsW8kNLo0&amp;t=ffffffff8b3ffb57" type="text/javascript"></script>
+<div>
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="C470B306" />
+</div>
+
+        <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('ScriptManager', 'MainForm', ['tUP1',''], [], [], 90, '');
+//]]>
+</script>
+
+
+        <!-- begin header -->
+        <div id="header">
+            <span class="headerleft"></span>
+            <h1>
+                <a tabindex="1" href="default.aspx" title="Bioguiden"><span class="hide">Bioguiden</span></a></h1>
+            <ul>
+                <li><a tabindex="2" href="biorummet.aspx" title="Hitta film">Hitta film</a></li>
+                <li><a tabindex="3" href="biotoppen.aspx" title="Biotoppen">Biotoppen</a></li>
+                <li><a tabindex="4" href="kommande.aspx" title="Kommande">Kommande</a></li>
+                <li class="active"><a tabindex="-1" href="biografer.aspx" title="Biografer">Biografer</a></li>
+                <li><a tabindex="5" href="tillganglig.aspx" title="Tillgänglig Bio">Tillgänglig Bio</a></li>
+            </ul>
+            <div id="loading"></div>
+
+             <div id="simple">
+                  <div id="pnSimpleSearch" onkeypress="javascript:return WebForm_FireDefaultButton(event, &#39;SearchFilterButton&#39;)" style="text-align:left;">
+	
+
+                    <div id="UP1">
+		
+
+                            <fieldset>
+                                <legend>
+                                    <label for="SearchFilterTextbox" id="lblSearchFilterTextbox">Snabbsök</label>
+                                </legend>
+
+                                <input name="SearchFilterTextbox" type="text" id="SearchFilterTextbox" tabindex="6" title="Ange en text att söka biograf efter" AutoComplete="Off" placeholder="Fri text" style="height:20px;" />
+                                <a id="SearchFilterButton" tabindex="7" title="Sök biografer" class="buttonBlue" href="javascript:__doPostBack(&#39;SearchFilterButton&#39;,&#39;&#39;)">Sök<img alt="" class="arrowBlue_right" src="img/clear.gif"  /></a>
+
+                                  
+                            </fieldset>
+                            
+                        
+	</div>
+
+                
+</div> 
+            </div>
+
+            <span class="headerright"></span>
+        </div>
+        <!-- end header -->
+        <!-- begin wrapper -->
+        <div id="wrapper" class="clearfix">
+            <!-- begin container -->
+            <div id="container">
+
+                <!-- begin notification -->
+                
+                <!-- end notification -->
+
+                <!-- begin Biotoppen -->
+                <span class="subPageTop"></span>
+                <div id="subPage">
+                    <div class="subPageHeadline clearfix">
+                        <h1 id="debug">
+                            Biografer</h1>
+                    </div>
+                    <!-- begin biografsearch -->
+                    <div id="biografsearch" class="clearfix">
+
+                        <div class="omrade">
+                            <h2>
+                                <label for="SearchCityDropDown" id="lblSearchCityDropDown">Välj kommun</label></h2>
+                            <fieldset>
+                                <select name="SearchCityDropDown" onchange="javascript:setTimeout(&#39;__doPostBack(\&#39;SearchCityDropDown\&#39;,\&#39;\&#39;)&#39;, 0)" id="SearchCityDropDown" style="height:20px;">
+	<option selected="selected" value="">V&#228;lj kommun</option>
+	<option value="216">Ale</option>
+	<option value="71">Alvesta</option>
+	<option value="46">Aneby</option>
+	<option value="205">Arboga</option>
+	<option value="79">Arjeplog</option>
+	<option value="80">Arvidsjaur</option>
+	<option value="167">Arvika</option>
+	<option value="218">Bengtsfors</option>
+	<option value="38">Berg</option>
+	<option value="81">Boden</option>
+	<option value="22">Bolln&#228;s</option>
+	<option value="59">Borgholm</option>
+	<option value="220">Bor&#229;s</option>
+	<option value="126">Botkyrka</option>
+	<option value="39">Br&#228;cke</option>
+	<option value="96">B&#229;stad</option>
+	<option value="221">Dals-Ed</option>
+	<option value="184">Dorotea</option>
+	<option value="168">Eda</option>
+	<option value="128">Eker&#246;</option>
+	<option value="47">Eksj&#246;</option>
+	<option value="60">Emmaboda</option>
+	<option value="152">Eskilstuna</option>
+	<option value="222">Essunga</option>
+	<option value="206">Fagersta</option>
+	<option value="32">Falkenberg</option>
+	<option value="8">Falun</option>
+	<option value="169">Filipstad</option>
+	<option value="278">Finsp&#229;ng</option>
+	<option value="153">Flen</option>
+	<option value="170">Forshaga</option>
+	<option value="224">F&#228;rgelanda</option>
+	<option value="9">Gagnef</option>
+	<option value="48">Gislaved</option>
+	<option value="154">Gnesta</option>
+	<option value="49">Gnosj&#246;</option>
+	<option value="21">Gotland</option>
+	<option value="171">Grums</option>
+	<option value="225">Gr&#228;storp</option>
+	<option value="226">Gullsp&#229;ng</option>
+	<option value="82">G&#228;llivare</option>
+	<option value="23">G&#228;vle</option>
+	<option value="227">G&#246;teborg</option>
+	<option value="228">G&#246;tene</option>
+	<option value="172">Hagfors</option>
+	<option value="267">Hallsberg</option>
+	<option value="207">Hallstahammar</option>
+	<option value="33">Halmstad</option>
+	<option value="173">Hammar&#246;</option>
+	<option value="208">Heby</option>
+	<option value="98">Helsingborg</option>
+	<option value="230">Hjo</option>
+	<option value="24">Hofors</option>
+	<option value="25">Hudiksvall</option>
+	<option value="61">Hultsfred</option>
+	<option value="268">H&#228;llefors</option>
+	<option value="40">H&#228;rjedalen</option>
+	<option value="100">H&#246;gan&#228;s</option>
+	<option value="62">H&#246;gsby</option>
+	<option value="84">Jokkmokk</option>
+	<option value="51">J&#246;nk&#246;ping</option>
+	<option value="85">Kalix</option>
+	<option value="232">Karlsborg</option>
+	<option value="1">Karlshamn</option>
+	<option value="269">Karlskoga</option>
+	<option value="155">Katrineholm</option>
+	<option value="175">Kil</option>
+	<option value="279">Kinda</option>
+	<option value="86">Kiruna</option>
+	<option value="290">Knivsta</option>
+	<option value="199">Kramfors</option>
+	<option value="104">Kristianstad</option>
+	<option value="176">Kristinehamn</option>
+	<option value="41">Krokom</option>
+	<option value="270">Kumla</option>
+	<option value="209">Kungs&#246;r</option>
+	<option value="233">Kung&#228;lv</option>
+	<option value="36">Laholm</option>
+	<option value="271">Lax&#229;</option>
+	<option value="11">Leksand</option>
+	<option value="234">Lerum</option>
+	<option value="72">Lessebo</option>
+	<option value="235">Lidk&#246;ping</option>
+	<option value="236">Lilla Edet</option>
+	<option value="273">Lindesberg</option>
+	<option value="280">Link&#246;ping</option>
+	<option value="73">Ljungby</option>
+	<option value="26">Ljusdal</option>
+	<option value="274">Ljusnarsberg</option>
+	<option value="12">Ludvika</option>
+	<option value="87">Lule&#229;</option>
+	<option value="108">Lund</option>
+	<option value="185">Lycksele</option>
+	<option value="237">Lysekil</option>
+	<option value="109">Malm&#246;</option>
+	<option value="239">Mark</option>
+	<option value="74">Markaryd</option>
+	<option value="240">Mellerud</option>
+	<option value="281">Mj&#246;lby</option>
+	<option value="177">Munkfors</option>
+	<option value="64">M&#246;nster&#229;s</option>
+	<option value="65">M&#246;rbyl&#229;nga</option>
+	<option value="27">Nordanstig</option>
+	<option value="283">Norrk&#246;ping</option>
+	<option value="134">Norrt&#228;lje</option>
+	<option value="188">Norsj&#246;</option>
+	<option value="66">Nybro</option>
+	<option value="28">Ockelbo</option>
+	<option value="3">Olofstr&#246;m</option>
+	<option value="15">Orsa</option>
+	<option value="243">Orust</option>
+	<option value="110">Osby</option>
+	<option value="67">Oskarshamn</option>
+	<option value="88">Pajala</option>
+	<option value="244">Partille</option>
+	<option value="89">Pite&#229;</option>
+	<option value="42">Ragunda</option>
+	<option value="189">Robertsfors</option>
+	<option value="4">Ronneby</option>
+	<option value="138">Sigtuna</option>
+	<option value="112">Simrishamn</option>
+	<option value="113">Sj&#246;bo</option>
+	<option value="190">Skellefte&#229;</option>
+	<option value="114">Skurup</option>
+	<option value="246">Sk&#246;vde</option>
+	<option value="17">Smedjebacken</option>
+	<option value="200">Sollefte&#229;</option>
+	<option value="191">Sorsele</option>
+	<option value="247">Soten&#228;s</option>
+	<option value="248">Stenungsund</option>
+	<option value="1001">Stockholm City</option>
+	<option value="178">Storfors</option>
+	<option value="1000">Stor-Stockholm</option>
+	<option value="192">Storuman</option>
+	<option value="158">Str&#228;ngn&#228;s</option>
+	<option value="43">Str&#246;msund</option>
+	<option value="201">Sundsvall</option>
+	<option value="179">Sunne</option>
+	<option value="214">Surahammar</option>
+	<option value="116">Sval&#246;v</option>
+	<option value="250">Svenljunga</option>
+	<option value="180">S&#228;ffle</option>
+	<option value="18">S&#228;ter</option>
+	<option value="54">S&#228;vsj&#246;</option>
+	<option value="31">S&#246;derhamn</option>
+	<option value="284">S&#246;derk&#246;ping</option>
+	<option value="143">S&#246;dert&#228;lje</option>
+	<option value="5">S&#246;lvesborg</option>
+	<option value="251">Tanum</option>
+	<option value="252">Tibro</option>
+	<option value="253">Tidaholm</option>
+	<option value="163">Tierp</option>
+	<option value="75">Tingsryd</option>
+	<option value="118">Tomelilla</option>
+	<option value="181">Torsby</option>
+	<option value="68">Tors&#229;s</option>
+	<option value="255">Tranemo</option>
+	<option value="55">Tran&#229;s</option>
+	<option value="159">Trosa</option>
+	<option value="144">Tyres&#246;</option>
+	<option value="257">T&#246;reboda</option>
+	<option value="258">Uddevalla</option>
+	<option value="193">Ume&#229;</option>
+	<option value="147">Upplands-Bro</option>
+	<option value="164">Uppsala</option>
+	<option value="76">Uppvidinge</option>
+	<option value="56">Vaggeryd</option>
+	<option value="286">Valdemarsvik</option>
+	<option value="148">Vallentuna</option>
+	<option value="19">Vansbro</option>
+	<option value="260">Vara</option>
+	<option value="37">Varberg</option>
+	<option value="149">Vaxholm</option>
+	<option value="57">Vetlanda</option>
+	<option value="194">Vilhelmina</option>
+	<option value="69">Vimmerby</option>
+	<option value="195">Vindeln</option>
+	<option value="160">Ving&#229;ker</option>
+	<option value="261">V&#229;rg&#229;rda</option>
+	<option value="196">V&#228;nn&#228;s</option>
+	<option value="58">V&#228;rnamo</option>
+	<option value="70">V&#228;stervik</option>
+	<option value="215">V&#228;ster&#229;s</option>
+	<option value="77">V&#228;xj&#246;</option>
+	<option value="287">Ydre</option>
+	<option value="121">Ystad</option>
+	<option value="263">&#197;m&#229;l</option>
+	<option value="203">&#197;nge</option>
+	<option value="44">&#197;re</option>
+	<option value="182">&#197;rj&#228;ng</option>
+	<option value="197">&#197;sele</option>
+	<option value="78">&#196;lmhult</option>
+	<option value="20">&#196;lvdalen</option>
+	<option value="165">&#196;lvkarleby</option>
+	<option value="90">&#196;lvsbyn</option>
+	<option value="264">&#214;cker&#246;</option>
+	<option value="289">&#214;desh&#246;g</option>
+	<option value="276">&#214;rebro</option>
+	<option value="204">&#214;rnsk&#246;ldsvik</option>
+	<option value="45">&#214;stersund</option>
+	<option value="151">&#214;ster&#229;ker</option>
+	<option value="166">&#214;sthammar</option>
+	<option value="125">&#214;stra G&#246;inge</option>
+	<option value="92">&#214;vertorne&#229;</option>
+
+</select>
+                            </fieldset>
+                        </div>
+
+                        <div class="biograf">
+                            <h2>
+                                <label for="SearchTheatreDropDown" id="lblSearchTheatreDropDown">Välj biograf</label></h2>
+                            <fieldset>
+                                <select name="SearchTheatreDropDown" onchange="javascript:setTimeout(&#39;__doPostBack(\&#39;SearchTheatreDropDown\&#39;,\&#39;\&#39;)&#39;, 0)" id="SearchTheatreDropDown" disabled="disabled" style="height:20px;">
+	<option selected="selected" value="">V&#228;lj biograf</option>
+
+</select>
+                            </fieldset>
+                        </div>
+                    </div>
+                    <!-- end biografsearch -->
+
+                    <!-- begin biografinformation -->
+                    <div id="MovieInfoPanel">
+	
+
+                            
+                                    <!-- begin biografinformation -->
+                                    <div id="biografinformation" class="clearfix">
+                                        <div id="clipregion">
+                                            <img id="MovieInfoRepeater_ctl00_TheatreImage" src="image.aspx?id=566bc152-a8b7-4321-b308-ffa78a8260de" style="border-width:0px;" />
+                                        </div>
+                                        <div id="biografinfo" class="clearfix">
+                                            <h2>
+                                                Folkets Hus Bio, Överkalix
+                                            </h2>
+
+                                            <div id="biografadress">
+                                                <address>
+                                                    Bulandsgatan 2
+                                                    <br />
+                                                    95631
+                                                    Överkalix
+                                                    <br />
+                                                                                                      
+                                                </address>
+                                            </div>
+                                            <div id="biografstorlek">
+                                                <a class="arrowRightLink"  href="http://maps.google.com/maps?output=html&hl=sv&z=17&f=q&t=m&ll=66.32959772,22.84299785&q=Bulandsgatan+2%2c+%c3%96VERKALIX" target="_blank" title="Se var biografen ligger på kartan">
+                                                    Visa på karta</a>
+                                                
+                                                
+                                            </div>
+                                        </div>
+
+                                        <div class="biografinfo" style="font-size:1.2em">
+                                            
+                                                
+                                            
+                                        </div>
+
+                                    </div>
+
+                                    <!-- end biografinformation -->
+                                
+             
+                    
+</div>
+                    <!-- end biografinformation -->
+                </div>
+                <!-- end Biotoppen -->
+
+                <!-- begin results -->
+                <div id="searchResults" class="clearfix">
+
+                    <script type="text/javascript" language="javascript">
+                        function setDisplaymode(mode) {
+                            var _x = document.getElementById('displaymode');
+                            _x.value = mode;
+                        }
+                        function getDisplaymode() {
+                            var _x = document.getElementById('displaymode');
+                            return _x.value;
+                        }
+                        function changeDisplaymode(idList) {
+                            var idArr = idList.split(",");
+
+                            for (index = 0; index < idArr.length; index++)
+                            {
+                                if (getDisplaymode() == 'none')
+                                    showDisplay(idArr[index]);
+                                else
+                                    hideDisplay(idArr[index]);
+                            }
+                            if (getDisplaymode() == 'none')
+                                setDisplaymode('block');
+                            else
+                                setDisplaymode('none');
+                        }
+
+                        function showHideDisplay(id) {
+                            var _id = document.getElementById(id);                           
+                            if (_id.style.display == 'block')
+                                _id.style.display = 'none';
+                            else
+                                _id.style.display = 'block';
+                        }
+                        function hideDisplay(id) {
+                            var _id = document.getElementById(id);
+                            _id.style.display = 'none';
+                        }
+                        function showDisplay(id) {
+                            var _id = document.getElementById(id);
+                            _id.style.display = 'block';
+                        }
+                    </script>
+
+                    <div id="SearchResultPanel">
+	
+
+                        
+                        
+                        
+
+
+                        <div id="SearchResultDetails">
+		
+
+                            <div class="bioDisplay clearfix">
+                                <div class="toogleList">
+                                    <a href="javascript:changeDisplaymode('details69b8ba89-5872-4cd5-a501-0cdedfad35a8');" id="extend" class="arrowDownLink" title="Växla mellan enkel och detaljerad lista">Detaljerad lista</a>
+                                    <input name="displaymode" type="text" value="block" id="displaymode" style="height:20px;display:none;" />
+                                </div>
+                            </div>
+
+                            
+                                    <div id="SearchResultRepeater_ctl01_ResultDiv" class="resultat clearfix open">
+
+                                        <ul>
+                                            <li class="first">
+                                                <div style="cursor:pointer;float:left" onclick="showHideDisplay('details69b8ba89-5872-4cd5-a501-0cdedfad35a8');">
+                                                    <h3>Wicker</h3>
+                                                </div>  
+                                                
+                                            </li>
+                                            <li class="second">
+                                                105
+                                                min</li>
+                                            <li class="third">
+                                                Från 11 år
+                                            </li>
+                                            
+                                            <li class="fifth" style="padding-left:25px; float:right" ><a id="SearchResultRepeater_ctl01_urlMovieDetails" title="Läs mer om Wicker" class="buttonRed" href="filmfokus.aspx?movieid=69b8ba89-5872-4cd5-a501-0cdedfad35a8&amp;cityid=91&amp;theatreid=df7b68d4-44d9-4d99-b508-e4bf79b1444b">Läs mer
+                                                    <img src="img/clear.gif" alt="" class="arrowRed_right" />
+                                                </a></li>
+                                        </ul>
+                                                                                                                  
+                                        <div class="detaljerat_content" id="details69b8ba89-5872-4cd5-a501-0cdedfad35a8">
+
+                                           <div class="imgCol">
+                                                <img class="banner" src="image.aspx?id=3785d848-f414-4496-a386-4a205dc076a7"
+                                                    alt="Wicker"  style="cursor:pointer" onclick="document.location = 'filmfokus.aspx?movieid=69b8ba89-5872-4cd5-a501-0cdedfad35a8&cityid=91&theatreid=df7b68d4-44d9-4d99-b508-e4bf79b1444b';" />                                
+                                            </div>
+
+                                            <div class="contentCol">
+                                                
+                                                Olivia Colman (Oscarbelönad för The Favourite) spelar fiskarkvinnan som bor i en by vid havet och som en dag tröttnar på tillvaron som fiskluktande singel, ständigt tråkad av sina småsinta grannar. Hon bestämmer sig för att helt enkelt beställa en flätad man (Alexander Skarsgård) av byns korgmakare (Peter Dinklage). Hennes udda romans med den stiliga skapelsen väcker upprördhet, svartsjuka och kaos i den konservativa byn. Wicker har fått mycket kritikerberöm och blivit en stor snackis på sociala medier världen över. 
+
+I övriga roller ses bland andra Gustav Lindh (Bränn alla mina brev, Trolösa) samt Elizabeth Debicki. För regi och manus står Alex Huston Fischer och Eleanor Wilson, som baserat filmen på novellen The Wicker Husband av Ursula Wills-Jones.
+
+Urval av internationella citat:
+
+Med en sprudlande energi som leder fram till ett fullkomligt perfekt slut är Wicker både rolig, märklig och innerligt romantisk- The New York Times
+
+Olivia Colman och Alexander Skarsgård är fantastiska. Filmen är rolig, otroligt sexig och en av årets bästa - The Film Maven
+
+Wicker är en sevärd och säregen skapelse som skickligt väver samman humor, samhällskritik och en djupgående betraktelse över hur svartsjuka kan leda till självdestruktiva konsekvenser - The Film Stage
+
+Manuset bjuder på rikliga doser satir och ögonblick som får en att skratta högt - Screen Daily
+
+Det krävs en skådespelerska med Colmans orädda inställning för att kunna skapa en så djup koppling till en trädgårdsstol. Skarsgårds lyhördhet bidrar också till detta - New York Post
+
+Filmen är utformad med lika stor omsorg som de korgar som korgmakaren väcker till liv; Fischer och Wilson levererar en kaxig, feministisk fabel som går sin egen väg - rytmisk, lekfull och full av liv - Chicago Tribune
+
+Wicker är en varm och stundtals gripande upplevelse - en film med stark personlighet och en försonande, mänsklig syn på våra små mänskliga svagheter - The Hollywood Reporter
+
+                                                
+                                                <div id="SearchResultRepeater_ctl01_RepertoirePanel">
+			
+                                                    <h2>
+                                                        Visningar</h2>
+                                                        
+					                                <div id="biografrepertoire" style=" width:400px;">                                                        
+                                				        <ul style="border: 1px solid #e9e9e9; padding:0px;">   
+                                                            
+										                            <li style="padding:2px;vertical-align:middle"><img id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl00_imgPrice" onmouseover="showDiv(&#39;SearchResultRepeater_ctl01_RepertoireRepeater_ctl00_popupcontent&#39;);" onmouseout="hideDiv(&#39;SearchResultRepeater_ctl01_RepertoireRepeater_ctl00_popupcontent&#39;);" src="img/buttons/info.gif" alt="Visa prisinformation" style="border-width:0px;margin-top:1px;cursor:hand;" /><div id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl00_popupcontent" class="popupcontent">
+				<span id="SearchResultRepeater_ctl01_RepertoireRepeater_ctl00_lblPriceinfo">Ordinarie biljettpris: 100</span>
+			</div>&nbsp;&nbsp;2026-11-26 19:00&nbsp;&nbsp;Folkets Hus Bio&nbsp;&nbsp;</li>
+                                                                
+                                                        </ul>
+                                                    </div>
+
+                                                
+		</div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                
+                                    &nbsp;
+                                
+                        
+	</div>
+                    
+</div>
+                </div>
+                <!-- end results -->
+                <!-- begin footer -->
+                <div id="footer">
+                    <div class="slogan">Vi finns här för dig som älskar film!</div>
+                    <div class="bgurl">www.bioguiden.se</div>
+                    <div class="bgabout"><a href="bioguiden.aspx" class="linkAdjusted">Om Bioguiden</a></div>
+                </div>
+                <!-- end footer -->
+            </div>
+            <!-- end container -->
+            <!-- begin sidebar -->
+            <div id="sidebar">
+                <!-- start BioToppen -->
+                
+<div class="biotoppen clearfix">
+	<h1 style="padding-bottom:10px">Biotoppen</h1>
+
+	<table summary="Popul&auml;raste filmerna just nu" >
+		<caption>Biotoppen</caption>
+		<tbody>
+			
+					<tr class="odd">
+						<th scope="row">1</th>
+						<td>(NY)</td>
+						<td><a class="linkAdjusted" href="filmfokus.aspx?movieid=1706e261-d53d-47f7-b546-43a13e1a65fe" title="The Hunger Games: Sunrise on the reaping">The Hunger Games: Sunri...</a></td>
+					</tr>
+				
+					<tr>
+						<th scope="row">2</th>
+						<td>(NY)</td>
+						<td><a class="linkAdjusted"  href="filmfokus.aspx?movieid=6e0c9d8c-3f38-4e39-a1c7-2a3642cc042a" title="Arne Goes to Space">Arne Goes to Space</a></td>
+					</tr>
+				
+					<tr class="odd">
+						<th scope="row">3</th>
+						<td>(NY)</td>
+						<td><a class="linkAdjusted" href="filmfokus.aspx?movieid=a7922999-0e1a-4a97-8cf6-45b84174098c" title="You Can See Everything">You Can See Everything</a></td>
+					</tr>
+				
+					<tr>
+						<th scope="row">4</th>
+						<td>(5)</td>
+						<td><a class="linkAdjusted"  href="filmfokus.aspx?movieid=06694f87-7310-4a9b-bcb5-b9be4a7967f6" title="Jakten på Jultomtens verkstad">Jakten på Jultomtens ve...</a></td>
+					</tr>
+				
+					<tr class="odd">
+						<th scope="row">5</th>
+						<td>(NY)</td>
+						<td><a class="linkAdjusted" href="filmfokus.aspx?movieid=69b8ba89-5872-4cd5-a501-0cdedfad35a8" title="Wicker">Wicker</a></td>
+					</tr>
+				
+					<tr>
+						<th scope="row">6</th>
+						<td>(NY)</td>
+						<td><a class="linkAdjusted"  href="filmfokus.aspx?movieid=15485aae-d341-4d66-94a2-e64894e8a0dd" title="Wild Horse Nine">Wild Horse Nine</a></td>
+					</tr>
+				
+					<tr class="odd">
+						<th scope="row">7</th>
+						<td>(4)</td>
+						<td><a class="linkAdjusted" href="filmfokus.aspx?movieid=1c0f822d-67b3-4b8b-80ac-98a19be7e1da" title="Nelly Rapp - Porten till underjorden">Nelly Rapp - Porten til...</a></td>
+					</tr>
+				
+					<tr>
+						<th scope="row">8</th>
+						<td>(1)</td>
+						<td><a class="linkAdjusted"  href="filmfokus.aspx?movieid=c9340256-dad9-45e5-8146-bffbf14d5025" title="Ebenezer">Ebenezer</a></td>
+					</tr>
+				
+					<tr class="odd">
+						<th scope="row">9</th>
+						<td>(2)</td>
+						<td><a class="linkAdjusted" href="filmfokus.aspx?movieid=93827d8d-651e-4118-aada-83f1fa0bcbd0" title="Jävla karlar">Jävla karlar</a></td>
+					</tr>
+				
+					<tr>
+						<th scope="row">10</th>
+						<td>(3)</td>
+						<td><a class="linkAdjusted"  href="filmfokus.aspx?movieid=b85d75e0-940b-418c-8ad4-dfe53c77d178" title="Arkipelag">Arkipelag</a></td>
+					</tr>
+							
+		</tbody>		
+	</table>
+	
+	<div id="BioToppen_pnlDownload1" style="padding-top:8px;padding-left:3px">
+	
+	    <table border=0 cellpadding=0 cellspacing=0>
+	    <tr>
+	        <td style="width:28px"><img id="BioToppen_imgDownloadPDF1" title="Genererad 2026-11-23 10:11" onclick="document.location.href=&#39;../StreamFile_medialista.ashx?weekid=8bb2aaac-46a4-4933-8859-7c911dc08f78&amp;s=1&#39;;" src="img/download_pdf.gif" style="border-width:0px;cursor:pointer;" /></td>
+	        <td style="padding-top:2px"><a id="BioToppen_urlDownloadPDF1" title="Genererad 2026-11-23 10:11" class="linkAdjusted" href="StreamFile_medialista.ashx?weekid=8bb2aaac-46a4-4933-8859-7c911dc08f78&amp;s=1">Biotoppen för helgen v.47</a></td>
+	    </tr>
+	    </table>             
+    
+</div>            
+	<div id="BioToppen_pnlDownload2" style="padding-left:3px;padding-bottom:3px;">
+	
+	    <table border=0 cellpadding=0 cellspacing=0>
+	    <tr>
+	        <td style="width:28px"><img id="BioToppen_imgDownloadPDF2" title="Genererad 2026-11-20 10:01" onclick="document.location.href=&#39;../StreamFile_medialista.ashx?weekid=3d87e14c-0dd7-4a68-aa28-72bc2e56d242&amp;s=2&#39;;" src="img/download_pdf.gif" style="border-width:0px;cursor:pointer;" /></td>
+	        <td style="padding-top:2px"><a id="BioToppen_urlDownloadPDF2" title="Genererad 2026-11-20 10:01" class="linkAdjusted" href="StreamFile_medialista.ashx?weekid=3d87e14c-0dd7-4a68-aa28-72bc2e56d242&amp;s=2">Biotoppen för vecka 46</a></td>
+	    </tr>
+	    </table>     
+	
+</div>
+</div>
+                <!-- end BioToppen -->
+            </div>
+            <!-- end sidebar -->
+        </div>
+        <!-- end wrapper -->
+    
+
+<script type="text/javascript">
+//<![CDATA[
+Sys.Application.add_init(function() {
+    $create(AjaxControlToolkit.AutoCompleteBehavior, {"completionListCssClass":"AutoExtender","completionListItemCssClass":"AutoExtenderList","delimiterCharacters":"","highlightedItemCssClass":"AutoExtenderHighlight","id":"AutoCompleteExtender1","minimumPrefixLength":2,"serviceMethod":"GetSearchSuggestions","servicePath":"/biografer.aspx","useContextKey":true}, {"itemSelected":OnCompleteSelected}, null, $get("SearchFilterTextbox"));
+});
+//]]>
+</script>
+</form>
+
+</body>
+</html>

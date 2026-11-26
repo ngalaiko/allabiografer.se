@@ -314,6 +314,19 @@ def _parse_pages(get, *, sites=None) -> Iterator[Screening | Venue | Film]:
                 and next(address.stripped_strings, "") == venue.address
                 and soup.select_one(f'#SearchTheatreDropDown option[value="{expected}"]') is None
             )
+        # The dropdown can show no cinema, or the one visited before; the page's own heading and
+        # address identify an unlisted cinema then.
+        if (
+            not matches_selection
+            and cinema is not None
+            and soup.select_one(f'#SearchTheatreDropDown option[value="{expected}"]') is None
+        ):
+            address = soup.select_one("#biografadress address")
+            matches_selection = (
+                cinema.get_text(" ", strip=True).split(",", 1)[0] in {venue.name, "Folkets Hus Bio"}
+                and address is not None
+                and next(address.stripped_strings, "") == venue.address
+            )
         if cinema is not None and programme is None and soup.select_one("#NoResultsLiteral") is not None:
             # Unlisted cinemas can leave the dropdown on the last venue visited.
             # In that case identify the requested cinema by its own details instead.
