@@ -1,0 +1,563 @@
+import ast
+import copy
+import json
+from datetime import date
+from io import BytesIO
+from urllib.parse import parse_qs, urlsplit
+
+import pytest
+
+from allabiografer import newsletter
+from allabiografer.newsletter import PostHog, edition
+
+
+def show(city, day, name, **film):
+    return {"city": city, "date": date.fromisoformat(day), "film": {"name": name, **film}}
+
+
+@pytest.mark.parametrize("edition_day", [14, 15])
+def test_city_edition_excludes_films_screened_in_previous_month(edition_day):
+    debut = {"datePublished": "2026", "image": "https://example.com/new.jpg"}
+    scraped = {"description": "Scraped synopsis", "genre": ["Komedi"], "duration": "PT90M"}
+    returning = {
+        "datePublished": "1999-01-01",
+        "description": "Original synopsis",
+        "genre": ["Drama"],
+        "director": [{"@type": "Person", "name": "Director"}],
+        "duration": "PT2H3M",
+        "contentRating": "Från 15 år",
+    }
+    shows = [
+        show("Stockholm", "2026-10-09", "Ongoing"),
+        show("Stockholm", "2026-10-16", "ONGOING!"),
+        show("Stockholm", "2026-10-15", "Thursday"),
+        show("Stockholm", "2026-10-22", "Thursday"),
+        show("Stockholm", "2026-10-08", "Recent return"),
+        show("Stockholm", "2026-10-16", "Recent return"),
+        show("Stockholm", "2026-09-16", "History boundary"),
+        show("Stockholm", "2026-10-16", "History boundary"),
+        show("Stockholm", "2026-09-15", "Returning", **returning),
+        show("Stockholm", "2026-10-16", "Returning", **returning),
+        show("Malmö", "2026-10-10", "Local debut", **debut),
+        show("Stockholm", "2026-10-22", "Local debut", **debut, **scraped),
+        show("Stockholm", "2026-10-23", "Local debut", **debut),
+        show("Stockholm", "2026-10-23", "Too late"),
+        show("Stockholm", "2026-10-17", "Zebra", datePublished="2026-10-20"),
+        show("Stockholm", "2026-10-17", "Åter", datePublished="2026-01-01"),
+        show("Stockholm", "2026-10-17", "Unknown"),
+    ]
+    result = edition(shows, "Stockholm", date(2026, 10, edition_day))
+    assert [f["title"] for f in result["films"]] == ["Local debut", "Zebra", "Åter", "Returning", "Unknown"]
+    assert result["films"][0]["poster"] == "https://example.com/new.jpg"
+    assert [f["year"] for f in result["films"]] == [2026, 2026, 2026, 1999, None]
+    assert (result["start"], result["end"]) == ("2026-10-16", "2026-10-22")
+    assert result["films"][0]["description"] == "Scraped synopsis"
+    assert result["films"][0]["genres"] == ["Komedi"]
+    assert result["films"][3]["directors"] == ["Director"]
+    assert result["films"][3]["runtime"] == 123
+    assert result["films"][3]["age_rating"] == "Från 15 år"
+    movie_url = urlsplit(result["films"][2]["url"])
+    assert movie_url.fragment == "film-%C3%A5ter"
+    assert movie_url.path == "/stad/stockholm/"
+    genre = result["films"][0]["genre_links"][0]
+    assert genre["name"] == "Komedi"
+    assert urlsplit(genre["url"]).path == "/stad/stockholm/genre/komedi/"
+    for url, content in [
+        (result["films"][2]["url"], "movie"),
+        (genre["url"], "genre"),
+        (result["city_url"], "city"),
+        (result["home_url"], "home"),
+    ]:
+        assert parse_qs(urlsplit(url).query) == {
+            "utm_source": ["allabiografer.se"],
+            "utm_medium": ["email"],
+            "utm_campaign": ["weekly-2026-10-16"],
+            "utm_content": [content],
+        }
+    with pytest.raises(ValueError, match="city"):
+        edition(shows, "", date(2026, 10, 15))
+
+    # Same-day shows count separately, including normalized title variants.
+    shows += [show("Stockholm", "2026-10-16", "Returning"), show("Stockholm", "2026-10-16", "RETURNING!")]
+    shows += [show("Stockholm", "2026-10-17", "Zebra")]
+    ranked = edition(shows, "Stockholm", date(2026, 10, edition_day))
+    assert [f["title"] for f in ranked["films"]] == ["RETURNING!", "Zebra", "Local debut", "Åter", "Unknown"]
+
+
+def test_screenings_read_city_and_film_from_the_merged_dataset(graph, parsed):
+    from allabiografer.merge import merge_datasets
+
+    listed = {"a": ({"name": "Dune"}, [("Göteborg Hagabion", "2026-12-02T18:00:00+01:00")])}
+    merged = merge_datasets(graph, None, [parsed(graph, "x", ["Göteborg Hagabion"], listed)], date(2026, 12, 1))
+    assert newsletter.screenings(graph, merged) == [
+        {"city": "Göteborg", "date": date(2026, 12, 2), "film": newsletter.screenings(graph, merged)[0]["film"]}
+    ]
+    assert newsletter.screenings(graph, merged)[0]["film"]["name"] == "Dune"
+
+
+@pytest.mark.parametrize("truncated", [False, True])
+def test_registered_cities_query(monkeypatch, truncated):
+    monkeypatch.setenv("POSTHOG_PROJECT_ID", "123")
+    monkeypatch.setenv("POSTHOG_PERSONAL_API_KEY", "test-key")
+
+    def respond(request, timeout):
+        assert request.full_url == "https://eu.posthog.com/api/projects/123/query/"
+        query = json.loads(request.data)
+        assert query["refresh"] == "force_blocking"
+        assert "JSONExtract(properties, 'newsletter_cities', 'Array(String)')" in query["query"]["query"]
+        assert "newsletter_subscribed_city_" not in query["query"]["query"]
+        assert "newsletter_confirmed" not in query["query"]["query"]
+        return BytesIO(json.dumps({"results": [["Göteborg"], ["Malmö"]], "hasMore": truncated}).encode())
+
+    monkeypatch.setattr("allabiografer.newsletter.urlopen", respond)
+    if truncated:
+        with pytest.raises(ValueError, match="truncated"):
+            PostHog().cities()
+    else:
+        assert PostHog().cities() == ["Göteborg", "Malmö"]
+
+
+class FakePostHog(PostHog):
+    """In-memory API model: batch records are the observable send outcome."""
+
+    def __init__(self):
+        self.base = "https://eu.posthog.com/api/projects/123/hog_flows/"
+        self.categories = []
+        self.deliveries = {}
+        self.flows = []
+        self.jobs = []
+        self.invocations = []
+        self.runs = {}
+        self.in_flight = {}
+        self.test_result = {"status": "success", "errors": [], "logs": []}
+        self.fail_send = False
+        self.native_lookup_failed = False
+        self.people = [
+            {
+                "uuid": "reader-profile",
+                "distinct_ids": ["existing-reader"],
+                "properties": {"email": "reader@example.org", "newsletter_preferences_token": "signed-link"},
+            }
+        ]
+        self.template = {
+            "status": "active",
+            "trigger_masking": {
+                "hash": "{person.id}:{event.properties.newsletter.city}:{event.properties.newsletter.start}",
+                "ttl": 604800,
+            },
+            "actions": [
+                {
+                    "id": "trigger",
+                    "type": "trigger",
+                    "config": {
+                        "type": "event",
+                        "filters": {
+                            "events": [{"id": "newsletter_edition_ready"}],
+                            "properties": [
+                                {
+                                    "key": "email",
+                                    "type": "person",
+                                    "operator": "is_set",
+                                },
+                            ],
+                        },
+                    },
+                },
+                {
+                    "id": "email",
+                    "type": "function_email",
+                    "config": {
+                        "template_id": "template-email",
+                        "template_uuid": "library-template",
+                        "message_category_type": "marketing",
+                        "inputs": {
+                            "email": {
+                                "value": {
+                                    "from": {"integrationId": 7},
+                                    "to": {"email": "{{ person.properties.email }}"},
+                                    "subject": "Old subject",
+                                    "html": "Old HTML",
+                                    "text": "Old text",
+                                    "design": {"old": True},
+                                }
+                            }
+                        },
+                    },
+                },
+                {"id": "exit", "type": "exit", "config": {}},
+            ],
+            "edges": [{"from": "trigger", "to": "email"}, {"from": "email", "to": "exit"}],
+        }
+
+    def request(self, method, path="", body=None):
+        if "messaging_preferences/opt_outs/" in path:
+            if self.native_lookup_failed:
+                raise RuntimeError("Native consent lookup failed")
+            return {"results": [], "next": None}
+        if "persons/" in path:
+            if "?" in path:
+                return {"results": copy.deepcopy(self.people)}
+            return copy.deepcopy(self.people[0])
+        if "messaging_categories/" in path:
+            if method == "GET":
+                return {"results": copy.deepcopy(self.categories)}
+            category = {"id": body["key"], **copy.deepcopy(body)}
+            self.categories.append(category)
+            return category
+        if method == "GET":
+            parsed = urlsplit(path)
+            if parsed.query and (not parsed.path or path.startswith(self.base + "?")):
+                query = parse_qs(parsed.query)
+                matches = [f for f in [*self.deliveries.values(), *self.flows] if query["search"][0] in f["name"]]
+                if "status" in query:
+                    matches = [f for f in matches if f["status"] == query["status"][0]]
+                offset = int(query.get("offset", [0])[0])
+                page = {"results": copy.deepcopy(matches[offset : offset + 2])}
+                if offset + 2 < len(matches):
+                    page["next"] = self.base + f"?search=allabiografer%3A&status=active&offset={offset + 2}"
+                return page
+            flow_id = parsed.path.split("/")[0]
+            if parsed.path.endswith("/batch_jobs/"):
+                return [copy.deepcopy(job) for job in self.jobs if job["workflow"]["id"] == flow_id]
+            if parsed.path.endswith("/invocation_results_count/"):
+                query = parse_qs(parsed.query)
+                statuses = query.get("status", ["failed,canceled,running,succeeded"])[0].split(",")
+                # Model PostHog's default seven-day window: old failures must not disappear.
+                after = query.get("after", ["2026-10-23T00:00:00Z"])[0]
+                return {
+                    "count": sum(
+                        run["status"] in statuses and run["scheduled_at"] >= after for run in self.runs.get(flow_id, [])
+                    )
+                }
+            if parsed.path.endswith("/in_flight/"):
+                return self.in_flight.get(flow_id, {"count": 0, "position_unknown": 0})
+            if path.rstrip("/") in self.deliveries:
+                return copy.deepcopy(self.deliveries[path.rstrip("/")])
+            for flow in self.flows:
+                if flow["id"] == path.rstrip("/"):
+                    return copy.deepcopy(flow)
+            return copy.deepcopy(self.template)
+        if method == "PATCH":
+            flow = self.deliveries.get(path.rstrip("/"))
+            if flow is None:
+                flow = next(f for f in self.flows if f["id"] == path.rstrip("/"))
+            flow.update(body)
+            return copy.deepcopy(flow)
+        if not path:
+            if body["name"].startswith("allabiografer:delivery:"):
+                flow = {**copy.deepcopy(body), "id": f"delivery-{len(self.deliveries)}"}
+                self.deliveries[flow["id"]] = flow
+                return copy.deepcopy(flow)
+            flow = {**copy.deepcopy(body), "id": "edition"}
+            self.flows.append(flow)
+            return flow
+        if path.endswith("/invocations/"):
+            self.invocations.append(copy.deepcopy(body))
+            if self.fail_send:
+                raise TimeoutError("Response lost after test was accepted")
+            return copy.deepcopy(self.test_result)
+        self.jobs.append({"id": "batch", "workflow": self.flows[-1], **copy.deepcopy(body)})
+        if self.fail_send:
+            raise TimeoutError("Response lost after server accepted batch")
+        return self.jobs[-1]
+
+
+@pytest.fixture
+def completed_batch():
+    api = FakePostHog()
+    flow = copy.deepcopy(api.template)
+    flow.update(id="old-edition", name="allabiografer:Stockholm:2026-09-18", created_at="2026-09-17T09:00:00Z")
+    flow["actions"][0]["config"]["type"] = "batch"
+    return flow
+
+
+def test_archive_only_completed_idle_editions_across_pages(completed_batch):
+    api = FakePostHog()
+    cases = {
+        "finished": {},
+        "no-jobs": {"jobs": []},
+        "pending": {"jobs": ["completed", "in_progress"]},
+        "failed-batch": {"jobs": ["failed", "completed"]},
+        "canceled-batch": {"jobs": ["canceled"]},
+        "failed-run": {"run": "failed"},
+        "canceled-run": {"run": "canceled"},
+        "running": {"run": "running"},
+        "delayed": {"in_flight": {"count": 2, "position_unknown": 0}},
+        "unknown-count": {"in_flight": {"count": None, "position_unknown": None}},
+        "unknown-position": {"in_flight": {"count": 0, "position_unknown": 1}},
+        "edited": {"draft": {"actions": []}},
+        "scheduled": {"schedules": [{"status": "active"}]},
+        "event": {"trigger": "event"},
+        "delivery": {"name": "allabiografer:delivery:Stockholm"},
+        "blueprint": {"name": "allabiografer:blueprint"},
+        "test": {"name": "allabiografer:test:Stockholm:2026-09-18"},
+        "unrelated": {"name": "other:Stockholm:2026-09-18"},
+        "archived": {"status": "archived"},
+        "finished-last-page": {},
+    }
+    for key, case in cases.items():
+        flow = copy.deepcopy(completed_batch)
+        flow.update(id=key)
+        flow.update({k: v for k, v in case.items() if k in {"name", "status", "draft", "schedules"}})
+        if "trigger" in case:
+            flow["actions"][0]["config"]["type"] = case["trigger"]
+        api.flows.append(flow)
+        api.jobs.extend({"workflow": flow, "status": status} for status in case.get("jobs", ["completed"]))
+        api.runs[key] = [{"status": case.get("run", "succeeded"), "scheduled_at": "2026-09-18T09:00:00Z"}]
+        if "in_flight" in case:
+            api.in_flight[key] = case["in_flight"]
+    original = copy.deepcopy(api.flows)
+
+    assert api.archive_completed_batches() == 2
+    for before, after in zip(original, api.flows, strict=True):
+        expected = copy.deepcopy(before)
+        if before["id"] in {"finished", "finished-last-page"}:
+            expected["status"] = "archived"
+        assert after == expected
+    assert api.archive_completed_batches() == 0
+
+
+@pytest.mark.parametrize("send", [False, True])
+@pytest.mark.parametrize("native_lookup_failed", [False, True])
+def test_newsletter_run_reconciles_before_dispatch_or_archival(
+    tmp_path, monkeypatch, completed_batch, send, native_lookup_failed
+):
+    api = FakePostHog()
+    api.native_lookup_failed = native_lookup_failed
+    api.flows.append(completed_batch)
+    api.jobs.append({"workflow": completed_batch, "status": "completed"})
+    monkeypatch.setattr(api, "cities", list)
+    monkeypatch.setattr(newsletter, "PostHog", lambda: api)
+    monkeypatch.setattr("allabiografer.pipeline.latest", lambda graph: tmp_path)
+    monkeypatch.setattr(newsletter, "screenings", lambda graph, merged: [])
+    monkeypatch.setattr(
+        "sys.argv",
+        ["newsletter", "--data", str(tmp_path), "--output", str(tmp_path / "preview"), *(["--send"] if send else [])],
+    )
+    if send and native_lookup_failed:
+        with pytest.raises(RuntimeError, match="consent lookup failed"):
+            newsletter.main()
+    else:
+        newsletter.main()
+    assert api.flows[0]["status"] == ("archived" if send and not native_lookup_failed else "active")
+
+
+@pytest.mark.parametrize("ambiguous", [False, True])
+def test_posthog_preserves_audience_and_allows_repeating_an_edition(ambiguous):
+    api = FakePostHog()
+    api.fail_send = ambiguous
+    data = {
+        "city": "Stockholm",
+        "start": "2026-10-16",
+        "end": "2026-10-22",
+        "films": [{"title": "Ö O'Brien \\ {{ person.email }}\n", "description": "film " * 10000, "year": 2026}],
+    }
+    if ambiguous:
+        with pytest.raises(TimeoutError):
+            api.send("template", data)
+    else:
+        assert api.send("template", data) == "batch"
+    initial_jobs = 1
+    assert len(api.jobs) == initial_jobs
+    api.fail_send = False
+    assert api.send("template", data) == "batch"
+    assert len(api.jobs) == initial_jobs + 1
+    assert [flow["name"] for flow in api.flows] == ["allabiografer:Stockholm:2026-10-16"] * (initial_jobs + 1)
+    sent = api.jobs[0]["workflow"]["actions"]
+    assert sent[0]["config"]["filters"]["properties"] == [
+        {"key": "email", "type": "person", "operator": "is_set"},
+        {
+            "type": "hogql",
+            "key": "has(JSONExtract(ifNull(properties.newsletter_cities, '[]'), 'Array(String)'), 'Stockholm')",
+        },
+    ]
+    assert sent[0]["config"]["type"] == "batch"
+    assert sent[1]["type"] == "function"
+    assert sent[1]["config"]["template_id"] == "template-posthog-capture"
+    inputs = sent[1]["config"]["inputs"]
+    assert inputs["event"]["value"] == "newsletter_edition_ready:Stockholm"
+    assert inputs["distinct_id"]["value"] == "{event.distinct_id}"
+    expression = inputs["properties"]["value"]["newsletter"]
+    assert expression.startswith("{jsonParse(")
+    assert expression.endswith(")}")
+    assert json.loads(ast.literal_eval(expression[len("{jsonParse(") : -2])) == data
+    assert api.jobs[0]["workflow"]["variables"] == []
+    assert "variables" not in api.jobs[0]
+    assert api.template["actions"][1]["type"] == "function_email"
+
+
+def test_shared_workflow_keeps_city_audiences_separate():
+    api = FakePostHog()
+    for city in ["Göteborg", "Malmö"]:
+        api.send("template", {"city": city, "start": "2026-10-16", "end": "2026-10-22", "films": []})
+    assert [job["workflow"]["actions"][0]["config"]["filters"]["properties"][-1]["key"] for job in api.jobs] == [
+        "has(JSONExtract(ifNull(properties.newsletter_cities, '[]'), 'Array(String)'), 'Göteborg')",
+        "has(JSONExtract(ifNull(properties.newsletter_cities, '[]'), 'Array(String)'), 'Malmö')",
+    ]
+    assert len(api.template["actions"][0]["config"]["filters"]["properties"]) == 1
+
+
+def test_city_delivery_uses_property_membership_and_deduplication_across_editions():
+    api = FakePostHog()
+    for city, start in [("Göteborg", "2026-10-16"), ("Stockholm", "2026-10-16"), ("Göteborg", "2026-10-23")]:
+        api.send("template", {"city": city, "start": start, "end": start, "films": []})
+    assert api.categories == []
+    assert len(api.deliveries) == 2
+    assert {job["workflow"]["actions"][1]["config"]["inputs"]["event"]["value"] for job in api.jobs} == {
+        "newsletter_edition_ready:Göteborg",
+        "newsletter_edition_ready:Stockholm",
+    }
+    for flow in api.deliveries.values():
+        city = flow["name"].removeprefix("allabiografer:delivery:")
+        trigger, email, _ = flow["actions"]
+        assert trigger["config"]["filters"]["events"][0]["id"] == f"newsletter_edition_ready:{city}"
+        assert not email["config"].get("message_category_id")
+        assert email["config"]["message_category_type"] == "marketing"
+        assert {"type": "hogql", "key": f"has(person.properties.newsletter_cities, '{city}')"} in trigger["config"][
+            "filters"
+        ]["properties"]
+        assert flow["trigger_masking"] == api.template["trigger_masking"]
+        assert email["config"]["inputs"]["email"]["value"]["to"] == {"email": "{{ person.properties.email }}"}
+
+
+@pytest.mark.parametrize("unsafe", ["paused", "wrong_category", "wrong_event", "no_dedup"])
+def test_invalid_city_delivery_never_dispatches(unsafe):
+    api = FakePostHog()
+    data = {"city": "Göteborg", "start": "2026-10-16", "end": "2026-10-22", "films": []}
+    api.send("template", data)
+    flow = next(iter(api.deliveries.values()))
+    if unsafe == "paused":
+        flow["email_sending_paused_at"] = "2026-10-16T12:00:00Z"
+    elif unsafe == "wrong_category":
+        flow["actions"][1]["config"]["message_category_id"] = "newsletter-city-stockholm"
+    elif unsafe == "wrong_event":
+        flow["actions"][0]["config"]["filters"]["events"][0]["id"] = "newsletter_edition_ready:Stockholm"
+    else:
+        flow["trigger_masking"]["ttl"] = 60
+    jobs_before = len(api.jobs)
+    with pytest.raises(ValueError, match="Invalid or paused"):
+        api.send("template", data)
+    assert len(api.jobs) == jobs_before
+
+
+def test_existing_category_consent_requires_explicit_migration():
+    api = FakePostHog()
+    api.template["actions"][1]["config"]["message_category_id"] = "old-newsletter"
+    with pytest.raises(ValueError, match="Migrate"):
+        api.send("template", {"city": "Stockholm", "start": "2026-10-16", "end": "2026-10-22", "films": []})
+    assert api.jobs == []
+    assert api.deliveries == {}
+
+
+def test_city_membership_expressions_escape_literals_in_both_scopes():
+    api = FakePostHog()
+    api.send("template", {"city": "Göte'borg\\East", "start": "2026-10-16", "end": "2026-10-22", "films": []})
+    batch = api.jobs[0]["workflow"]["actions"][0]["config"]["filters"]["properties"][-1]
+    assert batch == {
+        "type": "hogql",
+        "key": "has(JSONExtract(ifNull(properties.newsletter_cities, '[]'), 'Array(String)'), 'Göte\\'borg\\\\East')",
+    }
+    event = next(iter(api.deliveries.values()))["actions"][0]["config"]["filters"]["properties"][-1]
+    assert event == {"type": "hogql", "key": "has(person.properties.newsletter_cities, 'Göte\\'borg\\\\East')"}
+
+
+def test_overlapping_audiences_require_delivery_deduplication():
+    api = FakePostHog()
+    api.template["trigger_masking"] = None
+    with pytest.raises(ValueError, match="deduplicate"):
+        api.send("template", {"city": "Stockholm", "start": "2026-10-16", "end": "2026-10-22", "films": []})
+    assert api.jobs == []
+
+
+def test_city_membership_does_not_require_confirmation():
+    api = FakePostHog()
+    api.template["actions"][0]["config"]["filters"]["properties"] = []
+    api.send("template", {"city": "Malmö", "start": "2026-10-16", "end": "2026-10-22", "films": []})
+    assert api.jobs[0]["workflow"]["actions"][0]["config"]["filters"]["properties"] == [
+        {
+            "type": "hogql",
+            "key": "has(JSONExtract(ifNull(properties.newsletter_cities, '[]'), 'Array(String)'), 'Malmö')",
+        }
+    ]
+
+
+@pytest.mark.parametrize("invalid", ["draft", "wrong_event"])
+def test_delivery_must_be_listening_before_dispatch(invalid):
+    api = FakePostHog()
+    if invalid == "draft":
+        api.template["status"] = "draft"
+    else:
+        api.template["actions"][0]["config"]["filters"]["events"] = [{"id": "other_event"}]
+    with pytest.raises(ValueError, match=r"active event|must listen"):
+        api.send("template", {"city": "Malmö", "start": "2026-10-16", "end": "2026-10-22", "films": []})
+    assert api.flows == []
+    assert api.jobs == []
+
+
+@pytest.mark.parametrize("outcome", ["success", "skipped", "error", "timeout"])
+def test_single_recipient_test_never_enables_or_batches(outcome):
+    api = FakePostHog()
+    api.template["actions"][0]["config"]["type"] = "manual"
+    email_config = api.template["actions"][1]["config"]
+    email_config["inputs"]["email"]["value"]["to"] = {"email": "{{ variables.email }}"}
+    api.fail_send = outcome == "timeout"
+    if outcome == "skipped":
+        api.test_result["logs"] = [{"message": "Skipping send: recipient opted out"}]
+    elif outcome == "error":
+        api.test_result["status"] = "error"
+        api.test_result["errors"] = ["Sender unverified"]
+    data = {"city": "Göteborg", "films": [{"title": "A & B", "year": 2026}]}
+    if outcome == "success":
+        assert api.send_test("manual", "reader@example.org", data) == "edition"
+    else:
+        with pytest.raises(TimeoutError if outcome == "timeout" else ValueError):
+            api.send_test("manual", "reader@example.org", data)
+    assert api.jobs == []
+    assert len(api.invocations) == 1
+    assert api.flows[0]["status"] == "draft"
+    invocation = api.invocations[0]
+    assert invocation["current_action_id"] == "email"
+    assert invocation["mock_async_functions"] is False
+    assert invocation["globals"]["variables"] == {"email": "reader@example.org"}
+    assert invocation["globals"]["event"]["properties"]["newsletter"] == data
+    assert invocation["globals"]["event"]["distinct_id"] == "existing-reader"
+    assert invocation["globals"]["person"]["properties"]["newsletter_preferences_token"] == "signed-link"
+    value = api.flows[0]["actions"][1]["config"]["inputs"]["email"]["value"]
+    assert value == {"from": {"integrationId": 7}, "to": {"email": "{{ variables.email }}"}}
+    assert not api.flows[0]["actions"][1]["config"].get("message_category_id")
+
+
+@pytest.mark.parametrize("invalid", ["missing", "duplicate", "unmigrated", "different-email"])
+def test_single_recipient_test_requires_matching_migrated_profile(invalid):
+    api = FakePostHog()
+    api.template["actions"][0]["config"]["type"] = "manual"
+    api.template["actions"][1]["config"]["inputs"]["email"]["value"]["to"] = {"email": "{{ variables.email }}"}
+    if invalid == "missing":
+        api.people = []
+    elif invalid == "duplicate":
+        api.people *= 2
+    elif invalid == "unmigrated":
+        del api.people[0]["properties"]["newsletter_preferences_token"]
+    else:
+        api.people[0]["properties"]["email"] = "different@example.org"
+    with pytest.raises(ValueError, match=r"profile|preferences"):
+        api.send_test("manual", "reader@example.org", {"city": "Göteborg", "films": []})
+    assert api.flows == []
+    assert api.invocations == []
+
+
+@pytest.mark.parametrize("unsafe", ["multiple", "cc", "batch"])
+def test_single_recipient_test_rejects_broader_delivery(unsafe):
+    api = FakePostHog()
+    api.template["actions"][0]["config"]["type"] = "batch" if unsafe == "batch" else "manual"
+    value = api.template["actions"][1]["config"]["inputs"]["email"]["value"]
+    value["to"] = {"email": "{{ variables.email }}"}
+    if unsafe == "cc":
+        value["cc"] = [{"email": "someone@example.org"}]
+    recipient = "one@example.org,two@example.org" if unsafe == "multiple" else "one@example.org"
+    error = {"multiple": "exactly one email", "cc": "only variables.email", "batch": "manual → email"}[unsafe]
+    with pytest.raises(ValueError, match=error):
+        api.send_test("manual", recipient, {"city": "Göteborg", "films": []})
+    assert api.flows == []
+    assert api.invocations == []
+    assert api.jobs == []

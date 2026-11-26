@@ -14,6 +14,7 @@ import os
 import re
 from collections import defaultdict
 from collections.abc import Callable
+from datetime import date
 from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import urlencode
@@ -233,7 +234,12 @@ def enrich_dataset(graph: Graph, merged: Path, fetch: Fetch, session=None) -> tu
     dataset = graph.read(merged)
     parts = list(graph.parts(merged).values())
     # Past films keep their pages' history; only films with screenings are looked up.
-    showing = {part["workPresented"]["@id"] for part in parts if part["@type"] == "ScreeningEvent"}
+    today = date.fromisoformat(dataset["temporalCoverage"].split("/")[-1])
+    showing = {
+        part["workPresented"]["@id"]
+        for part in parts
+        if part["@type"] == "ScreeningEvent" and date.fromisoformat(part["startDate"][:10]) >= today
+    }
     enriched, count = [], 0
     for part in parts:
         if part["@type"] == "Movie" and part["@id"] in showing:

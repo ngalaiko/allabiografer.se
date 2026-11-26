@@ -44,14 +44,14 @@ def test_partial_rerun_of_a_source_keeps_its_other_feeds_on_one_film(graph, pars
     ]
 
 
-def test_past_screenings_drop_and_failed_runs_need_no_input(graph, parsed):
+def test_old_screenings_drop_and_failed_runs_need_no_input(graph, parsed):
     first = merge_datasets(
         graph,
         None,
         [parsed(graph, "x", ["Aspen"], {"b": ({"name": "Heat"}, [("Aspen", "2026-12-02T20:00:00+01:00")])})],
         DAY,
     )
-    later = merge_datasets(graph, first, [], date(2026, 12, 5))
+    later = merge_datasets(graph, first, [], date(2027, 1, 5))
     films, screenings = contents(graph, later)
     assert screenings == []
     assert [films_of_name(film) for film in films.values()] == ["heat"]
@@ -121,3 +121,15 @@ def test_a_failed_feed_keeps_its_screenings_without_touching_the_cinemas_other_f
 
     _, screenings = contents(graph, second)
     assert [s["film"] for s in screenings] == ["bad-apples"]
+
+
+def test_past_screenings_are_kept_for_thirty_days(graph, parsed):
+    from datetime import timedelta
+
+    listed = {"a": ({"name": "Heat"}, [("Aspen", "2026-12-02T20:00:00+01:00")])}
+    first = merge_datasets(graph, None, [parsed(graph, "x", ["Aspen"], listed)], DAY)
+    # The feed no longer lists the past show; the merged result remembers it.
+    later = merge_datasets(graph, first, [parsed(graph, "x", ["Aspen"], {})], date(2026, 12, 10))
+    assert [s["startDate"] for s in contents(graph, later)[1]] == ["2026-12-02T20:00:00+01:00"]
+    gone = merge_datasets(graph, later, [], date(2026, 12, 2) + timedelta(days=31))
+    assert contents(graph, gone)[1] == []

@@ -5,8 +5,10 @@ The merged Dataset carries the state between runs:
 - `isBasedOn` lists the parse Datasets in effect, oldest first. Each registry DataFeed's
   screenings come from the newest one with a snapshot of it, so feeds left out of a run, or
   whose adapter failed, keep their previous screenings.
-- Its parts are every film ever identified, and the screenings from the run day onward.
-  A show listed by several feeds of one cinema appears once.
+- Its parts are every film ever identified, the screenings from the run day onward, and
+  past screenings of the last `HISTORY` days, carried from the previous result: the
+  newsletter tells new films from those shown recently. A show listed by several feeds of
+  one cinema appears once.
 
 Films keep a stable slug, the `allabiografer:film` identifier. Grouping is re-evaluated
 on every run; a group reuses the oldest identity among its members, slugs are never
@@ -16,7 +18,7 @@ reassigned, and slugs of films merged into another remain as `allabiografer:film
 import json
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import TYPE_CHECKING
 
 from .graph import fragment
@@ -29,6 +31,8 @@ if TYPE_CHECKING:
     from .graph import Graph
 
 FILM = "allabiografer:film"
+# Past screenings kept, in days.
+HISTORY = 30
 ALIAS = "allabiografer:film-alias"
 SITE = "https://allabiografer.se"
 # Source records whose fields are replaced by the merged film's own.
@@ -103,6 +107,11 @@ def _previous_films(graph: Graph, previous: Path) -> tuple[list[Identity], dict[
 
 def merge_datasets(graph: Graph, previous: Path | None, parsed: list[Path], day: date) -> Path:
     identities, owners, records = _previous_films(graph, previous) if previous else ([], {}, {})
+    # Past screenings name the previous film; any of its source records identifies it now.
+    past_keys = {}
+    for _, film in _of(graph, previous, "Movie") if previous else []:
+        for reference in film["isBasedOn"]:
+            past_keys.setdefault(film["@id"], _key(graph.find(previous, reference)[1]))
     datasets = [graph.resolve(previous, ref) for ref in graph.read(previous)["isBasedOn"]] if previous else []
     datasets += parsed
 
@@ -110,7 +119,7 @@ def merge_datasets(graph: Graph, previous: Path | None, parsed: list[Path], day:
     suppliers: dict[Path, tuple[Path, Part]] = {}
     for dataset in datasets:
         for feed, snapshot in _snapshots(graph, dataset):
-            if feed.exists():
+            if graph.exists(feed):
                 suppliers[feed] = (dataset, snapshot)
     in_effect = [dataset for dataset in dict.fromkeys(datasets) if dataset in {d for d, _ in suppliers.values()}]
 
@@ -166,6 +175,10 @@ def merge_datasets(graph: Graph, previous: Path | None, parsed: list[Path], day:
             films[key] = film
 
     parts = {}
+    for screening in _history(graph, previous, day) if previous else []:
+        # Repointed to the film its source record belongs to now; records gone keep no history.
+        if (key := past_keys.get(screening["workPresented"]["@id"])) in films:
+            parts[screening["@id"]] = screening | {"workPresented": {"@id": films[key]["@id"]}}
     for key, screening in _distinct(screenings, {key: film["@id"] for key, film in films.items()}):
         merged = {k: v for k, v in screening.items() if k != "@id"} | {"workPresented": {"@id": films[key]["@id"]}}
         merged = {"@id": "#" + fragment("screening", merged), **merged}
@@ -182,6 +195,16 @@ def merge_datasets(graph: Graph, previous: Path | None, parsed: list[Path], day:
         },
         [unique_films[key] for key in sorted(unique_films)] + [parts[key] for key in sorted(parts)],
     )
+
+
+def _history(graph: Graph, previous: Path, day: date) -> list[dict]:
+    """The previous result's screenings before `day`, within `HISTORY` days."""
+    since = day - timedelta(days=HISTORY)
+    found = []
+    for _, screening in _of(graph, previous, "ScreeningEvent"):
+        if since <= datetime.fromisoformat(screening["startDate"]).astimezone(STOCKHOLM).date() < day:
+            found.append(screening)
+    return found
 
 
 def _distinct(screenings: list, films: dict) -> list[dict]:
