@@ -9,3 +9,13 @@ www/
 *.db-journal
 *.db-wal
 *.db-shm
+# allabiografer: only the cinema registry and its README are checked in.
+!/data/allabiografer/
+/data/allabiografer/*
+!/data/allabiografer/README.md
+!/data/allabiografer/schema/
+/data/allabiografer/schema/*
+!/data/allabiografer/schema/AdministrativeArea/
+!/data/allabiografer/schema/City/
+!/data/allabiografer/schema/Country/
+!/data/allabiografer/schema/MovieTheater/

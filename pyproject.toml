@@ -12,13 +12,14 @@ parse = "parse:main"
 reconcile = "build.catalogue:main"
 build = "build:main"
 newsletter = "newsletter:main"
+allabiografer = "allabiografer.pipeline:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/parse", "src/build", "src/store", "src/newsletter"]
+packages = ["src/parse", "src/build", "src/store", "src/newsletter", "src/allabiografer"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -56,7 +57,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["parse", "build", "store"]
+known-first-party = ["parse", "build", "store", "allabiografer"]
 
 [dependency-groups]
 build = [

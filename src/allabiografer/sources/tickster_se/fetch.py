@@ -1,0 +1,40 @@
+"""Capture Tickster organiser listings and candidate event pages."""
+
+from datetime import timedelta
+
+from allabiografer.sources import _tickster
+from allabiografer.sources.tickster_se.site import _BASE, _NOT_A_SHOWING, _SITES
+
+from ...schedule import checked
+from .pages import Pages
+
+SOURCE = "tickster_se"
+
+
+def candidates(pages, today, selectors=None):
+    checked(selectors, {site.organiser.split("/", 1)[0] for site in _SITES})
+    seen = set()
+    for site in _SITES:
+        if selectors is not None and site.organiser.split("/", 1)[0] not in selectors:
+            continue
+        url = _BASE + site.organiser
+        visited = set()
+        while url:
+            if url in visited:
+                raise ValueError(f"Tickster pagination loop: {url}")
+            visited.add(url)
+            events, url = _tickster.listing(pages.text(url))
+            for item in events:
+                if (
+                    item.url not in seen
+                    and today <= item.date <= today + timedelta(days=365)
+                    and not _NOT_A_SHOWING.search(item.title)
+                ):
+                    seen.add(item.url)
+                    yield site, item
+
+
+def fetch_pages(session, inputs, today, *, selectors=None):
+    pages = Pages(inputs, session)
+    for _, item in candidates(pages, today, selectors):
+        pages.text(item.url, optional=True)

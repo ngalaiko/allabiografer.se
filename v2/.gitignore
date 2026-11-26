@@ -1,8 +1,0 @@
-/data/*
-!/data/README.md
-!/data/schema/
-/data/schema/*
-!/data/schema/AdministrativeArea/
-!/data/schema/City/
-!/data/schema/Country/
-!/data/schema/MovieTheater/
