@@ -32,8 +32,16 @@
         pkgs.gnutar
         pkgs.gzip
       ];
+      # Pele renders the trace diagrams to SVG: https://pele.run
+      pele =
+        pkgs:
+        pkgs.fetchzip {
+          url = "https://registry.npmjs.org/pele/-/pele-1.13.0.tgz";
+          hash = "sha256-1mxtui9HY6TO5Sdpt+DtoTf/O7q8rvcba76Ifg1txBs=";
+        };
       # uv runs the locked dependencies on Nix's Python; it never downloads its own.
       env = pkgs: {
+        PELE = "${pele pkgs}/dist/pele.js";
         UV_PYTHON = "${pkgs.python314}/bin/python3";
         UV_PYTHON_DOWNLOADS = "never";
         NEWSLETTER_LUA_PATH = "${pkgs.luajitPackages.lua-resty-http}/share/lua/5.1/?.lua;;";
@@ -66,6 +74,8 @@
             # Download, read, look up and build the programme, then render it, against data/allabiografer.
             # Flags pass through (--cinema, --fresh, --render-only); --production, the R2 store, runs in CI only.
             run = ''uv run --locked --group parse --group build allabiografer "$@"'';
+            # Draw a run, a step (--step) or a film's sources (--film) from the local store as SVG; --open shows it.
+            trace = ''uv run --locked allabiografer-trace "$@"'';
             # Adapter fixtures: save <adapter> from the local store, update its rows, or diff the reader.
             fixture = ''uv run --locked --group parse allabiografer-fixture "$@"'';
             # The weekly newsletter: previews, or with --send, PostHog batches (POSTHOG_* variables).

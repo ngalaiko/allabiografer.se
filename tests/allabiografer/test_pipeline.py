@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from contextlib import nullcontext
 from datetime import UTC, date, datetime
@@ -214,3 +215,32 @@ def test_every_adapter_names_its_website():
 
     adapters = {feed.adapter for feed in feeds().values()}
     assert all(re.fullmatch(r"[a-z0-9.-]+\.[a-z]+", site(adapter)) for adapter in adapters)
+
+
+def test_trace_draws_a_run_its_steps_and_a_films_sources(graph, parsed):
+    from allabiografer import trace
+    from allabiografer.merge import merge_datasets
+    from allabiografer.pipeline import action
+
+    listed = {"a": ({"name": "Dune"}, [("Bio Rio", "2026-12-02T18:00:00+01:00")])}
+    with action(graph, "UpdateAction", {"name": "Update programme"}) as run:
+        source = parsed(graph, "x", ["Bio Rio"], listed)
+        with action(graph, "CreateAction", {"name": "Read x", "object": graph.ref(source)}) as read:
+            read["result"] = graph.ref(source)
+        with action(graph, "CreateAction", {"name": "Build programme", "object": [graph.ref(source)]}) as build:
+            programme = merge_datasets(graph, None, [source], date(2026, 12, 1))
+            build["result"] = run["result"] = graph.ref(programme)
+    (path,) = graph.entities("UpdateAction")
+
+    overview = trace.overview(graph, path).source()
+    assert "Build programme" in overview
+    assert "1 Movie, 1 ScreeningEvent" in overview
+    assert "Bio Rio<br/>1 screenings" in trace.step(graph, path, "Read x").source()
+    assert "read as" in trace.film(graph, programme, "dune").source()
+
+
+@pytest.mark.skipif(not os.environ.get("PELE"), reason="Pele comes from the Nix shell")
+def test_trace_renders_svg_with_pele():
+    from allabiografer import trace
+
+    assert trace.svg("flowchart LR\n  a --> b\n").startswith("<svg")
