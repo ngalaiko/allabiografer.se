@@ -126,7 +126,9 @@ def previous_answers(graph: Graph, programme: Path) -> Answers:
             for link in part["isBasedOn"]:
                 if "#" not in link["@id"]:
                     path = graph.resolve(programme, link)
-                    found[graph.read(path)["isBasedOn"]] = path
+                    # Files a settled film was read from have no URL, or one TMDB lookups never ask.
+                    if address := graph.read(path).get("isBasedOn"):
+                        found[address] = path
     graph.prefetch_content([graph.read(path) for path in found.values()])
     return Answers(graph, found=found)
 

@@ -15,6 +15,11 @@ The Programme carries the state between runs:
 Every part links its sources in `isBasedOn`: a screening the parsed screening it is, a film
 its parsed records and, when TMDB filled it, the responses and posters that decided it.
 
+A film without screenings is settled: it keeps its fields and identity, and links the files
+its records were read from instead of the records, so the day's listings around them can be
+pruned. Settled films are kept for good and group with new records like records do: a film
+listed again finds its slug, and pages once published keep resolving.
+
 Films keep a stable slug, the `allabiografer:film` identifier. Grouping is re-evaluated
 on every run; a group reuses the oldest identity among its members, slugs are never
 reassigned, and slugs of films merged into another remain as `allabiografer:film-alias`.
@@ -95,15 +100,23 @@ def _link(graph: Graph, part: Part) -> dict:
     return graph.part_ref(*part)
 
 
+def _identity(film: dict, source: Path) -> Identity:
+    values = {item["propertyID"]: [] for item in film["identifier"]}
+    for item in film["identifier"]:
+        values[item["propertyID"]].append(item["value"])
+    if FILM not in values:
+        raise ValueError(f"{source} has no film identities; start with --fresh")
+    return Identity(values[FILM][0], film["dateCreated"], set(values.get(ALIAS, [])))
+
+
+def _slug(film: dict) -> str:
+    return next(item["value"] for item in film["identifier"] if item["propertyID"] == FILM)
+
+
 def _previous_films(graph: Graph, previous: Path) -> tuple[list[Identity], dict[str, Identity], dict[str, Part]]:
     identities, owners, records = [], {}, {}
     for _, film in _of(graph, previous, "Movie"):
-        values = {item["propertyID"]: [] for item in film["identifier"]}
-        for item in film["identifier"]:
-            values[item["propertyID"]].append(item["value"])
-        if FILM not in values:
-            raise ValueError(f"{previous} has no film identities; start with --fresh")
-        identity = Identity(values[FILM][0], film["dateCreated"], set(values.get(ALIAS, [])))
+        identity = _identity(film, previous)
         identities.append(identity)
         for reference in _records(film):
             dataset, member = graph.find(previous, reference)
@@ -156,7 +169,26 @@ def build(
     if answers is not None:
         parts, count = tmdb.enrich_parts(graph, parts, day, answers)
         print(f"Filled {count} films from TMDB")
+    shown = {part["workPresented"]["@id"] for part in parts if part["@type"] == "ScreeningEvent"}
+    parts = [_settle(graph, part) if part["@type"] == "Movie" and part["@id"] not in shown else part for part in parts]
     return graph.put_dataset(combined.fields, parts), combined.warnings
+
+
+def _settle(graph: Graph, film: dict) -> dict:
+    """A film without screenings, linking the files its records were read from instead of the records."""
+    origin = graph.path("Dataset", "_")
+    links = []
+    for link in film["isBasedOn"]:
+        if "#" not in link["@id"]:
+            links.append(link)
+            continue
+        dataset, record = graph.find(origin, link)
+        links += [graph.ref(graph.resolve(dataset, file)) for file in _list(record.get("isBasedOn"))]
+    return film | {"isBasedOn": list({link["@id"]: link for link in links}.values())}
+
+
+def _list(value) -> list:
+    return value if isinstance(value, list) else [value] if value else []
 
 
 def combine(graph: Graph, previous: Path | None, parsed: list[Path], day: date) -> Combined:
@@ -166,8 +198,15 @@ def combine(graph: Graph, previous: Path | None, parsed: list[Path], day: date) 
     for _, film in _of(graph, previous, "Movie") if previous else []:
         for reference in _records(film):
             past_keys.setdefault(film["@id"], _key(graph.find(previous, reference)[1]))
-    datasets = [graph.resolve(previous, ref) for ref in graph.read(previous)["isBasedOn"]] if previous else []
+    datasets = [graph.resolve(previous, ref) for ref in graph.read(previous).get("isBasedOn", [])] if previous else []
     datasets += parsed
+    # Settled films stand for themselves among the records: a group holding one keeps its identity.
+    settled = {}
+    for _, film in _of(graph, previous, "Movie") if previous else []:
+        if not _records(film):
+            key = json.dumps(["settled", _slug(film)], ensure_ascii=False)
+            owners[key] = _identity(film, previous)
+            settled[key] = film
 
     # The newest snapshot of a feed supplies it; feeds gone from the registry drop out.
     suppliers: dict[Path, tuple[Path, Part]] = {}
@@ -194,11 +233,11 @@ def combine(graph: Graph, previous: Path | None, parsed: list[Path], day: date) 
         for part, movie in _of(graph, dataset, "Movie"):
             records[_key(movie)] = part
             keys[part] = _key(movie)
-    movies = {key: graph.parts(dataset)[part] for key, (dataset, part) in records.items()}
+    movies = {key: graph.parts(dataset)[part] for key, (dataset, part) in records.items()} | settled
 
     screenings = []
     # Screenings per source record: the record listed most often names the film.
-    shown = dict.fromkeys(records, 0)
+    shown = dict.fromkeys(movies, 0)
     cinemas = set()
     for feed, (_, (dataset, part)) in sorted(suppliers.items(), key=lambda item: str(item[0])):
         snapshot = graph.parts(dataset)[part]
@@ -234,7 +273,7 @@ def combine(graph: Graph, previous: Path | None, parsed: list[Path], day: date) 
             identity = Identity(slug, day.isoformat())
         used.add(identity.slug)
         claimed |= {identity.slug, *identity.aliases}
-        film = _film(graph, identity, members, movies, records)
+        film = _film(graph, identity, members, movies, records, previous)
         for key in group:
             films[key] = film
 
@@ -312,8 +351,13 @@ def _distinct(screenings: list, films: dict) -> list[tuple]:
     return result
 
 
-def _film(graph: Graph, identity: Identity, members: list[str], movies: dict, records: dict) -> dict:
-    """A film's fields: preferred values from the member with the most screenings."""
+def _film(
+    graph: Graph, identity: Identity, members: list[str], movies: dict, records: dict, previous: Path | None
+) -> dict:
+    """A film's fields: preferred values from the member with the most screenings.
+
+    It links its members' records, and the files a settled member links.
+    """
     fields = {}
     same_as = set()
     image = None
@@ -326,7 +370,8 @@ def _film(graph: Graph, identity: Identity, members: list[str], movies: dict, re
         # TMDB and IMDb entries identify the film; source pages are reached through `isBasedOn`.
         same_as |= {link for link in (links if isinstance(links, list) else [links]) if references({"sameAs": [link]})}
         if image is None and (found := movie.get("image")):
-            image = graph.ref(graph.resolve(records[key][0], found)) if isinstance(found, dict) else found
+            origin = records[key][0] if key in records else previous
+            image = graph.ref(graph.resolve(origin, found)) if isinstance(found, dict) else found
     return {
         "@id": "#" + fragment("film", identity.slug),
         "@type": "Movie",
@@ -337,5 +382,6 @@ def _film(graph: Graph, identity: Identity, members: list[str], movies: dict, re
         **fields,
         **({"sameAs": sorted(same_as)} if same_as else {}),
         **({"image": image} if image else {}),
-        "isBasedOn": [_link(graph, records[key]) for key in sorted(members)],
+        "isBasedOn": [_link(graph, records[key]) for key in sorted(members) if key in records]
+        + [link for key in sorted(members) if key not in records for link in movies[key]["isBasedOn"]],
     }

@@ -45,7 +45,8 @@ def test_render_writes_pages_from_the_merged_dataset(graph, parsed, tmp_path):
     posters = sorted((out / "posters").iterdir())
     assert len(posters) == 4
     assert not any(poster.is_symlink() for poster in posters)
-    assert len(list((tmp_path / "assets").iterdir())) == 3  # Poster, and two dataset documents.
+    # Poster, the films' pages and two dataset documents.
+    assert len(list((tmp_path / "assets").iterdir())) == 5
     with Image.open(next(link for link in posters if "-" not in link.stem)) as image:
         assert (image.format, image.size) == ("WEBP", (250, 354))
 

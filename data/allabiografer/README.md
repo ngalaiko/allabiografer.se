@@ -44,6 +44,8 @@ Programme ─▶ <site> listings in effect ─▶ <site> pages (about: DataFeeds
                     in a per-feed #feed-… Dataset ─▶ DataFeed ─about─▶ MovieTheater
 ```
 
+A film without screenings is settled: it links the files its records were read from (`DataDownload`s) instead of the records, so listings it no longer needs are pruned, and it stays in every later `Programme`. A film listed again groups with its settled self and keeps its slug.
+
 A `Programme` `Movie`'s `sameAs` keeps the TMDB and IMDb entries that identify it; the source pages it was read from are reached through its parsed records. Each action's `instrument` is the code, and the registry, it ran with.
 
 A listings `Dataset` or `Programme` keeps its parts in one document: its `distribution` is a `DataDownload` of `application/ld+json+zstd` whose `hasPart` holds the `Movie`s, `ScreeningEvent`s and nested per-feed `Dataset`s. Parts carry `#fragment` identifiers and link to each other by them (`"workPresented": {"@id": "#film-…"}`); their links to entities resolve against the `Dataset` entity, and links into another dataset read `../Dataset/<hash>.jsonld#fragment`. Unchanged inputs give the same document and entity, so reruns write only what changed. After a run, `allabiografer.prune` keeps whole runs, newest first, while they fit 9 GB (R2's free tier is 10 GB), and deletes what none of them reach; `--keep N` caps the count. The newest run is always kept, a run still going is never touched, and the registry is never pruned.

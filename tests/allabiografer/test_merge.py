@@ -149,3 +149,26 @@ def test_past_screenings_are_kept_for_thirty_days(graph, parsed):
     assert [s["startDate"] for s in contents(graph, later)[1]] == ["2026-12-02T20:00:00+01:00"]
     gone = merge_datasets(graph, later, [], date(2026, 12, 2) + timedelta(days=31))
     assert contents(graph, gone)[1] == []
+
+
+def test_a_film_without_screenings_settles_and_keeps_its_slug_when_listed_again(graph, parsed):
+    listed = {"a": ({"name": "Dogville"}, [("Aspen", "2026-12-02T18:00:00+01:00")])}
+    listing = parsed(graph, "x", ["Aspen"], listed)
+    first = merge_datasets(graph, None, [listing], DAY)
+    # Its screening is past and out of the history; the feed lists nothing else.
+    settled = merge_datasets(graph, first, [parsed(graph, "x", ["Aspen"], {})], date(2027, 1, 10))
+
+    (film,) = contents(graph, settled)[0].values()
+    assert films_of_name(film) == "dogville"
+    # It links the file it was read from, not the listing: old listings can be pruned.
+    assert all("#" not in link["@id"] for link in film["isBasedOn"])
+    assert graph.read(graph.resolve(settled, film["isBasedOn"][0]))["name"] == "movie-a.html"
+    assert graph.ref(listing) not in graph.read(settled)["isBasedOn"]
+
+    # Another site lists it later: the film keeps its slug.
+    again = {"b": ({"name": "Dogville"}, [("Bio Rio", "2027-02-01T18:00:00+01:00")])}
+    later = merge_datasets(graph, settled, [parsed(graph, "y", ["Bio Rio"], again)], date(2027, 1, 20))
+
+    films, screenings = contents(graph, later)
+    assert [films_of_name(film) for film in films.values()] == ["dogville"]
+    assert [s["film"] for s in screenings] == ["dogville"]

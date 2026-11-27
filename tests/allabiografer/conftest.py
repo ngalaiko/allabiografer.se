@@ -29,7 +29,9 @@ def parse_dataset(graph, adapter, feeds, films, *, day=DAY):
             "@id": f"#movie-{movie_id}",
             "@type": "Movie",
             "identifier": {"propertyID": PREFIX + adapter, "value": movie_id},
-            "isBasedOn": "x",
+            "isBasedOn": graph.ref(
+                graph.put_bytes(f"{adapter} {movie_id}".encode(), "text/html", name=f"movie-{movie_id}.html")
+            ),
             **fields,
         }
         movies.append(movie)
