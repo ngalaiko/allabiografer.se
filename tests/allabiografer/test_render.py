@@ -36,8 +36,9 @@ def test_render_writes_pages_from_the_merged_dataset(graph, parsed, tmp_path):
     assert "Engelskt tal • Svensk text" in cinema
     assert (out / "film" / "dune" / "index.html").is_file()
     assert (out / "stad" / "stockholm" / "genre" / "drama" / "index.html").is_file()
-    # Films without upcoming screenings are not published.
-    assert not (out / "film" / "gammal-film").exists()
+    # A film without upcoming screenings keeps its page, listed nowhere else.
+    assert "Inga kommande visningar publicerade." in (out / "film" / "gammal-film" / "index.html").read_text()
+    assert not (out / "stad" / "stockholm" / "film" / "gammal-film").exists()
     # No iCalendar feeds; Schema.org JSON-LD only.
     assert not list(out.rglob("*.ics"))
     assert (out / "film" / "dune" / "index.jsonld").is_file()

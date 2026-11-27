@@ -157,9 +157,8 @@ def site_data(graph: Graph, merged: Path, out: Path, *, today: date | None = Non
         )
     sd.screenings.sort(key=lambda s: (s.date, s.time, s.city, s.cinema_name, s.tmdb_id, s.ticket_url))
 
-    showing = {s.tmdb_id for s in sd.screenings}
-    for identifier in showing:
-        film_path, image = images[identifier]
+    # Every film keeps its page: details, and its screenings when it has any.
+    for identifier, (film_path, image) in images.items():
         if poster := _poster(graph, film_path, image, session, downloaded):
             sd.posters[identifier] = poster
     for venue in venues.values():
@@ -169,8 +168,7 @@ def site_data(graph: Graph, merged: Path, out: Path, *, today: date | None = Non
     for screening in sd.screenings:
         sd.cities[screening.city] += 1
         sd.city_films.add((screening.city, screening.tmdb_id))
-    # Every registry cinema and city has a page; films are listed while they show.
-    sd.movies = {identifier: movie for identifier, movie in sd.movies.items() if identifier in showing}
+    # Every registry cinema, city and film has a page; a city lists a film while it shows there.
     return sd
 
 
