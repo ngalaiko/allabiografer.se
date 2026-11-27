@@ -100,3 +100,26 @@ def test_stated_tmdb_and_imdb_references_decide():
         "remake": film("Dune: Part Three", sameAs=[tmdb(999)]),
     }
     assert groups(movies) == [["both", "imdb", "rio", "roxy"], ["remake"]]
+
+
+def test_a_shared_event_blurb_naming_both_films_joins_neither():
+    blurb = (
+        "Den spanske regissören Luis Buñuel räknas som en av filmhistoriens mest originella filmskapare. "
+        "I hans filmer blandas surrealism med samhällssatir. Den 22 april visar vi Viridiana och "
+        "The Exterminating Angel (Mordängeln)!"
+    )
+    movies = {
+        "angel": film("The Exterminating Angel", description=blurb, director="Luis Buñuel"),
+        "viridiana": film("Viridiana", description=blurb, director="Luis Buñuel"),
+    }
+    assert not together(movies, "angel", "viridiana")
+
+
+def test_a_long_edition_stays_apart_even_by_the_same_director():
+    movies = {
+        "theatrical": film("Fanny och Alexander", director="Ingmar Bergman", runtime=188),
+        "complete": film("Fanny och Alexander – Complete version", director="Ingmar Bergman", runtime=312),
+        "tv": film("Fanny och Alexander", director="Ingmar Bergman", runtime=326),
+    }
+    assert not together(movies, "theatrical", "complete")
+    assert together(movies, "complete", "tv")

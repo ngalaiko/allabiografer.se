@@ -120,6 +120,8 @@ def _facts(movie: dict) -> dict:
     words = fold(movie.get("description") or "").split()
     plot = {tuple(words[i : i + _SHINGLE]) for i in range(len(words) - _SHINGLE + 1)}
     return {
+        "text": " ".join(words),
+        "titles": title_keys(movie),
         "year": int(stated[1]) if stated else int(published) if published.isdigit() and len(published) == 4 else None,
         "runtime": (int(duration[1] or 0) * 60 + int(duration[2] or 0)) or None if duration else None,
         # Transliterations vary ("Koreeda", "Kore-eda"); surnames still agree.
@@ -147,16 +149,24 @@ def _relation(a: dict, b: dict) -> str:
             return "same" if a[database] & b[database] else "different"
     if a["year"] and b["year"] and abs(a["year"] - b["year"]) > 1:
         return "different"
+    runtimes = a["runtime"], b["runtime"]
     if a["directors"] and b["directors"]:
-        return "same" if a["directors"] & b["directors"] else "different"
+        if not a["directors"] & b["directors"]:
+            return "different"
+        # One director's two cuts of a work: a television version is twice the cinema one.
+        return "different" if all(runtimes) and _edition(*runtimes) else "same"
     # Distributors' synopses are reused verbatim; different synopses prove nothing.
     if _overlap(a["plot"], b["plot"]) >= _SAME_PLOT:
         return "same"
-    runtimes = a["runtime"], b["runtime"]
     # Editions differ by far more than listings of one cut.
     if all(runtimes) and abs(runtimes[0] - runtimes[1]) > max(15, min(runtimes) * 0.25):
         return "different"
     return "unknown"
+
+
+def _edition(a: int, b: int) -> bool:
+    """Runtimes of different cuts: an hour and a half apart, and half as long again."""
+    return abs(a - b) >= 60 and max(a, b) >= 1.5 * min(a, b)
 
 
 class _Union:
@@ -238,9 +248,29 @@ def _synopsis_bridges(works: list[list[str]], info: dict) -> list[tuple[int, int
     for (a, b), count in sorted(shared.items()):
         if count < _BRIDGE_SHINGLES or not _compatible(works[a], works[b], info):
             continue
+        if _names_both(works[a], works[b], info):
+            # An event blurb listing both films ("we show Viridiana and The Exterminating Angel").
+            continue
         if max(_overlap(info[x]["plot"], info[y]["plot"]) for x in works[a] for y in works[b]) >= _BRIDGE_PLOT:
             bridges.append((a, b))
     return bridges
+
+
+def _names_both(left: list[str], right: list[str], info: dict) -> bool:
+    """Whether a synopsis of either work names a title of each."""
+
+    def titles(work):
+        return {title for key in work for title in info[key]["titles"] if len(title) >= 4}
+
+    texts = {info[key]["text"] for key in left + right}
+    return any(
+        any(_mentions(text, title) for title in titles(left)) and any(_mentions(text, title) for title in titles(right))
+        for text in texts
+    )
+
+
+def _mentions(text: str, title: str) -> bool:
+    return re.search(rf"(?<!\w){re.escape(title)}(?!\w)", text) is not None
 
 
 def _prefix_bridges(works: list[list[str]], info: dict, titles: dict, movies: dict) -> list[tuple[int, int]]:
