@@ -6,10 +6,9 @@ Inspired by [allekinos.de](https://allekinos.de/) by [Nikita Tonsky](https://ton
 Tools come from Nix; Python dependencies from `uv.lock`.
 
 ```sh
-nix run .#run       # fetch, parse, merge, enrich and render (store in R2 when R2_* are set)
+nix run .#pull      # copy the production store into data/allabiografer
+nix run .#run       # update the programme in data/allabiografer and render it
 nix run .#serve     # serve data/allabiografer/www on :8000
-nix run .#pull      # copy the R2 store into data/allabiografer
-nix run .#push      # copy data/allabiografer into R2
 nix run .#newsletter # prepare (or --send) the weekly city editions
 nix run .#nginx     # the production server on data/allabiografer/www, :8080
 nix run .#deploy    # push the image with the rendered site to Fly (FLY_API_TOKEN)
@@ -23,7 +22,7 @@ See [data/allabiografer/README.md](data/allabiografer/README.md) for the registr
 
 ## Production
 
-- **Store:** the Cloudflare R2 bucket `allabiografer-store` (EU jurisdiction). Pipeline runs read and write it directly.
+- **Store:** the Cloudflare R2 bucket `allabiografer-store` (EU jurisdiction). Commands open it only with `--production`, as GitHub Actions does; otherwise they use `data/allabiografer`, which `nix run .#pull` fills from it.
 - **Server:** a Nix-built OpenResty image (`deploy/`) serving `/srv/www` and the newsletter API; Fly app `allabiografer-se`.
 - **CI** (`.github/workflows/`):
   - `ci.yml` lints, tests and builds the image;

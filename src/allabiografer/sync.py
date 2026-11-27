@@ -1,9 +1,8 @@
-"""Copy the generated store between R2 and the data directory.
+"""Copy the production store from R2 into the data directory.
 
-`pull` makes the data directory a copy of the bucket; `push` makes the bucket a copy of
-the data directory. Both delete objects missing from the source, and both refuse a source
-without a completed run, so an empty side can never wipe the other. The registry is never
-copied: it is read from the checkout either way.
+The data directory becomes a copy of the bucket: objects the bucket lacks are deleted locally,
+and a bucket without a completed run is refused. Only reading needs credentials; nothing is
+ever written to the bucket. The registry is never copied: it is read from the checkout.
 """
 
 import argparse
@@ -40,10 +39,7 @@ def mirror(source, target) -> tuple[int, int]:
 
 def main() -> None:
     cli = argparse.ArgumentParser(description=__doc__)
-    cli.add_argument("direction", choices=("pull", "push"))
     cli.add_argument("--data", type=Path, default=DATA)
     args = cli.parse_args()
-    local, bucket = LocalStore(args.data.resolve()), BucketStore.from_environment()
-    source, target = (bucket, local) if args.direction == "pull" else (local, bucket)
-    copied, deleted = mirror(source, target)
-    print(f"{args.direction}: copied {copied}, deleted {deleted}")
+    copied, deleted = mirror(BucketStore.from_environment(), LocalStore(args.data.resolve()))
+    print(f"pull: copied {copied}, deleted {deleted}")

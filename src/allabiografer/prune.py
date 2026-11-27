@@ -113,9 +113,10 @@ def main() -> None:
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--keep", type=int, default=1, help="Completed runs to keep")
     cli.add_argument("--data", type=Path, default=DATA)
-    cli.add_argument("--local", action="store_true", help="Prune the store under --data even when R2_BUCKET is set")
+    cli.add_argument("--production", action="store_true", help="Prune the production R2 store")
     args = cli.parse_args()
     from .pipeline import open_store
 
-    entities, assets = prune(Graph(args.data.resolve(), open_store(args.data.resolve(), local=args.local)), args.keep)
+    store = open_store(args.data.resolve(), production=args.production)
+    entities, assets = prune(Graph(args.data.resolve(), store), args.keep)
     print(json.dumps({"entities": entities, "assets": assets}))

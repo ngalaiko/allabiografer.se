@@ -63,9 +63,8 @@
               uv run --locked --group dev --group parse --group build pytest "$@"
               node --test tests/allabiografer/site/*.test.cjs
             '';
-            # Fetch, parse, merge, enrich and render; flags pass through (--cinema, --fresh, --render-only).
-            # With R2_BUCKET (and R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY) set, the
-            # store is the bucket; otherwise data/allabiografer.
+            # Download, read, look up and build the programme, then render it, against data/allabiografer.
+            # Flags pass through (--cinema, --fresh, --render-only); --production, the R2 store, runs in CI only.
             run = ''uv run --locked --group parse --group build allabiografer "$@"'';
             # The weekly newsletter: previews, or with --send, PostHog batches (POSTHOG_* variables).
             newsletter = ''uv run --locked allabiografer-newsletter "$@"'';
@@ -94,9 +93,17 @@
             nginx = ''
               SITE_ROOT=$(realpath "''${1:-data/allabiografer/www}") exec ${(server pkgs).serve}/bin/allabiografer-serve
             '';
-            # Mirror R2 and data/allabiografer; deletes what the source lacks, refuses a source without a run.
-            pull = ''uv run --locked allabiografer-sync pull "$@"'';
-            push = ''uv run --locked allabiografer-sync push "$@"'';
+            # Copy the production store into data/allabiografer, deleting what production lacks.
+            # Credentials from R2_* variables, else ~/.config/allabiografer/r2.env.
+            pull = ''
+              if [[ -z "''${R2_BUCKET:-}" && -f "$HOME/.config/allabiografer/r2.env" ]]; then
+                set -a
+                # shellcheck disable=SC1091
+                . "$HOME/.config/allabiografer/r2.env"
+                set +a
+              fi
+              uv run --locked allabiografer-pull "$@"
+            '';
           };
     in
     {

@@ -76,7 +76,7 @@ jobs:
           SEND: ${{ inputs.send }}
           DATE: ${{ inputs.date }}
         run: |
-          args=(--output newsletter-preview)
+          args=(--production --output newsletter-preview)
           if [[ -n "$DATE" ]]; then args+=(--date "$DATE"); fi
           if [[ "$EVENT" == schedule || "$SEND" == true ]]; then
             args+=(--send)

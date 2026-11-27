@@ -179,3 +179,11 @@ def test_pruning_keeps_the_newest_render_of_the_kept_result(tmp_path):
 
     assert graph.exists(graph.path("CreateAction", "new"))
     assert not graph.exists(graph.path("CreateAction", "old"))
+
+
+def test_credentials_alone_never_select_production(tmp_path, monkeypatch):
+    from allabiografer.pipeline import open_store
+    from allabiografer.store import LocalStore
+
+    monkeypatch.setenv("R2_BUCKET", "store")
+    assert isinstance(open_store(tmp_path), LocalStore)

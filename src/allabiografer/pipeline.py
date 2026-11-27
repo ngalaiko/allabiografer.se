@@ -9,7 +9,6 @@ Dataset it produced; the run's result is the merge's.
 """
 
 import argparse
-import os
 import sys
 import tempfile
 import traceback
@@ -197,9 +196,13 @@ def render(graph: Graph, merged: Path) -> Path:
     return out
 
 
-def open_store(data: Path, *, local: bool = False):
-    """R2 when R2_BUCKET is set, caching objects under <data>/.cache; else the data directory."""
-    if local or not os.environ.get("R2_BUCKET"):
+def open_store(data: Path, *, production: bool = False):
+    """The data directory; with `production`, the R2 bucket, caching objects under <data>/.cache.
+
+    Credentials alone never select production: a run there becomes the programme the site and
+    the next run build on. `nix run .#pull` copies production into the data directory.
+    """
+    if not production:
         return LocalStore(data)
     return BucketStore.from_environment(cache=data / ".cache")
 
@@ -262,11 +265,9 @@ def main() -> None:
     cli.add_argument("--render-only", action="store_true", help="Render the latest result without fetching")
     cli.add_argument("--keep", type=int, default=1, help="Completed runs kept in the store afterwards")
     cli.add_argument("--data", type=Path, default=DATA, help="Registry, site output and local store")
-    cli.add_argument(
-        "--local", action="store_true", help="Keep generated objects under --data even when R2_BUCKET is set"
-    )
+    cli.add_argument("--production", action="store_true", help="Use the production R2 store")
     args = cli.parse_args()
-    graph = Graph(args.data.resolve(), open_store(args.data.resolve(), local=args.local))
+    graph = Graph(args.data.resolve(), open_store(args.data.resolve(), production=args.production))
     if args.render_only:
         if (previous := latest(graph)) is None:
             cli.error("no completed run to render")

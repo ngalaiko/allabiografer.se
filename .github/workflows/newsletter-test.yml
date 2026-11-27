@@ -39,4 +39,4 @@ jobs:
           POSTHOG_NEWSLETTER_TEST_WORKFLOW: ${{ vars.POSTHOG_NEWSLETTER_TEST_WORKFLOW }}
           EMAIL: ${{ inputs.email }}
           CITY: ${{ inputs.city }}
-        run: nix run .#newsletter -- --test-email "$EMAIL" --city "$CITY"
+        run: nix run .#newsletter -- --production --test-email "$EMAIL" --city "$CITY"

@@ -492,8 +492,9 @@ def main():
     parser.add_argument("--test-email", help="Send one real test email, without enrolling the recipient")
     parser.add_argument("--city", help="City for --test-email (case-insensitive)")
     parser.add_argument("--output", type=Path, default=Path("newsletter-preview"))
+    parser.add_argument("--production", action="store_true", help="Read the production R2 store")
     args = parser.parse_args()
-    graph = Graph(args.data.resolve(), open_store(args.data.resolve()))
+    graph = Graph(args.data.resolve(), open_store(args.data.resolve(), production=args.production))
     if (merged := latest(graph)) is None:
         parser.error("No completed run in the store")
     shows = screenings(graph, merged)

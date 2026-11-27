@@ -48,9 +48,9 @@ jobs:
         # Code changes re-render the latest result; the schedule fetches.
         run: |
           if [[ "${{ github.event_name }}" == push ]]; then
-            nix run .#run -- --render-only
+            nix run .#run -- --production --render-only
           else
-            nix run .#run
+            nix run .#run -- --production
           fi
       - name: Deploy
         if: github.event_name != 'workflow_dispatch' || inputs.deploy

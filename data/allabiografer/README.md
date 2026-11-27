@@ -6,7 +6,7 @@ assets/<sha256>                  raw bytes: HTML, API responses, images
 schema/<Schema.org type>/<id>.jsonld
 ```
 
-The registry is read from this directory. Everything generated (actions, datasets, captures, images) lives in a store: with `R2_BUCKET`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` set, the Cloudflare R2 bucket, read and written directly, with immutable objects cached under `.cache/`; otherwise this directory (`--local` forces it). Object keys are the same paths in both: `schema/<Type>/<id>.jsonld` and `assets/<sha256>`. `nix run .#pull` and `nix run .#push` mirror one into the other, deleting what the source lacks; each refuses a source without a completed run.
+The registry is read from this directory. Everything generated (actions, datasets, pages, images) lives in a store, by default this directory. Production is the Cloudflare R2 bucket, read and written directly with immutable objects cached under `.cache/`; commands open it only with `--production`. Object keys are the same paths in both: `schema/<Type>/<id>.jsonld` and `assets/<sha256>`. `nix run .#pull` makes this directory a copy of production, deleting what production lacks; it refuses a bucket without a completed run and never writes to it. Credentials come from `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` and `R2_JURISDICTION`, or `~/.config/allabiografer/r2.env`.
 
 Run `nix run .#run`, optionally limited to the feeds of `-- --cinema <MovieTheater ID>` (repeatable). It prints the `Programme` and the website directory. `--fresh` ignores the previous result; `--render-only` renders the latest result without fetching.
 

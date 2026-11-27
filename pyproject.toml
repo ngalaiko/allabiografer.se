@@ -11,7 +11,7 @@ dependencies = [
 [project.scripts]
 allabiografer = "allabiografer.pipeline:main"
 allabiografer-prune = "allabiografer.prune:main"
-allabiografer-sync = "allabiografer.sync:main"
+allabiografer-pull = "allabiografer.sync:main"
 allabiografer-newsletter = "allabiografer.newsletter:main"
 
 [build-system]
