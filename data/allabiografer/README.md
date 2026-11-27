@@ -58,7 +58,14 @@ A poster is an image at least 200 px wide and 1.2 times taller than wide; stills
 
 Each `Movie` in a `Programme` has a stable slug, its `allabiografer:film` identifier, and `url` `https://allabiografer.se/film/<slug>/`. Grouping is re-evaluated every run. A group reuses the oldest identity among its members, slugs are never reassigned, and slugs of joined films remain as `allabiografer:film-alias`.
 
-Actions record `startTime`, `endTime`, `actionStatus`, and `error` for failures. A failing adapter does not stop the others; the run exits non-zero after merging.
+Actions record `startTime`, `endTime`, `actionStatus`, and `error` for failures. Problems never cost data:
+
+- a failing site does not stop the others, and its feeds keep their previous screenings;
+- a feed read empty keeps the screenings it listed before; one that loses more than half of ten or more is reported;
+- without TMDB, films keep the answers that filled them before;
+- a run with problems prunes nothing.
+
+The run then exits non-zero. In CI the site still deploys, and the problems are filed in one open issue, *Programme update problems*, which the next clean scheduled run closes.
 
 Entities other than actions are named by the SHA-256 of their content, so identical outputs are shared between runs. Links are relative paths.
 

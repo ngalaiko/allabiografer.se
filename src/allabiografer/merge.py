@@ -4,7 +4,9 @@ The Programme carries the state between runs:
 
 - `isBasedOn` lists the parse Datasets in effect, oldest first. Each registry DataFeed's
   screenings come from the newest one with a snapshot of it, so feeds left out of a run, or
-  whose adapter failed, keep their previous screenings.
+  whose adapter failed, keep their previous screenings. A snapshot listing nothing from the
+  run day on does not replace one that does: a source that reads empty has more likely
+  changed than emptied its programme. The held feeds are reported.
 - Its parts are every film ever identified, the screenings from the run day onward, and
   past screenings of the last `HISTORY` days, carried from the previous result: the
   newsletter tells new films from those shown recently. A show listed by several feeds of
@@ -37,6 +39,8 @@ if TYPE_CHECKING:
 FILM = "allabiografer:film"
 # Past screenings kept, in days.
 HISTORY = 30
+# Feeds listing at least this many screenings are reported when a read loses most of them.
+LOST_FLOOR = 10
 ALIAS = "allabiografer:film-alias"
 SITE = "https://allabiografer.se"
 # Source records whose fields are replaced by the merged film's own.
@@ -122,18 +126,37 @@ class Combined:
     films: list[dict]
     screenings: list[dict]
     day: date
+    # Feeds read empty whose earlier screenings were kept, and feeds that lost most of theirs.
+    warnings: dict[str, str] = field(default_factory=dict)
 
 
 def merge_datasets(
     graph: Graph, previous: Path | None, parsed: list[Path], day: date, capture: Path | None = None
 ) -> Path:
-    """The Programme; films needing it are filled from the TMDB answers in `capture` alone."""
+    return build(graph, previous, parsed, day, capture)[0]
+
+
+def build(
+    graph: Graph, previous: Path | None, parsed: list[Path], day: date, capture: Path | None = None
+) -> tuple[Path, dict[str, str]]:
+    """The Programme, and warnings about feeds.
+
+    Films needing it are filled from the TMDB answers in `capture` alone; without a capture,
+    from the answers that decided the previous Programme's films, so a TMDB outage loses nothing.
+    """
     combined = combine(graph, previous, parsed, day)
     parts = combined.films + combined.screenings
-    if capture is not None:
-        parts, count = tmdb.enrich_parts(graph, parts, day, tmdb.replaying(graph, capture))
+    answers = (
+        tmdb.replaying(graph, capture)
+        if capture is not None
+        else tmdb.previous_answers(graph, previous)
+        if previous is not None
+        else None
+    )
+    if answers is not None:
+        parts, count = tmdb.enrich_parts(graph, parts, day, answers)
         print(f"Filled {count} films from TMDB")
-    return graph.put_dataset(combined.fields, parts)
+    return graph.put_dataset(combined.fields, parts), combined.warnings
 
 
 def combine(graph: Graph, previous: Path | None, parsed: list[Path], day: date) -> Combined:
@@ -148,10 +171,20 @@ def combine(graph: Graph, previous: Path | None, parsed: list[Path], day: date) 
 
     # The newest snapshot of a feed supplies it; feeds gone from the registry drop out.
     suppliers: dict[Path, tuple[Path, Part]] = {}
+    upcoming: dict[Path, int] = {}
+    warnings: dict[str, str] = {}
     for dataset in datasets:
         for feed, snapshot in _snapshots(graph, dataset):
-            if graph.exists(feed):
-                suppliers[feed] = (dataset, snapshot)
+            if not graph.exists(feed):
+                continue
+            count = _upcoming(graph, snapshot, day)
+            if count == 0 and upcoming.get(feed):
+                warnings[graph.read(feed)["name"]] = f"read no screenings; kept the {upcoming[feed]} listed before"
+                continue
+            if dataset in parsed and feed in upcoming and upcoming[feed] >= LOST_FLOOR and count < upcoming[feed] / 2:
+                warnings[graph.read(feed)["name"]] = f"read {count} screenings, down from {upcoming[feed]}"
+            suppliers[feed] = (dataset, snapshot)
+            upcoming[feed] = count
     in_effect = [dataset for dataset in dict.fromkeys(datasets) if dataset in {d for d, _ in suppliers.values()}]
 
     # Newer source records replace older ones with the same identity. Screenings resolve
@@ -229,6 +262,16 @@ def combine(graph: Graph, previous: Path | None, parsed: list[Path], day: date) 
         [unique_films[key] for key in sorted(unique_films)],
         [parts[key] for key in sorted(parts)],
         day,
+        warnings,
+    )
+
+
+def _upcoming(graph: Graph, snapshot: Part, day: date) -> int:
+    """How many of a feed snapshot's screenings are on `day` or later."""
+    dataset, key = snapshot
+    return sum(
+        datetime.fromisoformat(show["startDate"]).astimezone(STOCKHOLM).date() >= day
+        for show in graph.parts(dataset)[key]["hasPart"]
     )
 
 

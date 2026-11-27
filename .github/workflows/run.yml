@@ -1,6 +1,10 @@
 name: Run
 
-# Fetch, parse, merge, enrich and render against the store in R2, then deploy the site.
+# Update the programme in the production store, render and deploy it; file problems as an issue.
+permissions:
+  contents: read
+  issues: write
+
 on:
   schedule:
     - cron: "17 3 * * *"
@@ -45,6 +49,7 @@ jobs:
           R2_JURISDICTION: ${{ vars.R2_JURISDICTION }}
           TMDB_ACCESS_TOKEN: ${{ secrets.TMDB_ACCESS_TOKEN }}
           POSTHOG_PROJECT_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
+          PROBLEMS: problems.md
         # Code changes re-render the latest result; the schedule fetches.
         run: |
           if [[ "${{ github.event_name }}" == push ]]; then
@@ -52,13 +57,40 @@ jobs:
           else
             nix run .#run -- --production
           fi
+      # A source problem still deploys: its feeds keep their previous screenings.
+      # Anything else that failed the run (no programme rendered) does not.
       - name: Deploy
-        if: github.event_name != 'workflow_dispatch' || inputs.deploy
+        if: (steps.run.outcome == 'success' || hashFiles('problems.md') != '') && (github.event_name != 'workflow_dispatch' || inputs.deploy)
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: nix run .#deploy
-      - name: Report failed sources
-        if: steps.run.outcome == 'failure'
+      # One open issue tracks problems: a failed run updates it, a clean scheduled run closes it.
+      - name: Report problems
+        if: always() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUTCOME: ${{ job.status == 'success' && steps.run.outcome || 'failure' }}
+          PROBLEMS: problems.md
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EVENT: ${{ github.event_name }}
         run: |
-          echo "::error::Some sources failed; see the Run step"
+          title="Programme update problems"
+          issue=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
+          if [[ "$OUTCOME" == success ]]; then
+            if [[ -n "$issue" && "$EVENT" == schedule ]]; then
+              gh issue close "$issue" --comment "Resolved by $RUN_URL"
+            fi
+            exit 0
+          fi
+          {
+            echo "Run: $RUN_URL"
+            echo
+            if [[ -s "$PROBLEMS" ]]; then cat "$PROBLEMS"; else echo "The run failed before reporting; see the log."; fi
+          } > body.md
+          if [[ -n "$issue" ]]; then
+            gh issue comment "$issue" --body-file body.md
+          else
+            gh issue create --title "$title" --body-file body.md
+          fi
+          echo "::error::The programme update had problems; see $title"
           exit 1

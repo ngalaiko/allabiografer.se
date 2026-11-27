@@ -116,11 +116,27 @@ def test_a_failed_feed_keeps_its_screenings_without_touching_the_cinemas_other_f
         [parsed(graph, "x", ["Arboga Bio"], own), parsed(graph, "y", ["Arboga Bio Kontrast"], kontrast)],
         DAY,
     )
-    # The cinema's own feed is re-run and now lists nothing; Kontrast's adapter failed.
-    second = merge_datasets(graph, first, [parsed(graph, "x", ["Arboga Bio"], {})], DAY)
+    # The cinema's own feed is re-run and lists another film; Kontrast's adapter failed.
+    heat = {"c": ({"name": "Heat"}, [("Arboga Bio", "2026-12-03T18:00:00+01:00")])}
+    second = merge_datasets(graph, first, [parsed(graph, "x", ["Arboga Bio"], heat)], DAY)
 
     _, screenings = contents(graph, second)
-    assert [s["film"] for s in screenings] == ["bad-apples"]
+    assert sorted(s["film"] for s in screenings) == ["bad-apples", "heat"]
+
+
+def test_a_feed_read_empty_keeps_its_screenings_and_is_reported(graph, parsed):
+    from allabiografer.merge import build
+
+    listed = {"a": ({"name": "Dune"}, [("Aspen", f"2026-12-{day:02}T18:00:00+01:00") for day in range(2, 14)])}
+    first = merge_datasets(graph, None, [parsed(graph, "x", ["Aspen"], listed)], DAY)
+
+    empty, warnings = build(graph, first, [parsed(graph, "x", ["Aspen"], {})], DAY)
+
+    assert len(contents(graph, empty)[1]) == 12
+    assert warnings == {"Aspen": "read no screenings; kept the 12 listed before"}
+    fewer = {"a": ({"name": "Dune"}, [("Aspen", "2026-12-02T18:00:00+01:00")])}
+    _, warnings = build(graph, first, [parsed(graph, "x", ["Aspen"], fewer)], DAY)
+    assert warnings == {"Aspen": "read 1 screenings, down from 12"}
 
 
 def test_past_screenings_are_kept_for_thirty_days(graph, parsed):

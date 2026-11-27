@@ -114,6 +114,18 @@ def test_only_films_missing_critical_details_are_filled_and_stated_values_stay(g
     assert works == {"Dune: Part Three", "Heat"}
 
 
+def test_without_tmdb_films_keep_the_answers_that_filled_them(graph, parsed, monkeypatch):
+    tmdb = ["https://www.themoviedb.org/movie/1170608"]
+    listed = {"a": ({"name": "Dune: Part Three", "sameAs": tmdb}, [("Bio Rio", "2026-12-16T18:00:00+01:00")])}
+    source = parsed(graph, "x", ["Bio Rio"], listed)
+    enriched, _ = enrich(graph, source, {"/movie/1170608": DUNE}, monkeypatch)
+
+    # The next run cannot reach TMDB: it builds without answers.
+    later = merge_datasets(graph, enriched, [source], DAY)
+
+    assert films(graph, later)["Dune: Part Three"]["director"] == [{"@type": "Person", "name": "Denis Villeneuve"}]
+
+
 def test_search_accepts_one_consistent_result_only(graph, parsed, monkeypatch):
     listed = {"a": ({"name": "Metropolis", "datePublished": "1927"}, [("Bio Rio", "2026-12-16T18:00:00+01:00")])}
     lang = {"id": 19, "title": "Metropolis", "original_title": "Metropolis", "release_date": "1927-01-10"}

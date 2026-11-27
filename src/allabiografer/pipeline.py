@@ -9,6 +9,7 @@ Dataset it produced; the run's result is the merge's.
 """
 
 import argparse
+import os
 import sys
 import tempfile
 import traceback
@@ -25,7 +26,7 @@ from allabiografer import session as _http
 from . import enrich as tmdb
 from .code import source_code
 from .graph import DATA, Graph, media_type
-from .merge import combine, merge_datasets
+from .merge import build, combine
 from .parsing import parse_capture, site
 from .prune import prune
 from .render import render as render_site
@@ -169,16 +170,18 @@ def fetch_tmdb(graph: Graph, previous: Path | None, parsed: list[Path], day: dat
     return capture
 
 
-def merge(graph: Graph, previous: Path | None, parsed: list[Path], day: date, capture: Path | None) -> Path:
+def merge(
+    graph: Graph, previous: Path | None, parsed: list[Path], day: date, capture: Path | None
+) -> tuple[Path, dict[str, str]]:
     fields = {
         "name": "Build programme",
         "object": inputs(graph, previous, parsed) + ([graph.ref(capture)] if capture else []),
         "instrument": instrument(graph, "src/allabiografer/merge.py"),
     }
     with action(graph, "CreateAction", fields) as outcome:
-        dataset = merge_datasets(graph, previous, parsed, day, capture)
+        dataset, warnings = build(graph, previous, parsed, day, capture)
         outcome["result"] = graph.ref(dataset)
-    return dataset
+    return dataset, warnings
 
 
 def render(graph: Graph, merged: Path) -> Path:
@@ -218,10 +221,11 @@ def latest(graph: Graph) -> Path | None:
 
 
 def run(graph: Graph, selected: list[Feed], *, previous: Path | None) -> tuple[Path, dict[str, str]]:
-    """Fan out into fetch and parse per adapter; fan in to one merge with the previous result.
+    """Fan out into download and read per site; fan in to one build with the previous Programme.
 
-    A failing adapter is recorded as a failed action and reported; its feeds keep their
-    previous screenings.
+    Returns the Programme and the problems to report, by site or feed. A failing site is
+    recorded as a failed action; its feeds keep their previous screenings, as do feeds read
+    empty. Without TMDB, films keep the answers that decided them before.
     """
     day = datetime.now(STOCKHOLM).date()
     by_adapter = defaultdict(list)
@@ -251,9 +255,19 @@ def run(graph: Graph, selected: list[Feed], *, previous: Path | None) -> tuple[P
             # Films stay as their sources state them.
             failures["tmdb"] = "".join(traceback.format_exception_only(error)).strip()
             print(f"tmdb: {failures['tmdb']}", file=sys.stderr)
-        result = merge(graph, previous, parsed, day, capture)
+        result, warnings = merge(graph, previous, parsed, day, capture)
+        failures |= warnings
+        for name, warning in sorted(warnings.items()):
+            print(f"{name}: {warning}", file=sys.stderr)
         outcome["result"] = graph.ref(result)
     return result, failures
+
+
+def report(failures: dict[str, str]) -> None:
+    """Write problems to $PROBLEMS when set: CI files them as an issue."""
+    if target := os.environ.get("PROBLEMS"):
+        lines = [f"- **{name}**: {problem.splitlines()[0]}" for name, problem in sorted(failures.items())]
+        Path(target).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def main() -> None:
@@ -282,11 +296,15 @@ def main() -> None:
     result, failures = run(graph, selected, previous=None if args.fresh else latest(graph))
     print(result)
     print(render(graph, result))
-    # Earlier runs and what only they reach are no longer needed: the result carries the state.
-    entities, assets = prune(graph, args.keep)
-    print(f"Pruned {entities} entities and {assets} assets")
     if failures:
-        sys.exit(f"{len(failures)} adapter(s) failed: {', '.join(sorted(failures))}")
+        # Earlier runs stay until a clean one: they hold what a fixed source should be compared with.
+        print("Not pruning: the run had problems", file=sys.stderr)
+    else:
+        entities, assets = prune(graph, args.keep)
+        print(f"Pruned {entities} entities and {assets} assets")
+    if failures:
+        report(failures)
+        sys.exit(f"{len(failures)} problem(s): {', '.join(sorted(failures))}")
 
 
 if __name__ == "__main__":

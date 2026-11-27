@@ -56,6 +56,10 @@ def needs(film: dict) -> bool:
     return any(not film.get(field) for field in CRITICAL)
 
 
+class MissingAnswerError(KeyError):
+    """An answer neither stored nor askable: the film it was for stays as its sources state it."""
+
+
 class Answers:
     """TMDB responses and source posters by URL: asked live and stored, or replayed from a capture."""
 
@@ -70,7 +74,7 @@ class Answers:
         key = url(path, params)
         if key not in self.found:
             if self.session is None:
-                raise KeyError(f"Not captured: {key}")
+                raise MissingAnswerError(key)
             headers = {"Authorization": f"Bearer {token()}", "Accept": "application/json"}
             response = self.session.get(key, headers=headers, timeout=30)
             # A missing film is an answer too; anything else is a failure.
@@ -111,6 +115,19 @@ def replaying(graph: Graph, capture: Path) -> Answers:
     for path in paths:
         found[graph.read(path)["isBasedOn"]] = path
     graph.prefetch_content([graph.read(path) for path in paths])
+    return Answers(graph, found=found)
+
+
+def previous_answers(graph: Graph, programme: Path) -> Answers:
+    """The TMDB responses and posters that decided a Programme's films, for when TMDB is unreachable."""
+    found = {}
+    for part in graph.parts(programme).values():
+        if part["@type"] == "Movie":
+            for link in part["isBasedOn"]:
+                if "#" not in link["@id"]:
+                    path = graph.resolve(programme, link)
+                    found[graph.read(path)["isBasedOn"]] = path
+    graph.prefetch_content([graph.read(path) for path in found.values()])
     return Answers(graph, found=found)
 
 
@@ -276,16 +293,19 @@ def enrich_parts(graph: Graph, parts: list[dict], today: date, answers: Answers)
                 sources.append(source)
                 return found
 
-            checked = part
-            if part.get("image") and not _usable_poster(graph, part["image"], answers, sources):
-                checked = {key: value for key, value in part.items() if key != "image"}
-            if needs(checked):
-                tmdb_id = _identify(fetch, checked)
-                detail = _detail(fetch, tmdb_id) if tmdb_id is not None else {}
-                if "id" in detail:
-                    filled = enrich_film(checked, tmdb_movie(detail))
-                    if filled != part:
-                        part, count = filled, count + 1
+            try:
+                checked = part
+                if part.get("image") and not _usable_poster(graph, part["image"], answers, sources):
+                    checked = {key: value for key, value in part.items() if key != "image"}
+                if needs(checked):
+                    tmdb_id = _identify(fetch, checked)
+                    detail = _detail(fetch, tmdb_id) if tmdb_id is not None else {}
+                    if "id" in detail:
+                        filled = enrich_film(checked, tmdb_movie(detail))
+                        if filled != part:
+                            part, count = filled, count + 1
+            except MissingAnswerError:
+                sources.clear()
             if sources:
                 links = [graph.ref(path) for path in dict.fromkeys(sources)]
                 part = part | {"isBasedOn": [*part["isBasedOn"], *links]}
