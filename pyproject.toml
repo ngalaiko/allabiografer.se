@@ -13,6 +13,7 @@ allabiografer = "allabiografer.pipeline:main"
 allabiografer-prune = "allabiografer.prune:main"
 allabiografer-pull = "allabiografer.sync:main"
 allabiografer-newsletter = "allabiografer.newsletter:main"
+allabiografer-fixture = "allabiografer.fixtures:main"
 
 [build-system]
 requires = ["hatchling"]

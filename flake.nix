@@ -66,6 +66,8 @@
             # Download, read, look up and build the programme, then render it, against data/allabiografer.
             # Flags pass through (--cinema, --fresh, --render-only); --production, the R2 store, runs in CI only.
             run = ''uv run --locked --group parse --group build allabiografer "$@"'';
+            # Adapter fixtures: save <adapter> from the local store, update its rows, or diff the reader.
+            fixture = ''uv run --locked --group parse allabiografer-fixture "$@"'';
             # The weekly newsletter: previews, or with --send, PostHog batches (POSTHOG_* variables).
             newsletter = ''uv run --locked allabiografer-newsletter "$@"'';
             serve = ''python3 -m http.server "''${1:-8000}" --bind 127.0.0.1 -d data/allabiografer/www'';
