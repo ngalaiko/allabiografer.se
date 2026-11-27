@@ -74,37 +74,3 @@ def write_programme(
             )
         )
     write_page(path, title, lines)
-
-
-def write_festival(path: Path, festival: dict) -> None:
-    lines = [
-        text(f"{festival['city']} · {festival['start']} – {festival['end']}"),
-        link("Festivalens webbplats", festival["url"]),
-    ]
-    for film in festival["films"]:
-        lines.append(f"## {link(film['title'], film['film_url'])}")
-        metadata = [
-            f"{film['runtime']} min" if film["runtime"] else "",
-            film["production_year"],
-            film["sections"],
-            film["director"],
-            film["country"],
-        ]
-        lines.append(text(" · ".join(str(value) for value in metadata if value)))
-        if film["description"] or film["intro"]:
-            lines.append(text(film["description"] or film["intro"]))
-        for cinema in film["cinemas"]:
-            lines.append(f"### {text(cinema['venue'])}")
-            showtimes = []
-            for cell in cinema["cells"]:
-                for screening in cell["screenings"]:
-                    label = f"{screening['date']} {screening['time']}"
-                    if screening["end_time"]:
-                        label += f"–{screening['end_time']}"
-                    details = [screening.get("language"), screening.get("subtitles")]
-                    detail = " · ".join(filter(None, details))
-                    showtimes.append(f"- {link(label, screening['url'])}" + (f" · {text(detail)}" if detail else ""))
-            lines.append("\n".join(showtimes))
-    if not festival["films"]:
-        lines.append("Inga visningar publicerade ännu.")
-    write_page(path, f"{festival['name']} {festival['year']} – program och eget schema", lines)

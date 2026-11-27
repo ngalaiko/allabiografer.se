@@ -694,7 +694,7 @@ def _write_newsletter_cities(sd: SiteData) -> None:
     out_path.write_text(json.dumps(mapping, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def _build_index(env: Environment, sd: SiteData, festivals: list[dict]) -> None:
+def _build_index(env: Environment, sd: SiteData) -> None:
     print("Building /")
 
     groups: list[tuple[str, list[dict]]] = []
@@ -728,13 +728,9 @@ def _build_index(env: Environment, sd: SiteData, festivals: list[dict]) -> None:
         jsonld=_website_jsonld(),
         active="index",
         groups=groups,
-        festivals=festivals,
     )
     out.write_text(html, encoding="utf-8")
     lines = [SITE_DESCRIPTION]
-    if festivals:
-        lines.append("## Filmfestivaler")
-        lines.append("\n".join(f"- {page_link(f['name'] + ' ' + str(f['year']), f['path'])}" for f in festivals))
     for letter, cities in groups:
         lines.append(f"## {letter}")
         lines.append("\n".join(f"- {page_link(c['name'], '/stad/' + c['slug'] + '/')}" for c in cities))
@@ -1605,7 +1601,7 @@ def build(sd: SiteData) -> int:
     _copy_static(out_dir)
     env = _make_env()
 
-    _build_index(env, sd, [])
+    _build_index(env, sd)
     _build_programme_pages(env, sd)
     _build_newsletter_preferences(env, out_dir)
     _write_newsletter_cities(sd)
