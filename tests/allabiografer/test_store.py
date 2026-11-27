@@ -187,3 +187,31 @@ def test_credentials_alone_never_select_production(tmp_path, monkeypatch):
 
     monkeypatch.setenv("R2_BUCKET", "store")
     assert isinstance(open_store(tmp_path), LocalStore)
+
+
+def test_pruning_keeps_older_runs_while_they_fit_and_never_a_run_in_progress(tmp_path):
+    graph = Graph(tmp_path)
+    done = {"actionStatus": "https://schema.org/CompletedActionStatus"}
+
+    def run(name, start, status=done):
+        data = graph.put_bytes(name.encode() * 1000, "text/plain", name=name, compress=False)
+        dataset = graph.put_dataset({"name": name}, [{"@id": "#a", "@type": "Movie", "isBasedOn": graph.ref(data)}])
+        graph.save("CreateAction", f"{name}-step", {"startTime": start, "result": graph.ref(dataset), **done})
+        graph.save("UpdateAction", name, {"startTime": start, "endTime": start, "result": graph.ref(dataset), **status})
+        return data
+
+    before = set(graph.store.list(""))
+    oldest = run("oldest", "1")
+    one_run = sum(graph.store.size(key) for key in set(graph.store.list("")) - before)
+    older, newest = run("older", "2"), run("newest", "3")
+    going = run("going", "4", {"actionStatus": "https://schema.org/ActiveActionStatus"})
+
+    # Room for two runs and a half: the newest two stay whole, the third goes whole.
+    prune(graph, budget=int(2.5 * one_run))
+
+    assert graph.exists(newest)
+    assert graph.exists(older)
+    assert not graph.exists(oldest)
+    assert not graph.exists(graph.path("UpdateAction", "oldest"))
+    assert graph.exists(going)
+    assert graph.exists(graph.path("CreateAction", "going-step"))

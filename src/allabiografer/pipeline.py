@@ -263,7 +263,7 @@ def main() -> None:
     )
     cli.add_argument("--fresh", action="store_true", help="Ignore the previous run's result")
     cli.add_argument("--render-only", action="store_true", help="Render the latest result without fetching")
-    cli.add_argument("--keep", type=int, default=1, help="Completed runs kept in the store afterwards")
+    cli.add_argument("--keep", type=int, help="At most this many completed runs kept; default: as many as fit")
     cli.add_argument("--data", type=Path, default=DATA, help="Registry, site output and local store")
     cli.add_argument("--production", action="store_true", help="Use the production R2 store")
     args = cli.parse_args()

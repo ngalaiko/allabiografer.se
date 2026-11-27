@@ -46,6 +46,9 @@ class LocalStore:
     def flush(self) -> None:
         pass
 
+    def size(self, key: str) -> int:
+        return (self.root / key).stat().st_size
+
     def list(self, prefix: str) -> Iterator[str]:
         base = self.root / prefix
         if base.is_dir():
@@ -77,7 +80,8 @@ class BucketStore:
         self.cache = cache
         self._pool = concurrent.futures.ThreadPoolExecutor(workers)
         self._pending: list[concurrent.futures.Future] = []
-        self._keys: set[str] | None = None
+        # Every key with its size, from one listing; writes and deletes keep it current.
+        self._keys: dict[str, int] | None = None
 
     @classmethod
     def from_environment(cls, cache: Path | None = None) -> BucketStore:
@@ -105,11 +109,11 @@ class BucketStore:
         return key.startswith("schema/") and key.split("/")[1].endswith("Action")
 
     @property
-    def keys(self) -> set[str]:
+    def keys(self) -> dict[str, int]:
         if self._keys is None:
-            found = set()
+            found = {}
             for page in self.client.get_paginator("list_objects_v2").paginate(Bucket=self.bucket):
-                found.update(item["Key"] for item in page.get("Contents", []))
+                found.update((item["Key"], item["Size"]) for item in page.get("Contents", []))
             self._keys = found
         return self._keys
 
@@ -133,7 +137,7 @@ class BucketStore:
         list(self._pool.map(self.get, missing))
 
     def put(self, key: str, data: bytes) -> None:
-        self.keys.add(key)
+        self.keys[key] = len(data)
         if self._cached(key):
             LocalStore(self.cache).put(key, data)
         if self._mutable(key):
@@ -151,6 +155,9 @@ class BucketStore:
     def exists(self, key: str) -> bool:
         return key in self.keys
 
+    def size(self, key: str) -> int:
+        return self.keys[key]
+
     def list(self, prefix: str) -> Iterator[str]:
         return iter(sorted(key for key in self.keys if key.startswith(prefix)))
 
@@ -161,7 +168,8 @@ class BucketStore:
             self.client.delete_objects(
                 Bucket=self.bucket, Delete={"Objects": [{"Key": key} for key in batch], "Quiet": True}
             )
-        self.keys.difference_update(keys)
+        for key in keys:
+            self.keys.pop(key, None)
         for key in keys:
             if self.cache:
                 (self.cache / key).unlink(missing_ok=True)
