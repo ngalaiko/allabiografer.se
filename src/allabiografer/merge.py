@@ -49,7 +49,7 @@ LOST_FLOOR = 10
 ALIAS = "allabiografer:film-alias"
 SITE = "https://allabiografer.se"
 # Source records whose fields are replaced by the merged film's own.
-_OWN_FIELDS = {"@context", "@id", "@type", "identifier", "isBasedOn", "url", "sameAs", "image"}
+_OWN_FIELDS = {"@context", "@id", "@type", "identifier", "isBasedOn", "url", "sameAs", "image", "dateCreated"}
 
 
 def slugify(text: str) -> str:
@@ -253,13 +253,20 @@ def combine(graph: Graph, previous: Path | None, parsed: list[Path], day: date) 
     used = {slug for identity in identities for slug in (identity.slug, *identity.aliases)}
     claimed: set[str] = set()
     films = {}
-    for group in groups(movies):
+
+    def oldest(group: list[str]) -> tuple[str, str]:
+        found = [(owners[key].created, owners[key].slug) for key in group if key in owners]
+        return min(found, default=("9999", ""))
+
+    for group in sorted(groups(movies), key=oldest):
         members = sorted(group, key=lambda key: (-shown[key], key))
+        named = slugify(movies[members[0]]["name"])
+        # The oldest identity wins; among equally old ones, the one named like the film, then the shortest.
         candidates = sorted(
             {
                 owners[key].slug: owners[key] for key in group if key in owners and owners[key].slug not in claimed
             }.values(),
-            key=lambda identity: (identity.created, identity.slug),
+            key=lambda identity: (identity.created, identity.slug != named, len(identity.slug), identity.slug),
         )
         if candidates:
             identity = Identity(candidates[0].slug, candidates[0].created, set(candidates[0].aliases))
