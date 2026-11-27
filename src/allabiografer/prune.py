@@ -32,6 +32,17 @@ def _links(value, found: list[str], strings: set[str]) -> None:
         strings.add(value)
 
 
+def _renders(graph: Graph, path: Path, action: dict, result: Path) -> bool:
+    """Whether an action rendered `result`: its own result is pages based on it."""
+    if "@id" not in action.get("result", {}) or action.get("actionStatus") != COMPLETED:
+        return False
+    pages = graph.resolve(path, action["result"])
+    if not graph.exists(pages):
+        return False
+    based = graph.read(pages).get("isBasedOn")
+    return isinstance(based, dict) and graph.resolve(pages, based) == result
+
+
 def _list(value) -> list:
     return value if isinstance(value, list) else [value] if value else []
 
@@ -106,10 +117,7 @@ def prune(graph: Graph, keep: int | None = None, budget: int = BUDGET) -> tuple[
         for path, action in actions.items():
             if start <= action["startTime"] <= end:
                 roots.append(path)
-            elif "@id" not in action.get("result", {"@id": ""}) and any(
-                graph.resolve(path, link) == result for link in _list(action.get("object"))
-            ):
-                # A render: it used the run's result and stored nothing.
+            elif _renders(graph, path, action, result):
                 renders.append((action["startTime"], path))
         roots += [max(renders)[1]] if renders else []
         entities, assets = _reach(graph, roots, stored, media)

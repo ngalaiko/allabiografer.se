@@ -30,7 +30,7 @@ Generated and not checked in. Each run is an action:
 | `Read <site>` | `CreateAction` | `<site> pages` | `<site> listings`: `Dataset` of `Movie`s and, per feed, a `Dataset` of `ScreeningEvent`s |
 | `Look up films on TMDB` | `DownloadAction` | previous `Programme`, new listings | `TMDB answers`: `Dataset` of TMDB responses and checked posters |
 | `Build programme` | `CreateAction` | previous `Programme`, new listings, `TMDB answers` | `Programme` |
-| `Render allabiografer.se` | `CreateAction` | `Programme` | `www/` |
+| `Render allabiografer.se` | `CreateAction` | `Programme`, previous `Published pages` | `www/`, and `Published pages`: every page ever published |
 
 `<site>` is the website an adapter reads, declared as `SITE` in its package: `filmstaden.se`, `bio.se`, `tickster.com`. One download covers every feed of that site. Names are labels; no step reads them.
 
@@ -80,5 +80,7 @@ Each action's `instrument` is a `SoftwareSourceCode` entity naming the module it
 ## Website
 
 `www/` is the allabiografer.se site rendered from the latest `Programme`, regenerated on every run and not checked in. `src/allabiografer/site/` holds the page code, templates, styles, scripts and fonts; `render.py` translates the `Programme` into its page data. Each programme has an `index.md` and an `index.jsonld`. Former film and cinema slugs are static redirect pages: a meta refresh, a canonical link to the new address, `noindex`, and a script that keeps the URL fragment.
+
+Every page published stays reachable. A render's result lists, as `WebPage` parts, every path it served and every path the render before had listed. A listed path no longer served gets a redirect page to its nearest live page: a city's film page to the film's page, a genre page to the genre's current name or the city, a cinema or genre page to its city, the rest to the home page. Only rendered pages enter the sitemap.
 
 Posters are downloaded into the store once; render crops and resizes them to WebP at 104, 125, 250 and 500 px directly into `www/posters/`.

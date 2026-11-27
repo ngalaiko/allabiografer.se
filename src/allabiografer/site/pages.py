@@ -43,6 +43,8 @@ from allabiografer.model.version import (
     speech_label,
     subtitles_label,
 )
+from allabiografer.movie_fields import GENRES
+from allabiografer.movie_fields import genres as _genres
 
 from .markdown import link, page_link, write_page, write_programme
 from .og import write_card
@@ -253,6 +255,10 @@ class SiteData:
     cinema_aliases: dict[tuple[str, str], str] = field(default_factory=dict)
     city_films: set[tuple[str, int]] = field(default_factory=set)
     sitemap_urls: list[str] = field(default_factory=list)
+    # Paths published before, such as "/film/dogville/": each still resolves, to itself or its nearest page.
+    published: set[str] = field(default_factory=set)
+    # Film slugs by former slug, for published pages of films renamed or joined since.
+    film_slug_of: dict[str, str] = field(default_factory=dict)
 
 
 def _first(films: list[Film], attr: str):
@@ -1608,7 +1614,46 @@ def build(sd: SiteData) -> int:
     _write_llms(sd)
     _write_sitemap(sd)
     _write_redirects(sd)
+    _write_published_redirects(sd)
     return len(set(sd.sitemap_urls))
+
+
+def movie_genres(slugs: list[str]) -> list[str]:
+    """Genre page slugs for slugs of former genre pages: "sci-fi" is now "science-fiction"."""
+    by_slug = {_slugify_sv(genre): genre for genre in GENRES}
+    found = []
+    for slug in slugs:
+        found += [_slugify_sv(genre) for genre in _genres([by_slug.get(slug, slug.replace("-", " "))])]
+    return found
+
+
+def served(sd: SiteData) -> set[str]:
+    """Paths of the pages written, as published: "/film/dune/"."""
+    return {url.removeprefix(BASE_URL) for url in sd.sitemap_urls}
+
+
+def _nearest(sd: SiteData, path: str, pages: set[str]) -> str:
+    """The closest served page to a published path no longer served: the film, the city, else the home page."""
+    parts = [part for part in path.strip("/").split("/") if part]
+    candidates = []
+    if parts[:1] == ["film"] and len(parts) == 2:
+        candidates.append(f"/film/{sd.film_slug_of.get(parts[1], parts[1])}/")
+    if parts[:1] == ["stad"] and len(parts) >= 2:
+        city = f"/stad/{parts[1]}/"
+        if len(parts) == 4 and parts[2] == "film":
+            film = sd.film_slug_of.get(parts[3], parts[3])
+            candidates += [f"{city}film/{film}/", f"/film/{film}/"]
+        if len(parts) == 4 and parts[2] == "genre":
+            candidates += [f"{city}genre/{genre}/" for genre in movie_genres([parts[3]])]
+        candidates.append(city)
+    return next((page for page in candidates if page in pages and page != path), "/")
+
+
+def _write_published_redirects(sd: SiteData) -> None:
+    """Every published path no longer served sends visitors to its nearest page."""
+    pages = served(sd)
+    for path in sorted(sd.published - pages):
+        _write_redirect(sd, path, _nearest(sd, path, pages))
 
 
 REDIRECT = """<!DOCTYPE html>

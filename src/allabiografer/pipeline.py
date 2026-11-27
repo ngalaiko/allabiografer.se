@@ -184,18 +184,36 @@ def merge(
     return dataset, warnings
 
 
+def published(graph: Graph) -> Path | None:
+    """The pages of the newest completed render: every address the site has published.
+
+    A render's result is the Dataset of the site's `WebPage`s; other steps' results hold none.
+    """
+    renders = []
+    for path in graph.entities("CreateAction"):
+        record = graph.read(path)
+        if record.get("actionStatus") != COMPLETED or "@id" not in record.get("result", {}):
+            continue
+        result = graph.resolve(path, record["result"])
+        if graph.read(result).get("url") == SITE:
+            renders.append((record["endTime"], result))
+    return max(renders)[1] if renders else None
+
+
 def render(graph: Graph, merged: Path) -> Path:
-    """Write the static site for `merged` to <data>/www, replacing the previous one."""
+    """Write the static site for `merged` to <data>/www, replacing the previous one.
+
+    Its result lists every page published, by this render and every one before.
+    """
     out = graph.root / "www"
+    previous = published(graph)
     fields = {
         "name": "Render allabiografer.se",
-        "object": graph.ref(merged),
+        "object": [graph.ref(merged)] + ([graph.ref(previous)] if previous else []),
         "instrument": instrument(graph, "src/allabiografer/render.py"),
     }
     with action(graph, "CreateAction", fields) as outcome:
-        pages = render_site(graph, merged, out)
-        # The site is a directory, not an entity; record where it is and how much it holds.
-        outcome["result"] = {"@type": "WebSite", "name": "allabiografer.se", "url": SITE, "size": f"{pages} pages"}
+        outcome["result"] = graph.ref(render_site(graph, merged, out, previous=previous))
     return out
 
 
@@ -208,6 +226,9 @@ def open_store(data: Path, *, production: bool = False):
     if not production:
         return LocalStore(data)
     return BucketStore.from_environment(cache=data / ".cache")
+
+
+COMPLETED = "https://schema.org/CompletedActionStatus"
 
 
 def latest(graph: Graph) -> Path | None:

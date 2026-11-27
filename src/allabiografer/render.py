@@ -87,6 +87,15 @@ def _version(screening: dict) -> tuple[ContentVersion, Presentation]:
     )
 
 
+def published(graph: Graph, site: Path | None) -> set[str]:
+    """The paths a Dataset of pages lists as published."""
+    if site is None:
+        return set()
+    return {
+        part["url"].removeprefix(pages.BASE_URL) for part in graph.parts(site).values() if part["@type"] == "WebPage"
+    }
+
+
 def site_data(graph: Graph, merged: Path, out: Path, *, today: date | None = None) -> pages.SiteData:
     """Page data for a merged Dataset."""
     sd = pages.SiteData(out_dir=out)
@@ -120,6 +129,7 @@ def site_data(graph: Graph, merged: Path, out: Path, *, today: date | None = Non
             for item in entity["identifier"]:
                 if item["propertyID"] == ALIAS:
                     sd.film_aliases[item["value"]] = slug
+                    sd.film_slug_of[item["value"]] = slug
         elif entity["@type"] == "ScreeningEvent":
             screenings.append(entity)
 
@@ -164,6 +174,26 @@ def site_data(graph: Graph, merged: Path, out: Path, *, today: date | None = Non
     return sd
 
 
-def render(graph: Graph, merged: Path, out: Path, *, today: date | None = None) -> int:
-    """Write the site for `merged` to `out`, replacing it. Returns the number of pages."""
-    return pages.build(site_data(graph, merged, out, today=today))
+def render(graph: Graph, merged: Path, out: Path, *, previous: Path | None = None, today: date | None = None) -> Path:
+    """Write the site for `merged` to `out`, replacing it; return the Dataset of its pages.
+
+    The Dataset lists every page ever published, now and in `previous`, the one before, as
+    `WebPage` parts: a page no longer served is a redirect to its nearest one, so a published
+    address never breaks.
+    """
+    sd = site_data(graph, merged, out, today=today)
+    sd.published = published(graph, previous)
+    pages.build(sd)
+    paths = sorted(sd.published | pages.served(sd))
+    return graph.put_dataset(
+        {
+            "name": "Published pages",
+            "url": pages.BASE_URL,
+            # The pages before are all listed here; linking them would keep every earlier site.
+            "isBasedOn": graph.ref(merged),
+        },
+        [
+            {"@id": f"#page-{index}", "@type": "WebPage", "url": pages.BASE_URL + path}
+            for index, path in enumerate(paths)
+        ],
+    )

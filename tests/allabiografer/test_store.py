@@ -171,14 +171,20 @@ def test_pruning_keeps_the_newest_render_of_the_kept_result(tmp_path):
     dataset = graph.put_dataset({"name": "result"}, [])
     done = {"actionStatus": "https://schema.org/CompletedActionStatus"}
     graph.save("UpdateAction", "run", {"startTime": "1", "endTime": "2", "result": graph.ref(dataset), **done})
-    website = {"@type": "WebSite", "url": "https://allabiografer.se"}
+    sites = {}
     for name, start in (("old", "3"), ("new", "4")):
-        graph.save("CreateAction", name, {"startTime": start, "object": graph.ref(dataset), "result": website, **done})
+        page = {"@id": "#p", "@type": "WebPage", "url": f"https://allabiografer.se/{name}/"}
+        sites[name] = graph.put_dataset({"url": "https://allabiografer.se", "isBasedOn": graph.ref(dataset)}, [page])
+        record = {"startTime": start, "object": graph.ref(dataset), "result": graph.ref(sites[name]), **done}
+        graph.save("CreateAction", name, record)
 
     prune(graph, keep=1)
 
     assert graph.exists(graph.path("CreateAction", "new"))
+    # The newest render's pages list every address published: they stay.
+    assert graph.exists(sites["new"])
     assert not graph.exists(graph.path("CreateAction", "old"))
+    assert not graph.exists(sites["old"])
 
 
 def test_credentials_alone_never_select_production(tmp_path, monkeypatch):

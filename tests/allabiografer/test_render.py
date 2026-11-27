@@ -45,8 +45,8 @@ def test_render_writes_pages_from_the_merged_dataset(graph, parsed, tmp_path):
     posters = sorted((out / "posters").iterdir())
     assert len(posters) == 4
     assert not any(poster.is_symlink() for poster in posters)
-    # Poster, the films' pages and two dataset documents.
-    assert len(list((tmp_path / "assets").iterdir())) == 5
+    # Poster, the films' pages, two dataset documents and the published pages.
+    assert len(list((tmp_path / "assets").iterdir())) == 6
     with Image.open(next(link for link in posters if "-" not in link.stem)) as image:
         assert (image.format, image.size) == ("WEBP", (250, 354))
 
@@ -82,3 +82,45 @@ def test_renamed_cinemas_redirect_from_their_former_pages(graph, parsed, tmp_pat
     assert '<meta name="robots" content="noindex, follow">' in redirect
     assert f'<a href="{target}">allabiografer.se/stad/göteborg/hagabion/</a>' in redirect
     assert not (out / "film-redirects.map").exists()
+
+
+def test_every_published_page_keeps_resolving(graph, parsed, tmp_path):
+    from urllib.parse import unquote
+
+    from allabiografer.render import published
+
+    listed = {"a": ({"name": "Dune", "genre": ["Drama"]}, [("Bio Rio", "2026-12-02T18:00:00+01:00")])}
+    merged = merge_datasets(graph, None, [parsed(graph, "x", ["Bio Rio"], listed)], DAY)
+    pages = published(graph, render(graph, merged, tmp_path / "www", today=DAY))
+    assert {"/film/dune/", "/stad/stockholm/film/dune/", "/stad/stockholm/genre/drama/"} <= pages
+
+    # Bio Rio shows another film now, and Dune moves to Göteborg.
+    elsewhere = {
+        "a": ({"name": "Dune", "genre": ["Drama"]}, [("Göteborg Hagabion", "2026-12-03T18:00:00+01:00")]),
+        "b": ({"name": "Heat"}, [("Bio Rio", "2026-12-03T18:00:00+01:00")]),
+    }
+    merged = merge_datasets(graph, merged, [parsed(graph, "x", ["Bio Rio", "Göteborg Hagabion"], elsewhere)], DAY)
+    # Pages the site published before the ledger began.
+    earlier = sorted(pages | {"/stad/stockholm/genre/sci-fi/", "/festival/", "/stad/stockholm/gone-bio/"})
+    before = graph.put_dataset(
+        {"name": "Published pages"},
+        [
+            {"@id": f"#p{i}", "@type": "WebPage", "url": "https://allabiografer.se" + path}
+            for i, path in enumerate(earlier)
+        ],
+    )
+    out = tmp_path / "www2"
+    second = render(graph, merged, out, previous=before, today=DAY)
+
+    def target(path):
+        page = (out / path.strip("/") / "index.html").read_text()
+        assert 'http-equiv="refresh"' in page, f"{path} is a page, not a redirect"
+        return unquote(page.split('http-equiv="refresh" content="0; url=')[1].split('"')[0])
+
+    # Each former page leads to its nearest one, and stays in the ledger.
+    assert target("/stad/stockholm/film/dune/") == "/film/dune/"
+    assert target("/stad/stockholm/genre/drama/") == "/stad/stockholm/"
+    assert target("/stad/stockholm/genre/sci-fi/") == "/stad/stockholm/"
+    assert target("/stad/stockholm/gone-bio/") == "/stad/stockholm/"
+    assert target("/festival/") == "/"
+    assert set(earlier) <= published(graph, second)
