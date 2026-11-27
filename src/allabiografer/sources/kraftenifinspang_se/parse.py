@@ -29,6 +29,7 @@ def rows(inputs, today):
                 stable_key(film.key),
                 capture,
                 film_fields(film, runtime=None),
+                capture,
             )
         if page >= data["total_pages"]:
             return

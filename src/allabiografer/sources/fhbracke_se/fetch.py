@@ -23,7 +23,7 @@ def programme_rows(pages, today):
         event = programme.find(show["title"], show["date"], show["time"])
         if event:
             matched.add(event.url)
-        yield show, event, False
+        yield show, event, False, programme
 
     unmatched = [
         e
@@ -39,7 +39,7 @@ def programme_rows(pages, today):
         rest, _, _ = _tickster.version(event.title)
         for title, url, poster in cards:
             if _tickster.same_title(title, rest):
-                yield {"title": rest, "date": event.date, "url": url, "poster_url": poster}, event, True
+                yield {"title": rest, "date": event.date, "url": url, "poster_url": poster}, event, True, programme
                 break
 
 
@@ -57,7 +57,7 @@ def fetch_pages(session, inputs, today, *, selectors=None):
     single(selectors)
     session.headers["User-Agent"] = "Mozilla/5.0"
     pages = Pages(inputs, session)
-    for show, event, broadcast in programme_rows(pages, today):
+    for show, event, broadcast, _ in programme_rows(pages, today):
         html = pages.text(show["url"], optional=True)
         if broadcast and html:
             broadcast_page(pages, show, event, html)

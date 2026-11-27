@@ -10,6 +10,8 @@ if TYPE_CHECKING:
 BASE = "https://riobiotomelilla.se"
 STOCKHOLM = ZoneInfo("Europe/Stockholm")
 SOURCE = "riobiotomelilla_se"
+# The website the adapter reads, naming its actions and datasets.
+SITE = "riobiotomelilla.se"
 
 
 def response_rows(path: Path) -> list[dict]:

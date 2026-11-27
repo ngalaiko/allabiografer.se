@@ -53,4 +53,5 @@ def rows(inputs, today):
                     f"{site.source}-{feature['id']}",
                     path.name,
                     fields,
+                    path.name,
                 )

@@ -30,4 +30,5 @@ def rows(inputs, today):
                 stable_key(title.casefold()),
                 capture,
                 {"name": title},
+                capture,
             )

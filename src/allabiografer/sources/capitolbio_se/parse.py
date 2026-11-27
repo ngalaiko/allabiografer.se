@@ -62,4 +62,5 @@ def rows(inputs, today):
                 slug,
                 capture,
                 details[slug],
+                f"programme-{day}.html",
             )

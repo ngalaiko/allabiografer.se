@@ -2,9 +2,10 @@
 
 A run is an UpdateAction: its `object` lists the registry DataFeeds run and its
 `targetCollection` the previous result. It fans out to a DownloadAction (fetch) and
-CreateAction (parse) per adapter, then fans in to one CreateAction (merge). A DownloadAction
-captures TMDB answers for films missing critical details, and a CreateAction (enrich) fills
-them from that capture. Each step's `object` links its inputs and `result` the Dataset it produced.
+CreateAction (parse) per adapter. A DownloadAction captures TMDB answers for films missing
+critical details, then one CreateAction (merge) builds the result from the previous result,
+the parsed Datasets and that capture. Each step's `object` links its inputs and `result` the
+Dataset it produced; the run's result is the merge's.
 """
 
 import argparse
@@ -25,8 +26,8 @@ from allabiografer import session as _http
 from . import enrich as tmdb
 from .code import source_code
 from .graph import DATA, Graph, media_type
-from .merge import merge_datasets
-from .parsing import parse_capture
+from .merge import combine, merge_datasets
+from .parsing import parse_capture, site
 from .prune import prune
 from .render import render as render_site
 from .schedule import Feed, checked, feeds
@@ -100,8 +101,7 @@ def fetch(graph: Graph, adapter: str, selected: list[Feed], day: date) -> Path:
     about = [graph.ref(graph.path("DataFeed", feed.name)) for feed in selected]
     selectors = {feed.venue_id for feed in selected}
     fields = {
-        "name": f"Fetch {adapter}",
-        "object": about,
+        "name": f"Download {site(adapter)}",
         "instrument": instrument(graph, f"src/allabiografer/sources/{adapter}/fetch.py"),
     }
     with (
@@ -121,7 +121,7 @@ def fetch(graph: Graph, adapter: str, selected: list[Feed], day: date) -> Path:
         dataset = graph.put(
             "Dataset",
             {
-                "name": f"{adapter} capture",
+                "name": f"{site(adapter)} pages",
                 "temporalCoverage": day.isoformat(),
                 "about": about,
                 "distribution": [graph.ref(path) for path in downloads],
@@ -133,7 +133,7 @@ def fetch(graph: Graph, adapter: str, selected: list[Feed], day: date) -> Path:
 
 def parse(graph: Graph, adapter: str, captured: Path) -> Path:
     fields = {
-        "name": f"Parse {adapter}",
+        "name": f"Read {site(adapter)}",
         "object": graph.ref(captured),
         "instrument": instrument(graph, f"src/allabiografer/sources/{adapter}/parse.py"),
     }
@@ -143,55 +143,50 @@ def parse(graph: Graph, adapter: str, captured: Path) -> Path:
     return dataset
 
 
-def merge(graph: Graph, previous: Path | None, parsed: list[Path], day: date) -> Path:
-    fields = {
-        "name": "Merge",
-        "object": [graph.ref(path) for path in ([previous] if previous else []) + parsed],
-        "instrument": instrument(graph, "src/allabiografer/merge.py"),
-    }
-    with action(graph, "CreateAction", fields) as outcome:
-        dataset = merge_datasets(graph, previous, parsed, day)
-        outcome["result"] = graph.ref(dataset)
-    return dataset
+def inputs(graph: Graph, previous: Path | None, parsed: list[Path]) -> list[dict]:
+    return [graph.ref(path) for path in ([previous] if previous else []) + parsed]
 
 
-def enrich(graph: Graph, merged: Path) -> Path:
-    """Capture TMDB answers for films missing critical details, then fill them from the capture."""
+def fetch_tmdb(graph: Graph, previous: Path | None, parsed: list[Path], day: date) -> Path:
+    """Capture the TMDB answers and source posters that films missing critical details need."""
     fields = {
-        "name": "Fetch TMDB",
-        "object": graph.ref(merged),
+        "name": "Look up films on TMDB",
+        "object": inputs(graph, previous, parsed),
         "instrument": instrument(graph, "src/allabiografer/enrich.py"),
     }
     with action(graph, "DownloadAction", fields) as outcome, _http.session() as session:
-        downloads: list[Path] = []
-        # Source poster URLs are downloaded here, so the replay below decides from stored images only.
-        tmdb.enrich_dataset(graph, merged, tmdb.recording(graph, session, downloads), session)
+        combined = combine(graph, previous, parsed, day)
+        answers = tmdb.recording(graph, session)
+        tmdb.enrich_parts(graph, combined.films + combined.screenings, day, answers)
         capture = graph.put(
             "Dataset",
             {
-                "name": "TMDB capture",
-                "about": graph.ref(merged),
-                "distribution": [graph.ref(path) for path in dict.fromkeys(downloads)],
+                "name": "TMDB answers",
+                "temporalCoverage": day.isoformat(),
+                "distribution": [graph.ref(path) for path in dict.fromkeys(answers.used)],
             },
         )
         outcome["result"] = graph.ref(capture)
+    return capture
+
+
+def merge(graph: Graph, previous: Path | None, parsed: list[Path], day: date, capture: Path | None) -> Path:
     fields = {
-        "name": "Enrich",
-        "object": [graph.ref(merged), graph.ref(capture)],
-        "instrument": instrument(graph, "src/allabiografer/enrich.py"),
+        "name": "Build programme",
+        "object": inputs(graph, previous, parsed) + ([graph.ref(capture)] if capture else []),
+        "instrument": instrument(graph, "src/allabiografer/merge.py"),
     }
     with action(graph, "CreateAction", fields) as outcome:
-        enriched, count = tmdb.enrich_dataset(graph, merged, tmdb.replaying(graph, capture))
-        print(f"Enriched {count} films from TMDB")
-        outcome["result"] = graph.ref(enriched)
-    return enriched
+        dataset = merge_datasets(graph, previous, parsed, day, capture)
+        outcome["result"] = graph.ref(dataset)
+    return dataset
 
 
 def render(graph: Graph, merged: Path) -> Path:
     """Write the static site for `merged` to <data>/www, replacing the previous one."""
     out = graph.root / "www"
     fields = {
-        "name": "Render",
+        "name": "Render allabiografer.se",
         "object": graph.ref(merged),
         "instrument": instrument(graph, "src/allabiografer/render.py"),
     }
@@ -230,7 +225,7 @@ def run(graph: Graph, selected: list[Feed], *, previous: Path | None) -> tuple[P
     for feed in selected:
         by_adapter[feed.adapter].append(feed)
     fields = {
-        "name": "Run",
+        "name": "Update programme",
         "object": [graph.ref(graph.path("DataFeed", feed.name)) for feed in selected],
         **({"targetCollection": graph.ref(previous)} if previous else {}),
         "instrument": instrument(graph, "src/allabiografer/pipeline.py"),
@@ -246,12 +241,14 @@ def run(graph: Graph, selected: list[Feed], *, previous: Path | None) -> tuple[P
                 print(f"{adapter}: {failures[adapter]}", file=sys.stderr)
         if not parsed and previous is None:
             raise RuntimeError("Every adapter failed")
-        result = merge(graph, previous, parsed, day)
+        capture = None
         try:
-            result = enrich(graph, result)
+            capture = fetch_tmdb(graph, previous, parsed, day)
         except Exception as error:
+            # Films stay as their sources state them.
             failures["tmdb"] = "".join(traceback.format_exception_only(error)).strip()
             print(f"tmdb: {failures['tmdb']}", file=sys.stderr)
+        result = merge(graph, previous, parsed, day, capture)
         outcome["result"] = graph.ref(result)
     return result, failures
 

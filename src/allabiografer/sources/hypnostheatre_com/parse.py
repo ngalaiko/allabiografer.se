@@ -31,4 +31,5 @@ def rows(inputs, today):
             movie_id,
             capture,
             fields,
+            capture,
         )

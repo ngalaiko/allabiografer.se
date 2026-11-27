@@ -45,4 +45,5 @@ def rows(inputs, today):
             stable_key(film.key),
             capture,
             fields,
+            ("programme.html", capture),
         )

@@ -39,6 +39,10 @@ class Pages:
         response._content = path.read_bytes()
         return response
 
+    def captured(self, *urls):
+        """File names of the pages among `urls` that were saved."""
+        return [self.filename(url) for url in urls if (self.inputs / self.filename(url)).is_file()]
+
     def text(self, url, *, optional=False):
         try:
             return self.get(url).text

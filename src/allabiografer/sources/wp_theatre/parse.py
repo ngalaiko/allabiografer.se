@@ -36,4 +36,5 @@ def rows(inputs, today):
                 path.stem.removeprefix("movie-"),
                 path.name,
                 fields,
+                path.name,
             )

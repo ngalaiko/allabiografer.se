@@ -40,6 +40,16 @@ def screening_fields(version: ContentVersion, presentation: Presentation) -> dic
     return fields
 
 
+def site(adapter: str) -> str:
+    """The website an adapter reads."""
+    return import_module(f".sources.{adapter}", __package__).SITE
+
+
+def _refs(graph: Graph, paths: list[Path]) -> dict | list[dict]:
+    found = [graph.ref(path) for path in dict.fromkeys(paths)]
+    return found[0] if len(found) == 1 else found
+
+
 def parse_capture(graph: Graph, adapter: str, captured: Path) -> Path:
     dataset = graph.read(captured)
     downloads = {}
@@ -65,7 +75,9 @@ def parse_capture(graph: Graph, adapter: str, captured: Path) -> Path:
         inputs = Path(scratch)
         for name, path in downloads.items():
             (inputs / name).write_bytes(graph.content(graph.read(path)))
-        for venue, show_id, start, ticket, version, presentation, movie_id, capture, movie in rows(inputs, today):
+        for venue, show_id, start, ticket, version, presentation, movie_id, capture, movie, listing in rows(
+            inputs, today
+        ):
             # Adapters may yield programmes of venues outside the selection: shared feeds, old captures.
             if venue[0] not in feeds:
                 continue
@@ -93,28 +105,24 @@ def parse_capture(graph: Graph, adapter: str, captured: Path) -> Path:
                 **screening_fields(version, presentation),
                 # Programmes published by someone other than the cinema name their organiser.
                 **({"organizer": feed["publisher"]} if "publisher" in feed else {}),
+                "isBasedOn": _refs(
+                    graph, [downloads[name] for name in ([listing] if isinstance(listing, str) else listing)]
+                ),
             }
             key = fragment("screening", screening)
             screenings[feed_path][key] = {"@id": f"#{key}", **screening}
     # One snapshot per registry feed, empty ones included: an empty programme replaces the previous one.
+    # Its feed names the cinema and the capture the day; neither is repeated here.
     snapshots = [
         {
             "@id": "#" + fragment("feed", feed["name"], str(path)),
             "@type": "Dataset",
-            "name": feed["name"],
             "isBasedOn": graph.ref(path),
-            "about": graph.ref(cinema),
-            "temporalCoverage": dataset["temporalCoverage"],
             "hasPart": [screenings[path][key] for key in sorted(screenings[path])],
         }
-        for path, feed, cinema in sorted(feeds.values(), key=lambda item: str(item[0]))
+        for path, feed, _ in sorted(feeds.values(), key=lambda item: str(item[0]))
     ]
     return graph.put_dataset(
-        {
-            "name": f"{adapter} screenings",
-            "temporalCoverage": dataset["temporalCoverage"],
-            "isBasedOn": graph.ref(captured),
-            "about": dataset["about"],
-        },
+        {"name": f"{site(adapter)} listings", "isBasedOn": graph.ref(captured)},
         [movies[key] for key in sorted(movies)] + snapshots,
     )

@@ -39,4 +39,9 @@ def rows(inputs, today):
             stable_key(title.casefold()),
             pages.filename(url if html else site._URL),
             details_fields(title, url, details) | ({"sameAs": links} if (links := imdb_links(booking)) else {}),
+            (
+                pages.filename(site._URL),
+                *([pages.filename(url)] if html else []),
+                *(pages.captured(ticket) if ticket else []),
+            ),
         )

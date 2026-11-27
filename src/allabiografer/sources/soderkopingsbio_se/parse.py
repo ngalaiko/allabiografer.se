@@ -17,7 +17,8 @@ VENUE = (None, _CINEMA, _ADDRESS, _CITY)
 def rows(inputs, today):
     schedule = json.loads((inputs / SCHEDULE).read_bytes())
     seen = set()
-    for row, event, audio, subtitles in showings(Pages(inputs), schedule, today):
+    pages = Pages(inputs)
+    for row, event, audio, subtitles, programme in showings(pages, schedule, today):
         title, day, time, screen, _, _, movie, booking, _ = row
         start = datetime.combine(day, time, STOCKHOLM)
         ticket = booking or (event.url if event else _TICKETS)
@@ -37,4 +38,5 @@ def rows(inputs, today):
             stable_key(slug or title),
             SCHEDULE,
             fields,
+            (SCHEDULE, *(pages.captured(*programme.urls, event.url) if event else [])),
         )

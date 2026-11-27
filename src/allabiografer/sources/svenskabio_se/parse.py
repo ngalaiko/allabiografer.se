@@ -75,4 +75,5 @@ def rows(inputs, today):
                     movie_id,
                     based_on,
                     fields,
+                    path.name,
                 )

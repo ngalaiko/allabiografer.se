@@ -1,9 +1,12 @@
 import io
+import json
 from datetime import date
+from types import SimpleNamespace
 
+import pytest
 from PIL import Image
 
-from allabiografer.enrich import enrich_dataset, tmdb_movie, url
+from allabiografer.enrich import Answers, enrich_parts, tmdb_movie, url
 from allabiografer.merge import merge_datasets
 
 DAY = date(2026, 12, 1)
@@ -25,14 +28,34 @@ DUNE = {
 }
 
 
-def fake(answers):
-    asked = []
+class Session:
+    """TMDB answering by path, or by (path, language) when given."""
 
-    def fetch(path, params):
-        asked.append(url(path, params))
-        return answers.get(path, {"results": []})
+    def __init__(self, answers):
+        self.answers = answers
+        self.asked = []
 
-    return fetch, asked
+    def get(self, address, headers=None, timeout=None):
+        self.asked.append(address)
+        path = address.removeprefix("https://api.themoviedb.org/3").split("?")[0]
+        language = next((p[9:] for p in address.split("?")[-1].split("&") if p.startswith("language=")), None)
+        found = self.answers.get((path, language), self.answers.get(path, {"results": []}))
+        return SimpleNamespace(status_code=200, content=json.dumps(found).encode(), raise_for_status=lambda: None)
+
+
+def enrich(graph, parsed_dataset, answers, monkeypatch):
+    """The merge of `parsed_dataset` with a TMDB capture of `answers`, and the session asked."""
+    monkeypatch.setenv("TMDB_ACCESS_TOKEN", "token")
+    session = Session(answers)
+    found = Answers(graph, session)
+    from allabiografer.merge import combine
+
+    combined = combine(graph, None, [parsed_dataset], DAY)
+    enrich_parts(graph, combined.films + combined.screenings, DAY, found)
+    capture = graph.put(
+        "Dataset", {"name": "TMDB answers", "distribution": [graph.ref(path) for path in dict.fromkeys(found.used)]}
+    )
+    return merge_datasets(graph, None, [parsed_dataset], DAY, capture), session
 
 
 def portrait(graph):
@@ -58,7 +81,7 @@ def test_tmdb_details_become_a_normalised_movie():
     assert movie["director"] == [{"@type": "Person", "name": "Denis Villeneuve"}]
 
 
-def test_only_films_missing_critical_details_are_filled_and_stated_values_stay(graph, parsed):
+def test_only_films_missing_critical_details_are_filled_and_stated_values_stay(graph, parsed, monkeypatch):
     tmdb = ["https://www.themoviedb.org/movie/1170608"]
     complete = {"image": portrait(graph), "description": "Text.", "director": ["Ava Berg"]}
     listed = {
@@ -68,27 +91,31 @@ def test_only_films_missing_critical_details_are_filled_and_stated_values_stay(g
         ),
         "b": ({"name": "Heat", **complete}, [("Bio Rio", "2026-12-17T18:00:00+01:00")]),
     }
-    merged = merge_datasets(graph, None, [parsed(graph, "x", ["Bio Rio"], listed)], DAY)
-    fetch, asked = fake({"/movie/1170608": DUNE})
+    source = parsed(graph, "x", ["Bio Rio"], listed)
+    merged = merge_datasets(graph, None, [source], DAY)
 
-    enriched, count = enrich_dataset(graph, merged, fetch)
+    enriched, session = enrich(graph, source, {"/movie/1170608": DUNE}, monkeypatch)
 
-    assert count == 1
-    assert all("1170608" in request for request in asked)
+    assert all("1170608" in request for request in session.asked)
     dune = films(graph, enriched)["Dune: Part Three"]
     assert dune["image"] == "https://image.tmdb.org/t/p/original/sv.jpg"
     assert dune["director"] == [{"@type": "Person", "name": "Denis Villeneuve"}]
     # The cinema's own runtime is kept.
     assert dune["duration"] == "PT155M"
+    # The response that filled it is among its sources.
+    (response,) = [link for link in dune["isBasedOn"] if "#" not in link["@id"]]
+    assert graph.read(graph.resolve(enriched, response))["isBasedOn"].startswith(url("/movie/1170608", {})[:-1])
     assert films(graph, enriched)["Heat"] == films(graph, merged)["Heat"]
+    # Films carry their TMDB sources; the result builds on parse Datasets only, so the next run merges onto it.
+    assert graph.read(enriched)["isBasedOn"] == [graph.ref(source)]
+    assert films(graph, merge_datasets(graph, enriched, [], DAY))["Dune: Part Three"]["name"] == "Dune: Part Three"
     parts = graph.parts(enriched)
     works = {parts[s["workPresented"]["@id"][1:]]["name"] for s in parts.values() if s["@type"] == "ScreeningEvent"}
     assert works == {"Dune: Part Three", "Heat"}
 
 
-def test_search_accepts_one_consistent_result_only(graph, parsed):
+def test_search_accepts_one_consistent_result_only(graph, parsed, monkeypatch):
     listed = {"a": ({"name": "Metropolis", "datePublished": "1927"}, [("Bio Rio", "2026-12-16T18:00:00+01:00")])}
-    merged = merge_datasets(graph, None, [parsed(graph, "x", ["Bio Rio"], listed)], DAY)
     lang = {"id": 19, "title": "Metropolis", "original_title": "Metropolis", "release_date": "1927-01-10"}
     remake = {"id": 10, "title": "Metropolis", "original_title": "Metropolis", "release_date": "2001-05-26"}
     detail = DUNE | {"id": 19, "title": "Metropolis", "original_title": "Metropolis", "runtime": 153}
@@ -98,31 +125,27 @@ def test_search_accepts_one_consistent_result_only(graph, parsed):
         "/movie/10": detail | {"id": 10, "release_date": "2001-05-26", "runtime": 107},
     }
 
-    enriched, count = enrich_dataset(graph, merged, fake(answers)[0])
+    enriched, _ = enrich(graph, parsed(graph, "x", ["Bio Rio"], listed), answers, monkeypatch)
 
-    assert count == 1
     assert "https://www.themoviedb.org/movie/19" in films(graph, enriched)["Metropolis"]["sameAs"]
 
 
-def test_a_banner_counts_as_no_poster(graph, parsed):
+def test_a_banner_counts_as_no_poster(graph, parsed, monkeypatch):
     buffer = io.BytesIO()
     Image.new("RGB", (1920, 1080), "gray").save(buffer, "PNG")
     still = graph.ref(graph.put_bytes(buffer.getvalue(), "image/png", name="still.png"))
     tmdb = ["https://www.themoviedb.org/movie/1170608"]
     complete = {"description": "Text.", "director": ["Denis Villeneuve"], "sameAs": tmdb, "image": still}
     listed = {"a": ({"name": "Dune: Part Three", **complete}, [("Bio Rio", "2026-12-16T18:00:00+01:00")])}
-    merged = merge_datasets(graph, None, [parsed(graph, "x", ["Bio Rio"], listed)], DAY)
 
-    enriched, count = enrich_dataset(graph, merged, fake({"/movie/1170608": DUNE})[0])
+    enriched, _ = enrich(graph, parsed(graph, "x", ["Bio Rio"], listed), {"/movie/1170608": DUNE}, monkeypatch)
 
-    assert count == 1
     assert films(graph, enriched)["Dune: Part Three"]["image"] == "https://image.tmdb.org/t/p/original/sv.jpg"
 
 
 def identify(graph, parsed, movie, results, details, languages=None):
     """The TMDB id enrichment links `movie` to, given search results and detail responses."""
     listed = {"a": (movie, [("Bio Rio", "2026-12-16T18:00:00+01:00")])}
-    merged = merge_datasets(graph, None, [parsed(graph, "x", ["Bio Rio"], listed)], DAY)
     released = {found["id"]: found["release_date"] for found in results}
     crew = {tmdb_id: [{"job": "Director", "name": d[3]}] if d[3] else [] for tmdb_id, d in details.items()}
     answers = {"/search/movie": {"results": results}} | {
@@ -132,7 +155,7 @@ def identify(graph, parsed, movie, results, details, languages=None):
         | {"original_language": (languages or {}).get(tmdb_id, "en")}
         for tmdb_id, (title, original, runtime, _) in details.items()
     }
-    enriched, _ = enrich_dataset(graph, merged, fake(answers)[0])
+    enriched, _ = enrich(graph, parsed(graph, "x", ["Bio Rio"], listed), answers, pytest.MonkeyPatch())
     links = next(iter(films(graph, enriched).values())).get("sameAs", [])
     found = [link.rsplit("/", 1)[1] for link in links if "themoviedb" in link]
     return int(found[0]) if found else None
@@ -202,11 +225,10 @@ def test_a_shared_director_outweighs_runtime_and_undated_duplicates(graph, parse
     assert identify(graph, parsed, movie, capra, details) == 1585
 
 
-def test_a_title_found_in_any_language_counts(graph, parsed):
+def test_a_title_found_in_any_language_counts(graph, parsed, monkeypatch):
     listed = {
         "a": ({"name": "The Neverending Story", "datePublished": "1984"}, [("Bio Rio", "2026-12-16T18:00:00+01:00")])
     }
-    merged = merge_datasets(graph, None, [parsed(graph, "x", ["Bio Rio"], listed)], DAY)
     found = {"id": 34584, "original_title": "Die unendliche Geschichte", "release_date": "1984-03-16"}
     answers = {
         # Swedish results title it in Swedish, English ones in English.
@@ -215,10 +237,6 @@ def test_a_title_found_in_any_language_counts(graph, parsed):
         ("/movie/34584", "sv-SE"): DUNE | found | {"title": "Den oändliga historien", "runtime": 94},
     }
 
-    def fetch(path, params):
-        return answers.get((path, params.get("language")), {"results": []})
+    enriched, _ = enrich(graph, parsed(graph, "x", ["Bio Rio"], listed), answers, monkeypatch)
 
-    enriched, count = enrich_dataset(graph, merged, fetch)
-
-    assert count == 1
     assert "https://www.themoviedb.org/movie/34584" in films(graph, enriched)["The Neverending Story"]["sameAs"]

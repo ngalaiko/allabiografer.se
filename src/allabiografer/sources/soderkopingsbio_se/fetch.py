@@ -20,7 +20,7 @@ def showings(pages, schedule, today):
     for row in shows:
         title, day, start, _, audio, subtitles, *_ = row
         event, audio, subtitles, _ = _biosverige_api.showing(programme, title, day, start, audio, subtitles)
-        yield row, event, audio, subtitles
+        yield row, event, audio, subtitles, programme
 
 
 def fetch_pages(session, inputs, today, *, selectors=None):

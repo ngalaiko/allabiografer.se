@@ -48,4 +48,5 @@ def rows(inputs, today):
                     else film,
                     image=poster.name if (poster := inputs / f"poster-{movie_id}.jpg").is_file() else "",
                 ),
+                f"programme-{venue_key}.html",
             )

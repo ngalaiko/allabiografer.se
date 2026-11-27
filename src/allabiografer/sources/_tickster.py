@@ -182,14 +182,17 @@ def _cut(title: str, listed: str) -> bool:
 class Programme:
     """An organiser's showings, matched to a site's own by date, title and start time."""
 
-    def __init__(self, events: list[Event], session: _Session):
+    def __init__(self, events: list[Event], session: _Session, urls: tuple[str, ...] = ()):
         self.events = events
         self._session = session
+        # The listing pages read.
+        self.urls = urls
 
     @classmethod
     def fetch(cls, url: str, session: _Session, pages: int = _PAGES) -> Programme:
         """Every listed showing; empty when the organiser page is unreachable."""
         events: list[Event] = []
+        urls = []
         for _ in range(pages):
             try:
                 resp = session.get(url, timeout=15)
@@ -197,11 +200,12 @@ class Programme:
             except requests.RequestException as exc:
                 log.warning("tickster: %s failed: %s", url, exc)
                 break
+            urls.append(url)
             found, url = listing(resp.text)
             events.extend(found)
             if not url:
                 break
-        return cls(events, session)
+        return cls(events, session, tuple(urls))
 
     def find(self, title: str, day: date, start: time) -> Event | None:
         """The showing of *title* at *day* *start*; None when none or several fit."""

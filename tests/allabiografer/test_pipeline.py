@@ -1,4 +1,5 @@
 import json
+import re
 from contextlib import nullcontext
 from datetime import UTC, date, datetime
 from types import SimpleNamespace
@@ -79,26 +80,45 @@ def test_run_records_actions_and_links_screenings_to_the_registry(graph, monkeyp
         assert json.loads((inputs / "cinemas.json").read_text()) == cinemas
         version = ContentVersion(AudioVersion(languages=frozenset({Language.SWEDISH})))
         start = datetime(2026, 12, 1, 18, tzinfo=UTC)
-        yield (("16484",), "1", start, "https://bio.se", version, Presentation(), "m", "cinemas.json", {"name": "Film"})
-        yield (("99",), "2", start, "https://bio.se", version, Presentation(), "m", "cinemas.json", {"name": "Film"})
+        yield (
+            ("16484",),
+            "1",
+            start,
+            "https://bio.se",
+            version,
+            Presentation(),
+            "m",
+            "cinemas.json",
+            {"name": "Film"},
+            "programme-16484.json",
+        )
+        yield (
+            ("99",),
+            "2",
+            start,
+            "https://bio.se",
+            version,
+            Presentation(),
+            "m",
+            "cinemas.json",
+            {"name": "Film"},
+            "cinemas.json",
+        )
 
     modules = {
         "fetch": SimpleNamespace(fetch_pages=fetch_pages),
         "parse": SimpleNamespace(rows=rows),
+        "bio_se": SimpleNamespace(SITE="bio.se"),
     }
     monkeypatch.setattr(pipeline, "import_module", lambda name, package: modules[name.rsplit(".", 1)[1]])
-    monkeypatch.setattr("allabiografer.parsing.import_module", lambda name, package: modules["parse"])
+    monkeypatch.setattr("allabiografer.parsing.import_module", lambda name, package: modules[name.rsplit(".", 1)[1]])
     monkeypatch.setattr(pipeline._http, "session", lambda: nullcontext(SimpleNamespace(headers={})))
     monkeypatch.setattr(pipeline, "datetime", SimpleNamespace(now=lambda tz: datetime(2026, 11, 26, tzinfo=tz)))
 
-    def recording(graph, session, downloads):
-        def fetch(path, params):
-            downloads.append(graph.put_bytes(b"{}", "application/json", name=path, url=pipeline.tmdb.url(path, params)))
-            return {}
-
-        return fetch
-
-    monkeypatch.setattr(pipeline.tmdb, "recording", recording)
+    monkeypatch.setenv("TMDB_ACCESS_TOKEN", "token")
+    tmdb_response = SimpleNamespace(status_code=200, content=b"{}", raise_for_status=lambda: None)
+    tmdb_session = SimpleNamespace(get=lambda address, headers=None, timeout=None: tmdb_response)
+    monkeypatch.setattr(pipeline.tmdb, "recording", lambda graph, session: pipeline.tmdb.Answers(graph, tmdb_session))
 
     result, failures = pipeline.run(graph, [feed], previous=None)
 
@@ -107,11 +127,10 @@ def test_run_records_actions_and_links_screenings_to_the_registry(graph, monkeyp
         graph.read(path) for kind in ("DownloadAction", "CreateAction") for path in graph.schema.glob(f"{kind}/*")
     ]
     assert sorted(action["name"] for action in actions) == [
-        "Enrich",
-        "Fetch TMDB",
-        "Fetch bio_se",
-        "Merge",
-        "Parse bio_se",
+        "Build programme",
+        "Download bio.se",
+        "Look up films on TMDB",
+        "Read bio.se",
     ]
     assert pipeline.latest(graph) == result
     assert {action["actionStatus"] for action in actions} == {"https://schema.org/CompletedActionStatus"}
@@ -124,6 +143,30 @@ def test_run_records_actions_and_links_screenings_to_the_registry(graph, monkeyp
     assert len(screenings) == 1
     assert screenings[0]["inLanguage"] == ["sv"]
     assert graph.resolve(result, screenings[0]["location"]) == graph.path("MovieTheater", feed.cinema).resolve()
+
+    # The result alone leads to each part's sources: parsed parts, then the captured files.
+    def captured(origin, reference):
+        dataset, part = graph.find(origin, reference)
+        links = part["isBasedOn"] if isinstance(part["isBasedOn"], list) else [part["isBasedOn"]]
+        return [graph.read(graph.resolve(dataset, link))["name"] for link in links]
+
+    assert captured(result, screenings[0]["isBasedOn"]) == ["programme-16484.json"]
+    (film,) = [part for part in graph.parts(result).values() if part["@type"] == "Movie"]
+    records = [link for link in film["isBasedOn"] if "#" in link["@id"]]
+    assert [name for link in records for name in captured(result, link)] == ["cinemas.json"]
+    # The TMDB responses looked up for it.
+    responses = [graph.read(graph.resolve(result, link)) for link in film["isBasedOn"] if "#" not in link["@id"]]
+    assert responses
+    assert all(response["isBasedOn"].startswith("https://api.themoviedb.org/3/") for response in responses)
+    # The run's result is what its last step produced, and that step names every input.
+    (built,) = [
+        action
+        for action in actions
+        if action.get("result") and graph.resolve(graph.path("CreateAction", "_"), action["result"]) == result
+    ]
+    assert built["name"] == "Build programme"
+    inputs = {graph.read(graph.resolve(graph.path("CreateAction", "_"), link))["name"] for link in built["object"]}
+    assert inputs == {"bio.se listings", "TMDB answers"}
 
 
 def test_source_snapshot_is_deterministic_and_restorable(tmp_path):
@@ -142,6 +185,7 @@ def test_source_snapshot_is_deterministic_and_restorable(tmp_path):
         names = tar.getnames()
     assert pipeline_file == (ROOT / "src" / "allabiografer" / "pipeline.py").read_bytes()
     assert "uv.lock" in names
+    assert "data/allabiografer/schema/MovieTheater/Bio Rio.jsonld" in names
     assert not any(name.startswith(("src/parse", "src/store", "tests")) for name in names)
 
 
@@ -162,3 +206,11 @@ def test_failed_adapter_is_recorded_and_others_still_merge(graph, monkeypatch):
     monkeypatch.setattr(pipeline, "fetch", fetch)
     with pytest.raises(RuntimeError, match="Every adapter failed"):
         pipeline.run(graph, [feeds(graph.root)["Ale Medborgarhusets Bio"]], previous=None)
+
+
+def test_every_adapter_names_its_website():
+    from allabiografer.parsing import site
+    from allabiografer.schedule import feeds
+
+    adapters = {feed.adapter for feed in feeds().values()}
+    assert all(re.fullmatch(r"[a-z0-9.-]+\.[a-z]+", site(adapter)) for adapter in adapters)

@@ -55,4 +55,5 @@ def rows(inputs, today):
             movie_id,
             capture,
             movies[movie_id],
+            "programme.json",
         )

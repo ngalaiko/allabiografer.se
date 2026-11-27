@@ -29,6 +29,10 @@ def _links(value, found: list[str], strings: set[str]) -> None:
         strings.add(value)
 
 
+def _list(value) -> list:
+    return value if isinstance(value, list) else [value] if value else []
+
+
 def prune(graph: Graph, keep: int = 1) -> tuple[int, int]:
     """Delete unreachable entities and assets; return how many of each were deleted."""
     actions = {
@@ -54,7 +58,10 @@ def prune(graph: Graph, keep: int = 1) -> tuple[int, int]:
         for path, action in actions.items():
             if start <= action["startTime"] <= end:
                 roots.append(path)
-            elif action.get("name") == "Render" and graph.resolve(path, action["object"]) == result:
+            elif "@id" not in action.get("result", {"@id": ""}) and any(
+                graph.resolve(path, link) == result for link in _list(action.get("object"))
+            ):
+                # A render: it used the run's result and stored nothing.
                 renders.append((action["startTime"], path))
         roots += [max(renders)[1]] if renders else []
 

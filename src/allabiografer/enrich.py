@@ -5,8 +5,8 @@ entry is the one its sources state (`sameAs` TMDB or IMDb links), else the singl
 search result whose title, year, director and runtime do not contradict the film.
 TMDB values fill missing properties only; what cinemas state is kept.
 
-A DownloadAction captures the responses as DataDownloads; the enrich CreateAction replays
-them, so its result follows from stored inputs alone.
+A DownloadAction captures the responses, and the source posters checked, in a Dataset; merging
+replays that capture alone. A filled film links the responses and posters that decided it.
 """
 
 import json
@@ -19,9 +19,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import urlencode
 
+from .graph import media_type
 from .movie_fields import normalise
 from .movie_matching import _close, _facts, _people, _relation, references, title_keys, work_title
-from .posters import poster, stored_downloads
+from .posters import portrait, stored_downloads
 
 if TYPE_CHECKING:
     from .graph import Graph
@@ -55,11 +56,75 @@ def needs(film: dict) -> bool:
     return any(not film.get(field) for field in CRITICAL)
 
 
-def _without_unusable_poster(graph: Graph, path: Path, film: dict, session, downloaded: dict) -> dict:
-    """The film without an image that is no poster: a still, a banner or a placeholder."""
-    if film.get("image") and poster(graph, path, film["image"], session, downloaded) is None:
-        return {key: value for key, value in film.items() if key != "image"}
-    return film
+class Answers:
+    """TMDB responses and source posters by URL: asked live and stored, or replayed from a capture."""
+
+    def __init__(self, graph: Graph, session=None, found: dict[str, Path] | None = None):
+        self.graph = graph
+        self.session = session
+        self.found = dict(found or {})
+        # Everything answered, in order: the capture's contents.
+        self.used: list[Path] = []
+
+    def json(self, path: str, params: dict) -> tuple[dict, Path]:
+        key = url(path, params)
+        if key not in self.found:
+            if self.session is None:
+                raise KeyError(f"Not captured: {key}")
+            headers = {"Authorization": f"Bearer {token()}", "Accept": "application/json"}
+            response = self.session.get(key, headers=headers, timeout=30)
+            # A missing film is an answer too; anything else is a failure.
+            if response.status_code != 404:
+                response.raise_for_status()
+            self.found[key] = self.graph.put_bytes(response.content, "application/json", name=path.strip("/"), url=key)
+        self.used.append(self.found[key])
+        return json.loads(self.graph.content(self.graph.read(self.found[key]))), self.found[key]
+
+    def image(self, address: str) -> Path | None:
+        """The stored image downloaded from `address`; None when it cannot be had."""
+        if address not in self.found and self.session is not None:
+            try:
+                response = self.session.get(address, timeout=30)
+                response.raise_for_status()
+            except Exception:
+                return None
+            media = media_type(address, response.headers.get("Content-Type", ""))
+            if not media.startswith("image/"):
+                return None
+            self.found[address] = self.graph.put_bytes(response.content, media, name=Path(address).name, url=address)
+        if address not in self.found:
+            return None
+        self.used.append(self.found[address])
+        return self.found[address]
+
+
+def recording(graph: Graph, session) -> Answers:
+    """Answers asked live; posters downloaded before are reused."""
+    return Answers(graph, session, stored_downloads(graph))
+
+
+def replaying(graph: Graph, capture: Path) -> Answers:
+    """Answers from a capture Dataset only."""
+    paths = [graph.resolve(capture, reference) for reference in graph.read(capture)["distribution"]]
+    graph.prefetch(paths)
+    found = {}
+    for path in paths:
+        found[graph.read(path)["isBasedOn"]] = path
+    graph.prefetch_content([graph.read(path) for path in paths])
+    return Answers(graph, found=found)
+
+
+def _usable_poster(graph: Graph, image, answers: Answers, sources: list[Path]) -> bool:
+    """Whether an image is a poster: not a still, a banner or a placeholder."""
+    if isinstance(image, dict):
+        return portrait(graph, graph.read(graph.resolve(graph.path("Dataset", "_"), image)))
+    if not isinstance(image, str) or not image.startswith(("http://", "https://")):
+        return False
+    stored = answers.image(image)
+    if stored is None:
+        return False
+    sources.append(stored)
+    return portrait(graph, graph.read(stored))
 
 
 def _year(film: dict) -> int | None:
@@ -190,51 +255,12 @@ def enrich_film(film: dict, found: dict) -> dict:
     return filled
 
 
-def recording(graph: Graph, session, downloads: list[Path]) -> Fetch:
-    """A fetch that stores every response as a DataDownload; repeated requests are asked once."""
-    headers = {"Authorization": f"Bearer {token()}", "Accept": "application/json"}
-    asked: dict[str, Path] = {}
+def enrich_parts(graph: Graph, parts: list[dict], today: date, answers: Answers) -> tuple[list[dict], int]:
+    """`parts` with the films that need it filled from TMDB, and how many were.
 
-    def fetch(path: str, params: dict) -> dict:
-        key = url(path, params)
-        if key not in asked:
-            response = session.get(key, headers=headers, timeout=30)
-            # A missing film is an answer too; anything else is a failure.
-            if response.status_code != 404:
-                response.raise_for_status()
-            asked[key] = graph.put_bytes(response.content, "application/json", name=path.strip("/"), url=key)
-            downloads.append(asked[key])
-        return json.loads(graph.content(graph.read(asked[key])))
-
-    return fetch
-
-
-def replaying(graph: Graph, capture: Path) -> Fetch:
-    """A fetch answered from a capture Dataset's DataDownloads only."""
-    stored = {}
-    paths = [graph.resolve(capture, reference) for reference in graph.read(capture)["distribution"]]
-    graph.prefetch(paths)
-    for path in paths:
-        download = graph.read(path)
-        stored[download["isBasedOn"]] = download
-    graph.prefetch_content(list(stored.values()))
-
-    def fetch(path: str, params: dict) -> dict:
-        return json.loads(graph.content(stored[url(path, params)]))
-
-    return fetch
-
-
-def enrich_dataset(graph: Graph, merged: Path, fetch: Fetch, session=None) -> tuple[Path, int]:
-    """A copy of `merged` whose films that need it are filled from TMDB, and how many were.
-
-    `session` downloads source poster URLs to check them; without one, only stored images are checked.
+    Each film checked links the responses and downloaded posters that decided it.
     """
-    downloaded = stored_downloads(graph)
-    dataset = graph.read(merged)
-    parts = list(graph.parts(merged).values())
     # Past films keep their pages' history; only films with screenings are looked up.
-    today = date.fromisoformat(dataset["temporalCoverage"].split("/")[-1])
     showing = {
         part["workPresented"]["@id"]
         for part in parts
@@ -243,7 +269,16 @@ def enrich_dataset(graph: Graph, merged: Path, fetch: Fetch, session=None) -> tu
     enriched, count = [], 0
     for part in parts:
         if part["@type"] == "Movie" and part["@id"] in showing:
-            checked = _without_unusable_poster(graph, merged, part, session, downloaded)
+            sources: list[Path] = []
+
+            def fetch(path: str, params: dict, sources: list[Path] = sources) -> dict:
+                found, source = answers.json(path, params)
+                sources.append(source)
+                return found
+
+            checked = part
+            if part.get("image") and not _usable_poster(graph, part["image"], answers, sources):
+                checked = {key: value for key, value in part.items() if key != "image"}
             if needs(checked):
                 tmdb_id = _identify(fetch, checked)
                 detail = _detail(fetch, tmdb_id) if tmdb_id is not None else {}
@@ -251,7 +286,8 @@ def enrich_dataset(graph: Graph, merged: Path, fetch: Fetch, session=None) -> tu
                     filled = enrich_film(checked, tmdb_movie(detail))
                     if filled != part:
                         part, count = filled, count + 1
+            if sources:
+                links = [graph.ref(path) for path in dict.fromkeys(sources)]
+                part = part | {"isBasedOn": [*part["isBasedOn"], *links]}
         enriched.append(part)
-    # Films keep their fragment identifiers, so screenings need no repointing.
-    fields = {k: v for k, v in dataset.items() if k not in ("@context", "@id", "@type", "distribution")}
-    return graph.put_dataset(fields, enriched), count
+    return enriched, count

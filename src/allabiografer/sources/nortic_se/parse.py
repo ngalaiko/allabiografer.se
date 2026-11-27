@@ -81,4 +81,5 @@ def rows(inputs, today):
                 stable_key(film.key),
                 capture,
                 film_fields(film),
+                capture,
             )

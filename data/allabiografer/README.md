@@ -8,7 +8,7 @@ schema/<Schema.org type>/<id>.jsonld
 
 The registry is read from this directory. Everything generated (actions, datasets, captures, images) lives in a store: with `R2_BUCKET`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` set, the Cloudflare R2 bucket, read and written directly, with immutable objects cached under `.cache/`; otherwise this directory (`--local` forces it). Object keys are the same paths in both: `schema/<Type>/<id>.jsonld` and `assets/<sha256>`. `nix run .#pull` and `nix run .#push` mirror one into the other, deleting what the source lacks; each refuses a source without a completed run.
 
-Run `nix run .#run`, optionally limited to the feeds of `-- --cinema <MovieTheater ID>` (repeatable). It prints the merged `Dataset` and the website directory. `--fresh` ignores the previous result; `--render-only` renders the latest result without fetching.
+Run `nix run .#run`, optionally limited to the feeds of `-- --cinema <MovieTheater ID>` (repeatable). It prints the `Programme` and the website directory. `--fresh` ignores the previous result; `--render-only` renders the latest result without fetching.
 
 ## Registry
 
@@ -26,24 +26,37 @@ Generated and not checked in. Each run is an action:
 
 | Step | Action | `object` | `result` |
 |---|---|---|---|
-| fetch | `DownloadAction` | registry feeds | `Dataset` of `DataDownload`s |
-| parse | `CreateAction` | fetch `Dataset` | `Dataset` of `Movie`s and, per feed, a `Dataset` of `ScreeningEvent`s |
-| merge | `CreateAction` | previous merged `Dataset`, new parse `Dataset`s | merged `Dataset` |
-| fetch TMDB | `DownloadAction` | merged `Dataset` | `Dataset` of TMDB responses (`DataDownload`s) |
-| enrich | `CreateAction` | merged `Dataset`, TMDB capture | merged `Dataset` with filled films |
-| render | `CreateAction` | merged `Dataset` | `www/` |
+| `Download <site>` | `DownloadAction` | | `<site> pages`: `Dataset` of `DataDownload`s, `about` the registry feeds |
+| `Read <site>` | `CreateAction` | `<site> pages` | `<site> listings`: `Dataset` of `Movie`s and, per feed, a `Dataset` of `ScreeningEvent`s |
+| `Look up films on TMDB` | `DownloadAction` | previous `Programme`, new listings | `TMDB answers`: `Dataset` of TMDB responses and checked posters |
+| `Build programme` | `CreateAction` | previous `Programme`, new listings, `TMDB answers` | `Programme` |
+| `Render allabiografer.se` | `CreateAction` | `Programme` | `www/` |
 
-A `Dataset` produced by parse, merge or enrich keeps its parts in one document: its `distribution` is a `DataDownload` of `application/ld+json+zstd` whose `hasPart` holds the `Movie`s, `ScreeningEvent`s and nested per-feed `Dataset`s. Parts carry `#fragment` identifiers and link to each other by them (`"workPresented": {"@id": "#film-…"}`); their links to entities resolve against the `Dataset` entity, and links into another dataset read `../Dataset/<hash>.jsonld#fragment`. Unchanged inputs give the same document and entity, so reruns write only what changed. After a run, `allabiografer.prune` deletes what the latest run (`--keep N` runs) no longer reaches; the registry is never pruned.
+`<site>` is the website an adapter reads, declared as `SITE` in its package: `filmstaden.se`, `bio.se`, `tickster.com`. One download covers every feed of that site. Names are labels; no step reads them.
 
-A run is an `UpdateAction` over the previous result (`targetCollection`) for the selected feeds (`object`): fetch and parse per adapter, then one merge. Each feed's screenings come from the newest parse covering it, so feeds not run, or whose adapter failed, keep their previous screenings. A show listed by several feeds of one cinema appears once, from the cinema's own feed. Screenings before the run day drop out.
+The run's `result` is the `Programme`. Following `isBasedOn` from it is a waterfall: each link goes one step back, and nothing is repeated that the step before states.
+
+```text
+Programme ─▶ <site> listings in effect ─▶ <site> pages (about: DataFeeds, temporalCoverage: day) ─▶ files ─▶ URLs
+  #film-…      ─▶ parsed #movie-… ─▶ file ─▶ URL
+               ─▶ TMDB responses, checked posters ─▶ URLs
+  #screening-… ─▶ parsed #screening-… ─▶ files ─▶ URLs
+                    in a per-feed #feed-… Dataset ─▶ DataFeed ─about─▶ MovieTheater
+```
+
+A `Programme` `Movie`'s `sameAs` keeps the TMDB and IMDb entries that identify it; the source pages it was read from are reached through its parsed records. Each action's `instrument` is the code, and the registry, it ran with.
+
+A listings `Dataset` or `Programme` keeps its parts in one document: its `distribution` is a `DataDownload` of `application/ld+json+zstd` whose `hasPart` holds the `Movie`s, `ScreeningEvent`s and nested per-feed `Dataset`s. Parts carry `#fragment` identifiers and link to each other by them (`"workPresented": {"@id": "#film-…"}`); their links to entities resolve against the `Dataset` entity, and links into another dataset read `../Dataset/<hash>.jsonld#fragment`. Unchanged inputs give the same document and entity, so reruns write only what changed. After a run, `allabiografer.prune` deletes what the latest run (`--keep N` runs) no longer reaches; the registry is never pruned. Past screenings kept in the result keep their links, so the listings and pages of the last 30 days stay.
+
+A run is an `UpdateAction` named `Update programme` over the previous result (`targetCollection`) for the selected feeds (`object`): download and read per site, look up films on TMDB, then build the programme. Each feed's screenings come from the newest listings covering it, so feeds not run, or whose adapter failed, keep their previous screenings. A show listed by several feeds of one cinema appears once, from the cinema's own feed. Screenings before the run day drop out.
 
 Source `Movie`s pass through `movie_fields.normalise`, so every adapter writes one vocabulary: `genre` from a fixed Swedish list (programme labels such as "Jul" or "Live på bio" drop), `contentRating` as "Barntillåten" or "Från 7/11/15/18 år", `inLanguage` as BCP 47 tags, `duration` in minutes, people as `Person`s and trailers as `VideoObject`s. Unrated and implausible values drop.
 
-Sources that state a TMDB or IMDb identity carry it in `sameAs`; matching treats a shared identity as the same film and different ones as different films. Showing films missing a poster, description or director are looked up on TMDB: by stated identity, else as in merging. Search results in Swedish and English whose title matches are one work, split where year, director, plot or runtime contradict the listing. A single namesake left standing is the film; among several, the one whose year, director, plot, exact runtime or original language agrees. TMDB fills missing properties only. The token is read from `TMDB_ACCESS_TOKEN` or `~/.config/allabiografer/tmdb-token`. A TMDB failure is reported; the run keeps the unenriched result.
+Sources that state a TMDB or IMDb identity carry it in `sameAs`; matching treats a shared identity as the same film and different ones as different films. Showing films missing a poster, description or director are looked up on TMDB: by stated identity, else as in merging. Search results in Swedish and English whose title matches are one work, split where year, director, plot or runtime contradict the listing. A single namesake left standing is the film; among several, the one whose year, director, plot, exact runtime or original language agrees. TMDB fills missing properties only. `TMDB answers` holds every response and source poster the lookups used; building the programme replays it and reads nothing else. The token is read from `TMDB_ACCESS_TOKEN` or `~/.config/allabiografer/tmdb-token`. A TMDB failure is reported; the programme is then built without answers and films stay as their sources state them.
 
 A poster is an image at least 200 px wide and 1.2 times taller than wide; stills, banners and placeholders are dropped, and TMDB fills the gap. Bioguiden's listing thumbnails are 150x90 banners, so its poster is taken from the film page's gallery with the dark canvas cropped off; the gallery serves the real image only with the film page as referrer.
 
-Each `Movie` in a merged `Dataset` has a stable slug, its `allabiografer:film` identifier, and `url` `https://allabiografer.se/film/<slug>/`. Grouping is re-evaluated every run. A group reuses the oldest identity among its members, slugs are never reassigned, and slugs of joined films remain as `allabiografer:film-alias`.
+Each `Movie` in a `Programme` has a stable slug, its `allabiografer:film` identifier, and `url` `https://allabiografer.se/film/<slug>/`. Grouping is re-evaluated every run. A group reuses the oldest identity among its members, slugs are never reassigned, and slugs of joined films remain as `allabiografer:film-alias`.
 
 Actions record `startTime`, `endTime`, `actionStatus`, and `error` for failures. A failing adapter does not stop the others; the run exits non-zero after merging.
 
@@ -51,14 +64,12 @@ Entities other than actions are named by the SHA-256 of their content, so identi
 
 `DataDownload` and `ImageObject` describe stored bytes. `contentUrl` is an [RFC 6920](https://www.rfc-editor.org/rfc/rfc6920) `ni:///sha-256;…` URI. `sha256` names the file under `assets/`. Bytes are zstd-compressed when that saves at least 10%; `encodingFormat` then carries the registered `+zstd` suffix, e.g. `text/html+zstd`.
 
-`ScreeningEvent` links `workPresented` to a `Movie` and `location` to a registry `MovieTheater`. `inLanguage` and `subtitleLanguage` are BCP 47 tags; an empty `subtitleLanguage` means the source states there are none. `videoFormat` lists picture and projection formats only: `2D`, `3D`, `IMAX`, `Dolby Cinema`, `4DX`, `ScreenX`, `35 mm`, `70 mm`.
+`ScreeningEvent` links `workPresented` to a `Movie` and `location` to a registry `MovieTheater`. `inLanguage` and `subtitleLanguage` are BCP 47 tags; an empty `subtitleLanguage` means the source states there are none. `videoFormat` lists picture and sound formats, in display order: `2D`, `3D`, `IMAX`, `Dolby Cinema`, `4DX`, `ScreenX`, `D-Box`, `iSense`, `Infinity Vision`, `4K`, `Laser`, `Dolby Atmos`, `35 mm`, `70 mm`. Schema.org has no sound format on a screening, so `Dolby Atmos` is listed there too.
 
-A merged `Movie` lists its source records in `isBasedOn`.
-
-Each action's `instrument` is a `SoftwareSourceCode` entity naming the module it ran. That module is `isPartOf` a snapshot of all pipeline code. The snapshot records the git commit as `version`, suffixed `-dirty` when the source files differ from it. Its `encoding` is a deterministic tar of `src/allabiografer/`, `pyproject.toml`, and `uv.lock`, stored as an asset, so a run can be traced to the exact bytes it executed even when uncommitted.
+Each action's `instrument` is a `SoftwareSourceCode` entity naming the module it ran. That module is `isPartOf` a snapshot of all pipeline code. The snapshot records the git commit as `version`, suffixed `-dirty` when the source files differ from it. Its `encoding` is a deterministic tar of `src/allabiografer/`, `pyproject.toml`, `uv.lock` and the registry under `data/allabiografer/schema/`, stored as an asset, so a run can be traced to the exact bytes it executed and the registry it read, even when uncommitted or since edited.
 
 ## Website
 
-`www/` is the allabiografer.se site rendered from the latest merged `Dataset`, regenerated on every run and not checked in. `src/allabiografer/site/` holds the page code, templates, styles, scripts and fonts; `render.py` translates the merged graph into its page data. Each programme has an `index.md` and an `index.jsonld`. Former film and cinema slugs are static redirect pages: a meta refresh, a canonical link to the new address, `noindex`, and a script that keeps the URL fragment.
+`www/` is the allabiografer.se site rendered from the latest `Programme`, regenerated on every run and not checked in. `src/allabiografer/site/` holds the page code, templates, styles, scripts and fonts; `render.py` translates the `Programme` into its page data. Each programme has an `index.md` and an `index.jsonld`. Former film and cinema slugs are static redirect pages: a meta refresh, a canonical link to the new address, `noindex`, and a script that keeps the URL fragment.
 
 Posters are downloaded into the store once; render crops and resizes them to WebP at 104, 125, 250 and 500 px directly into `www/posters/`.

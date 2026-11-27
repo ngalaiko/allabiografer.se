@@ -2,9 +2,9 @@
 
 Fetch adapters expose `fetch_pages(session, inputs, today, *, selectors=None)` and
 write captures into `inputs` by file name. Parse adapters expose `rows(inputs, today)`
-yielding `(venue, show_id, start, ticket, version, presentation, movie_id, capture, movie)`,
-where `venue[0]` is the adapter's venue ID (None for single-cinema adapters)
-and `capture` names the file the movie came from.
+yielding `(venue, show_id, start, ticket, version, presentation, movie_id, capture, movie, listing)`,
+where `venue[0]` is the adapter's venue ID (None for single-cinema adapters),
+`capture` names the file the movie came from and `listing` the files the screening was read from.
 """
 
 import json
@@ -76,8 +76,11 @@ def facts(*, format="", language="", subtitles="", source_texts=(), audio_role_t
     return found["version"], found["presentation"]
 
 
-def single_venue_rows(venue_id, screenings):
-    """Rows for adapters that publish one cinema and link each film to its own page."""
+def single_venue_rows(venue_id, screenings, listing=None):
+    """Rows for adapters that publish one cinema and link each film to its own page.
+
+    Screenings are read from `listing`, or from their film's page when it is None.
+    """
     for show_id, start, ticket, audio, subtitles, movie in screenings:
         slug = film_id(movie["url"])
         yield (
@@ -89,4 +92,5 @@ def single_venue_rows(venue_id, screenings):
             slug,
             f"movie-{slug}.html",
             movie,
+            listing or f"movie-{slug}.html",
         )

@@ -19,7 +19,7 @@ _COMBINED_VERSION = re.compile(r"\((\w+\.?\s*tal)\s*&\s*(\w+\.?\s*(?:txt|text))\
 
 def rows(inputs, today):
     pages = Pages(inputs)
-    screenings = []
+    screenings, listings = [], []
     films = {}
     seen = set()
     for site, item in candidates(pages, today):
@@ -71,5 +71,6 @@ def rows(inputs, today):
         screenings.append(
             (venue, stable_key(event.url), event.start, event.url, *facts(language=audio, subtitles=subtitles), slug)
         )
-    for row in screenings:
-        yield (*row, *films[row[-1]])
+        listings.append(pages.filename(item.url))
+    for row, listing in zip(screenings, listings, strict=True):
+        yield (*row, *films[row[-1]], listing)

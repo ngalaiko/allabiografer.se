@@ -57,4 +57,5 @@ def rows(inputs, today):
                     credits={"director": [director]} if director else None,
                     year=year,
                 ),
+                path.name,
             )

@@ -97,4 +97,4 @@ def screenings(inputs, today):
 
 
 def rows(inputs, today):
-    return single_venue_rows(None, screenings(inputs, today))
+    return single_venue_rows(None, screenings(inputs, today), "programme.html")

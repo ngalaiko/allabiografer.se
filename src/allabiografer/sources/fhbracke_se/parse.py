@@ -18,7 +18,7 @@ VENUE = (None, site._CINEMA, site._ADDRESS, site._CITY)
 def rows(inputs, today):
     pages = Pages(inputs)
     seen = set()
-    for show, event, broadcast in programme_rows(pages, today):
+    for show, event, broadcast, programme in programme_rows(pages, today):
         title = show["title"]
         url = show["url"]
         html = pages.text(url, optional=True)
@@ -49,4 +49,9 @@ def rows(inputs, today):
             stable_key(broadcast, title_key(title)),
             pages.filename(url if html else site._URL),
             details_fields(title, url, details),
+            (
+                pages.filename(site._EVENTS if broadcast else site._URL),
+                *(pages.captured(*programme.urls, event.url) if event else []),
+                *([pages.filename(url)] if html else []),
+            ),
         )

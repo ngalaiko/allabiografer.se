@@ -56,4 +56,5 @@ def rows(inputs, today):
             str(movie_id),
             capture,
             movies[movie_id],
+            programme,
         )

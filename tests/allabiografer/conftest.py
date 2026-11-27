@@ -54,20 +54,18 @@ def parse_dataset(graph, adapter, feeds, films, *, day=DAY):
     for feed, screenings in shows.items():
         path = graph.path("DataFeed", feed)
         snapshots.append(
-            {
-                "@id": f"#feed-{feed}",
-                "@type": "Dataset",
-                "name": feed,
-                "isBasedOn": graph.ref(path),
-                "about": graph.ref(graph.resolve(path, graph.read(path)["about"])),
-                "temporalCoverage": day.isoformat(),
-                "hasPart": screenings,
-            }
+            {"@id": f"#feed-{feed}", "@type": "Dataset", "isBasedOn": graph.ref(path), "hasPart": screenings}
         )
-    return graph.put_dataset(
-        {"temporalCoverage": day.isoformat(), "about": [graph.ref(graph.path("DataFeed", feed)) for feed in feeds]},
-        movies + snapshots,
+    capture = graph.put(
+        "Dataset",
+        {
+            "name": f"{adapter} pages",
+            "temporalCoverage": day.isoformat(),
+            "about": [graph.ref(graph.path("DataFeed", feed)) for feed in feeds],
+            "distribution": [],
+        },
     )
+    return graph.put_dataset({"name": f"{adapter} listings", "isBasedOn": graph.ref(capture)}, movies + snapshots)
 
 
 def contents(graph, dataset):

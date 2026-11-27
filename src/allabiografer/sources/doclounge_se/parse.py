@@ -36,4 +36,5 @@ def rows(inputs, today):
             stable_key(url or title),
             capture,
             details_fields(title, url, details),
+            "programme.html",
         )

@@ -1,4 +1,5 @@
 import json
+from datetime import date
 
 from conftest import DAY
 
@@ -133,3 +134,48 @@ def test_mirroring_copies_new_objects_deletes_stale_ones_and_refuses_an_empty_so
     assert not target.exists("assets/old")
     # The registry is never mirrored, nor deleted.
     assert target.exists("schema/City/Göteborg.jsonld")
+
+
+def test_pruning_keeps_the_sources_of_past_screenings(graph, parsed):
+    def run(result, name, end):
+        graph.save(
+            "UpdateAction",
+            name,
+            {
+                "startTime": end,
+                "endTime": end,
+                "actionStatus": "https://schema.org/CompletedActionStatus",
+                "result": graph.ref(result),
+            },
+        )
+
+    listed = {"a": ({"name": "Dune"}, [("Bio Rio", "2026-12-01T18:00:00+01:00")])}
+    first_parse = parsed(graph, "x", ["Bio Rio"], listed)
+    first = merge_datasets(graph, None, [first_parse], DAY)
+    run(first, "first", "2026-12-01T00:00:00+00:00")
+    later = merge_datasets(
+        graph, first, [parsed(graph, "x", ["Bio Rio"], {}, day=date(2026, 12, 5))], date(2026, 12, 5)
+    )
+    run(later, "later", "2026-12-05T00:00:00+00:00")
+
+    prune(graph, keep=1)
+
+    (past,) = [part for part in graph.parts(later).values() if part["@type"] == "ScreeningEvent"]
+    dataset, source = graph.find(later, past["isBasedOn"])
+    assert dataset == first_parse
+    assert source["startDate"] == past["startDate"]
+
+
+def test_pruning_keeps_the_newest_render_of_the_kept_result(tmp_path):
+    graph = Graph(tmp_path)
+    dataset = graph.put_dataset({"name": "result"}, [])
+    done = {"actionStatus": "https://schema.org/CompletedActionStatus"}
+    graph.save("UpdateAction", "run", {"startTime": "1", "endTime": "2", "result": graph.ref(dataset), **done})
+    website = {"@type": "WebSite", "url": "https://allabiografer.se"}
+    for name, start in (("old", "3"), ("new", "4")):
+        graph.save("CreateAction", name, {"startTime": start, "object": graph.ref(dataset), "result": website, **done})
+
+    prune(graph, keep=1)
+
+    assert graph.exists(graph.path("CreateAction", "new"))
+    assert not graph.exists(graph.path("CreateAction", "old"))

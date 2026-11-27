@@ -63,4 +63,5 @@ def rows(inputs, today):
             key,
             capture,
             fields,
+            ("programme.html", capture),
         )

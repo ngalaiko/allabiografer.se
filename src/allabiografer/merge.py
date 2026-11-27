@@ -1,6 +1,6 @@
-"""Fold new parse Datasets into the previous merged Dataset.
+"""Build the Programme: new listings folded into the previous Programme.
 
-The merged Dataset carries the state between runs:
+The Programme carries the state between runs:
 
 - `isBasedOn` lists the parse Datasets in effect, oldest first. Each registry DataFeed's
   screenings come from the newest one with a snapshot of it, so feeds left out of a run, or
@@ -9,6 +9,9 @@ The merged Dataset carries the state between runs:
   past screenings of the last `HISTORY` days, carried from the previous result: the
   newsletter tells new films from those shown recently. A show listed by several feeds of
   one cinema appears once.
+
+Every part links its sources in `isBasedOn`: a screening the parsed screening it is, a film
+its parsed records and, when TMDB filled it, the responses and posters that decided it.
 
 Films keep a stable slug, the `allabiografer:film` identifier. Grouping is re-evaluated
 on every run; a group reuses the oldest identity among its members, slugs are never
@@ -21,8 +24,9 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from typing import TYPE_CHECKING
 
+from . import enrich as tmdb
 from .graph import fragment
-from .movie_matching import groups
+from .movie_matching import groups, references
 from .sources._shared import STOCKHOLM
 
 if TYPE_CHECKING:
@@ -97,7 +101,7 @@ def _previous_films(graph: Graph, previous: Path) -> tuple[list[Identity], dict[
             raise ValueError(f"{previous} has no film identities; start with --fresh")
         identity = Identity(values[FILM][0], film["dateCreated"], set(values.get(ALIAS, [])))
         identities.append(identity)
-        for reference in film["isBasedOn"]:
+        for reference in _records(film):
             dataset, member = graph.find(previous, reference)
             key = _key(member)
             owners[key] = identity
@@ -105,12 +109,39 @@ def _previous_films(graph: Graph, previous: Path) -> tuple[list[Identity], dict[
     return identities, owners, records
 
 
-def merge_datasets(graph: Graph, previous: Path | None, parsed: list[Path], day: date) -> Path:
+def _records(film: dict) -> list[dict]:
+    """A film's links to parsed records; the others lead to TMDB responses and posters."""
+    return [reference for reference in film["isBasedOn"] if "#" in reference["@id"]]
+
+
+@dataclass
+class Combined:
+    """A merge before it is stored: the Dataset's fields, its films and its screenings."""
+
+    fields: dict
+    films: list[dict]
+    screenings: list[dict]
+    day: date
+
+
+def merge_datasets(
+    graph: Graph, previous: Path | None, parsed: list[Path], day: date, capture: Path | None = None
+) -> Path:
+    """The Programme; films needing it are filled from the TMDB answers in `capture` alone."""
+    combined = combine(graph, previous, parsed, day)
+    parts = combined.films + combined.screenings
+    if capture is not None:
+        parts, count = tmdb.enrich_parts(graph, parts, day, tmdb.replaying(graph, capture))
+        print(f"Filled {count} films from TMDB")
+    return graph.put_dataset(combined.fields, parts)
+
+
+def combine(graph: Graph, previous: Path | None, parsed: list[Path], day: date) -> Combined:
     identities, owners, records = _previous_films(graph, previous) if previous else ([], {}, {})
     # Past screenings name the previous film; any of its source records identifies it now.
     past_keys = {}
     for _, film in _of(graph, previous, "Movie") if previous else []:
-        for reference in film["isBasedOn"]:
+        for reference in _records(film):
             past_keys.setdefault(film["@id"], _key(graph.find(previous, reference)[1]))
     datasets = [graph.resolve(previous, ref) for ref in graph.read(previous)["isBasedOn"]] if previous else []
     datasets += parsed
@@ -138,14 +169,14 @@ def merge_datasets(graph: Graph, previous: Path | None, parsed: list[Path], day:
     cinemas = set()
     for feed, (_, (dataset, part)) in sorted(suppliers.items(), key=lambda item: str(item[0])):
         snapshot = graph.parts(dataset)[part]
-        cinemas.add(graph.resolve(dataset, snapshot["about"]))
+        cinemas.add(graph.resolve(feed, graph.read(feed)["about"]))
         for screening in snapshot["hasPart"]:
             start = datetime.fromisoformat(screening["startDate"])
             if start.astimezone(STOCKHOLM).date() < day:
                 continue
             key = keys[(dataset, screening["workPresented"]["@id"][1:])]
             shown[key] += 1
-            screenings.append((key, graph.resolve(dataset, screening["location"]), feed, screening))
+            screenings.append((key, graph.resolve(dataset, screening["location"]), feed, dataset, screening))
 
     used = {slug for identity in identities for slug in (identity.slug, *identity.aliases)}
     claimed: set[str] = set()
@@ -179,22 +210,31 @@ def merge_datasets(graph: Graph, previous: Path | None, parsed: list[Path], day:
         # Repointed to the film its source record belongs to now; records gone keep no history.
         if (key := past_keys.get(screening["workPresented"]["@id"])) in films:
             parts[screening["@id"]] = screening | {"workPresented": {"@id": films[key]["@id"]}}
-    for key, screening in _distinct(screenings, {key: film["@id"] for key, film in films.items()}):
-        merged = {k: v for k, v in screening.items() if k != "@id"} | {"workPresented": {"@id": films[key]["@id"]}}
+    for key, dataset, screening in _distinct(screenings, {key: film["@id"] for key, film in films.items()}):
+        merged = {k: v for k, v in screening.items() if k != "@id"} | {
+            "workPresented": {"@id": films[key]["@id"]},
+            "isBasedOn": graph.part_ref(dataset, screening["@id"][1:]),
+        }
         merged = {"@id": "#" + fragment("screening", merged), **merged}
         parts[merged["@id"]] = merged
-    days = sorted({graph.read(dataset)["temporalCoverage"] for dataset in in_effect})
+    days = sorted({_captured(graph, dataset)["temporalCoverage"] for dataset in in_effect})
     unique_films = {film["@id"]: film for film in films.values()}
-    return graph.put_dataset(
+    return Combined(
         {
-            "name": "Merged screenings",
+            "name": "Programme",
             "temporalCoverage": days[0] if len(days) == 1 else f"{days[0]}/{days[-1]}",
             "isBasedOn": [graph.ref(dataset) for dataset in in_effect],
-            "spatialCoverage": graph.ref(graph.path("Country", "Sverige")),
             "about": [graph.ref(cinema) for cinema in sorted(cinemas, key=str)],
         },
-        [unique_films[key] for key in sorted(unique_films)] + [parts[key] for key in sorted(parts)],
+        [unique_films[key] for key in sorted(unique_films)],
+        [parts[key] for key in sorted(parts)],
+        day,
     )
+
+
+def _captured(graph: Graph, parsed: Path) -> dict:
+    """The capture a parse Dataset was read from."""
+    return graph.read(graph.resolve(parsed, graph.read(parsed)["isBasedOn"]))
 
 
 def _history(graph: Graph, previous: Path, day: date) -> list[dict]:
@@ -207,25 +247,25 @@ def _history(graph: Graph, previous: Path, day: date) -> list[dict]:
     return found
 
 
-def _distinct(screenings: list, films: dict) -> list[dict]:
+def _distinct(screenings: list, films: dict) -> list[tuple]:
     """One screening per show: feeds of one cinema may list the same one.
 
     A show is a film at a cinema at a start time in one version. Within a feed, matching
     entries stay apart; a source lists what it sells, such as two halls.
     """
-    shows: dict[tuple, dict[Path, list[dict]]] = {}
-    for key, cinema, feed, screening in screenings:
+    shows: dict[tuple, dict[Path, list[tuple]]] = {}
+    for key, cinema, feed, dataset, screening in screenings:
         version = json.dumps(
             [screening.get(name) for name in ("inLanguage", "subtitleLanguage", "videoFormat")],
             sort_keys=True,
         )
         show = (films[key], cinema, datetime.fromisoformat(screening["startDate"]), version)
-        shows.setdefault(show, {}).setdefault(feed, []).append((key, screening))
+        shows.setdefault(show, {}).setdefault(feed, []).append((key, dataset, screening))
     result = []
     for by_feed in shows.values():
         # The cinema's own feed, then the one naming an organiser, keeps the show.
-        feed = min(by_feed, key=lambda feed: ("organizer" in by_feed[feed][0][1], str(feed)))
-        result += [(key, screening) for key, screening in by_feed[feed]]
+        feed = min(by_feed, key=lambda feed: ("organizer" in by_feed[feed][0][2], str(feed)))
+        result += by_feed[feed]
     return result
 
 
@@ -240,8 +280,8 @@ def _film(graph: Graph, identity: Identity, members: list[str], movies: dict, re
             if name not in _OWN_FIELDS:
                 fields.setdefault(name, value)
         links = movie.get("sameAs", [])
-        # Source pages identify the film too; the film's own url is its allabiografer page.
-        same_as |= {movie.get("url", ""), *(links if isinstance(links, list) else [links])} - {""}
+        # TMDB and IMDb entries identify the film; source pages are reached through `isBasedOn`.
+        same_as |= {link for link in (links if isinstance(links, list) else [links]) if references({"sameAs": [link]})}
         if image is None and (found := movie.get("image")):
             image = graph.ref(graph.resolve(records[key][0], found)) if isinstance(found, dict) else found
     return {

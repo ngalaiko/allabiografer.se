@@ -36,6 +36,14 @@ def schedule_rows(items):
             yield item.get("id"), title, start, screen, language, subtitles, movie, ticket
 
 
+def evidence(inputs, programme, event):
+    """Tickster pages a showing was matched on: the listing, and the event page when it was read."""
+    if event is None:
+        return []
+    pages = [tickster_path(inputs, url) for url in (*programme.urls, event.url)]
+    return [page.name for page in pages if page.is_file()]
+
+
 def venue_id(url):
     return stable_key(url)
 
@@ -83,4 +91,5 @@ def rows(inputs, today):
                 movie_id,
                 path.name,
                 movies[movie_id],
+                (path.name, *evidence(inputs, programme, event)),
             )
