@@ -32,16 +32,14 @@ from PIL import Image, UnidentifiedImageError
 
 from allabiografer.model import Film, Screening, Venue, title_key
 from allabiografer.model.version import (
-    Accessibility,
     AudioKind,
     AudioVersion,
     ContentVersion,
-    Dimension,
     Language,
     Presentation,
-    PresentationSystem,
-    ProjectionMedium,
     SubtitleVersion,
+    VideoFormat,
+    ordered,
     speech_label,
     subtitles_label,
 )
@@ -52,17 +50,15 @@ from .og import write_card
 if TYPE_CHECKING:
     from allabiografer.model.movie import Movie
 
-_FORMAT_SYSTEMS = frozenset(
-    {
-        PresentationSystem.IMAX,
-        PresentationSystem.DOLBY_CINEMA,
-        PresentationSystem.FOUR_DX,
-        PresentationSystem.SCREENX,
-        PresentationSystem.D_BOX,
-        PresentationSystem.ISENSE,
-        PresentationSystem.INFINITY_VISION,
-    }
-)
+_DIMENSIONS = frozenset({VideoFormat.TWO_D, VideoFormat.THREE_D})
+_GAUGES = frozenset({VideoFormat.MM_35, VideoFormat.MM_70})
+_PICTURE = frozenset({VideoFormat.K4, VideoFormat.LASER})
+_SYSTEMS = frozenset(VideoFormat) - _DIMENSIONS - _GAUGES - _PICTURE
+
+
+def _one(video: frozenset[VideoFormat], aspect: frozenset[VideoFormat]) -> VideoFormat | None:
+    return next(iter(video & aspect), None)
+
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -340,14 +336,9 @@ def _deduplicate_screenings(sd: SiteData) -> list[Screening]:
                         edition=profile[3],
                     ),
                     presentation=Presentation(
-                        experiences=profile[4],
-                        dimension=profile[5] or Dimension.UNKNOWN,
-                        medium=profile[6],
-                        projection=profile[7],
-                        sound=profile[8],
-                        auditorium=profile[9],
+                        video=profile[4].union({profile[5], profile[6]} - {None}, profile[7]),
+                        audio=profile[8],
                     ),
-                    accessibility=Accessibility(profile[10]),
                     raw_attributes=tuple(sorted({a for s in members for a in s.raw_attributes})),
                 )
             )
@@ -588,16 +579,16 @@ def _programme_nodes(
             ticket_url=s.ticket_url,
         )
         p = s.presentation
-        formats = sorted(p.experiences & _FORMAT_SYSTEMS)
-        if p.dimension != Dimension.UNKNOWN:
-            formats.append(p.dimension)
-        if p.medium != ProjectionMedium.UNKNOWN:
-            formats.append(p.medium)
-        formats.extend(sorted(p.projection))
-        if formats:
-            event["videoFormat"] = " ".join(formats)
+        shown = [
+            *sorted(p.video & _SYSTEMS),
+            *(p.video & _DIMENSIONS),
+            *(p.video & _GAUGES),
+            *sorted(p.video & _PICTURE),
+        ]
+        if shown:
+            event["videoFormat"] = " ".join(shown)
         details = [s.screen] if s.screen else []
-        details.extend(sorted(p.sound | p.auditorium))
+        details.extend(sorted(p.audio))
         if details:
             event["description"] = ", ".join(details)
         if s.version.audio.languages and s.version.audio.kind != AudioKind.SILENT:
@@ -771,13 +762,11 @@ def _variant_profile(screening: Screening) -> tuple:
         frozenset(audio.languages) or None,
         frozenset(subtitle_languages) if subtitle_languages is not None else None,
         version.edition if version.edition != "Inspelad repris" else None,
-        presentation.experiences & _FORMAT_SYSTEMS,
-        presentation.dimension if presentation.dimension != Dimension.UNKNOWN else None,
-        presentation.medium,
-        frozenset(presentation.projection),
-        frozenset(presentation.sound),
-        frozenset(presentation.auditorium),
-        frozenset(screening.accessibility.features),
+        presentation.video & _SYSTEMS,
+        _one(presentation.video, _DIMENSIONS),
+        _one(presentation.video, _GAUGES),
+        presentation.video & _PICTURE,
+        presentation.audio,
     )
 
 
@@ -788,14 +777,14 @@ def _profiles_compatible(left: tuple, right: tuple) -> bool:
             if not a.intersection(b):
                 return False
             continue
-        # Unknown medium may join digital. Film formats (35/70 mm) stay distinct.
-        if index == 6 and {a, b} == {ProjectionMedium.UNKNOWN, ProjectionMedium.DIGITAL}:
-            continue
+        # Film gauges (35/70 mm) stay distinct from digital projection.
+        if index == 6 and a != b:
+            return False
         # Missing dimension may join 2D, but 3D remains distinct in every
         # presentation system and projection medium.
         if index == 5 and (a is None) != (b is None):
             known = b if a is None else a
-            if known == Dimension.THREE_D:
+            if known == VideoFormat.THREE_D:
                 return False
         if a is not None and b is not None and a != b:
             return False
@@ -808,10 +797,7 @@ def _merge_profiles(left: tuple, right: tuple) -> tuple:
         if index == 1 and a is not None and b is not None:
             merged.append(a.union(b))
             continue
-        if index == 6 and {a, b} == {ProjectionMedium.UNKNOWN, ProjectionMedium.DIGITAL}:
-            merged.append(ProjectionMedium.DIGITAL)
-        else:
-            merged.append(a if a is not None else b)
+        merged.append(a if a is not None else b)
     return tuple(merged)
 
 
@@ -913,16 +899,12 @@ def _profile_component_label(index: int, profile: tuple) -> str:
         return _subtitle_label(value)
     if index == 3:
         return value or "Edition okänd"
-    if index == 4:
-        return ", ".join(sorted(system.value for system in value)) if value else ""
+    if index in (4, 7, 8):
+        return ", ".join(ordered(value))
     if index == 5:
         return value.value if value else "Dimension okänd"
     if index == 6:
-        if value in (ProjectionMedium.UNKNOWN, ProjectionMedium.DIGITAL):
-            return ""
-        return value.value if value else "Projektion okänd"
-    if index in (7, 8, 9, 10):
-        return ", ".join(sorted(attribute.value for attribute in value))
+        return value.value if value else ""
     return ""
 
 
@@ -949,11 +931,11 @@ def _variants(screenings: list[Screening]) -> dict[Screening, tuple[str, str]]:
         if len({profile[4] for profile in profiles}) > 1 or any(profile[4] for profile in profiles):
             split_axes.add(4)
         known_dimensions = {profile[5] for profile in profiles if profile[5] is not None}
-        if len(known_dimensions) > 1 or any(profile[5] == Dimension.THREE_D for profile in profiles):
+        if len(known_dimensions) > 1 or any(profile[5] == VideoFormat.THREE_D for profile in profiles):
             split_axes.add(5)
-        if any(profile[6] in (ProjectionMedium.MM_35, ProjectionMedium.MM_70) for profile in profiles):
+        if any(profile[6] for profile in profiles):
             split_axes.add(6)
-        for index in (7, 8, 9, 10):
+        for index in (7, 8):
             if any(profile[index] for profile in profiles):
                 split_axes.add(index)
         for members, profile in film_groups:

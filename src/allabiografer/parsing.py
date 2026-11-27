@@ -6,35 +6,21 @@ from importlib import import_module
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from allabiografer.model import Dimension, Presentation, PresentationSystem, ProjectionMedium
+from allabiografer.model.version import formats
 
 from .graph import fragment
 from .movie_fields import normalise
 from .schedule import PREFIX
 
 if TYPE_CHECKING:
-    from allabiografer.model.version import ContentVersion
+    from allabiografer.model.version import ContentVersion, Presentation
 
     from .graph import Graph
 
-# Picture and projection formats. Sound, seating and programme labels are not video formats.
-_SYSTEMS = (
-    PresentationSystem.IMAX,
-    PresentationSystem.DOLBY_CINEMA,
-    PresentationSystem.FOUR_DX,
-    PresentationSystem.SCREENX,
-)
-_MEDIA = (ProjectionMedium.MM_35, ProjectionMedium.MM_70)
-
 
 def video_format(presentation: Presentation) -> list[str]:
-    formats = []
-    if presentation.dimension is not Dimension.UNKNOWN:
-        formats.append(str(presentation.dimension))
-    formats += [str(system) for system in _SYSTEMS if system in presentation.experiences]
-    if presentation.medium in _MEDIA:
-        formats.append(str(presentation.medium))
-    return formats
+    """Schema.org has no audio format on a screening: sound formats join the video ones."""
+    return [str(value) for value in formats(presentation)]
 
 
 def language_fields(version: ContentVersion) -> dict:

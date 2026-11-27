@@ -216,7 +216,8 @@ def _distinct(screenings: list, films: dict) -> list[dict]:
     shows: dict[tuple, dict[Path, list[dict]]] = {}
     for key, cinema, feed, screening in screenings:
         version = json.dumps(
-            [screening.get(name) for name in ("inLanguage", "subtitleLanguage", "videoFormat")], sort_keys=True
+            [screening.get(name) for name in ("inLanguage", "subtitleLanguage", "videoFormat")],
+            sort_keys=True,
         )
         show = (films[key], cinema, datetime.fromisoformat(screening["startDate"]), version)
         shows.setdefault(show, {}).setdefault(feed, []).append((key, screening))

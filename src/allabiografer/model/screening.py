@@ -5,20 +5,15 @@ from datetime import date, time
 from typing import Self
 
 from allabiografer.model.version import (
-    Accessibility,
-    AccessibilityFeature,
+    AudioFormat,
     AudioKind,
     AudioVersion,
-    AuditoriumAttribute,
     ContentVersion,
-    Dimension,
     Language,
     Presentation,
-    PresentationSystem,
-    ProjectionAttribute,
-    ProjectionMedium,
-    SoundAttribute,
     SubtitleVersion,
+    VideoFormat,
+    ordered,
 )
 
 
@@ -38,7 +33,6 @@ class Screening:
     screen: str = ""
     version: ContentVersion = field(default_factory=ContentVersion)
     presentation: Presentation = field(default_factory=Presentation)
-    accessibility: Accessibility = field(default_factory=Accessibility)
     raw_attributes: tuple[str, ...] = ()
     runtime: int | None = None
 
@@ -57,7 +51,6 @@ class Screening:
             "screen": self.screen,
             "version": _content_to_dict(self.version),
             "presentation": _presentation_to_dict(self.presentation),
-            "accessibility": [feature.value for feature in sorted(self.accessibility.features)],
             "raw_attributes": list(self.raw_attributes),
             **({"runtime": self.runtime} if self.runtime is not None else {}),
         }
@@ -79,7 +72,6 @@ class Screening:
             screen=d.get("screen", ""),
             version=_content_from_dict(d.get("version", {})),
             presentation=_presentation_from_dict(d.get("presentation", {})),
-            accessibility=Accessibility(frozenset(AccessibilityFeature(v) for v in d.get("accessibility", ()))),
             raw_attributes=tuple(d.get("raw_attributes", ())),
             runtime=d.get("runtime"),
         )
@@ -106,21 +98,13 @@ def _content_from_dict(d: dict) -> ContentVersion:
 
 def _presentation_to_dict(p: Presentation) -> dict:
     return {
-        "experiences": sorted(x.value for x in p.experiences),
-        "dimension": p.dimension.value,
-        "medium": p.medium.value,
-        "projection": sorted(x.value for x in p.projection),
-        "sound": sorted(x.value for x in p.sound),
-        "auditorium": sorted(x.value for x in p.auditorium),
+        "video": [x.value for x in ordered(p.video)],
+        "audio": [x.value for x in ordered(p.audio)],
     }
 
 
 def _presentation_from_dict(d: dict) -> Presentation:
     return Presentation(
-        experiences=frozenset(PresentationSystem(x) for x in d.get("experiences", ())),
-        dimension=Dimension(d.get("dimension", "unknown")),
-        medium=ProjectionMedium(d.get("medium", "unknown")),
-        projection=frozenset(ProjectionAttribute(x) for x in d.get("projection", ())),
-        sound=frozenset(SoundAttribute(x) for x in d.get("sound", ())),
-        auditorium=frozenset(AuditoriumAttribute(x) for x in d.get("auditorium", ())),
+        video=frozenset(VideoFormat(x) for x in d.get("video", ())),
+        audio=frozenset(AudioFormat(x) for x in d.get("audio", ())),
     )

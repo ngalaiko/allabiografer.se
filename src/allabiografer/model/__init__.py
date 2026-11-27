@@ -3,21 +3,15 @@
 from allabiografer.model.film import Film, film_key, title_key
 from allabiografer.model.screening import Screening
 from allabiografer.model.venue import Venue
-from allabiografer.model.version import (
-    Dimension,
-    Presentation,
-    PresentationSystem,
-    ProjectionMedium,
-)
+from allabiografer.model.version import AudioFormat, Presentation, VideoFormat
 
 __all__ = [
-    "Dimension",
+    "AudioFormat",
     "Film",
     "Presentation",
-    "PresentationSystem",
-    "ProjectionMedium",
     "Screening",
     "Venue",
+    "VideoFormat",
     "film_key",
     "title_key",
 ]

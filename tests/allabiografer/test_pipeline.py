@@ -7,7 +7,7 @@ import pytest
 
 from allabiografer import pipeline
 from allabiografer.graph import Graph
-from allabiografer.model import Dimension, Presentation, PresentationSystem
+from allabiografer.model import AudioFormat, Presentation, VideoFormat
 from allabiografer.model.version import AudioVersion, ContentVersion, Language, SubtitleVersion
 from allabiografer.parsing import screening_fields
 from allabiografer.schedule import feeds
@@ -37,14 +37,32 @@ def test_entities_are_named_by_content(tmp_path):
 
 def test_screening_fields_use_bcp47_tags_and_video_formats_only():
     version = ContentVersion(AudioVersion(languages=frozenset({Language.ENGLISH})), SubtitleVersion(frozenset()))
-    presentation = Presentation(experiences=frozenset({PresentationSystem.IMAX}), dimension=Dimension.THREE_D)
+    presentation = Presentation(
+        video=frozenset({VideoFormat.MM_70, VideoFormat.IMAX, VideoFormat.THREE_D}),
+        audio=frozenset({AudioFormat.DOLBY_ATMOS}),
+    )
 
     assert screening_fields(version, presentation) == {
         "inLanguage": ["en"],
         "subtitleLanguage": [],
-        "videoFormat": ["3D", "IMAX"],
+        "videoFormat": ["3D", "IMAX", "Dolby Atmos", "70 mm"],
     }
     assert screening_fields(ContentVersion(), Presentation()) == {}
+
+
+def test_screening_formats_are_read_from_labels_and_fill_unstated_aspects():
+    from allabiografer.normalize import screening_facts
+
+    found = screening_facts(format="2D 3D IMAX Laser Atmos 35mm 70 mm D-Box iSense Infinity Vision 4K XL")
+    assert found["presentation"] == Presentation(
+        video=frozenset(VideoFormat)
+        - {VideoFormat.TWO_D, VideoFormat.MM_35, VideoFormat.DOLBY_CINEMA, VideoFormat.FOUR_DX, VideoFormat.SCREENX},
+        audio=frozenset({AudioFormat.DOLBY_ATMOS}),
+    )
+    found = screening_facts(format="IMAX", source_texts=("ScreenX 3D Atmos",))
+    assert found["presentation"] == Presentation(
+        video=frozenset({VideoFormat.IMAX, VideoFormat.THREE_D}), audio=frozenset({AudioFormat.DOLBY_ATMOS})
+    )
 
 
 def test_run_records_actions_and_links_screenings_to_the_registry(graph, monkeypatch):

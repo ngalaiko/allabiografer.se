@@ -1,4 +1,4 @@
-"""Typed screening content, presentation, and accessibility facts."""
+"""Typed screening content and presentation facts."""
 
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -85,7 +85,11 @@ class ContentVersion:
     edition: str | None = None
 
 
-class PresentationSystem(StrEnum):
+class VideoFormat(StrEnum):
+    """In display order: dimension, system, picture, film gauge."""
+
+    TWO_D = "2D"
+    THREE_D = "3D"
     IMAX = "IMAX"
     DOLBY_CINEMA = "Dolby Cinema"
     FOUR_DX = "4DX"
@@ -93,75 +97,42 @@ class PresentationSystem(StrEnum):
     D_BOX = "D-Box"
     ISENSE = "iSense"
     INFINITY_VISION = "Infinity Vision"
-    AFTERNOON_TEA = "Afternoon Tea"
-    RECORDED_THEATRE = "Inspelad teater"
-    KNATTEBIO = "Knattebio"
-    BOOK_CLUB = "Bokklubb"
-    BIOPASSET = "Biopasset"
-    CINEVILLE = "Cineville"
-    ROLL_AND_COFFEE_INCLUDED = "Frallfika ingår"
-    NEW_FINNISH_FILM = "Ny finsk film"
-    QA = "Frågestund"
-    DIRECTOR_QA = "Regissörssamtal (teckenspråkstolkat)"
-    FAMILY_CINEMA = "Familjebio"
-    PREMIERE = "Premiär"
-    PREVIEW = "Förhandsvisning"
-    BIOVINO = "BioVino"
-    PAWLIKOWSKI_SERIES = "3 x Pawlikowski"
-    LIVE_ON_CINEMA = "Live på bio"
-    CLASSIC = "Klassiker"
-    FILM_INTRODUCTION = "Filmintroduktion"
-    CHILDRENS_CINEMA = "Barnbio"
-    ARTHOUSE = "Arthouse"
-    LUX_AUDIENCE_AWARD = "LUX Audience Award"
-
-
-class Dimension(StrEnum):
-    UNKNOWN = "unknown"
-    TWO_D = "2D"
-    THREE_D = "3D"
-
-
-class ProjectionMedium(StrEnum):
-    UNKNOWN = "unknown"
-    DIGITAL = "digital"
+    K4 = "4K"
+    LASER = "Laser"
     MM_35 = "35 mm"
     MM_70 = "70 mm"
 
 
-class ProjectionAttribute(StrEnum):
-    K4 = "4K"
-    LASER = "Laser"
-
-
-class SoundAttribute(StrEnum):
+class AudioFormat(StrEnum):
     DOLBY_ATMOS = "Dolby Atmos"
-    SURROUND_7_1 = "7.1-ljud"
-
-
-class AuditoriumAttribute(StrEnum):
-    VIP = "VIP"
-    XL = "XL"
 
 
 @dataclass(frozen=True, slots=True)
 class Presentation:
-    experiences: frozenset[PresentationSystem] = frozenset()
-    dimension: Dimension = Dimension.UNKNOWN
-    medium: ProjectionMedium = ProjectionMedium.UNKNOWN
-    projection: frozenset[ProjectionAttribute] = frozenset()
-    sound: frozenset[SoundAttribute] = frozenset()
-    auditorium: frozenset[AuditoriumAttribute] = frozenset()
+    video: frozenset[VideoFormat] = frozenset()
+    audio: frozenset[AudioFormat] = frozenset()
 
 
-class AccessibilityFeature(StrEnum):
-    AUDIO_DESCRIPTION = "Syntolkning"
-    AUDIO_DESCRIPTION_VIA_APP = "Syntolkning via app"
+type Format = VideoFormat | AudioFormat
+_GAUGES = (VideoFormat.MM_35, VideoFormat.MM_70)
+# Sound reads before the film gauge: "3D IMAX Dolby Atmos 70 mm".
+_DISPLAY: tuple[Format, ...] = (
+    *(value for value in VideoFormat if value not in _GAUGES),
+    *AudioFormat,
+    *_GAUGES,
+)
 
 
-@dataclass(frozen=True, slots=True)
-class Accessibility:
-    features: frozenset[AccessibilityFeature] = frozenset()
+def ordered(formats: frozenset[Format]) -> list[Format]:
+    return [value for value in _DISPLAY if value in formats]
+
+
+def formats(presentation: Presentation) -> list[Format]:
+    """Video and audio formats in display order."""
+    return ordered(presentation.video | presentation.audio)
+
+
+FORMATS: dict[str, Format] = {value.value: value for value in _DISPLAY}
 
 
 class AgeRating(StrEnum):

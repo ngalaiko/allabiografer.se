@@ -13,14 +13,14 @@ from . import session as http
 from .model import Screening, Venue
 from .model.movie import Movie
 from .model.version import (
+    FORMATS,
+    AudioFormat,
     AudioVersion,
     ContentVersion,
-    Dimension,
     Language,
     Presentation,
-    PresentationSystem,
-    ProjectionMedium,
     SubtitleVersion,
+    VideoFormat,
 )
 from .posters import poster as _poster
 from .posters import stored_downloads
@@ -35,8 +35,6 @@ if TYPE_CHECKING:
 FILM = "allabiografer:film"
 ALIAS = "allabiografer:film-alias"
 _LANGUAGES = {language.tag: language for language in Language}
-_SYSTEMS = {system.value: system for system in PresentationSystem}
-_MEDIA = {medium.value: medium for medium in ProjectionMedium}
 
 
 def _identity(slug: str) -> int:
@@ -79,15 +77,12 @@ def _version(screening: dict) -> tuple[ContentVersion, Presentation]:
     subtitles = None
     if "subtitleLanguage" in screening:
         subtitles = frozenset(_LANGUAGES[tag] for tag in screening["subtitleLanguage"] if tag in _LANGUAGES)
-    formats = screening.get("videoFormat", [])
-    dimension = next((Dimension(value) for value in formats if value in {"2D", "3D"}), Dimension.UNKNOWN)
-    medium = next((_MEDIA[value] for value in formats if value in _MEDIA), ProjectionMedium.UNKNOWN)
+    found = {FORMATS[value] for value in screening.get("videoFormat", []) if value in FORMATS}
     return (
         ContentVersion(AudioVersion(languages=audio), SubtitleVersion(subtitles)),
         Presentation(
-            experiences=frozenset(_SYSTEMS[value] for value in formats if value in _SYSTEMS),
-            dimension=dimension,
-            medium=medium,
+            video=frozenset(value for value in found if isinstance(value, VideoFormat)),
+            audio=frozenset(value for value in found if isinstance(value, AudioFormat)),
         ),
     )
 

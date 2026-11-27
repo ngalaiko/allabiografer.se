@@ -9,20 +9,14 @@ import unicodedata
 
 from allabiografer.model.version import (
     LANGUAGES,
-    Accessibility,
-    AccessibilityFeature,
+    AudioFormat,
     AudioKind,
     AudioVersion,
-    AuditoriumAttribute,
     ContentVersion,
-    Dimension,
     Language,
     Presentation,
-    PresentationSystem,
-    ProjectionAttribute,
-    ProjectionMedium,
-    SoundAttribute,
     SubtitleVersion,
+    VideoFormat,
     speech_label,
     subtitles_label,
 )
@@ -31,27 +25,44 @@ NO_SPEECH = "Inget tal"
 NO_SUBTITLES = "Ej textad"
 
 # Spellings sites use for each format.
-_FORMAT_SPELLINGS = {
-    "IMAX": r"imax",
-    "Dolby Cinema": r"dolby\s*cinema",
-    "Dolby Atmos": r"(?:dolby\s*)?atmos",
-    "4DX": r"4dx",
-    "ScreenX": r"screen\s*x",
-    "D-Box": r"d-?box",
-    "iSense": r"isense",
-    "Infinity Vision": r"infinity\s*vision",
-    "3D": r"3d",
-    "70 mm": r"70\s*mm",
-    "35 mm": r"35\s*mm",
-    "4K": r"4k",
-    "Laser": r"laser",
-    "XL": r"xl",
-    "VIP": r"vip",
-    "Syntolkning": r"syntolk\w*",
+_SPELLINGS = {
+    VideoFormat.TWO_D: r"2d",
+    VideoFormat.THREE_D: r"3d",
+    VideoFormat.IMAX: r"imax",
+    VideoFormat.DOLBY_CINEMA: r"dolby\s*cinema",
+    VideoFormat.FOUR_DX: r"4dx",
+    VideoFormat.SCREENX: r"screen\s*x",
+    VideoFormat.D_BOX: r"d-?box",
+    VideoFormat.ISENSE: r"isense",
+    VideoFormat.INFINITY_VISION: r"infinity\s*vision",
+    VideoFormat.K4: r"4k",
+    VideoFormat.LASER: r"laser",
+    AudioFormat.DOLBY_ATMOS: r"(?:dolby\s*)?atmos",
+    VideoFormat.MM_35: r"35\s*mm",
+    VideoFormat.MM_70: r"70\s*mm",
 }
-_FORMAT_PATTERNS = {
-    tag: re.compile(rf"(?<![\w.]){pattern}(?!\w)", re.IGNORECASE) for tag, pattern in _FORMAT_SPELLINGS.items()
-}
+_PATTERNS = {value: re.compile(rf"(?<![\w.]){pattern}(?!\w)", re.IGNORECASE) for value, pattern in _SPELLINGS.items()}
+# Formats that describe one aspect of a screening; a fallback text fills only aspects left unstated.
+_ASPECTS = (
+    {VideoFormat.TWO_D, VideoFormat.THREE_D},
+    {
+        VideoFormat.IMAX,
+        VideoFormat.DOLBY_CINEMA,
+        VideoFormat.FOUR_DX,
+        VideoFormat.SCREENX,
+        VideoFormat.D_BOX,
+        VideoFormat.ISENSE,
+        VideoFormat.INFINITY_VISION,
+    },
+    {VideoFormat.K4, VideoFormat.LASER},
+    {VideoFormat.MM_35, VideoFormat.MM_70},
+    {AudioFormat.DOLBY_ATMOS},
+)
+
+
+def _fill[T](stated: frozenset[T], fallback: frozenset[T]) -> frozenset[T]:
+    return stated.union(*(fallback & aspect for aspect in _ASPECTS if not stated & aspect))
+
 
 # Codes that are not a prefix of the language name.
 _ALIASES = {
@@ -90,7 +101,7 @@ _UNSUBTITLED = {"ej", "ingen", "inget", "otextad", "otextat"}
 def formats(*texts: str) -> str:
     """Canonical format tags found in free-text labels."""
     joined = " , ".join(texts)
-    return ", ".join(tag for tag, pattern in _FORMAT_PATTERNS.items() if pattern.search(joined))
+    return ", ".join(str(value) for value, pattern in _PATTERNS.items() if pattern.search(joined))
 
 
 _LANGUAGES = {name.casefold(): member for member in Language for name in (member.value,)}
@@ -195,8 +206,8 @@ def normalize(
     audio_text: str | None = None,
     subtitle_text: str | None = None,
     audio_role_text: str | None = None,
-) -> tuple[ContentVersion, Presentation, Accessibility]:
-    """Extract typed version, presentation, and accessibility facts."""
+) -> tuple[ContentVersion, Presentation]:
+    """Extract typed version and presentation facts."""
     joined = " ".join(t for t in (*texts, audio_text or "", subtitle_text or "") if t)
     inferred_audio: list[str] = []
     inferred_subs: list[str] = []
@@ -265,53 +276,17 @@ def normalize(
     subtitles_value = SubtitleVersion(subtitle_languages)
     version = ContentVersion(audio, subtitles_value)
 
-    experiences = frozenset(
-        system
-        for system, label in (
-            (PresentationSystem.IMAX, "IMAX"),
-            (PresentationSystem.DOLBY_CINEMA, "Dolby Cinema"),
-            (PresentationSystem.FOUR_DX, "4DX"),
-            (PresentationSystem.SCREENX, "ScreenX"),
-            (PresentationSystem.D_BOX, "D-Box"),
-            (PresentationSystem.ISENSE, "iSense"),
-            (PresentationSystem.INFINITY_VISION, "Infinity Vision"),
-        )
-        if _FORMAT_PATTERNS[label].search(joined)
+    found = {value for value, pattern in _PATTERNS.items() if pattern.search(joined)}
+    # 3D wins over a stated 2D; 70 mm over 35 mm.
+    if VideoFormat.THREE_D in found:
+        found.discard(VideoFormat.TWO_D)
+    if VideoFormat.MM_70 in found:
+        found.discard(VideoFormat.MM_35)
+    presentation = Presentation(
+        video=frozenset(value for value in found if isinstance(value, VideoFormat)),
+        audio=frozenset(value for value in found if isinstance(value, AudioFormat)),
     )
-    dimension = (
-        Dimension.THREE_D
-        if _FORMAT_PATTERNS["3D"].search(joined)
-        else Dimension.TWO_D
-        if re.search(r"(?<!\w)2d(?!\w)", joined, re.IGNORECASE)
-        else Dimension.UNKNOWN
-    )
-    medium = (
-        ProjectionMedium.MM_70
-        if _FORMAT_PATTERNS["70 mm"].search(joined)
-        else ProjectionMedium.MM_35
-        if _FORMAT_PATTERNS["35 mm"].search(joined)
-        else ProjectionMedium.DIGITAL
-        if re.search(r"\bdigital\b", joined, re.IGNORECASE)
-        else ProjectionMedium.UNKNOWN
-    )
-    projection = frozenset(
-        attr
-        for attr, label in ((ProjectionAttribute.K4, "4K"), (ProjectionAttribute.LASER, "Laser"))
-        if _FORMAT_PATTERNS[label].search(joined)
-    )
-    sound = frozenset({SoundAttribute.DOLBY_ATMOS}) if _FORMAT_PATTERNS["Dolby Atmos"].search(joined) else frozenset()
-    auditorium = frozenset(
-        attr
-        for attr, label in ((AuditoriumAttribute.XL, "XL"), (AuditoriumAttribute.VIP, "VIP"))
-        if _FORMAT_PATTERNS[label].search(joined)
-    )
-    presentation = Presentation(experiences, dimension, medium, projection, sound, auditorium)
-    accessibility = Accessibility(
-        frozenset({AccessibilityFeature.AUDIO_DESCRIPTION})
-        if _FORMAT_PATTERNS["Syntolkning"].search(joined)
-        else frozenset()
-    )
-    return version, presentation, accessibility
+    return version, presentation
 
 
 def screening_facts(
@@ -324,14 +299,14 @@ def screening_facts(
     raw_attributes: tuple[str, ...] = (),
 ) -> dict[str, object]:
     """Structured Screening keyword fields for parsers holding normalized labels."""
-    version, presentation, accessibility = normalize(
+    version, presentation = normalize(
         format,
         audio_text=language or None,
         subtitle_text=subtitles or None,
         audio_role_text=audio_role_text or None,
     )
     if source_texts:
-        fallback_version, fallback_presentation, fallback_accessibility = normalize(*source_texts)
+        fallback_version, fallback_presentation = normalize(*source_texts)
         version = ContentVersion(
             audio=AudioVersion(
                 version.audio.kind if version.audio.kind is not AudioKind.UNKNOWN else fallback_version.audio.kind,
@@ -345,22 +320,12 @@ def screening_facts(
             edition=version.edition or fallback_version.edition,
         )
         presentation = Presentation(
-            experiences=presentation.experiences or fallback_presentation.experiences,
-            dimension=presentation.dimension
-            if presentation.dimension is not Dimension.UNKNOWN
-            else fallback_presentation.dimension,
-            medium=presentation.medium
-            if presentation.medium is not ProjectionMedium.UNKNOWN
-            else fallback_presentation.medium,
-            projection=presentation.projection or fallback_presentation.projection,
-            sound=presentation.sound or fallback_presentation.sound,
-            auditorium=presentation.auditorium or fallback_presentation.auditorium,
+            video=_fill(presentation.video, fallback_presentation.video),
+            audio=_fill(presentation.audio, fallback_presentation.audio),
         )
-        accessibility = Accessibility(accessibility.features | fallback_accessibility.features)
     return {
         "version": version,
         "presentation": presentation,
-        "accessibility": accessibility,
         "raw_attributes": raw_attributes,
     }
 
