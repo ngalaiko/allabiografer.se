@@ -9,6 +9,8 @@ Tools come from Nix; Python dependencies from `uv.lock`.
 nix run .#pull      # copy the production store into data/allabiografer
 nix run .#run       # update the programme in data/allabiografer and render it
 nix run .#serve     # serve data/allabiografer/www on :8000
+nix run .#trace     # draw the newest run, a step (--step) or a film's sources (--film) as SVG; --open shows it
+nix run .#fixture   # save, update or diff an adapter's test pages
 nix run .#newsletter # prepare (or --send) the weekly city editions
 nix run .#nginx     # the production server on data/allabiografer/www, :8080
 nix run .#deploy    # push the image with the rendered site to Fly (FLY_API_TOKEN)
@@ -18,7 +20,9 @@ nix run .#format
 nix develop         # shell with uv, Python and Node
 ```
 
-See [data/allabiografer/README.md](data/allabiografer/README.md) for the registry, pipeline and website.
+See [data/allabiografer/README.md](data/allabiografer/README.md) for the registry, pipeline and website, and
+[src/allabiografer/sources/README.md](src/allabiografer/sources/README.md) to add or change a source
+(agents: the `cinema-source` skill in `.agents/skills/`).
 
 ## Production
 
