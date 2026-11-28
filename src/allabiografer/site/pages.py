@@ -255,6 +255,10 @@ class SiteData:
     cinema_aliases: dict[tuple[str, str], str] = field(default_factory=dict)
     city_films: set[tuple[str, int]] = field(default_factory=set)
     sitemap_urls: list[str] = field(default_factory=list)
+    # Sharing card URLs by ("film", movie id) or ("city", name): written once per render.
+    cards: dict[tuple[str, object], str | None] = field(default_factory=dict)
+    # Images this render uses; others left by an earlier render are deleted.
+    images_written: set[Path] = field(default_factory=set)
     # Paths published before, such as "/film/dogville/": each still resolves, to itself or its nearest page.
     published: set[str] = field(default_factory=set)
     # Film slugs by former slug, for published pages of films renamed or joined since.
@@ -396,12 +400,27 @@ def _poster_bytes(sd: SiteData, movie_id: int) -> bytes | None:
         return None
 
 
+def _kept_poster(sd: SiteData, name: str) -> str | None:
+    """The URL of a poster a previous render encoded, keeping its files."""
+    files = [
+        sd.out_dir / "posters" / (f"{name}.webp" if width == POSTER_W else f"{name}-{width}.webp")
+        for width in POSTER_WIDTHS
+    ]
+    if not all(path.is_file() for path in files):
+        return None
+    sd.images_written.update(files)
+    return f"/posters/{name}.webp"
+
+
 def _poster_url(sd: SiteData, movie_id: int) -> str | None:
     """`/posters/<name>.webp`: the stored poster, cropped and resized for the site."""
     if movie_id in sd.poster_urls:
         return sd.poster_urls[movie_id]
     source = sd.posters.get(movie_id)
     url = None
+    if source is not None and (kept := _kept_poster(sd, source["sha256"][:16])):
+        sd.poster_urls[movie_id] = kept
+        return kept
     if source is not None:
         try:
             variants = _poster_variants(sd.graph.content(source))
@@ -416,6 +435,7 @@ def _poster_url(sd: SiteData, movie_id: int) -> str | None:
                 target = sd.out_dir / "posters" / filename
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(data)
+                sd.images_written.add(target)
             url = f"/posters/{name}.webp"
     sd.poster_urls[movie_id] = url
     return url
@@ -671,12 +691,13 @@ def _make_env() -> Environment:
 # ---------------------------------------------------------------------------
 
 
-def _build_newsletter_preferences(env: Environment, out_dir: Path) -> None:
+def _build_newsletter_preferences(env: Environment, sd: SiteData) -> None:
     # Private utility page: deliberately not registered in the public sitemap.
+    out_dir = sd.out_dir
     out_path = out_dir / "nyhetsbrev" / "installningar" / "index.html"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(
-        env.get_template("newsletter-preferences.html").render(og_image=_abs(write_card(out_dir))),
+        env.get_template("newsletter-preferences.html").render(og_image=_abs(_card(sd, out_dir))),
         encoding="utf-8",
     )
     write_page(
@@ -724,7 +745,7 @@ def _build_index(env: Environment, sd: SiteData) -> None:
         title="Alla biografer i Sverige – vad går på bio just nu?",
         description=SITE_DESCRIPTION,
         canonical=canonical,
-        og_image=_abs(write_card(sd.out_dir)),
+        og_image=_abs(_card(sd, sd.out_dir)),
         jsonld=_website_jsonld(),
         active="index",
         groups=groups,
@@ -1212,7 +1233,7 @@ def _write_programme(
         canonical=canonical,
         jsonld=_jsonld({"@context": "https://schema.org", "@graph": inline}) if inline else None,
         schedule_alternates=True,
-        og_image=og_image or _abs(write_card(sd.out_dir)),
+        og_image=og_image or _abs(_card(sd, sd.out_dir)),
         og_type=og_type,
         breadcrumbs=breadcrumbs,
         clear_filter_url=clear_filter_url,
@@ -1229,6 +1250,31 @@ def _write_programme(
         days = []
         programme_note = "Inga visningar de närmaste två veckorna."
     write_programme(out_path, title, blocks, days, note=programme_note, empty_context=empty_context)
+
+
+def _card(sd: SiteData, out_dir: Path, **fields) -> str:
+    """A sharing card, recorded as used by this render."""
+    url = write_card(out_dir, **fields)
+    sd.images_written.add(out_dir / url.lstrip("/"))
+    return url
+
+
+def _city_card(sd: SiteData, city_name: str) -> str | None:
+    """A city's sharing card: its pages, cinemas' and genres' too, share it."""
+    key = ("city", city_name)
+    if key not in sd.cards:
+        sd.cards[key] = _abs(_card(sd, sd.out_dir, title=f"Bio i {city_name}", subtitle="Program för alla biografer"))
+    return sd.cards[key]
+
+
+def _film_card(sd: SiteData, movie_id: int) -> str | None:
+    """A film's sharing card: its pages in every city share it."""
+    key = ("film", movie_id)
+    if key not in sd.cards:
+        movie = sd.movies[movie_id]
+        poster = _poster_bytes(sd, movie_id)
+        sd.cards[key] = _abs(_card(sd, sd.out_dir, title=movie.title_sv, subtitle="Speltider i Sverige", poster=poster))
+    return sd.cards[key]
 
 
 def _build_programme_pages(env: Environment, sd: SiteData) -> None:
@@ -1276,7 +1322,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             sd,
             city_screenings,
             title=title,
-            og_image=_abs(write_card(sd.out_dir, title=f"Bio i {city_name}", subtitle="Program för alla biografer")),
+            og_image=_city_card(sd, city_name),
             description=(
                 f"Bio i {city_name}: se speltider för {n_films} {'film' if n_films == 1 else 'filmer'} "
                 f"på {n_cinemas} {'biograf' if n_cinemas == 1 else 'biografer'} "
@@ -1319,13 +1365,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             sd,
             cinema_screenings,
             title=f"{cinema_name}{location} – program och speltider",
-            og_image=_abs(
-                write_card(
-                    sd.out_dir,
-                    title=cinema_name,
-                    subtitle=f"{city_name} · Program och speltider",
-                )
-            ),
+            og_image=_city_card(sd, city_name),
             description=(
                 f"{cinema_name}{location}: program och speltider för "
                 f"{n_films} {'film' if n_films == 1 else 'filmer'} de närmaste två veckorna. "
@@ -1361,13 +1401,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             sd,
             genre_screenings,
             title=f"{genre} på bio i {city_name} – speltider",
-            og_image=_abs(
-                write_card(
-                    sd.out_dir,
-                    title=f"{genre} på bio",
-                    subtitle=f"{city_name} · Program och speltider",
-                )
-            ),
+            og_image=_city_card(sd, city_name),
             description=(
                 f"{genre}-filmer som visas på bio i {city_name} just nu, med speltider och biografer."
                 if _schedule_screenings(sd, genre_screenings)
@@ -1406,14 +1440,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             )
         else:
             description = f"Speltider för {film_title} i {city_name}. Inga visningar de närmaste två veckorna."
-        og_image = _abs(
-            write_card(
-                sd.out_dir,
-                title=film_title,
-                subtitle=f"Speltider i {city_name}",
-                poster=_poster_bytes(sd, movie_id),
-            )
-        )
+        og_image = _film_card(sd, movie_id)
         _write_programme(
             env,
             sd,
@@ -1451,14 +1478,7 @@ def _build_programme_pages(env: Environment, sd: SiteData) -> None:
             )
         else:
             description = f"{film_title}. Inga kommande visningar publicerade."
-        og_image = _abs(
-            write_card(
-                sd.out_dir,
-                title=film_title,
-                subtitle="Speltider i Sverige",
-                poster=_poster_bytes(sd, movie_id),
-            )
-        )
+        og_image = _film_card(sd, movie_id)
         _write_programme(
             env,
             sd,
@@ -1591,19 +1611,31 @@ def _copy_static(out_dir: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
+# Images named by their content: a render keeps those still used and draws only new ones.
+KEPT = ("og", "posters")
+
+
 def build(sd: SiteData) -> int:
-    """Write every page for `sd` to `sd.out_dir`, replacing it. Returns the number of pages."""
+    """Write every page for `sd` to `sd.out_dir`, replacing it. Returns the number of pages.
+
+    Sharing cards and posters, named by their content, carry over from the previous render;
+    those no page uses any more are deleted.
+    """
     out_dir = sd.out_dir
     if out_dir.exists():
-        shutil.rmtree(out_dir)
-    out_dir.mkdir(parents=True)
+        for child in out_dir.iterdir():
+            if child.name not in KEPT:
+                shutil.rmtree(child) if child.is_dir() and not child.is_symlink() else child.unlink()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    before = {path for name in KEPT for path in (out_dir / name).glob("*")}
+    sd.images_written = set()
 
     _copy_static(out_dir)
     env = _make_env()
 
     _build_index(env, sd)
     _build_programme_pages(env, sd)
-    _build_newsletter_preferences(env, out_dir)
+    _build_newsletter_preferences(env, sd)
     _write_newsletter_cities(sd)
 
     _write_robots(out_dir)
@@ -1611,6 +1643,8 @@ def build(sd: SiteData) -> int:
     _write_sitemap(sd)
     _write_redirects(sd)
     _write_published_redirects(sd)
+    for path in before - sd.images_written:
+        path.unlink()
     return len(set(sd.sitemap_urls))
 
 

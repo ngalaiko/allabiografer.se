@@ -144,3 +144,23 @@ def test_the_site_check_finds_what_would_break(graph, parsed, tmp_path):
     assert "published page missing: /stad/gone/" in found
     assert "broken link: /stad/stockholm/film/dune/" in found
     assert any(problem.startswith("sitemap lists no page") for problem in found)
+
+
+def test_a_render_keeps_the_images_still_used_and_deletes_the_rest(graph, parsed, tmp_path):
+    buffer = io.BytesIO()
+    Image.new("RGB", (1000, 1500), "teal").save(buffer, "PNG")
+    poster = graph.put_bytes(buffer.getvalue(), "image/png", name="poster.png")
+    listed = {"a": ({"name": "Dune", "image": graph.ref(poster)}, [("Bio Rio", "2026-12-02T18:00:00+01:00")])}
+    merged = merge_datasets(graph, None, [parsed(graph, "x", ["Bio Rio"], listed)], DAY)
+    out = tmp_path / "www"
+    render(graph, merged, out, today=DAY)
+    images = {path: path.stat().st_mtime_ns for name in ("og", "posters") for path in (out / name).iterdir()}
+    # Every page of a city shares its card; every page of a film shares the film's.
+    assert len(list((out / "og").iterdir())) == 3  # Site, Stockholm, Dune.
+    stale = out / "og" / "stale.jpg"
+    stale.write_bytes(b"")
+
+    render(graph, merged, out, today=DAY)
+
+    assert {path: path.stat().st_mtime_ns for path in images} == images
+    assert not stale.exists()

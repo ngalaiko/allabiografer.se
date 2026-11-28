@@ -117,5 +117,5 @@ def write_card(
         y += 64
 
     dest.parent.mkdir(parents=True, exist_ok=True)
-    image.save(dest, "JPEG", quality=90, subsampling=0, optimize=True)
+    image.save(dest, "JPEG", quality=80, optimize=True)
     return url
