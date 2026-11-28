@@ -9,9 +9,11 @@ A DownloadAction captures the responses, and the source posters checked, in a Da
 replays that capture alone. A filled film links the responses and posters that decided it.
 """
 
+import concurrent.futures
 import json
 import os
 import re
+import threading
 from collections import defaultdict
 from collections.abc import Callable
 from datetime import date
@@ -34,6 +36,8 @@ TOKEN = Path.home() / ".config" / "allabiografer" / "tmdb-token"
 CRITICAL = ("image", "description", "director")
 # Filled from TMDB when missing.
 FILLED = ("image", "description", "director", "actor", "genre", "duration", "datePublished", "alternateName")
+# Films looked up at once: TMDB allows about 40 requests a second.
+FILMS_AT_ONCE = 8
 
 Fetch = Callable[[str, dict], dict]
 
@@ -61,45 +65,62 @@ class MissingAnswerError(KeyError):
 
 
 class Answers:
-    """TMDB responses and source posters by URL: asked live and stored, or replayed from a capture."""
+    """TMDB responses and source posters by URL: asked live and stored, or replayed from a capture.
+
+    Films are looked up in parallel: each URL is asked once, whichever film asks first.
+    """
 
     def __init__(self, graph: Graph, session=None, found: dict[str, Path] | None = None):
         self.graph = graph
         self.session = session
         self.found = dict(found or {})
-        # Everything answered, in order: the capture's contents.
+        # Everything answered: the capture's contents.
         self.used: list[Path] = []
+        self._lock = threading.Lock()
+        self._asking: dict[str, threading.Lock] = {}
+
+    def _once(self, key: str) -> threading.Lock:
+        with self._lock:
+            return self._asking.setdefault(key, threading.Lock())
+
+    def _use(self, path: Path) -> Path:
+        with self._lock:
+            self.used.append(path)
+        return path
 
     def json(self, path: str, params: dict) -> tuple[dict, Path]:
         key = url(path, params)
-        if key not in self.found:
-            if self.session is None:
-                raise MissingAnswerError(key)
-            headers = {"Authorization": f"Bearer {token()}", "Accept": "application/json"}
-            response = self.session.get(key, headers=headers, timeout=30)
-            # A missing film is an answer too; anything else is a failure.
-            if response.status_code != 404:
-                response.raise_for_status()
-            self.found[key] = self.graph.put_bytes(response.content, "application/json", name=path.strip("/"), url=key)
-        self.used.append(self.found[key])
-        return json.loads(self.graph.content(self.graph.read(self.found[key]))), self.found[key]
+        with self._once(key):
+            if key not in self.found:
+                if self.session is None:
+                    raise MissingAnswerError(key)
+                headers = {"Authorization": f"Bearer {token()}", "Accept": "application/json"}
+                response = self.session.get(key, headers=headers, timeout=30)
+                # A missing film is an answer too; anything else is a failure.
+                if response.status_code != 404:
+                    response.raise_for_status()
+                stored = self.graph.put_bytes(response.content, "application/json", name=path.strip("/"), url=key)
+                self.found[key] = stored
+        source = self._use(self.found[key])
+        return json.loads(self.graph.content(self.graph.read(source))), source
 
     def image(self, address: str) -> Path | None:
         """The stored image downloaded from `address`; None when it cannot be had."""
-        if address not in self.found and self.session is not None:
-            try:
-                response = self.session.get(address, timeout=30)
-                response.raise_for_status()
-            except Exception:
-                return None
-            media = media_type(address, response.headers.get("Content-Type", ""))
-            if not media.startswith("image/"):
-                return None
-            self.found[address] = self.graph.put_bytes(response.content, media, name=Path(address).name, url=address)
+        with self._once(address):
+            if address not in self.found and self.session is not None:
+                try:
+                    response = self.session.get(address, timeout=30)
+                    response.raise_for_status()
+                except Exception:
+                    return None
+                media = media_type(address, response.headers.get("Content-Type", ""))
+                if not media.startswith("image/"):
+                    return None
+                name = Path(address).name
+                self.found[address] = self.graph.put_bytes(response.content, media, name=name, url=address)
         if address not in self.found:
             return None
-        self.used.append(self.found[address])
-        return self.found[address]
+        return self._use(self.found[address])
 
 
 def recording(graph: Graph, session) -> Answers:
@@ -285,31 +306,40 @@ def enrich_parts(graph: Graph, parts: list[dict], today: date, answers: Answers)
         for part in parts
         if part["@type"] == "ScreeningEvent" and date.fromisoformat(part["startDate"][:10]) >= today
     }
-    enriched, count = [], 0
-    for part in parts:
-        if part["@type"] == "Movie" and part["@id"] in showing:
-            sources: list[Path] = []
 
-            def fetch(path: str, params: dict, sources: list[Path] = sources) -> dict:
-                found, source = answers.json(path, params)
-                sources.append(source)
-                return found
+    def look_up(part: dict) -> tuple[dict, bool]:
+        """The film, filled when TMDB has what it lacks, and whether it was."""
+        sources: list[Path] = []
 
-            try:
-                checked = part
-                if part.get("image") and not _usable_poster(graph, part["image"], answers, sources):
-                    checked = {key: value for key, value in part.items() if key != "image"}
-                if needs(checked):
-                    tmdb_id = _identify(fetch, checked)
-                    detail = _detail(fetch, tmdb_id) if tmdb_id is not None else {}
-                    if "id" in detail:
-                        filled = enrich_film(checked, tmdb_movie(detail))
-                        if filled != part:
-                            part, count = filled, count + 1
-            except MissingAnswerError:
-                sources.clear()
-            if sources:
-                links = [graph.ref(path) for path in dict.fromkeys(sources)]
-                part = part | {"isBasedOn": [*part["isBasedOn"], *links]}
-        enriched.append(part)
-    return enriched, count
+        def fetch(path: str, params: dict) -> dict:
+            found, source = answers.json(path, params)
+            sources.append(source)
+            return found
+
+        filled = part
+        try:
+            checked = part
+            if part.get("image") and not _usable_poster(graph, part["image"], answers, sources):
+                checked = {key: value for key, value in part.items() if key != "image"}
+            if needs(checked):
+                tmdb_id = _identify(fetch, checked)
+                detail = _detail(fetch, tmdb_id) if tmdb_id is not None else {}
+                if "id" in detail:
+                    filled = enrich_film(checked, tmdb_movie(detail))
+        except MissingAnswerError:
+            sources.clear()
+        if sources:
+            links = [graph.ref(path) for path in dict.fromkeys(sources)]
+            filled = filled | {"isBasedOn": [*filled["isBasedOn"], *links]}
+        return filled, any(filled.get(field) != part.get(field) for field in FILLED)
+
+    # Films are looked up independently, a few at once; parts keep their order.
+    with concurrent.futures.ThreadPoolExecutor(FILMS_AT_ONCE) as pool:
+        looked = {
+            index: pool.submit(look_up, part)
+            for index, part in enumerate(parts)
+            if part["@type"] == "Movie" and part["@id"] in showing
+        }
+        results = {index: future.result() for index, future in looked.items()}
+    enriched = [results[index][0] if index in results else part for index, part in enumerate(parts)]
+    return enriched, sum(changed for _, changed in results.values())

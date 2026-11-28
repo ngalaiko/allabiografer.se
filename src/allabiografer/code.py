@@ -4,6 +4,7 @@ import io
 import platform
 import subprocess
 import tarfile
+import threading
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -63,6 +64,8 @@ def commit(root: Path = ROOT) -> str | None:
 
 
 _snapshots: dict[tuple[str, Path], Path] = {}
+# Steps run in parallel; the snapshot is taken once.
+_snapshot_lock = threading.Lock()
 
 
 def _snapshot(graph: Graph, root: Path) -> Path:
@@ -86,6 +89,7 @@ def source_code(graph: Graph, root: Path = ROOT) -> Path:
     # Object ids are reused once freed; the store's location names it for the whole process.
     store = graph.store
     key = (str(getattr(store, "root", None) or f"{store.bucket}:{id(store.client)}"), root)
-    if key not in _snapshots:
-        _snapshots[key] = _snapshot(graph, root)
-    return _snapshots[key]
+    with _snapshot_lock:
+        if key not in _snapshots:
+            _snapshots[key] = _snapshot(graph, root)
+        return _snapshots[key]

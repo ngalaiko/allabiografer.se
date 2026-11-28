@@ -7,6 +7,7 @@ the checkout; it is code-reviewed data, not generated.
 
 import concurrent.futures
 import os
+import threading
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -82,6 +83,8 @@ class BucketStore:
         self._pending: list[concurrent.futures.Future] = []
         # Every key with its size, from one listing; writes and deletes keep it current.
         self._keys: dict[str, int] | None = None
+        # Steps run in parallel: the key index and pending uploads change under this lock.
+        self._lock = threading.RLock()
 
     @classmethod
     def from_environment(cls, cache: Path | None = None) -> BucketStore:
@@ -110,6 +113,10 @@ class BucketStore:
 
     @property
     def keys(self) -> dict[str, int]:
+        with self._lock:
+            return self._list()
+
+    def _list(self) -> dict[str, int]:
         if self._keys is None:
             found = {}
             for page in self.client.get_paginator("list_objects_v2").paginate(Bucket=self.bucket):
@@ -137,7 +144,8 @@ class BucketStore:
         list(self._pool.map(self.get, missing))
 
     def put(self, key: str, data: bytes) -> None:
-        self.keys[key] = len(data)
+        with self._lock:
+            self.keys[key] = len(data)
         if self._cached(key):
             LocalStore(self.cache).put(key, data)
         if self._mutable(key):
@@ -145,10 +153,14 @@ class BucketStore:
             self.flush()
             self.client.put_object(Bucket=self.bucket, Key=key, Body=data)
             return
-        self._pending.append(self._pool.submit(self.client.put_object, Bucket=self.bucket, Key=key, Body=data))
+        future = self._pool.submit(self.client.put_object, Bucket=self.bucket, Key=key, Body=data)
+        with self._lock:
+            self._pending.append(future)
 
     def flush(self) -> None:
-        pending, self._pending = self._pending, []
+        """Wait for every upload started so far, by any step."""
+        with self._lock:
+            pending, self._pending = self._pending, []
         for future in pending:
             future.result()
 
@@ -159,7 +171,8 @@ class BucketStore:
         return self.keys[key]
 
     def list(self, prefix: str) -> Iterator[str]:
-        return iter(sorted(key for key in self.keys if key.startswith(prefix)))
+        with self._lock:
+            return iter(sorted(key for key in self.keys if key.startswith(prefix)))
 
     def delete(self, keys: list[str]) -> None:
         self.flush()
@@ -168,8 +181,9 @@ class BucketStore:
             self.client.delete_objects(
                 Bucket=self.bucket, Delete={"Objects": [{"Key": key} for key in batch], "Quiet": True}
             )
-        for key in keys:
-            self.keys.pop(key, None)
+        with self._lock:
+            for key in keys:
+                self.keys.pop(key, None)
         for key in keys:
             if self.cache:
                 (self.cache / key).unlink(missing_ok=True)

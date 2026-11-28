@@ -9,6 +9,7 @@ Dataset it produced; the run's result is the merge's.
 """
 
 import argparse
+import concurrent.futures
 import os
 import sys
 import tempfile
@@ -163,7 +164,8 @@ def fetch_tmdb(graph: Graph, previous: Path | None, parsed: list[Path], day: dat
             {
                 "name": "TMDB answers",
                 "temporalCoverage": day.isoformat(),
-                "distribution": [graph.ref(path) for path in dict.fromkeys(answers.used)],
+                # Sorted: lookups run in parallel, and the same answers make the same capture.
+                "distribution": [graph.ref(path) for path in sorted(set(answers.used), key=str)],
             },
         )
         outcome["result"] = graph.ref(capture)
@@ -229,6 +231,8 @@ def open_store(data: Path, *, production: bool = False):
 
 
 COMPLETED = "https://schema.org/CompletedActionStatus"
+# Sites downloaded at once: each is its own server, so a few in parallel cost them nothing extra.
+SITES_AT_ONCE = 4
 
 
 def latest(graph: Graph) -> Path | None:
@@ -259,14 +263,19 @@ def run(graph: Graph, selected: list[Feed], *, previous: Path | None) -> tuple[P
         "instrument": instrument(graph, "src/allabiografer/pipeline.py"),
     }
     with action(graph, "UpdateAction", fields) as outcome:
-        parsed = []
         failures = {}
-        for adapter, group in sorted(by_adapter.items()):
+
+        def site(adapter: str) -> Path | None:
             try:
-                parsed.append(parse(graph, adapter, fetch(graph, adapter, group, day)))
+                return parse(graph, adapter, fetch(graph, adapter, by_adapter[adapter], day))
             except Exception as error:
                 failures[adapter] = "".join(traceback.format_exception_only(error)).strip()
                 print(f"{adapter}: {failures[adapter]}", file=sys.stderr)
+                return None
+
+        # Sites are independent: several download at once, and their listings keep a stable order.
+        with concurrent.futures.ThreadPoolExecutor(SITES_AT_ONCE) as pool:
+            parsed = [found for found in pool.map(site, sorted(by_adapter)) if found is not None]
         if not parsed and previous is None:
             raise RuntimeError("Every adapter failed")
         capture = None
