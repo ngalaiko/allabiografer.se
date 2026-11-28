@@ -14,7 +14,21 @@ permissions:
   contents: read
 
 jobs:
-  check:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v16
+      - uses: DeterminateSystems/magic-nix-cache-action@v8
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ hashFiles('uv.lock') }}
+          restore-keys: uv-
+      - run: nix run .#lint
+      - run: nix run .#format -- --check
+
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,14 +36,17 @@ jobs:
           lfs: true
       - uses: DeterminateSystems/nix-installer-action@v16
       - uses: DeterminateSystems/magic-nix-cache-action@v8
-      - run: nix run .#lint
-      - run: nix run .#format -- --check
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ hashFiles('uv.lock') }}
+          restore-keys: uv-
       - run: nix run .#test
       - name: Build the server image
         run: nix build .#image
 
   deploy:
-    needs: check
+    needs: [lint, test]
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -50,12 +67,21 @@ jobs:
           lfs: true
       - uses: DeterminateSystems/nix-installer-action@v16
       - uses: DeterminateSystems/magic-nix-cache-action@v8
-      # Immutable objects only: a cold cache costs time, never correctness.
       - uses: actions/cache@v4
         with:
-          path: data/allabiografer/.cache
-          key: store-${{ github.run_id }}
-          restore-keys: store-
+          path: ~/.cache/uv
+          key: uv-${{ hashFiles('uv.lock') }}
+          restore-keys: uv-
+      # Content-named, so a stale cache costs time, never correctness: the store's immutable
+      # objects, and the sharing cards and posters the previous render drew.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            data/allabiografer/.cache
+            data/allabiografer/www/og
+            data/allabiografer/www/posters
+          key: render-${{ github.run_id }}
+          restore-keys: render-
       - name: Render
         run: nix run .#run -- --production --render-only
       - name: Check the site

@@ -20,18 +20,24 @@
           # The image for another platform, e.g. Fly's x86_64-linux from a Mac.
           imageFor = system: (import ./deploy { pkgs = nixpkgs.legacyPackages.${system}; }).image;
         };
-      tools = pkgs: [
+      # What every task needs; `tools` adds the server and deploy tools.
+      python = pkgs: [
         pkgs.uv
         pkgs.python314
-        pkgs.nodejs
-        pkgs.git-lfs
-        # The production nginx, for the server and newsletter API tests.
-        (server pkgs).openresty
-        pkgs.crane
-        pkgs.flyctl
-        pkgs.gnutar
-        pkgs.gzip
       ];
+      tools =
+        pkgs:
+        python pkgs
+        ++ [
+          pkgs.nodejs
+          pkgs.git-lfs
+          # The production nginx, for the server and newsletter API tests.
+          (server pkgs).openresty
+          pkgs.crane
+          pkgs.flyctl
+          pkgs.gnutar
+          pkgs.gzip
+        ];
       # Pele renders the trace diagrams to SVG: https://pele.run
       pele =
         pkgs:
@@ -46,11 +52,16 @@
         UV_PYTHON_DOWNLOADS = "never";
         NEWSLETTER_LUA_PATH = "${pkgs.luajitPackages.lua-resty-http}/share/lua/5.1/?.lua;;";
       };
+      # Tasks that only run Python (lint, format) skip the server's build.
+      light = [
+        "lint"
+        "format"
+      ];
       task =
         pkgs: name: text:
         pkgs.writeShellApplication {
           inherit name;
-          runtimeInputs = tools pkgs;
+          runtimeInputs = if builtins.elem name light then python pkgs else tools pkgs;
           runtimeEnv = env pkgs;
           text = ''
             export PYTHONPATH="$PWD/src''${PYTHONPATH:+:$PYTHONPATH}"
