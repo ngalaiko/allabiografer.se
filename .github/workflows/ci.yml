@@ -1,10 +1,17 @@
 name: CI
 
+# Check the code, then render the production programme, check the site and deploy it.
+# Pushes to master and the daily update release; pull requests are checked only.
 on:
   push:
     branches: [master]
   pull_request:
     branches: [master]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   check:
@@ -20,3 +27,40 @@ jobs:
       - run: nix run .#test
       - name: Build the server image
         run: nix build .#image
+
+  deploy:
+    needs: check
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # One writer of production at a time: updates and deploys queue, never overlap.
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ vars.R2_BUCKET }}
+      R2_JURISDICTION: ${{ vars.R2_JURISDICTION }}
+      POSTHOG_PROJECT_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: DeterminateSystems/nix-installer-action@v16
+      - uses: DeterminateSystems/magic-nix-cache-action@v8
+      # Immutable objects only: a cold cache costs time, never correctness.
+      - uses: actions/cache@v4
+        with:
+          path: data/allabiografer/.cache
+          key: store-${{ github.run_id }}
+          restore-keys: store-
+      - name: Render
+        run: nix run .#run -- --production --render-only
+      - name: Check the site
+        run: nix run .#check-site -- --production
+      - name: Deploy
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: nix run .#deploy

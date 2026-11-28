@@ -298,6 +298,7 @@ def main() -> None:
     )
     cli.add_argument("--fresh", action="store_true", help="Ignore the previous run's result")
     cli.add_argument("--render-only", action="store_true", help="Render the latest result without fetching")
+    cli.add_argument("--no-render", action="store_true", help="Update the programme without rendering it")
     cli.add_argument("--keep", type=int, help="At most this many completed runs kept; default: as many as fit")
     cli.add_argument("--data", type=Path, default=DATA, help="Registry, site output and local store")
     cli.add_argument("--production", action="store_true", help="Use the production R2 store")
@@ -316,7 +317,8 @@ def main() -> None:
     selected = [feed for feed in available if not args.cinema or feed.cinema in args.cinema]
     result, failures = run(graph, selected, previous=None if args.fresh else latest(graph))
     print(result)
-    print(render(graph, result))
+    if not args.no_render:
+        print(render(graph, result))
     if failures:
         # Earlier runs stay until a clean one: they hold what a fixed source should be compared with.
         print("Not pruning: the run had problems", file=sys.stderr)

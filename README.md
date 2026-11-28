@@ -7,10 +7,11 @@ Tools come from Nix; Python dependencies from `uv.lock`.
 
 ```sh
 nix run .#pull      # copy the production store into data/allabiografer
-nix run .#run       # update the programme in data/allabiografer and render it
+nix run .#run       # update the programme in data/allabiografer and render it (--production: the R2 store)
 nix run .#serve     # serve data/allabiografer/www on :8000
 nix run .#trace     # draw the newest run, a step (--step) or a film's sources (--film) as SVG; --open shows it
 nix run .#fixture   # save, update or diff an adapter's test pages
+nix run .#check-site # check the rendered site: published pages resolve, redirects land, links lead somewhere
 nix run .#newsletter # prepare (or --send) the weekly city editions
 nix run .#nginx     # the production server on data/allabiografer/www, :8080
 nix run .#deploy    # push the image with the rendered site to Fly (FLY_API_TOKEN)
@@ -29,7 +30,7 @@ See [data/allabiografer/README.md](data/allabiografer/README.md) for the registr
 - **Store:** the Cloudflare R2 bucket `allabiografer-store` (EU jurisdiction). Commands open it only with `--production`, as GitHub Actions does; otherwise they use `data/allabiografer`, which `nix run .#pull` fills from it.
 - **Server:** a Nix-built OpenResty image (`deploy/`) serving `/srv/www` and the newsletter API; Fly app `allabiografer-se`.
 - **CI** (`.github/workflows/`):
-  - `ci.yml` lints, tests and builds the image;
-  - `run.yml` runs the pipeline daily (and re-renders on push) and deploys the site;
+  - `ci.yml` releases: it lints, tests and builds the image, then renders the production programme, checks the site and deploys it. Pushes to master release; pull requests are checked only;
+  - `update.yml` updates the programme daily, files problems with sources in one issue, then releases through `ci.yml`. Updates and deploys share one queue;
   - `newsletter.yml` sends Thursday editions; `newsletter-test.yml` sends one test.
 - **Secrets:** `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `TMDB_ACCESS_TOKEN`, `FLY_API_TOKEN`, `POSTHOG_PERSONAL_API_KEY`. **Variables:** `R2_BUCKET`, `R2_JURISDICTION`, `POSTHOG_PROJECT_TOKEN`, `POSTHOG_PROJECT_ID`, `POSTHOG_NEWSLETTER_WORKFLOW`, `POSTHOG_NEWSLETTER_TEST_WORKFLOW`, `NEWSLETTER_ENABLED`.

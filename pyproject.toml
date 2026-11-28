@@ -15,6 +15,7 @@ allabiografer-pull = "allabiografer.sync:main"
 allabiografer-newsletter = "allabiografer.newsletter:main"
 allabiografer-fixture = "allabiografer.fixtures:main"
 allabiografer-trace = "allabiografer.trace:main"
+allabiografer-check-site = "allabiografer.sitecheck:main"
 
 [build-system]
 requires = ["hatchling"]

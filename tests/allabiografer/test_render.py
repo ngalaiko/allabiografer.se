@@ -125,3 +125,22 @@ def test_every_published_page_keeps_resolving(graph, parsed, tmp_path):
     assert target("/stad/stockholm/gone-bio/") == "/stad/stockholm/"
     assert target("/festival/") == "/"
     assert set(earlier) <= published(graph, second)
+
+
+def test_the_site_check_finds_what_would_break(graph, parsed, tmp_path):
+    from allabiografer.render import published
+    from allabiografer.sitecheck import problems
+
+    listed = {"a": ({"name": "Dune"}, [("Bio Rio", "2026-12-02T18:00:00+01:00")])}
+    merged = merge_datasets(graph, None, [parsed(graph, "x", ["Bio Rio"], listed)], DAY)
+    out = tmp_path / "www"
+    paths = published(graph, render(graph, merged, out, today=DAY))
+    assert problems(out, paths) == []
+
+    (out / "film" / "dune" / "index.html").unlink()
+    (out / "stad" / "stockholm" / "film" / "dune" / "index.html").unlink()
+    found = problems(out, paths | {"/stad/gone/"})
+    assert "published page missing: /film/dune/" in found
+    assert "published page missing: /stad/gone/" in found
+    assert "broken link: /stad/stockholm/film/dune/" in found
+    assert any(problem.startswith("sitemap lists no page") for problem in found)

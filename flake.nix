@@ -74,6 +74,8 @@
             # Download, read, look up and build the programme, then render it, against data/allabiografer.
             # Flags pass through (--cinema, --fresh, --render-only); --production, the R2 store, runs in CI only.
             run = ''uv run --locked --group parse --group build allabiografer "$@"'';
+            # Check the rendered site: published pages resolve, redirects land, links lead somewhere.
+            check-site = ''uv run --locked allabiografer-check-site "$@"'';
             # Draw a run, a step (--step) or a film's sources (--film) from the local store as SVG; --open shows it.
             trace = ''uv run --locked allabiografer-trace "$@"'';
             # Adapter fixtures: save <adapter> from the local store, update its rows, or diff the reader.
